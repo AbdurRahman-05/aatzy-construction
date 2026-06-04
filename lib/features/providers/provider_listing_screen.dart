@@ -51,7 +51,7 @@ class ProviderListingScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text('Starts at', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                        Text('\$5k', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                        Text('₹5k', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
                       ],
                     )
                   ],

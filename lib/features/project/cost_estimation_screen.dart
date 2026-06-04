@@ -59,7 +59,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                     children: [
                       const Text('Estimated Total Cost', style: TextStyle(fontSize: 16, color: Colors.grey)),
                       const SizedBox(height: 8),
-                      Text('\$${estimatedTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue)),
+                      Text('₹${estimatedTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue)),
                       const SizedBox(height: 24),
                       _buildBreakdown('Materials (60%)', estimatedTotal * 0.6),
                       _buildBreakdown('Labor (30%)', estimatedTotal * 0.3),
@@ -82,7 +82,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
-          Text('\$${amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('₹${amount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );

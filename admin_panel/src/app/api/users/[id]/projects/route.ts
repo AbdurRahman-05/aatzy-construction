@@ -9,6 +9,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       where: { userId: id },
       orderBy: { createdAt: 'desc' },
       include: {
+        tasks: true,
         _count: {
           select: { quotes: true }
         }

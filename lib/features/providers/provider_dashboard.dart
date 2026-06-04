@@ -54,6 +54,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final businessName = auth.businessName ?? 'Your Business';
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Provider Dashboard'), actions: [
         IconButton(icon: const Icon(Icons.notifications), onPressed: (){})
       ]),
@@ -76,6 +77,56 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     ],
                   ),
                   const SizedBox(height: 24),
+                  Text('Active Jobs', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Builder(
+                    builder: (context) {
+                      final activeJobs = (_stats?['activeJobs'] as List? ?? [])
+                          .where((job) => ![
+                                'completed',
+                                'finished',
+                                'finished pending approval',
+                                'cancelled'
+                              ].contains((job['currentStage'] as String? ?? '').toLowerCase()))
+                          .toList();
+
+                      if (activeJobs.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: Text('No active jobs currently in execution.', style: TextStyle(color: Colors.grey)),
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: activeJobs.map((job) => Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: Colors.green,
+                              child: Icon(Icons.handyman, color: Colors.white),
+                            ),
+                            title: Text(job['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Client: ${job['userName']}'),
+                                const SizedBox(height: 4),
+                                Text('Stage: ${job['currentStage']}'),
+                              ],
+                            ),
+                            trailing: const Icon(Icons.arrow_forward),
+                            onTap: () async {
+                              await context.push('/provider-job/${job['id']}');
+                              _fetchStats();
+                            },
+                          ),
+                        )).toList(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
                   Text('Recent Leads', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   if ((_stats?['recentLeads'] as List?)?.isEmpty ?? true)
@@ -89,7 +140,20 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       child: ListTile(
                         leading: const CircleAvatar(child: Icon(Icons.person)),
                         title: Text(lead['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('By ${lead['userName']}'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('By ${lead['userName']}'),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on, size: 14, color: Colors.red),
+                                const SizedBox(width: 4),
+                                Text(lead['location'] ?? 'N/A', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                              ],
+                            ),
+                          ],
+                        ),
                         trailing: const Icon(Icons.arrow_forward),
                         onTap: () => context.push('/provider-lead/${lead['id']}'),
                       ),

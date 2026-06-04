@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
+import '../features/auth/onboarding_screen.dart';
 import '../features/home/main_layout.dart';
 import '../features/project/create_project_screen.dart';
 import '../features/project/project_detail_screen.dart';
@@ -15,11 +16,16 @@ import '../features/providers/provider_profile_edit_screen.dart';
 import '../features/auth/provider/provider_login_screen.dart';
 import '../features/auth/provider/provider_registration_stepper.dart';
 import '../features/auth/provider/verification_pending_screen.dart';
+import '../features/providers/provider_job_detail.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/onboarding',
     routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
@@ -65,6 +71,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/provider-lead/:id',
         builder: (context, state) => ProviderLeadDetail(leadId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/provider-job/:id',
+        builder: (context, state) => ProviderJobDetail(projectId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/provider-login',

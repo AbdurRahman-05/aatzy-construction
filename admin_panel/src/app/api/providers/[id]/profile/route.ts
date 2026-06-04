@@ -23,6 +23,28 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         panCard: true,
         profileCompletion: true,
         createdAt: true,
+        reviews: {
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            user: {
+              select: {
+                name: true
+              }
+            },
+            project: {
+              select: {
+                title: true,
+                type: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
       },
     });
 
@@ -30,7 +52,17 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ provider });
+    const reviews = provider.reviews || [];
+    const avgRating = reviews.length > 0
+      ? parseFloat((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1))
+      : 0.0;
+
+    return NextResponse.json({ 
+      provider: {
+        ...provider,
+        avgRating,
+      } 
+    });
   } catch (error) {
     console.error('Get provider profile error:', error);
     return NextResponse.json({ error: 'Failed to fetch provider' }, { status: 500 });

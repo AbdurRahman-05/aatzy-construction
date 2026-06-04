@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'provider_dashboard.dart';
-import '../chat/chat_list_screen.dart';
+import 'provider_projects_screen.dart';
+import 'provider_leads_screen.dart';
 import '../home/profile_screen.dart';
+import '../../core/wallpaper_background.dart';
 
 class ProviderLayout extends StatefulWidget {
   const ProviderLayout({super.key});
@@ -15,24 +17,27 @@ class _ProviderLayoutState extends State<ProviderLayout> {
 
   final screens = [
     const ProviderDashboard(),
-    const Center(child: Text('Leads / Requests')),
-    const ChatListScreen(),
+    const ProviderProjectsScreen(),
+    const ProviderLeadsScreen(),
     const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: screens[_currentIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Leads'),
-          NavigationDestination(icon: Icon(Icons.chat), label: 'Chat'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+    return WallpaperBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: screens[_currentIndex],
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+            NavigationDestination(icon: Icon(Icons.business_center), label: 'Projects'),
+            NavigationDestination(icon: Icon(Icons.list_alt), label: 'Leads'),
+            NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          ],
+        ),
       ),
     );
   }

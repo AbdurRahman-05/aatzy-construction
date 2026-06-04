@@ -11,10 +11,10 @@ interface Provider {
   phone: string;
   category: string;
   experience: number;
-  bio?: string;
-  address?: string;
-  aadharCard?: string;
-  panCard?: string;
+  bio?: string | null;
+  address?: string | null;
+  aadharCard?: string | null;
+  panCard?: string | null;
   profileCompletion: number;
   createdAt: any;
 }

@@ -6,6 +6,7 @@ export async function GET() {
     const projects = await prisma.project.findMany({
       include: {
         user: true,
+        tasks: true,
       },
       orderBy: { createdAt: 'desc' }
     });

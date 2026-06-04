@@ -12,6 +12,7 @@ class ProfileScreen extends ConsumerWidget {
     final name = auth.businessName ?? auth.name ?? 'Guest User';
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Profile')),
       body: ListView(
         padding: const EdgeInsets.all(16),
