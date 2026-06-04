@@ -28,6 +28,14 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
   String? _panBase64;
   List<dynamic> _portfolioImages = [];
 
+  final List<String> _categories = const [
+    'Land & Legal', 'Finance & Approvals', 'Survey & Analysis', 'Design & Planning',
+    'Construction', 'Engineering (MEP)', 'Materials & Supply', 'Utilities',
+    'Interiors & Finishing', 'Project Management', 'Inspection & Compliance',
+    'Smart & Security', 'Logistics & Equipment', 'Insurance'
+  ];
+  final Set<String> _selectedCategories = {};
+
   @override
   void initState() {
     super.initState();
@@ -48,12 +56,17 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
       final response = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/profile'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body)['provider'];
+        final categoryStr = data['category'] as String? ?? '';
         setState(() {
           _phoneController.text = data['phone'] ?? '';
           _addressController.text = data['address'] ?? '';
           _bioController.text = data['bio'] ?? '';
           _aadharBase64 = data['aadharCard'];
           _panBase64 = data['panCard'];
+          _selectedCategories.clear();
+          if (categoryStr.isNotEmpty) {
+            _selectedCategories.addAll(categoryStr.split(',').map((c) => c.trim()));
+          }
         });
       }
     } catch (e) {
@@ -236,6 +249,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           'phone': _phoneController.text.trim(),
           'address': _addressController.text.trim(),
           'bio': _bioController.text.trim(),
+          'category': _selectedCategories.isNotEmpty ? _selectedCategories.join(', ') : 'General',
           'aadharCard': _aadharBase64,
           'panCard': _panBase64,
           'profileCompletion': 100,
@@ -296,6 +310,42 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                     controller: _bioController,
                     decoration: const InputDecoration(labelText: 'Business Bio / Description', border: OutlineInputBorder()),
                     maxLines: 4,
+                  ),
+                  const SizedBox(height: 20),
+                  Text('Services Offered', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _categories.map((c) {
+                        final isSelected = _selectedCategories.contains(c);
+                        return FilterChip(
+                          label: Text(c, style: TextStyle(fontSize: 12, color: isSelected ? Colors.blue.shade900 : Colors.black87)),
+                          selected: isSelected,
+                          selectedColor: Colors.blue.shade50,
+                          checkmarkColor: Colors.blue.shade800,
+                          backgroundColor: Colors.white,
+                          side: BorderSide(color: isSelected ? Colors.blue.shade300 : Colors.grey.shade300),
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedCategories.add(c);
+                              } else {
+                                _selectedCategories.remove(c);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   

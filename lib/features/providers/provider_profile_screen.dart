@@ -120,26 +120,44 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               'Owner: ${_provider!['ownerName'] ?? 'N/A'}',
                               style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.work, color: Colors.blue, size: 18),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${_provider!['experience'] ?? 0} years experience',
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                                const SizedBox(width: 16),
-                                const Icon(Icons.category, color: Colors.orange, size: 18),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    _provider!['category'] ?? 'General',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                            ),
+                             const SizedBox(height: 8),
+                             Row(
+                               children: [
+                                 const Icon(Icons.work, color: Colors.blue, size: 18),
+                                 const SizedBox(width: 6),
+                                 Text(
+                                   '${_provider!['experience'] ?? 0} years experience',
+                                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                 ),
+                               ],
+                             ),
+                             const SizedBox(height: 16),
+                             const Text(
+                               'Services Offered',
+                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                             ),
+                             const SizedBox(height: 8),
+                             Wrap(
+                               spacing: 8,
+                               runSpacing: 8,
+                               children: (_provider!['category'] as String? ?? 'General')
+                                   .split(',')
+                                   .map((c) {
+                                     final cleanCat = c.trim();
+                                     if (cleanCat.isEmpty) return const SizedBox.shrink();
+                                     return Chip(
+                                       label: Text(
+                                         cleanCat,
+                                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue),
+                                       ),
+                                       backgroundColor: Colors.blue.shade50,
+                                       side: BorderSide(color: Colors.blue.shade100),
+                                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                       visualDensity: VisualDensity.compact,
+                                     );
+                                   })
+                                   .toList(),
+                             ),
                             const SizedBox(height: 12),
                             Row(
                               children: [

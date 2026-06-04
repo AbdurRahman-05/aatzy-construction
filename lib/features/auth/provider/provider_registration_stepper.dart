@@ -104,7 +104,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         'password': password,
         'businessName': businessName,
         'experience': _experienceController.text.trim(),
-        'category': _selectedCategories.isNotEmpty ? _selectedCategories.first : 'General',
+        'category': _selectedCategories.isNotEmpty ? _selectedCategories.join(', ') : 'General',
         'address': _addressController.text.trim(),
         'bio': _bioController.text.trim(),
         'aadharCard': _aadharBase64,

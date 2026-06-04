@@ -47,7 +47,10 @@ export async function GET(request: Request) {
     // Fetch providers matching the category
     const providers = await prisma.provider.findMany({
       where: {
-        category: category,
+        category: {
+          contains: category,
+          mode: 'insensitive',
+        },
         isRejected: false,
       },
       include: {
