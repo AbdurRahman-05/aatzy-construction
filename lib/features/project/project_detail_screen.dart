@@ -568,7 +568,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     } else {
       // Fallback stage-based progress if no tasks exist yet
       if (currentStage == 'Design & Planning') {
-        progressValue = 0.2;
+        progressValue = quotesCount > 0 ? 0.25 : 0.05;
       } else if (currentStage == 'Tracking' || currentStage == 'Execution') {
         progressValue = 0.5;
       } else if (currentStage == 'Finished Pending Approval') {
@@ -755,11 +755,28 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
               const SizedBox(height: 16),
               LinearProgressIndicator(value: progressValue, minHeight: 10, borderRadius: const BorderRadius.all(Radius.circular(5))),
               const SizedBox(height: 8),
-              Text(
-                hasAcceptedQuote 
-                    ? 'Current Stage: Execution Tracking ($currentStage)' 
-                    : 'Current Stage: $currentStage', 
-                style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.blue),
+              Builder(
+                builder: (context) {
+                  String progressStageText = hasAcceptedQuote 
+                      ? 'Current Stage: Execution Tracking ($currentStage)' 
+                      : 'Current Stage: $currentStage';
+                  Color progressStageColor = Colors.blue;
+                  
+                  if (!hasAcceptedQuote && currentStage == 'Design & Planning') {
+                    if (quotesCount == 0) {
+                      progressStageText = 'Current Stage: Waiting for Quotes';
+                      progressStageColor = Colors.orange.shade700;
+                    } else {
+                      progressStageText = 'Current Stage: $quotesCount ${quotesCount == 1 ? 'Quote' : 'Quotes'} Received';
+                      progressStageColor = Colors.green.shade600;
+                    }
+                  }
+                  
+                  return Text(
+                    progressStageText,
+                    style: TextStyle(fontWeight: FontWeight.w500, color: progressStageColor),
+                  );
+                }
               ),
               
               const SizedBox(height: 24),

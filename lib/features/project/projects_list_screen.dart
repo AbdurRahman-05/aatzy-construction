@@ -109,17 +109,37 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     final currentStage = project['currentStage'] ?? 'Design & Planning';
     final budget = (project['budget'] as num? ?? 0.0).toDouble();
     final location = project['location'] ?? 'N/A';
+    final quoteCount = project['_count']?['quotes'] as int? ?? 0;
     
     final tasks = project['tasks'] as List? ?? [];
     final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
     final totalCount = tasks.length;
     
+    String stageText = currentStage;
+    Color stageColor = Colors.blue;
+    IconData stageIcon = Icons.construction;
+    
+    if (currentStage == 'Design & Planning') {
+      if (quoteCount == 0) {
+        stageText = 'Waiting for Quotes';
+        stageColor = Colors.orange.shade700;
+        stageIcon = Icons.hourglass_empty;
+      } else {
+        stageText = '$quoteCount ${quoteCount == 1 ? 'Quote' : 'Quotes'} Received';
+        stageColor = Colors.green.shade600;
+        stageIcon = Icons.mark_chat_unread;
+      }
+    } else {
+      stageColor = _getStageColor(currentStage);
+      stageIcon = _getStageIcon(currentStage);
+    }
+
     double progress = 0.0;
     if (totalCount > 0) {
       progress = completedCount / totalCount;
     } else {
       if (currentStage == 'Design & Planning') {
-        progress = 0.2;
+        progress = quoteCount > 0 ? 0.25 : 0.05;
       } else if (currentStage == 'Tracking' || currentStage == 'Execution') {
         progress = 0.5;
       } else if (currentStage == 'Finished Pending Approval') {
@@ -130,9 +150,6 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
         progress = 0.15;
       }
     }
-
-    final stageColor = _getStageColor(currentStage);
-    final stageIcon = _getStageIcon(currentStage);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -171,7 +188,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         Icon(stageIcon, color: stageColor, size: 14),
                         const SizedBox(width: 4),
                         Text(
-                          currentStage,
+                          stageText,
                           style: TextStyle(color: stageColor, fontWeight: FontWeight.bold, fontSize: 11),
                         ),
                       ],

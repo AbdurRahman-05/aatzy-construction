@@ -234,12 +234,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
                 final totalCount = tasks.length;
                 final currentStage = project['currentStage'] ?? 'Design & Planning';
+                final quoteCount = project['_count']?['quotes'] as int? ?? 0;
+                
+                String stageText = currentStage;
+                Color stageColor = Colors.blue;
+                IconData stageIcon = Icons.construction;
+                
+                if (currentStage == 'Design & Planning') {
+                  if (quoteCount == 0) {
+                    stageText = 'Waiting for Quotes';
+                    stageColor = Colors.orange.shade700;
+                    stageIcon = Icons.hourglass_empty;
+                  } else {
+                    stageText = '$quoteCount ${quoteCount == 1 ? 'Quote' : 'Quotes'} Received';
+                    stageColor = Colors.green.shade600;
+                    stageIcon = Icons.mark_chat_unread;
+                  }
+                } else {
+                  switch (currentStage.toLowerCase()) {
+                    case 'completed':
+                    case 'finished':
+                      stageColor = Colors.green;
+                      stageIcon = Icons.check_circle;
+                      break;
+                    case 'finished pending approval':
+                      stageColor = Colors.amber.shade800;
+                      stageIcon = Icons.rate_review;
+                      break;
+                    case 'on hold':
+                      stageColor = Colors.orange;
+                      stageIcon = Icons.pause_circle_filled;
+                      break;
+                    case 'cancelled':
+                      stageColor = Colors.red;
+                      stageIcon = Icons.cancel;
+                      break;
+                    default:
+                      stageColor = Colors.blue;
+                      stageIcon = Icons.construction;
+                  }
+                }
+
                 double progress = 0.0;
                 if (totalCount > 0) {
                   progress = completedCount / totalCount;
                 } else {
                   if (currentStage == 'Design & Planning') {
-                    progress = 0.2;
+                    progress = quoteCount > 0 ? 0.25 : 0.05;
                   } else if (currentStage == 'Tracking' || currentStage == 'Execution') {
                     progress = 0.5;
                   } else if (currentStage == 'Finished Pending Approval') {
@@ -277,13 +318,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
+                                  color: stageColor.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.blue.shade200),
+                                  border: Border.all(color: stageColor.withOpacity(0.3)),
                                 ),
-                                child: Text(
-                                  currentStage,
-                                  style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold, fontSize: 10),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(stageIcon, color: stageColor, size: 12),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      stageText,
+                                      style: TextStyle(color: stageColor, fontWeight: FontWeight.bold, fontSize: 10),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
