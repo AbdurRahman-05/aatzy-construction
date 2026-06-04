@@ -4,6 +4,7 @@ import ProviderReviewModal from './components/ProviderReviewModal';
 import StatusToggle from './components/StatusToggle';
 import DeleteButton from './components/DeleteButton';
 import ViewDetailsModal from './components/ViewDetailsModal';
+import DashboardAnalytics from './components/DashboardAnalytics';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export default async function AdminDashboard({
 }: {
   searchParams: Promise<{ view?: string }>;
 }) {
-  const { view = 'pending' } = await searchParams;
+  const { view = 'dashboard' } = await searchParams;
 
   const unapprovedProviders = await prisma.provider.findMany({
     where: { isVerified: false, isRejected: false },
@@ -34,6 +35,76 @@ export default async function AdminDashboard({
   const totalProviders = await prisma.provider.count();
   const activeProjects = await prisma.project.count();
   const totalQuotes = await prisma.quote.count();
+
+  // Fetch projects data for the analytics dashboard
+  const allProjectsRaw = await prisma.project.findMany({
+    include: {
+      user: { select: { name: true } },
+      quotes: {
+        include: {
+          provider: { select: { id: true, businessName: true } }
+        }
+      },
+      tasks: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const projectsJson = allProjectsRaw.map(p => ({
+    id: p.id,
+    title: p.title,
+    type: p.type,
+    location: p.location,
+    budget: p.budget,
+    timeline: p.timeline,
+    currentStage: p.currentStage,
+    createdAt: p.createdAt.toISOString(),
+    user: { name: p.user.name },
+    quotes: p.quotes.map(q => ({
+      id: q.id,
+      estimatedCost: q.estimatedCost,
+      isAccepted: q.isAccepted,
+      createdAt: q.createdAt.toISOString(),
+      updatedAt: q.updatedAt.toISOString(),
+      provider: q.provider ? {
+        id: q.provider.id,
+        businessName: q.provider.businessName
+      } : null
+    })),
+    tasks: p.tasks.map(t => ({
+      id: t.id,
+      status: t.status
+    }))
+  }));
+
+  // Fetch accepted quotes data for profit analytics breakdown
+  const acceptedQuotesRaw = await prisma.quote.findMany({
+    where: { isAccepted: true },
+    include: {
+      provider: { select: { id: true, businessName: true, ownerName: true } },
+      project: true
+    },
+    orderBy: { updatedAt: 'desc' }
+  });
+
+  const acceptedQuotesJson = acceptedQuotesRaw.map(q => ({
+    id: q.id,
+    estimatedCost: q.estimatedCost,
+    isAccepted: q.isAccepted,
+    createdAt: q.createdAt.toISOString(),
+    updatedAt: q.updatedAt.toISOString(),
+    provider: {
+      id: q.provider.id,
+      businessName: q.provider.businessName,
+      ownerName: q.provider.ownerName
+    }
+  }));
+
+  const providersJson = allProviders.map(p => ({
+    id: p.id,
+    businessName: p.businessName,
+    ownerName: p.ownerName
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -57,6 +128,15 @@ export default async function AdminDashboard({
       <div className="flex flex-1">
         <aside className="w-64 bg-white border-r border-gray-200 py-8 flex flex-col shadow-sm sticky top-[73px] h-[calc(100vh-73px)]">
           <nav className="flex-1 px-4 space-y-1">
+            <Link 
+              href="/?view=dashboard" 
+              className={`flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all ${view === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+              </svg>
+              <span>Project Dashboard</span>
+            </Link>
             <Link 
               href="/?view=pending" 
               className={`flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all ${view === 'pending' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -127,6 +207,14 @@ export default async function AdminDashboard({
                 <p className="text-3xl font-black text-gray-900 mt-1">{totalQuotes}</p>
               </div>
             </div>
+
+            {view === 'dashboard' && (
+              <DashboardAnalytics 
+                projects={projectsJson} 
+                acceptedQuotes={acceptedQuotesJson} 
+                providers={providersJson} 
+              />
+            )}
 
             {view === 'pending' && (
               <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
