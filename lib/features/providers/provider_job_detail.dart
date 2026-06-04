@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import '../../core/constants.dart';
@@ -1579,100 +1579,240 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
                         // Tab 3: Finance Summary
                         if (_selectedTab == 3) ...[
-                          Card(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          Builder(
+                            builder: (context) {
+                              final double totalWorkersWage = _workers.fold<double>(0.0, (sum, w) => sum + w.totalEarned);
+                              final double totalWorkersPaid = _workers.fold<double>(0.0, (sum, w) => sum + w.amountPaid);
+                              final double totalProjectExpenses = totalSpent + totalWorkersWage;
+                              final double actualProfit = totalQuoted - totalProjectExpenses;
+                              final bool isActualProfit = actualProfit >= 0;
+
+                              // Cash Flow calculations
+                              final double cashIn = totalQuoted;
+                              final double cashOut = totalSpent + totalWorkersPaid;
+                              final double netCashFlow = cashIn - cashOut;
+                              final bool isPositiveCashFlow = netCashFlow >= 0;
+
+                              return Column(
                                 children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.analytics_outlined, color: Theme.of(context).primaryColor, size: 20),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Project Financials Summary',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  Card(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    elevation: 2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(Icons.analytics_outlined, color: Theme.of(context).primaryColor, size: 22),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Project Financials Summary',
+                                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    const Text('Quoted Revenue', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                                                    const SizedBox(height: 4),
+                                                    Text('₹${totalQuoted.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.blue)),
+                                                  ],
+                                                ),
+                                              ),
+                                              Container(width: 1, height: 35, color: Colors.grey.shade300),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    const Text('Total Expenses', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                                                    const SizedBox(height: 4),
+                                                    Text('₹${totalProjectExpenses.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.orange)),
+                                                  ],
+                                                ),
+                                              ),
+                                              Container(width: 1, height: 35, color: Colors.grey.shade300),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(isActualProfit ? 'Net Profit' : 'Net Loss', style: TextStyle(fontSize: 10, color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      '${isActualProfit ? "+" : ""}₹${actualProfit.toStringAsFixed(0)}',
+                                                      style: TextStyle(
+                                                        fontWeight: FontWeight.w900,
+                                                        fontSize: 16,
+                                                        color: isActualProfit ? Colors.green.shade700 : Colors.red.shade700,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 16),
+                                          const Divider(),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('Contract Budget:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                              Text('₹${budget.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('Material Expenses:', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                              Text('₹${totalSpent.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange)),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('Labor Wages (Workers):', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                              Text('₹${totalWorkersWage.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
                                   const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Expanded(
+                                  
+                                  // Visual Chart Card (PieChart)
+                                  if (totalQuoted > 0)
+                                    Card(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      elevation: 2,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            const Text('Total Quoted', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500)),
-                                            const SizedBox(height: 4),
-                                            Text('₹${totalQuoted.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blue)),
-                                          ],
-                                        ),
-                                      ),
-                                      Container(width: 1, height: 30, color: Colors.grey.shade300),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text('Total Spent', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500)),
-                                            const SizedBox(height: 4),
-                                            Text('₹${totalSpent.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.orange)),
-                                          ],
-                                        ),
-                                      ),
-                                      Container(width: 1, height: 30, color: Colors.grey.shade300),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(isTotalProfit ? 'Net Profit' : 'Net Loss', style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w500)),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '${isTotalProfit ? "+" : ""}₹${totalProfit.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                                color: isTotalProfit ? Colors.green.shade700 : Colors.red.shade700,
+                                            const Text(
+                                              'Budget Allocation & Margins',
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            SizedBox(
+                                              height: 180,
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    flex: 4,
+                                                    child: PieChart(
+                                                      PieChartData(
+                                                        sectionsSpace: 2,
+                                                        centerSpaceRadius: 35,
+                                                        sections: [
+                                                          if (totalSpent > 0)
+                                                            PieChartSectionData(
+                                                              color: Colors.orange.shade400,
+                                                              value: totalSpent,
+                                                              title: '${((totalSpent / totalQuoted) * 100).toStringAsFixed(0)}%',
+                                                              radius: 40,
+                                                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                                            ),
+                                                          if (totalWorkersWage > 0)
+                                                            PieChartSectionData(
+                                                              color: Colors.red.shade400,
+                                                              value: totalWorkersWage,
+                                                              title: '${((totalWorkersWage / totalQuoted) * 100).toStringAsFixed(0)}%',
+                                                              radius: 40,
+                                                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                                            ),
+                                                          if (actualProfit > 0)
+                                                            PieChartSectionData(
+                                                              color: Colors.green.shade400,
+                                                              value: actualProfit,
+                                                              title: '${((actualProfit / totalQuoted) * 100).toStringAsFixed(0)}%',
+                                                              radius: 45,
+                                                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    flex: 5,
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        _buildLegendItem(Colors.orange.shade400, 'Materials', totalSpent),
+                                                        const SizedBox(height: 8),
+                                                        _buildLegendItem(Colors.red.shade400, 'Labor / Wages', totalWorkersWage),
+                                                        const SizedBox(height: 8),
+                                                        _buildLegendItem(Colors.green.shade400, isActualProfit ? 'Profit Margin' : 'Loss', actualProfit),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
                                   const SizedBox(height: 16),
-                                  const Divider(),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Total Project Budget:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                      Text('₹${budget.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Remaining Unallocated Budget:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                      Text(
-                                        '₹${(budget - totalQuoted).toStringAsFixed(2)}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: (budget - totalQuoted) >= 0 ? Colors.green.shade700 : Colors.red.shade700,
-                                        ),
+
+                                  // Cash Flow Card
+                                  Card(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    elevation: 2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Project Cash Flow',
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _buildCashFlowRow('Cash In (Revenue Generated)', cashIn, Colors.blue),
+                                          const SizedBox(height: 8),
+                                          _buildCashFlowRow('Cash Out (Wages Paid + Materials)', cashOut, Colors.orange),
+                                          const Divider(height: 24),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              const Text('Net Cash Flow:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                              Text(
+                                                '${isPositiveCashFlow ? "+" : ""}₹${netCashFlow.toStringAsFixed(0)}',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: 14,
+                                                  color: isPositiveCashFlow ? Colors.green : Colors.red,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
+
                                   if (materialTasks.isNotEmpty) ...[
-                                    const Divider(height: 24),
-                                    const Text(
-                                      'Material Expenses & Quotes Breakdown:',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey),
+                                    const SizedBox(height: 16),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 4),
+                                      child: Text(
+                                        'Material Expenses Breakdown',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueGrey),
+                                      ),
                                     ),
                                     const SizedBox(height: 12),
                                     ...materialTasks.map((t) {
@@ -1685,10 +1825,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                       final isProfit = profit >= 0;
                                       return Container(
                                         margin: const EdgeInsets.only(bottom: 8),
-                                        padding: const EdgeInsets.all(10),
+                                        padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.shade50,
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
                                           border: Border.all(color: Colors.grey.shade200),
                                         ),
                                         child: Column(
@@ -1700,30 +1840,30 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                                 Expanded(
                                                   child: Text(
                                                     mName,
-                                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+                                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
                                                     overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                                 Text(
-                                                  '${isProfit ? "+" : ""}₹${profit.toStringAsFixed(2)}',
+                                                  '${isProfit ? "+" : ""}₹${profit.toStringAsFixed(0)}',
                                                   style: TextStyle(
-                                                    fontSize: 12,
+                                                    fontSize: 13,
                                                     fontWeight: FontWeight.bold,
                                                     color: isProfit ? Colors.green.shade700 : Colors.red.shade700,
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 4),
+                                            const SizedBox(height: 6),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
                                                 Text(
-                                                  'Qty: $mQty • Unit: ₹${mUnit.toStringAsFixed(2)}',
+                                                  'Qty: $mQty • Unit: ₹${mUnit.toStringAsFixed(0)}',
                                                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                                                 ),
                                                 Text(
-                                                  'Quoted: ₹${quoted.toStringAsFixed(2)} • Spent: ₹${spent.toStringAsFixed(2)}',
+                                                  'Quoted: ₹${quoted.toStringAsFixed(0)} • Spent: ₹${spent.toStringAsFixed(0)}',
                                                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                                                 ),
                                               ],
@@ -1734,8 +1874,8 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                     }).toList(),
                                   ],
                                 ],
-                              ),
-                            ),
+                              );
+                            }
                           ),
                         ],
 
@@ -2045,6 +2185,43 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
             value,
             style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label, double value) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        Text(
+          '₹${value.toStringAsFixed(0)}',
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCashFlowRow(String label, double value, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        Text(
+          '₹${value.toStringAsFixed(0)}',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color),
         ),
       ],
     );
