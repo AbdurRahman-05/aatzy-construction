@@ -103,6 +103,31 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     }
   }
 
+  Future<void> _showCancelConfirmationDialog() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Project'),
+        content: const Text('Are you sure you want to cancel this project? This will stop all tracking and execution progress. This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Go Back'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Cancel Project', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      _updateProjectStage('Cancelled');
+    }
+  }
+
   Future<void> _showEditProjectDialog() async {
     if (_project == null) return;
 
@@ -594,30 +619,47 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                   _showEditProjectDialog();
                 } else if (val == 'delete') {
                   _showDeleteConfirmationDialog();
+                } else if (val == 'cancel') {
+                  _showCancelConfirmationDialog();
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Edit Project'),
-                    ],
+              itemBuilder: (context) {
+                final isCancelled = currentStage.toLowerCase() == 'cancelled';
+                return [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text('Edit Project'),
+                      ],
+                    ),
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete Project'),
-                    ],
-                  ),
-                ),
-              ],
+                  if (isCancelled)
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete Project'),
+                        ],
+                      ),
+                    )
+                  else
+                    const PopupMenuItem(
+                      value: 'cancel',
+                      child: Row(
+                        children: [
+                          Icon(Icons.cancel, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Cancel Project'),
+                        ],
+                      ),
+                    ),
+                ];
+              },
             ),
           ],
         ),

@@ -1078,11 +1078,32 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Project Management Actions Card
                         Builder(
                           builder: (context) {
                             final currentStage = _project?['currentStage'] ?? 'Tracking';
                             final bool allCompleted = totalCount > 0 && completedCount == totalCount;
+
+                            if (currentStage == 'Cancelled') {
+                              return Card(
+                                color: Colors.red.shade50,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.cancel, color: Colors.red, size: 28),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Text(
+                                          'Project has been Cancelled.',
+                                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
 
                             if (currentStage == 'Completed' || currentStage == 'Finished') {
                               return Card(
