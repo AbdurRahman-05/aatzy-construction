@@ -6,7 +6,18 @@ import 'provider_leads_screen.dart';
 import '../home/profile_screen.dart';
 import '../../core/wallpaper_background.dart';
 
-final providerTabProvider = StateProvider<int>((ref) => 0);
+class ProviderTabNotifier extends Notifier<int> {
+  @override
+  int build() {
+    return 0;
+  }
+
+  void setTab(int idx) {
+    state = idx;
+  }
+}
+
+final providerTabProvider = NotifierProvider<ProviderTabNotifier, int>(ProviderTabNotifier.new);
 
 class ProviderLayout extends ConsumerWidget {
   const ProviderLayout({super.key});
@@ -28,7 +39,7 @@ class ProviderLayout extends ConsumerWidget {
         body: screens[currentIndex],
         bottomNavigationBar: NavigationBar(
           selectedIndex: currentIndex,
-          onDestinationSelected: (idx) => ref.read(providerTabProvider.notifier).state = idx,
+          onDestinationSelected: (idx) => ref.read(providerTabProvider.notifier).setTab(idx),
           destinations: const [
             NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
             NavigationDestination(icon: Icon(Icons.business_center), label: 'Projects'),

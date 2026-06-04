@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
+import 'provider_layout.dart';
 
 class ProviderDashboard extends ConsumerStatefulWidget {
   const ProviderDashboard({super.key});
@@ -134,7 +135,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
                                     onPressed: () {
-                                      ref.read(providerTabProvider.notifier).state = 2; // Leads tab is index 2
+                                      ref.read(providerTabProvider.notifier).setTab(2); // Leads tab is index 2
                                     },
                                     icon: const Icon(Icons.search, size: 18),
                                     label: const Text('See More Leads'),
