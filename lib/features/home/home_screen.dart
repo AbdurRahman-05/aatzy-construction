@@ -256,7 +256,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
-                    onTap: () => context.push('/project-detail/${project['id']}'),
+                    onTap: () async {
+                      await context.push('/project-detail/${project['id']}');
+                      _fetchProjects();
+                    },
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(

@@ -489,7 +489,11 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
+                    onPressed: () {
+                      Navigator.pop(ctx); // Close dialog
+                      Navigator.pop(context); // Go back from project detail screen
+                      context.push('/create-project'); // Open create new project screen
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       foregroundColor: Colors.white,
@@ -499,7 +503,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                       ),
                     ),
                     child: const Text(
-                      "Awesome!",
+                      "Create New Project",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,

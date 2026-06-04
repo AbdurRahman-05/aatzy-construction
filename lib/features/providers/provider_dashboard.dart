@@ -91,10 +91,65 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                           .toList();
 
                       if (activeJobs.isEmpty) {
-                        return const Center(
+                        return Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 1.5,
                           child: Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: Text('No active jobs currently in execution.', style: TextStyle(color: Colors.grey)),
+                            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade50,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.celebration,
+                                    size: 36,
+                                    color: Colors.green.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'All Jobs Completed!',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Congratulations! You have no active jobs in execution right now. Time to take on new projects!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 13,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      ref.read(providerTabProvider.notifier).state = 2; // Leads tab is index 2
+                                    },
+                                    icon: const Icon(Icons.search, size: 18),
+                                    label: const Text('See More Leads'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).primaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }
