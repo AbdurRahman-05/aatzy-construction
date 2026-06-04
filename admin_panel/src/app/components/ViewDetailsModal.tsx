@@ -98,7 +98,7 @@ export default function ViewDetailsModal(props: ViewDetailsModalProps) {
       {isOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden"
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden text-left"
             onClick={(e) => e.stopPropagation()}
             style={{ animation: 'modalIn 0.2s ease-out' }}
           >
