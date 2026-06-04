@@ -62,9 +62,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     // Filter projects where project type/services matches provider.category
     const categoryProjects = allProjects.filter(project => {
-      if (!project.type) return false;
+      if (!project.type || !provider.category) return false;
       const projectServices = project.type.split(',').map(s => s.trim().toLowerCase());
-      return projectServices.includes(provider.category.toLowerCase());
+      const providerServices = provider.category.split(',').map(s => s.trim().toLowerCase());
+      return projectServices.some(service => providerServices.includes(service));
     });
 
     // Filter projects based on locations compatibility
