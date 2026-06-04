@@ -16,7 +16,8 @@ interface Quote {
   provider: {
     id: string;
     businessName: string;
-  };
+    ownerName?: string;
+  } | null;
 }
 
 interface Project {
