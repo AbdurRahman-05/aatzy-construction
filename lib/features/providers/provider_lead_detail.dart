@@ -155,8 +155,17 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
               const SizedBox(height: 16),
               Card(
                 elevation: 0,
-                color: Colors.blue.shade50,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1F2C34)
+                    : Colors.blue.shade50,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade800
+                        : Colors.blue.shade100,
+                  ),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -164,32 +173,102 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Category:', style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text(type, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                          Text(
+                            'Category:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade300
+                                  : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              type,
+                              textAlign: TextAlign.end,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF0F9B8E)
+                                    : Colors.blue.shade800,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Plot Size:', style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text('$plotSize sq ft', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            'Plot Size:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade300
+                                  : Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            '$plotSize sq ft',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black87,
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Client Budget:', style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text('₹$budget', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                          Text(
+                            'Client Budget:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade300
+                                  : Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            '₹$budget',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Requested Timeline:', style: TextStyle(fontWeight: FontWeight.w500)),
-                          Text(timeline, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            'Requested Timeline:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade300
+                                  : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              timeline,
+                              textAlign: TextAlign.end,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],

@@ -129,9 +129,15 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.92),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF1F2C34)
+                            : Colors.white.withOpacity(0.92),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade300,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +146,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                             'Select Services Needed',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).primaryColor,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFF0F9B8E)
+                                      : Theme.of(context).primaryColor,
                                 ),
                           ),
                           const SizedBox(height: 12),
@@ -149,6 +157,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                             runSpacing: 8,
                             children: _categories.map((service) {
                               final isSelected = _selectedServices.contains(service);
+                              final isDark = Theme.of(context).brightness == Brightness.dark;
                               return FilterChip(
                                 label: Text(service),
                                 selected: isSelected,
@@ -161,17 +170,22 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                                     }
                                   });
                                 },
-                                selectedColor: Theme.of(context).primaryColor.withOpacity(0.15),
-                                checkmarkColor: Theme.of(context).primaryColor,
+                                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                                checkmarkColor: isDark ? const Color(0xFFF4EFE6) : Theme.of(context).primaryColor,
                                 labelStyle: TextStyle(
                                   fontSize: 12,
-                                  color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
+                                  color: isSelected
+                                      ? (isDark ? const Color(0xFFF4EFE6) : Theme.of(context).primaryColor)
+                                      : (isDark ? const Color(0xFFF4EFE6) : Colors.black87),
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 ),
+                                backgroundColor: isDark ? const Color(0xFF121B22) : Colors.grey.shade100,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   side: BorderSide(
-                                    color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
+                                    color: isSelected
+                                        ? Theme.of(context).primaryColor
+                                        : (isDark ? Colors.grey.shade700 : Colors.grey.shade300),
                                   ),
                                 ),
                               );
