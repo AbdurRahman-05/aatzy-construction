@@ -1,71 +1,173 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../auth/auth_provider.dart';
+import '../../core/constants.dart';
+import '../../main.dart'; // import themeModeProvider
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _pushNotifications = true;
   bool _emailAlerts = false;
   bool _locationServices = true;
   bool _darkMode = false;
+  bool _isInit = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInit) {
+      _loadPreferences();
+      _isInit = true;
+    }
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _pushNotifications = prefs.getBool('push_notifications') ?? true;
+      _emailAlerts = prefs.getBool('email_alerts') ?? false;
+      _locationServices = prefs.getBool('location_services') ?? true;
+      _darkMode = prefs.getBool('dark_mode') ?? false;
+    });
+  }
+
+  Future<void> _updatePreference(String key, bool val) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, val);
+    setState(() {
+      if (key == 'push_notifications') _pushNotifications = val;
+      if (key == 'email_alerts') _emailAlerts = val;
+      if (key == 'location_services') _locationServices = val;
+      if (key == 'dark_mode') {
+        _darkMode = val;
+        ref.read(themeModeProvider.notifier).toggleTheme(val);
+      }
+    });
+  }
 
   void _showChangePasswordDialog() {
     final oldPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: oldPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Current Password'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Change Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: oldPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Current Password'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: newPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'New Password'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Confirm New Password'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting ? null : () => Navigator.pop(context),
+              child: const Text('CANCEL'),
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: newPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'New Password'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: confirmPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Confirm New Password'),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final oldPass = oldPasswordController.text.trim();
+                      final newPass = newPasswordController.text.trim();
+                      final confirmPass = confirmPasswordController.text.trim();
+
+                      if (oldPass.isEmpty || newPass.isEmpty || confirmPass.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please fill all fields.'), backgroundColor: Colors.red),
+                        );
+                        return;
+                      }
+
+                      if (newPass != confirmPass) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('New passwords do not match!'), backgroundColor: Colors.red),
+                        );
+                        return;
+                      }
+
+                      setDialogState(() => isSubmitting = true);
+                      
+                      final auth = ref.read(authProvider);
+                      try {
+                        final response = await http.post(
+                          Uri.parse('$apiBaseUrl/auth/change-password'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: jsonEncode({
+                            'userId': auth.id,
+                            'role': auth.role,
+                            'oldPassword': oldPass,
+                            'newPassword': newPass,
+                          }),
+                        );
+
+                        if (response.statusCode == 200) {
+                          if (mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Password updated successfully!'), backgroundColor: Colors.green),
+                            );
+                          }
+                        } else {
+                          final errorMsg = jsonDecode(response.body)['error'] ?? 'Failed to update password';
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        debugPrint('Change password error: $e');
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Network error, please try again.'), backgroundColor: Colors.red),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setDialogState(() => isSubmitting = false);
+                        }
+                      }
+                    },
+              child: isSubmitting
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('UPDATE'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (newPasswordController.text != confirmPasswordController.text) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('New passwords do not match!'), backgroundColor: Colors.red),
-                );
-                return;
-              }
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password updated successfully!'), backgroundColor: Colors.green),
-              );
-            },
-            child: const Text('UPDATE'),
-          ),
-        ],
       ),
     );
   }
@@ -90,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 16),
               Text(
                 content,
-                style: const TextStyle(height: 1.6, fontSize: 14, color: Colors.black87),
+                style: const TextStyle(height: 1.6, fontSize: 14),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -124,7 +226,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Push Notifications'),
                   subtitle: const Text('Get real-time updates on quotes & tasks'),
                   value: _pushNotifications,
-                  onChanged: (val) => setState(() => _pushNotifications = val),
+                  onChanged: (val) => _updatePreference('push_notifications', val),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
@@ -132,7 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Email Alerts'),
                   subtitle: const Text('Receive digests and billing invoices'),
                   value: _emailAlerts,
-                  onChanged: (val) => setState(() => _emailAlerts = val),
+                  onChanged: (val) => _updatePreference('email_alerts', val),
                 ),
               ],
             ),
@@ -148,7 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Location Services'),
                   subtitle: const Text('Allow finding nearby active providers'),
                   value: _locationServices,
-                  onChanged: (val) => setState(() => _locationServices = val),
+                  onChanged: (val) => _updatePreference('location_services', val),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
@@ -156,7 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Dark Theme'),
                   subtitle: const Text('Toggle between dark and light themes'),
                   value: _darkMode,
-                  onChanged: (val) => setState(() => _darkMode = val),
+                  onChanged: (val) => _updatePreference('dark_mode', val),
                 ),
               ],
             ),
