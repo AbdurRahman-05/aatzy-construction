@@ -117,14 +117,25 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         color: _selectedTab == 0 ? Colors.blue : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        '💼 Services',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _selectedTab == 0 ? Colors.white : Colors.grey.shade800,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.miscellaneous_services_outlined,
+                            size: 18,
+                            color: _selectedTab == 0 ? Colors.white : Colors.grey.shade800,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Services',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _selectedTab == 0 ? Colors.white : Colors.grey.shade800,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -139,14 +150,25 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         color: _selectedTab == 1 ? Colors.blue : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        '📸 Social Feed',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: _selectedTab == 1 ? Colors.white : Colors.grey.shade800,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.dynamic_feed_outlined,
+                            size: 18,
+                            color: _selectedTab == 1 ? Colors.white : Colors.grey.shade800,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Social Feed',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: _selectedTab == 1 ? Colors.white : Colors.grey.shade800,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
