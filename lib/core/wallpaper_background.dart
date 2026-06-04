@@ -2,12 +2,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class ConstructionDoodlePainter extends CustomPainter {
-  const ConstructionDoodlePainter();
+  final bool isDark;
+  const ConstructionDoodlePainter({this.isDark = false});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.025) // Subtle outline
+      ..color = isDark 
+          ? Colors.white.withOpacity(0.03) 
+          : Colors.black.withOpacity(0.025) // Subtle outline
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
@@ -129,17 +132,20 @@ class WallpaperBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Elegant warm ivory/beige WhatsApp light chat background color theme
-    final Color bgColor = backgroundColor ?? const Color(0xFFF4EFE6);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Select background color matching theme
+    final Color bgColor = backgroundColor ?? 
+        (isDark ? const Color(0xFF121B22) : const Color(0xFFF4EFE6));
 
     return Container(
       color: bgColor,
       child: Stack(
         children: [
-          const Positioned.fill(
+          Positioned.fill(
             child: RepaintBoundary(
               child: CustomPaint(
-                painter: ConstructionDoodlePainter(),
+                painter: ConstructionDoodlePainter(isDark: isDark),
               ),
             ),
           ),
