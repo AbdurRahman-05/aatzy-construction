@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
+import '../chat/chat_detail_screen.dart';
 
 class ProviderProfileScreen extends ConsumerStatefulWidget {
   final String providerId;
@@ -370,20 +371,50 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                 },
                               ),
                             const SizedBox(height: 32),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _showQuoteModal(context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).primaryColor,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 50,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        _showQuoteModal(context);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(context).primaryColor,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                      child: const Text('Request Quote', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
                                 ),
-                                child: const Text('Request Quote', style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
+                                const SizedBox(width: 12),
+                                SizedBox(
+                                  height: 50,
+                                  width: 50,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      final businessName = _provider!['businessName'] ?? 'Provider';
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => ChatDetailScreen(
+                                            partnerId: widget.providerId,
+                                            partnerName: businessName,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      side: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+                                    ),
+                                    child: Icon(Icons.chat_bubble_outline, color: Theme.of(context).primaryColor),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

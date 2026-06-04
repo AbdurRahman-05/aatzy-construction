@@ -1990,10 +1990,14 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
+            final clientId = _project?['user']?['id'] ?? '';
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ChatDetailScreen(name: clientName),
+                builder: (_) => ChatDetailScreen(
+                  partnerId: clientId,
+                  partnerName: clientName,
+                ),
               ),
             );
           },
