@@ -86,6 +86,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         bio: body.bio,
         aadharCard: body.aadharCard,
         panCard: body.panCard,
+        profileImage: body.profileImage,
         profileCompletion: body.profileCompletion,
       },
     });

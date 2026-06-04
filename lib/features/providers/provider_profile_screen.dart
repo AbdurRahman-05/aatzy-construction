@@ -74,12 +74,17 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               CircleAvatar(
-                                radius: 40,
+                                radius: 45,
                                 backgroundColor: Colors.blue.shade600,
-                                child: Text(
-                                  (_provider!['businessName'] ?? 'P')[0].toUpperCase(),
-                                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
+                                backgroundImage: _provider!['profileImage'] != null && _provider!['profileImage'].toString().isNotEmpty
+                                    ? MemoryImage(base64Decode(_provider!['profileImage'].split(',').last))
+                                    : null,
+                                child: _provider!['profileImage'] == null || _provider!['profileImage'].toString().isEmpty
+                                    ? Text(
+                                        (_provider!['businessName'] ?? 'P')[0].toUpperCase(),
+                                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                                      )
+                                    : null,
                               ),
                             ],
                           ),

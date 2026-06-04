@@ -17,6 +17,8 @@ import '../features/auth/provider/provider_login_screen.dart';
 import '../features/auth/provider/provider_registration_stepper.dart';
 import '../features/auth/provider/verification_pending_screen.dart';
 import '../features/providers/provider_job_detail.dart';
+import '../features/home/settings_screen.dart';
+import '../features/home/help_support_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -97,6 +99,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/provider-profile-edit',
         builder: (context, state) => const ProviderProfileEditScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/help-support',
+        builder: (context, state) => const HelpSupportScreen(),
       ),
     ],
   );

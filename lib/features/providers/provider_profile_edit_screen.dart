@@ -26,6 +26,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
   
   String? _aadharBase64;
   String? _panBase64;
+  String? _profileImageBase64;
   List<dynamic> _portfolioImages = [];
 
   final List<String> _categories = const [
@@ -63,6 +64,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           _bioController.text = data['bio'] ?? '';
           _aadharBase64 = data['aadharCard'];
           _panBase64 = data['panCard'];
+          _profileImageBase64 = data['profileImage'];
           _selectedCategories.clear();
           if (categoryStr.isNotEmpty) {
             _selectedCategories.addAll(categoryStr.split(',').map((c) => c.trim()));
@@ -252,6 +254,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           'category': _selectedCategories.isNotEmpty ? _selectedCategories.join(', ') : 'General',
           'aadharCard': _aadharBase64,
           'panCard': _panBase64,
+          'profileImage': _profileImageBase64,
           'profileCompletion': 100,
         }),
       );
@@ -283,6 +286,50 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                 children: [
                   Text('Business Information', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.blue.shade100,
+                          backgroundImage: _profileImageBase64 != null
+                              ? MemoryImage(base64Decode(_profileImageBase64!.split(',').last))
+                              : null,
+                          child: _profileImageBase64 == null
+                              ? const Icon(Icons.business, size: 50, color: Colors.blue)
+                              : null,
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: InkWell(
+                            onTap: () async {
+                              final XFile? image = await _picker.pickImage(
+                                source: ImageSource.gallery,
+                                maxWidth: 600,
+                                maxHeight: 600,
+                                imageQuality: 70,
+                              );
+                              if (image != null) {
+                                final bytes = await image.readAsBytes();
+                                final base64Image = base64Encode(bytes);
+                                setState(() {
+                                  _profileImageBase64 = 'data:image/jpeg;base64,$base64Image';
+                                });
+                              }
+                            },
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.blue.shade700,
+                              child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   TextFormField(
                     controller: _businessNameController,
                     decoration: const InputDecoration(labelText: 'Business Name', border: OutlineInputBorder()),

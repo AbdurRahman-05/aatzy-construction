@@ -36,6 +36,7 @@ model Provider {
   bio               String?
   aadharCard        String?
   panCard           String?
+  profileImage      String?
   profileCompletion Int              @default(0)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt

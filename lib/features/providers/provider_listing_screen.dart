@@ -166,6 +166,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
         final bio = provider['bio'] ?? '';
         final avgRating = provider['avgRating'] ?? 0.0;
         final reviewCount = provider['reviewCount'] ?? 0;
+        final profileImage = provider['profileImage'] as String? ?? '';
 
         return Container(
           margin: const EdgeInsets.only(bottom: 14),
@@ -201,14 +202,19 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                         CircleAvatar(
                           radius: 28,
                           backgroundColor: Colors.blue.shade50,
-                          child: Text(
-                            businessName.substring(0, 1).toUpperCase(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              color: Colors.blue.shade800,
-                            ),
-                          ),
+                          backgroundImage: profileImage.isNotEmpty
+                              ? MemoryImage(base64Decode(profileImage.split(',').last))
+                              : null,
+                          child: profileImage.isEmpty
+                              ? Text(
+                                  businessName.substring(0, 1).toUpperCase(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    color: Colors.blue.shade800,
+                                  ),
+                                )
+                              : null,
                         ),
                         if (isVerified)
                           Positioned(
