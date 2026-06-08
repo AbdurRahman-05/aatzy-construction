@@ -6,11 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'core/theme.dart';
 import 'core/router.dart';
 import 'core/constants.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load saved API URL override if available
+  // Load saved configurations from SharedPreferences
   final prefs = await SharedPreferences.getInstance();
   final overrideUrl = prefs.getString('api_base_url_override');
 
@@ -32,6 +35,38 @@ void main() async {
       // Fallback for iOS, Web, and Desktop
       apiBaseUrl = "http://127.0.0.1:3000/api";
     }
+  }
+
+  // Fetch Google Client ID from backend
+  String webClientId = prefs.getString('google_client_id_override') ?? '';
+  try {
+    final response = await http.get(Uri.parse('$apiBaseUrl/users/google-client-id'))
+        .timeout(const Duration(seconds: 2));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final fetchedId = data['clientId'] as String? ?? '';
+      if (fetchedId.isNotEmpty) {
+        webClientId = fetchedId;
+        await prefs.setString('google_client_id_override', fetchedId);
+      }
+    }
+  } catch (e) {
+    debugPrint('Failed to fetch Google Client ID from backend: $e');
+  }
+
+  // Initialize Google Sign-In singleton once at startup
+  try {
+    if (kIsWeb) {
+      if (webClientId.isNotEmpty) {
+        await GoogleSignIn.instance.initialize(clientId: webClientId);
+      } else {
+        debugPrint('Google Sign-In Web: No Client ID configured yet.');
+      }
+    } else {
+      await GoogleSignIn.instance.initialize();
+    }
+  } catch (e) {
+    debugPrint('Failed to initialize Google Sign-In: $e');
   }
 
   runApp(const ProviderScope(child: ConstructionApp()));
@@ -69,11 +104,26 @@ class ConstructionApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'Construction Platform',
+      scrollBehavior: const SmoothScrollBehavior(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+class SmoothScrollBehavior extends MaterialScrollBehavior {
+  const SmoothScrollBehavior();
+
+  @override
+  Widget buildScrollbar(BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
   }
 }

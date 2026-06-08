@@ -18,6 +18,7 @@ class ProviderDashboard extends ConsumerStatefulWidget {
 class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   Map<String, dynamic>? _stats;
   List<dynamic> _projects = [];
+  List<dynamic> _materialLeads = [];
   bool _isLoading = true;
   int _dashboardTab = 0; // 0: General, 1: Finance
   int _selectedYear = 2026;
@@ -38,12 +39,20 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     try {
       final statsResponse = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats'));
       final projectsResponse = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/projects'));
+      final materialResponse = await http.get(Uri.parse('$apiBaseUrl/supplier/leads?supplierId=${auth.id}'));
 
       if (statsResponse.statusCode == 200 && projectsResponse.statusCode == 200) {
+        List<dynamic> matLeads = [];
+        if (materialResponse.statusCode == 200) {
+          final decoded = jsonDecode(materialResponse.body);
+          matLeads = decoded['leads'] ?? [];
+        }
+
         if (mounted) {
           setState(() {
             _stats = jsonDecode(statsResponse.body);
             _projects = jsonDecode(projectsResponse.body);
+            _materialLeads = matLeads;
             _isLoading = false;
           });
         }
@@ -284,35 +293,132 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       const SizedBox(height: 24),
                       Text('Recent Leads', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 16),
-                      if ((_stats?['recentLeads'] as List?)?.isEmpty ?? true)
-                        const Center(child: Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: Text('No leads found in your category yet.'),
-                        ))
-                      else
-                        ...(_stats?['recentLeads'] as List).map((lead) => Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ListTile(
-                            leading: const CircleAvatar(child: Icon(Icons.person)),
-                            title: Text(lead['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('By ${lead['userName']}'),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on, size: 14, color: Colors.red),
-                                    const SizedBox(width: 4),
-                                    Text(lead['location'] ?? 'N/A', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                  ],
+                      Builder(
+                        builder: (context) {
+                          final List<Map<String, dynamic>> combinedLeads = [];
+                          
+                          // Add Service Leads
+                          final serviceLeads = _stats?['recentLeads'] as List? ?? [];
+                          for (final lead in serviceLeads) {
+                            combinedLeads.add({
+                              'isMaterial': false,
+                              'id': lead['id'],
+                              'title': lead['title'] ?? 'Service Project',
+                              'subtitle': 'By ${lead['userName'] ?? 'Client'}',
+                              'location': lead['location'] ?? 'N/A',
+                              'date': lead['createdAt'] != null ? DateTime.tryParse(lead['createdAt'].toString()) : null,
+                              'raw': lead,
+                            });
+                          }
+
+                          // Add Material Leads
+                          for (final lead in _materialLeads) {
+                            combinedLeads.add({
+                              'isMaterial': true,
+                              'id': lead['id'],
+                              'title': lead['title'] ?? lead['product_name'] ?? 'Material Requirement',
+                              'subtitle': 'By ${lead['buyer_name'] ?? 'Buyer Client'}',
+                              'location': lead['location'] ?? 'N/A',
+                              'date': lead['created_at'] != null ? DateTime.tryParse(lead['created_at'].toString()) : null,
+                              'raw': lead,
+                            });
+                          }
+
+                          // Sort combined leads by date descending (newest first)
+                          combinedLeads.sort((a, b) {
+                            if (a['date'] == null && b['date'] == null) return 0;
+                            if (a['date'] == null) return 1;
+                            if (b['date'] == null) return -1;
+                            return b['date'].compareTo(a['date']);
+                          });
+
+                          // Take recent 6 leads
+                          final recentCombined = combinedLeads.take(6).toList();
+
+                          if (recentCombined.isEmpty) {
+                            return const Center(child: Padding(
+                              padding: EdgeInsets.all(20.0),
+                              child: Text('No leads found in your categories yet.'),
+                            ));
+                          }
+
+                          return Column(
+                            children: recentCombined.map((lead) {
+                              final isMaterial = lead['isMaterial'] as bool;
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: isMaterial ? Colors.green.shade100 : Colors.blue.shade100,
+                                    child: Icon(
+                                      isMaterial ? Icons.inventory_2_outlined : Icons.handyman_outlined,
+                                      color: isMaterial ? Colors.green.shade800 : Colors.blue.shade800,
+                                    ),
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          lead['title'],
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isMaterial ? Colors.green.shade50 : Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: isMaterial ? Colors.green.shade200 : Colors.blue.shade200,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          isMaterial ? 'Material' : 'Service',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: isMaterial ? Colors.green.shade800 : Colors.blue.shade800,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Text(lead['subtitle']),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.location_on, size: 14, color: Colors.red),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            lead['location'],
+                                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                  onTap: () {
+                                    if (isMaterial) {
+                                      context.push('/supplier-leads');
+                                    } else {
+                                      context.push('/provider-lead/${lead['id']}');
+                                    }
+                                  },
                                 ),
-                              ],
-                            ),
-                            trailing: const Icon(Icons.arrow_forward),
-                            onTap: () => context.push('/provider-lead/${lead['id']}'),
-                          ),
-                        )),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 28),
                       Text('B2B Material Supplier Tools', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),

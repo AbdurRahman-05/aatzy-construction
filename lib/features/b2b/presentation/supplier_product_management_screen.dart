@@ -107,7 +107,12 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
   Future<void> _pickLocalImage() async {
     try {
       final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
+      );
       if (image != null) {
         final bytes = await image.readAsBytes();
         final base64String = base64Encode(bytes);
