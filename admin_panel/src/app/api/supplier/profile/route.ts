@@ -9,6 +9,9 @@ export async function PUT(request: Request) {
       companyName,
       description,
       location,
+      businessType,
+      gstNumber,
+      website,
     } = body;
 
     if (!supplierId) {
@@ -21,7 +24,10 @@ export async function PUT(request: Request) {
         businessName: companyName,
         address: location,
         bio: description,
-      },
+        businessType: businessType,
+        gstNumber: gstNumber,
+        website: website,
+      } as any,
     });
 
     return NextResponse.json({

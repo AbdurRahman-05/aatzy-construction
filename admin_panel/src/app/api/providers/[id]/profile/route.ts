@@ -22,6 +22,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         aadharCard: true,
         panCard: true,
         profileCompletion: true,
+        businessType: true,
+        gstNumber: true,
+        website: true,
         createdAt: true,
         reviews: {
           select: {
@@ -45,16 +48,16 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
             createdAt: 'desc'
           }
         }
-      },
+      } as any,
     });
 
     if (!provider) {
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
 
-    const reviews = provider.reviews || [];
+    const reviews = (provider as any).reviews || [];
     const avgRating = reviews.length > 0
-      ? parseFloat((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1))
+      ? parseFloat((reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1))
       : 0.0;
 
     return NextResponse.json({ 
@@ -88,7 +91,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         panCard: body.panCard,
         profileImage: body.profileImage,
         profileCompletion: body.profileCompletion,
-      },
+        businessType: body.businessType,
+        gstNumber: body.gstNumber,
+        website: body.website,
+      } as any,
     });
 
     return NextResponse.json(updatedProvider);

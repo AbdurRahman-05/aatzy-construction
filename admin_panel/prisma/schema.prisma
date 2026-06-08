@@ -39,6 +39,9 @@ model Provider {
   panCard           String?
   profileImage      String?
   profileCompletion Int              @default(0)
+  businessType      String?
+  gstNumber         String?
+  website           String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   portfolioImages   PortfolioImage[]
