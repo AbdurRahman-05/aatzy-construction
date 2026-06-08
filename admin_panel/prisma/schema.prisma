@@ -19,6 +19,7 @@ model User {
   updatedAt  DateTime  @updatedAt
   projects   Project[]
   reviews    Review[]
+  inquiries  Inquiry[]
 }
 
 model Provider {
@@ -43,6 +44,8 @@ model Provider {
   portfolioImages   PortfolioImage[]
   quotes            Quote[]
   reviews           Review[]
+  products          Product[]
+  inquiries         Inquiry[]
 }
 
 model PortfolioImage {
@@ -140,4 +143,69 @@ model Message {
   receiverId String
   text       String
   createdAt  DateTime @default(now())
+}
+
+model Product {
+  id             String    @id @default(uuid())
+  providerId     String
+  categoryId     Int?
+  category       String?
+  name           String
+  description    String
+  specifications String?
+  images         String[]
+  status         String    @default("Approved") // "Pending", "Approved", "Rejected"
+  rejectedReason String?
+  pricePerUnit   Float     @default(0.0)
+  unitType       String    @default("Bag")
+  costPrice      Float     @default(0.0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  provider       Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  inquiries      Inquiry[]
+}
+
+model Inquiry {
+  id             String             @id @default(uuid())
+  buyerId        String
+  providerId     String
+  productId      String?
+  title          String
+  description    String
+  quantity       Float
+  unit           String
+  location       String
+  images         String[]
+  status         String             @default("New") // "New", "Viewed", "Contacted", "Closed", "Accepted", "Rejected"
+  quotedPrice    Float?
+  deliveryStatus String             @default("Pending")
+  gstPercent     Float              @default(18.0)
+  rating         Int?
+  reviewText     String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  buyer          User               @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  provider       Provider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  product        Product?           @relation(fields: [productId], references: [id], onDelete: SetNull)
+  statusLogs     InquiryStatusLog[]
+}
+
+model InquiryStatusLog {
+  id              String   @id @default(uuid())
+  inquiryId       String
+  status          String
+  notes           String?
+  changedByUserId String?
+  createdAt       DateTime @default(now())
+  inquiry         Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+}
+
+model MaterialNews {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  category    String?
+  publishedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

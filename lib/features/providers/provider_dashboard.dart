@@ -114,7 +114,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
@@ -312,7 +312,90 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             trailing: const Icon(Icons.arrow_forward),
                             onTap: () => context.push('/provider-lead/${lead['id']}'),
                           ),
-                        )).toList(),
+                        )),
+                      const SizedBox(height: 28),
+                      Text('B2B Material Supplier Tools', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      const Text('List your building materials, view active buyer inquiries, and propose rate quotes.', style: TextStyle(color: Colors.grey, fontSize: 12.5)),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              child: InkWell(
+                                onTap: () => context.push('/supplier-products'),
+                                borderRadius: BorderRadius.circular(16),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+                                  child: Column(
+                                    children: [
+                                      const Icon(Icons.inventory_2_outlined, size: 36, color: Colors.blue),
+                                      const SizedBox(height: 10),
+                                      const Text('My Products', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                      const SizedBox(height: 4),
+                                      Text('List & edit materials', style: TextStyle(fontSize: 11, color: Colors.grey.shade600), textAlign: TextAlign.center),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              child: InkWell(
+                                onTap: () => context.push('/supplier-leads'),
+                                borderRadius: BorderRadius.circular(16),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+                                  child: Column(
+                                    children: [
+                                      const Icon(Icons.contact_mail_outlined, size: 36, color: Colors.green),
+                                      const SizedBox(height: 10),
+                                      const Text('Material Leads', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                      const SizedBox(height: 4),
+                                      Text('Respond to quote requests', style: TextStyle(fontSize: 11, color: Colors.grey.shade600), textAlign: TextAlign.center),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        child: InkWell(
+                          onTap: () => context.push('/supplier-profile'),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.business_outlined, color: Colors.orange, size: 24),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Configure Business Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                      const SizedBox(height: 2),
+                                      Text('GST credentials, location, and description', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
 
                     // TAB 1: Finance Dashboard
@@ -453,12 +536,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -529,14 +612,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: color.withOpacity(0.1),
+            backgroundColor: color.withValues(alpha: 0.1),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 12),

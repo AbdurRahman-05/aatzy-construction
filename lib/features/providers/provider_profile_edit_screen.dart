@@ -103,6 +103,8 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
       final base64Image = base64Encode(bytes);
       final dataUrl = 'data:image/jpeg;base64,$base64Image';
 
+      if (!mounted) return;
+
       setState(() {
         if (type == 'aadhar') _aadharBase64 = dataUrl;
         if (type == 'pan') _panBase64 = dataUrl;
@@ -119,7 +121,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
+        builder: (dialogContext, setModalState) => AlertDialog(
           title: const Text('Add Project Photo'),
           content: SingleChildScrollView(
             child: Column(
@@ -189,7 +191,9 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                   );
                   if (response.statusCode == 201) {
                     _fetchPortfolio();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo added to portfolio!')));
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo added to portfolio!')));
+                    }
                   }
                 } catch (e) {
                   debugPrint('Add portfolio error: $e');
@@ -225,7 +229,9 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
         final response = await http.delete(Uri.parse('$apiBaseUrl/providers/${auth.id}/portfolio?imageId=$imageId'));
         if (response.statusCode == 200) {
           _fetchPortfolio();
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo removed.')));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo removed.')));
+          }
         }
       } catch (e) {
         debugPrint('Delete portfolio error: $e');

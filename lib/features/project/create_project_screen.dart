@@ -131,7 +131,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       decoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark
                             ? const Color(0xFF1F2C34)
-                            : Colors.white.withOpacity(0.92),
+                            : Colors.white.withValues(alpha: 0.92),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: Theme.of(context).brightness == Brightness.dark
@@ -170,7 +170,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                                     }
                                   });
                                 },
-                                selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                                selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                                 checkmarkColor: isDark ? const Color(0xFFF4EFE6) : Theme.of(context).primaryColor,
                                 labelStyle: TextStyle(
                                   fontSize: 12,

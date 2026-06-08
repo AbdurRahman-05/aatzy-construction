@@ -39,7 +39,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: quality,
+              initialValue: quality,
               decoration: InputDecoration(labelText: 'Material Quality', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
               items: ['Basic', 'Standard', 'Premium'].map((q) => DropdownMenuItem(value: q, child: Text(q))).toList(),
               onChanged: (v) => setState(() => quality = v!),

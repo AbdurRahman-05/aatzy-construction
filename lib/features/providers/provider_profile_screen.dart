@@ -566,6 +566,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         }),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Review submitted successfully!')),
@@ -578,6 +580,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       }
     } catch (e) {
       debugPrint('Error submitting review: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error connecting to backend.')),
       );

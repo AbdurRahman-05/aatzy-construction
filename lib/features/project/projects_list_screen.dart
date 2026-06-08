@@ -178,9 +178,9 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: stageColor.withOpacity(0.1),
+                      color: stageColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: stageColor.withOpacity(0.3)),
+                      border: Border.all(color: stageColor.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -344,7 +344,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         hintText: 'Search projects by title or location...',
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.9),
+                        fillColor: Colors.white.withValues(alpha: 0.9),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'core/theme.dart';
 import 'core/router.dart';
 import 'core/constants.dart';
@@ -18,7 +18,7 @@ void main() async {
     apiBaseUrl = overrideUrl;
   } else {
     // Dynamically configure API URL based on physical vs emulator device
-    if (Platform.isAndroid) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final deviceInfo = DeviceInfoPlugin();
       final androidInfo = await deviceInfo.androidInfo;
       if (androidInfo.isPhysicalDevice) {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -131,7 +130,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         );
 
                         if (response.statusCode == 200) {
-                          if (mounted) {
+                          if (context.mounted) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Password updated successfully!'), backgroundColor: Colors.green),
@@ -139,7 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           }
                         } else {
                           final errorMsg = jsonDecode(response.body)['error'] ?? 'Failed to update password';
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
                             );
@@ -147,13 +146,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         }
                       } catch (e) {
                         debugPrint('Change password error: $e');
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Network error, please try again.'), backgroundColor: Colors.red),
                           );
                         }
                       } finally {
-                        if (mounted) {
+                        if (context.mounted) {
                           setDialogState(() => isSubmitting = false);
                         }
                       }

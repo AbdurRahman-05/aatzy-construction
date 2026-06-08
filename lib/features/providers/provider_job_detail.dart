@@ -10,9 +10,9 @@ import '../chat/chat_detail_screen.dart';
 
 class Worker {
   final String id;
-  final String name;
-  final String role;
-  final double dailyWage;
+  String name;
+  String role;
+  double dailyWage;
   bool isPresentToday;
   int daysPresent;
   double amountPaid;
@@ -191,6 +191,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         body: jsonEncode({'tasks': templateTasks}),
       );
 
+      if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Project schedule template generated!')),
@@ -210,7 +211,6 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       setState(() => _isLoading = false);
     }
   }
-
   void _showTaskStatusSheet(Map<String, dynamic> task) {
     final taskId = task['id'];
     final title = task['title'] ?? 'Task Details';
@@ -218,10 +218,19 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     String? base64Image = task['photoUrl']; // Existing photo if any
     bool isSaving = false;
 
+    // Detect if we already have other expense or material expense
+    String expenseType = 'Material';
+    if (task['materialName'] != null && (task['materialName'] as String).isNotEmpty) {
+      if (task['materialQuantity'] == null && task['materialUnitCost'] == null) {
+        expenseType = 'Other';
+      }
+    }
+
     final quotedCostController = TextEditingController(text: (task['quotedCost'] ?? 0.0).toString());
     final materialNameController = TextEditingController(text: task['materialName'] ?? '');
     final quantityController = TextEditingController(text: task['materialQuantity']?.toString() ?? '');
     final unitCostController = TextEditingController(text: task['materialUnitCost']?.toString() ?? '');
+    final otherCostController = TextEditingController(text: (task['taskCost'] ?? 0.0).toString());
 
     showModalBottomSheet(
       context: context,
@@ -229,7 +238,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return SingleChildScrollView(
@@ -282,7 +291,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 color: selectedStatus == 'Todo' ? Theme.of(context).primaryColor : Colors.grey.shade300,
                                 width: selectedStatus == 'Todo' ? 2 : 1,
                               ),
-                              backgroundColor: selectedStatus == 'Todo' ? Theme.of(context).primaryColor.withOpacity(0.08) : null,
+                              backgroundColor: selectedStatus == 'Todo' ? Theme.of(context).primaryColor.withValues(alpha: 0.08) : null,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -307,7 +316,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 color: selectedStatus == 'In Progress' ? Colors.blue : Colors.grey.shade300,
                                 width: selectedStatus == 'In Progress' ? 2 : 1,
                               ),
-                              backgroundColor: selectedStatus == 'In Progress' ? Colors.blue.withOpacity(0.08) : null,
+                              backgroundColor: selectedStatus == 'In Progress' ? Colors.blue.withValues(alpha: 0.08) : null,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -332,7 +341,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 color: selectedStatus == 'Completed' ? Colors.green : Colors.grey.shade300,
                                 width: selectedStatus == 'Completed' ? 2 : 1,
                               ),
-                              backgroundColor: selectedStatus == 'Completed' ? Colors.green.withOpacity(0.08) : null,
+                              backgroundColor: selectedStatus == 'Completed' ? Colors.green.withValues(alpha: 0.08) : null,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -367,69 +376,124 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'Material & Expense Details (Actual Cost):',
+                      'Expense Category / Log Details:',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: materialNameController,
+                    DropdownButtonFormField<String>(
+                      initialValue: expenseType,
                       decoration: InputDecoration(
-                        labelText: 'Material / Expense Item',
-                        hintText: 'e.g. Cement, Bricks, Legal Approval',
+                        labelText: 'Expense Type',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        prefixIcon: const Icon(Icons.build_circle_outlined),
+                        prefixIcon: const Icon(Icons.category_outlined),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: quantityController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Quantity Used',
-                              hintText: 'e.g. 5',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onChanged: (_) => setModalState(() {}),
-                          ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Material',
+                          child: Text('Material Expenses'),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: unitCostController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              labelText: 'Unit Cost (₹)',
-                              hintText: 'e.g. 250',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onChanged: (_) => setModalState(() {}),
-                          ),
+                        DropdownMenuItem(
+                          value: 'Other',
+                          child: Text('Others'),
                         ),
                       ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setModalState(() {
+                            expenseType = val;
+                          });
+                        }
+                      },
                     ),
+                    const SizedBox(height: 16),
+                    if (expenseType == 'Material') ...[
+                      TextField(
+                        controller: materialNameController,
+                        decoration: InputDecoration(
+                          labelText: 'Material Item Name',
+                          hintText: 'e.g. Cement, Bricks, Sand',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          prefixIcon: const Icon(Icons.build_circle_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: quantityController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Quantity Used',
+                                hintText: 'e.g. 5',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onChanged: (_) => setModalState(() {}),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: unitCostController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Unit Cost (₹)',
+                                hintText: 'e.g. 250',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onChanged: (_) => setModalState(() {}),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      TextField(
+                        controller: materialNameController,
+                        decoration: InputDecoration(
+                          labelText: 'Expense Reason / Description',
+                          hintText: 'e.g. Legal Approval, Logistics, Tax',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          prefixIcon: const Icon(Icons.info_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: otherCostController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Expense Cost (₹)',
+                          hintText: 'e.g. 1500',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          prefixIcon: const Icon(Icons.currency_rupee),
+                        ),
+                        onChanged: (_) => setModalState(() {}),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
                         final quoted = double.tryParse(quotedCostController.text) ?? 0.0;
-                        final qty = double.tryParse(quantityController.text) ?? 0.0;
-                        final unit = double.tryParse(unitCostController.text) ?? 0.0;
-                        final spent = qty * unit;
+                        double spent = 0.0;
+                        if (expenseType == 'Material') {
+                          final qty = double.tryParse(quantityController.text) ?? 0.0;
+                          final unit = double.tryParse(unitCostController.text) ?? 0.0;
+                          spent = qty * unit;
+                        } else {
+                          spent = double.tryParse(otherCostController.text) ?? 0.0;
+                        }
                         final profit = quoted - spent;
                         final isProfit = profit >= 0;
-                                                     final isCompleted = task['status'] == 'Completed';
-                                                     if (!isCompleted) {
-                                                       if (quoted <= 0.0) return const SizedBox.shrink();
-                                                       return Padding(
-                                                         padding: const EdgeInsets.only(top: 4),
-                                                         child: Text(
-                                                           'Quoted Task Price: ₹${quoted.toStringAsFixed(2)}',
-                                                           style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.bold),
-                                                         ),
-                                                       );
-                                                     }
+                        final isCompleted = selectedStatus == 'Completed';
+                        if (!isCompleted) {
+                          if (quoted <= 0.0) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              'Quoted Task Price: ₹${quoted.toStringAsFixed(2)}',
+                              style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.bold),
+                            ),
+                          );
+                        }
 
                         return Container(
                           padding: const EdgeInsets.all(14),
@@ -563,9 +627,19 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 : () async {
                                     setModalState(() => isSaving = true);
                                     final quotedVal = double.tryParse(quotedCostController.text) ?? 0.0;
-                                    final qtyVal = int.tryParse(quantityController.text);
-                                    final costVal = double.tryParse(unitCostController.text);
-                                    final totalCost = (qtyVal != null && costVal != null) ? (qtyVal * costVal) : 0.0;
+                                    int? qtyVal;
+                                    double? costVal;
+                                    double totalCost = 0.0;
+
+                                    if (expenseType == 'Material') {
+                                      qtyVal = int.tryParse(quantityController.text);
+                                      costVal = double.tryParse(unitCostController.text);
+                                      totalCost = (qtyVal != null && costVal != null) ? (qtyVal * costVal) : 0.0;
+                                    } else {
+                                      qtyVal = null;
+                                      costVal = null;
+                                      totalCost = double.tryParse(otherCostController.text) ?? 0.0;
+                                    }
 
                                     try {
                                       final response = await http.patch(
@@ -583,21 +657,27 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                         }),
                                       );
                                       if (response.statusCode == 200) {
-                                        Navigator.pop(context);
+                                        if (sheetContext.mounted) {
+                                          Navigator.pop(sheetContext);
+                                          ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                            const SnackBar(content: Text('Task status updated!')),
+                                          );
+                                        }
                                         _fetchProjectDetails();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Task status updated!')),
-                                        );
                                       } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Failed to update task.')),
-                                        );
+                                        if (sheetContext.mounted) {
+                                          ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                            const SnackBar(content: Text('Failed to update task.')),
+                                          );
+                                        }
                                       }
                                     } catch (e) {
                                       debugPrint('Error: $e');
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Network error updating task.')),
-                                      );
+                                      if (sheetContext.mounted) {
+                                        ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                          const SnackBar(content: Text('Network error updating task.')),
+                                        );
+                                      }
                                     } finally {
                                       setModalState(() => isSaving = false);
                                     }
@@ -644,6 +724,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         }),
       );
 
+      if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Custom task added to plan!')));
         _fetchProjectDetails();
@@ -676,6 +757,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         final response = await http.delete(
           Uri.parse('$apiBaseUrl/projects/${widget.projectId}/tasks?taskId=$taskId'),
         );
+        if (!mounted) return;
         if (response.statusCode == 200) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Task deleted.')));
           _fetchProjectDetails();
@@ -700,6 +782,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           'status': 'In Progress',
         }),
       );
+      if (!mounted) return;
       if (response.statusCode == 200) {
         _fetchProjectDetails();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -729,6 +812,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         }),
       );
 
+      if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Daily update posted successfully!')),
@@ -741,6 +825,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       }
     } catch (e) {
       debugPrint('Error adding update: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error connecting to backend.')),
       );
@@ -787,7 +872,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: selectedStatus,
+                    initialValue: selectedStatus,
                     decoration: const InputDecoration(
                       labelText: 'Status',
                       border: OutlineInputBorder(),
@@ -887,7 +972,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: selectedStage,
+                    initialValue: selectedStage,
                     decoration: const InputDecoration(labelText: 'Project Stage / Service', border: OutlineInputBorder()),
                     items: services.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                     onChanged: (val) {
@@ -981,7 +1066,6 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     final tasks = _project?['tasks'] as List? ?? [];
     final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
     final totalCount = tasks.length;
-    final progressPercent = totalCount > 0 ? completedCount / totalCount : 0.0;
 
     double totalQuoted = 0.0;
     double totalSpent = 0.0;
@@ -989,8 +1073,6 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       totalQuoted += (t['quotedCost'] as num? ?? 0.0).toDouble();
       totalSpent += (t['taskCost'] as num? ?? 0.0).toDouble();
     }
-    final totalProfit = totalQuoted - totalSpent;
-    final isTotalProfit = totalProfit >= 0;
     final materialTasks = tasks.where((t) => t['materialName'] != null && (t['materialName'] as String).isNotEmpty).toList();
 
     final Map<String, List<dynamic>> groupedTasks = {};
@@ -1032,7 +1114,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                      backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                       child: Icon(Icons.person, color: Theme.of(context).primaryColor),
                                     ),
                                     const SizedBox(width: 12),
@@ -1055,7 +1137,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.12),
+                                        color: Colors.green.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Text(
@@ -1532,9 +1614,21 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                           Text('Stage: $tStage', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                                           if (task['materialName'] != null && (task['materialName'] as String).isNotEmpty) ...[
                                             const SizedBox(height: 8),
-                                            Text(
-                                              'Material: ${task['materialName']} (Qty: ${task['materialQuantity'] ?? 1})',
-                                              style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade800, fontStyle: FontStyle.italic),
+                                            Builder(
+                                              builder: (context) {
+                                                final isMaterial = task['materialQuantity'] != null && task['materialUnitCost'] != null;
+                                                if (isMaterial) {
+                                                  return Text(
+                                                    'Material: ${task['materialName']} (Qty: ${task['materialQuantity']} @ ₹${(task['materialUnitCost'] as num).toStringAsFixed(0)}/unit)',
+                                                    style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade800, fontStyle: FontStyle.italic),
+                                                  );
+                                                } else {
+                                                  return Text(
+                                                    'Other Expense: ${task['materialName']} (Cost: ₹${(task['taskCost'] ?? 0.0).toStringAsFixed(0)})',
+                                                    style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade800, fontStyle: FontStyle.italic),
+                                                  );
+                                                }
+                                              }
                                             ),
                                           ],
                                           const Divider(height: 20),
@@ -1858,9 +1952,21 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
-                                                Text(
-                                                  'Qty: $mQty • Unit: ₹${mUnit.toStringAsFixed(0)}',
-                                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                                Builder(
+                                                  builder: (context) {
+                                                    final isMaterial = t['materialQuantity'] != null && t['materialUnitCost'] != null;
+                                                    if (isMaterial) {
+                                                      return Text(
+                                                        'Qty: $mQty • Unit: ₹${mUnit.toStringAsFixed(0)}',
+                                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                                      );
+                                                    } else {
+                                                      return Text(
+                                                        'Other Expense',
+                                                        style: TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.bold),
+                                                      );
+                                                    }
+                                                  }
                                                 ),
                                                 Text(
                                                   'Quoted: ₹${quoted.toStringAsFixed(0)} • Spent: ₹${spent.toStringAsFixed(0)}',
@@ -1871,7 +1977,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                           ],
                                         ),
                                       );
-                                    }).toList(),
+                                    }),
                                   ],
                                 ],
                               );
@@ -1955,7 +2061,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                       Row(
                                         children: [
                                           CircleAvatar(
-                                            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                                            backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                                             child: Text(worker.name.substring(0, 1), style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
                                           ),
                                           const SizedBox(width: 12),
@@ -2005,11 +2111,34 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                               const Text('Present Today', style: TextStyle(fontSize: 12)),
                                             ],
                                           ),
-                                          TextButton.icon(
-                                            onPressed: () => _showPayWagesDialog(worker),
-                                            icon: const Icon(Icons.payment, size: 16),
-                                            label: const Text('Pay Wages'),
-                                            style: TextButton.styleFrom(foregroundColor: Theme.of(context).primaryColor),
+                                          Row(
+                                            children: [
+                                              TextButton.icon(
+                                                onPressed: () => _showEditWorkerDialog(worker),
+                                                icon: const Icon(Icons.edit, size: 14),
+                                                label: const Text('Edit', style: TextStyle(fontSize: 12)),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Colors.blue,
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                onPressed: () => _deleteWorker(worker),
+                                                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              TextButton.icon(
+                                                onPressed: () => _showPayWagesDialog(worker),
+                                                icon: const Icon(Icons.payment, size: 14),
+                                                label: const Text('Pay Wages', style: TextStyle(fontSize: 12)),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Theme.of(context).primaryColor,
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
@@ -2104,7 +2233,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                                 decoration: BoxDecoration(
-                                                  color: statusColor.withOpacity(0.12),
+                                                  color: statusColor.withValues(alpha: 0.12),
                                                   borderRadius: BorderRadius.circular(4),
                                                 ),
                                                 child: Text(
@@ -2235,7 +2364,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.white.withOpacity(0.9),
+          color: isSelected ? Theme.of(context).primaryColor : Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
@@ -2243,7 +2372,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   )
@@ -2272,7 +2401,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withOpacity(0.2) : Colors.grey.shade200,
+                  color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -2353,7 +2482,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   ));
                 });
                 Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(this.context).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Worker added successfully!')),
                 );
               }
@@ -2410,12 +2539,131 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   worker.amountPaid += amount;
                 });
                 Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(this.context).showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Paid ₹${amount.toStringAsFixed(2)} to ${worker.name}!')),
                 );
               }
             },
             child: const Text('RECORD PAYMENT'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditWorkerDialog(Worker worker) {
+    final nameController = TextEditingController(text: worker.name);
+    final roleController = TextEditingController(text: worker.role);
+    final wageController = TextEditingController(text: worker.dailyWage.toString());
+    final daysController = TextEditingController(text: worker.daysPresent.toString());
+    final paidController = TextEditingController(text: worker.amountPaid.toString());
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Edit Worker: ${worker.name}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Worker Name',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: roleController,
+                decoration: const InputDecoration(
+                  labelText: 'Role / Designation',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: wageController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Daily Wage (₹)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: daysController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Days Worked',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: paidController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Wages Paid (₹)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              final role = roleController.text.trim();
+              final wage = double.tryParse(wageController.text.trim()) ?? 0.0;
+              final days = int.tryParse(daysController.text.trim()) ?? 0;
+              final paid = double.tryParse(paidController.text.trim()) ?? 0.0;
+
+              if (name.isNotEmpty && role.isNotEmpty && wage > 0) {
+                setState(() {
+                  worker.name = name;
+                  worker.role = role;
+                  worker.dailyWage = wage;
+                  worker.daysPresent = days;
+                  worker.amountPaid = paid;
+                });
+                Navigator.pop(dialogContext);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Worker details updated successfully!')),
+                );
+              }
+            },
+            child: const Text('SAVE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteWorker(Worker worker) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Worker'),
+        content: Text('Are you sure you want to remove ${worker.name}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('CANCEL'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () {
+              setState(() {
+                _workers.removeWhere((w) => w.id == worker.id);
+              });
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Worker removed.')),
+              );
+            },
+            child: const Text('DELETE'),
           ),
         ],
       ),

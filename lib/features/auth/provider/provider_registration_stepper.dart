@@ -30,7 +30,6 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
   // Image Data (Base64)
   String? _aadharBase64;
   String? _panBase64;
-  String? _businessProofBase64;
   String? _portfolioBase64;
 
   Future<void> _pickImage(String type) async {
@@ -50,7 +49,6 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         setState(() {
           if (type == 'aadhar') _aadharBase64 = dataUrl;
           if (type == 'pan') _panBase64 = dataUrl;
-          if (type == 'business') _businessProofBase64 = dataUrl;
           if (type == 'portfolio') _portfolioBase64 = dataUrl;
         });
         
@@ -286,8 +284,11 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
                             selected: isSelected,
                             onSelected: (selected) {
                               setState(() {
-                                if (selected) _selectedCategories.add(c);
-                                else _selectedCategories.remove(c);
+                                if (selected) {
+                                  _selectedCategories.add(c);
+                                } else {
+                                  _selectedCategories.remove(c);
+                                }
                               });
                             },
                           );

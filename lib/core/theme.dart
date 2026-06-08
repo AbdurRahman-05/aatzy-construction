@@ -20,8 +20,7 @@ class AppTheme {
         seedColor: primaryTeal,
         primary: primaryTeal,
         secondary: secondaryTeal,
-        background: const Color(0xFFF4EFE6), // Matches wallpaper base
-        surface: Colors.white.withOpacity(0.92), // Translucent cards
+        surface: Colors.white.withValues(alpha: 0.92), // Translucent cards
       ),
       scaffoldBackgroundColor: const Color(0xFFF4EFE6), // Let wallpaper show through
       textTheme: GoogleFonts.interTextTheme().apply(
@@ -38,7 +37,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 1.5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: Colors.white.withOpacity(0.92), // Translucent card background
+        color: Colors.white.withValues(alpha: 0.92), // Translucent card background
         margin: const EdgeInsets.only(bottom: 16),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -71,7 +70,6 @@ class AppTheme {
         seedColor: primaryTeal,
         primary: const Color(0xFF0F9B8E),
         secondary: const Color(0xFF1E88E5),
-        background: const Color(0xFF121B22),
         surface: const Color(0xFF1F2C34),
       ),
       scaffoldBackgroundColor: const Color(0xFF121B22),

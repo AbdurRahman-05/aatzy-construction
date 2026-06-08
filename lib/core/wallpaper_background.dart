@@ -9,8 +9,8 @@ class ConstructionDoodlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = isDark 
-          ? Colors.white.withOpacity(0.03) 
-          : Colors.black.withOpacity(0.025) // Subtle outline
+          ? Colors.white.withValues(alpha: 0.03) 
+          : Colors.black.withValues(alpha: 0.025) // Subtle outline
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 

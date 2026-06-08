@@ -142,7 +142,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Edit Project Details'),
           content: SingleChildScrollView(
@@ -202,14 +202,14 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
 
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(dialogContext); // Close dialog
                 setState(() => _isLoading = true);
 
                 try {
@@ -297,7 +297,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     }
   }
 
-  Future<void> _showCompletionReviewDialog(BuildContext context) async {
+  Future<void> _showCompletionReviewDialog() async {
     final acceptedQuote = (_project?['quotes'] as List? ?? []).firstWhere(
       (q) => q['isAccepted'] == true,
       orElse: () => null,
@@ -468,7 +468,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   offset: const Offset(0, 10),
                   blurRadius: 10,
                 ),
@@ -707,7 +707,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                         Row(
                           children: [
                             ElevatedButton(
-                              onPressed: () => _showCompletionReviewDialog(context),
+                              onPressed: () => _showCompletionReviewDialog(),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                                 foregroundColor: Colors.white,
@@ -716,7 +716,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                             ),
                             const SizedBox(width: 12),
                             TextButton(
-                              onPressed: () => _updateProjectStage('Tracking'),
+                              onPressed: () async => await _updateProjectStage('Tracking'),
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.red,
                               ),
@@ -962,7 +962,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                               ],
                             ),
                           );
-                        }).toList(),
+                        }),
                       ],
                     ],
                   ),
@@ -1189,7 +1189,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor.withOpacity(0.06),
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
                             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                           ),
                           child: Text(
@@ -1296,7 +1296,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ]
             ] else ...[
               // Daily Logs Tab
@@ -1361,7 +1361,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                                 decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.12),
+                                  color: statusColor.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(

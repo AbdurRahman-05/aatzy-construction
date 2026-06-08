@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import '../core/constants.dart';
 import '../features/providers/provider_profile_screen.dart';
 
 class CategorySocialFeedScreen extends StatefulWidget {

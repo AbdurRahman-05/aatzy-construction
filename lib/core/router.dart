@@ -19,6 +19,15 @@ import '../features/auth/provider/verification_pending_screen.dart';
 import '../features/providers/provider_job_detail.dart';
 import '../features/home/settings_screen.dart';
 import '../features/home/help_support_screen.dart';
+import '../features/b2b/presentation/product_list_screen.dart';
+import '../features/b2b/presentation/product_detail_screen.dart';
+import '../features/b2b/presentation/inquiry_form_screen.dart';
+import '../features/b2b/presentation/my_inquiries_screen.dart';
+import '../features/b2b/presentation/news_screen.dart';
+import '../features/b2b/presentation/supplier_catalog_screen.dart';
+import '../features/b2b/presentation/supplier_product_management_screen.dart';
+import '../features/b2b/presentation/lead_management_screen.dart';
+import '../features/b2b/presentation/supplier_profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -107,6 +116,49 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/help-support',
         builder: (context, state) => const HelpSupportScreen(),
+      ),
+      GoRoute(
+        path: '/b2b-products',
+        builder: (context, state) => const ProductListScreen(),
+      ),
+      GoRoute(
+        path: '/b2b-product-detail/:id',
+        builder: (context, state) => ProductDetailScreen(productId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/b2b-inquiry-form',
+        builder: (context, state) => InquiryFormScreen(
+          supplierId: state.uri.queryParameters['supplierId'],
+          productId: state.uri.queryParameters['productId'],
+          productName: state.uri.queryParameters['productName'],
+          productImage: state.uri.queryParameters['productImage'],
+        ),
+      ),
+      GoRoute(
+        path: '/b2b-my-inquiries',
+        builder: (context, state) => const MyInquiriesScreen(),
+      ),
+      GoRoute(
+        path: '/b2b-news',
+        builder: (context, state) => const NewsScreen(),
+      ),
+      GoRoute(
+        path: '/supplier-products',
+        builder: (context, state) => const SupplierCatalogScreen(),
+      ),
+      GoRoute(
+        path: '/supplier-add-product',
+        builder: (context, state) => SupplierProductManagementScreen(
+          editItem: state.extra as Map<String, dynamic>?,
+        ),
+      ),
+      GoRoute(
+        path: '/supplier-leads',
+        builder: (context, state) => const LeadManagementScreen(),
+      ),
+      GoRoute(
+        path: '/supplier-profile',
+        builder: (context, state) => const SupplierProfileScreen(),
       ),
     ],
   );

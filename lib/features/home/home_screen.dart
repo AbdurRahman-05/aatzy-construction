@@ -115,7 +115,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -140,8 +140,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                               colors: [
-                                Colors.black.withOpacity(0.7),
-                                Colors.black.withOpacity(0.2),
+                                Colors.black.withValues(alpha: 0.7),
+                                Colors.black.withValues(alpha: 0.2),
                               ],
                             ),
                           ),
@@ -155,9 +155,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                               ),
                               child: const Icon(
                                 Icons.add,
@@ -184,7 +184,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   Text(
                                     'Start planning your dream home',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.85),
+                                      color: Colors.white.withValues(alpha: 0.85),
                                       fontSize: 14,
                                     ),
                                   ),
@@ -318,9 +318,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: stageColor.withOpacity(0.1),
+                                  color: stageColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: stageColor.withOpacity(0.3)),
+                                  border: Border.all(color: stageColor.withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -379,19 +379,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
 
             const SizedBox(height: 24),
-            Text('Tools', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Tools & Services', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: ListTile(
-                leading: const Icon(Icons.calculate, color: Colors.green),
-                title: const Text('Cost Estimator', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Get instant construction estimates'),
-                onTap: () => context.push('/cost-estimation'),
-              ),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.4,
+              children: [
+                _buildToolCard(
+                  context,
+                  title: 'Cost Estimator',
+                  subtitle: 'Instant construction costs',
+                  icon: Icons.calculate_outlined,
+                  color: Colors.green,
+                  onTap: () => context.push('/cost-estimation'),
+                ),
+                _buildToolCard(
+                  context,
+                  title: 'Material Sourcing',
+                  subtitle: 'Bulk B2B Marketplace',
+                  icon: Icons.storefront_outlined,
+                  color: Colors.blue,
+                  onTap: () => context.push('/b2b-products'),
+                ),
+                _buildToolCard(
+                  context,
+                  title: 'Quotes & Inquiries',
+                  subtitle: 'Track material requests',
+                  icon: Icons.contact_mail_outlined,
+                  color: Colors.orange,
+                  onTap: () => context.push('/b2b-my-inquiries'),
+                ),
+                _buildToolCard(
+                  context,
+                  title: 'Price News & Trends',
+                  subtitle: 'Live commodity price index',
+                  icon: Icons.trending_up_rounded,
+                  color: Colors.teal,
+                  onTap: () => context.push('/b2b-news'),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -576,6 +609,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildToolCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

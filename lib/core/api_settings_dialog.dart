@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:device_info_plus/device_info_plus.dart';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'constants.dart';
 
 void showApiSettingsDialog(BuildContext context, {VoidCallback? onSave}) {
@@ -103,7 +103,7 @@ class _ApiSettingsDialogState extends State<ApiSettingsDialog> {
     await prefs.remove('api_base_url_override');
 
     String defaultUrl = "http://127.0.0.1:3000/api";
-    if (Platform.isAndroid) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final deviceInfo = DeviceInfoPlugin();
       final androidInfo = await deviceInfo.androidInfo;
       if (androidInfo.isPhysicalDevice) {

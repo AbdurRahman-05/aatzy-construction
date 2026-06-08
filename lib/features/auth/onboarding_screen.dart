@@ -111,9 +111,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.65),
-                    Colors.black.withOpacity(0.4),
-                    Colors.black.withOpacity(0.88),
+                    Colors.black.withValues(alpha: 0.65),
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.black.withValues(alpha: 0.88),
                   ],
                   stops: const [0.0, 0.45, 1.0],
                 ),
@@ -172,7 +172,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 );
                               },
                               style: TextButton.styleFrom(
-                                foregroundColor: Colors.white.withOpacity(0.7),
+                                foregroundColor: Colors.white.withValues(alpha: 0.7),
                               ),
                               child: const Text(
                                 'Skip',

@@ -15,7 +15,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _profileImage;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -29,7 +28,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final auth = ref.read(authProvider);
     if (auth.id == null || auth.role != 'PROVIDER') return;
 
-    setState(() => _isLoading = true);
     try {
       final response = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/profile'));
       if (response.statusCode == 200) {
@@ -37,15 +35,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         if (mounted) {
           setState(() {
             _profileImage = data['profileImage'];
-            _isLoading = false;
           });
         }
-      } else {
-        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint('Error fetching profile photo in profile tab: $e');
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
