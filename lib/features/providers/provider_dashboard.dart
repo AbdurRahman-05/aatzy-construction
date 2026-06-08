@@ -367,35 +367,6 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: InkWell(
-                          onTap: () => context.push('/supplier-profile'),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.business_outlined, color: Colors.orange, size: 24),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('Configure Business Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                      const SizedBox(height: 2),
-                                      Text('GST credentials, location, and description', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
 
                     // TAB 1: Finance Dashboard

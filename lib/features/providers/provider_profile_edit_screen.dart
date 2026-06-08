@@ -23,6 +23,9 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   late TextEditingController _bioController;
+  late TextEditingController _businessTypeController;
+  late TextEditingController _gstController;
+  late TextEditingController _websiteController;
   
   String? _aadharBase64;
   String? _panBase64;
@@ -46,9 +49,25 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
     _phoneController = TextEditingController(text: ''); 
     _addressController = TextEditingController();
     _bioController = TextEditingController();
+    _businessTypeController = TextEditingController();
+    _gstController = TextEditingController();
+    _websiteController = TextEditingController();
     
     _fetchProfileData();
     _fetchPortfolio();
+  }
+
+  @override
+  void dispose() {
+    _businessNameController.dispose();
+    _ownerNameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _bioController.dispose();
+    _businessTypeController.dispose();
+    _gstController.dispose();
+    _websiteController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchProfileData() async {
@@ -62,6 +81,9 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           _phoneController.text = data['phone'] ?? '';
           _addressController.text = data['address'] ?? '';
           _bioController.text = data['bio'] ?? '';
+          _businessTypeController.text = data['businessType'] ?? '';
+          _gstController.text = data['gstNumber'] ?? '';
+          _websiteController.text = data['website'] ?? '';
           _aadharBase64 = data['aadharCard'];
           _panBase64 = data['panCard'];
           _profileImageBase64 = data['profileImage'];
@@ -262,6 +284,9 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           'panCard': _panBase64,
           'profileImage': _profileImageBase64,
           'profileCompletion': 100,
+          'businessType': _businessTypeController.text.trim(),
+          'gstNumber': _gstController.text.trim(),
+          'website': _websiteController.text.trim(),
         }),
       );
 
@@ -363,6 +388,31 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                     controller: _bioController,
                     decoration: const InputDecoration(labelText: 'Business Bio / Description', border: OutlineInputBorder()),
                     maxLines: 4,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _businessTypeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Business Type',
+                      hintText: 'e.g. Manufacturer, Wholesaler, Exporter, Service Provider',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _gstController,
+                    decoration: const InputDecoration(
+                      labelText: 'GST Number (Optional)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _websiteController,
+                    decoration: const InputDecoration(
+                      labelText: 'Company Website (Optional)',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Text('Services Offered', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
