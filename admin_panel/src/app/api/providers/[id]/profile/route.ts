@@ -21,6 +21,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         bio: true,
         aadharCard: true,
         panCard: true,
+        profileImage: true,
         profileCompletion: true,
         businessType: true,
         gstNumber: true,

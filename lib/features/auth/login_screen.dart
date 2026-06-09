@@ -13,7 +13,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../core/google_sign_in_helper.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialRole;
+  const LoginScreen({super.key, this.initialRole});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -30,6 +31,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    isProvider = widget.initialRole == 'provider';
     _loadWebClientId();
     
     // Subscribe to Google Sign-In events on Web platform
@@ -149,6 +151,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Approval Pending: ${data['message']}')),
         );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Login failed')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Network error. Failed to reach server.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loginProvider() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/providers/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+        ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+        context.go('/provider-home');
+      } else if (response.statusCode == 403) {
+        if (!mounted) return;
+        context.go('/provider-verification-pending', extra: {
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text,
+        });
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -376,39 +421,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                       ),
-                      if (!isProvider) ...[
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            labelStyle: TextStyle(color: Colors.grey.shade600),
-                            floatingLabelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                            prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
-                            ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          labelStyle: TextStyle(color: Colors.grey.shade600),
+                          floatingLabelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                          prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
                           ),
                         ),
-                      ],
+                      ),
                       const SizedBox(height: 24),
                       SizedBox(
                         height: 52,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : () {
                             if (isProvider) {
-                              context.push('/provider-login');
+                              _loginProvider();
                             } else {
                               _loginConsumer();
                             }

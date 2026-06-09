@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 class ConstructionDoodlePainter extends CustomPainter {
   final bool isDark;
@@ -7,6 +8,11 @@ class ConstructionDoodlePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Skip drawing background doodles on mobile screens/platforms to maximize scroll and transition performance
+    if (size.width <= 600 || defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS) {
+      return;
+    }
+
     final paint = Paint()
       ..color = isDark 
           ? Colors.white.withValues(alpha: 0.03) 

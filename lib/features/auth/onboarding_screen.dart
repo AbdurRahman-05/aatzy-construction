@@ -446,9 +446,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ElevatedButton(
                         onPressed: () {
                           if (_selectedRole == 'CONSUMER') {
-                            context.push('/login');
+                            context.push('/login?role=consumer');
                           } else {
-                            context.push('/provider-login');
+                            context.push('/login?role=provider');
                           }
                         },
                         style: ElevatedButton.styleFrom(

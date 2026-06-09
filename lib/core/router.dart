@@ -13,7 +13,7 @@ import '../features/providers/provider_profile_screen.dart';
 import '../features/providers/provider_layout.dart';
 import '../features/providers/provider_lead_detail.dart';
 import '../features/providers/provider_profile_edit_screen.dart';
-import '../features/auth/provider/provider_login_screen.dart';
+
 import '../features/auth/provider/provider_registration_stepper.dart';
 import '../features/auth/provider/verification_pending_screen.dart';
 import '../features/providers/provider_job_detail.dart';
@@ -38,7 +38,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) {
+          final role = state.uri.queryParameters['role'];
+          return LoginScreen(initialRole: role);
+        },
       ),
       GoRoute(
         path: '/register',
@@ -86,10 +89,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/provider-job/:id',
         builder: (context, state) => ProviderJobDetail(projectId: state.pathParameters['id']!),
       ),
-      GoRoute(
-        path: '/provider-login',
-        builder: (context, state) => const ProviderLoginScreen(),
-      ),
+
       GoRoute(
         path: '/provider-register',
         builder: (context, state) => const ProviderRegistrationStepper(),

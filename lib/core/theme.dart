@@ -20,7 +20,7 @@ class AppTheme {
         seedColor: primaryTeal,
         primary: primaryTeal,
         secondary: secondaryTeal,
-        surface: Colors.white.withValues(alpha: 0.92), // Translucent cards
+        surface: Colors.white, // Opaque cards to prevent heavy GPU blending
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -46,7 +46,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 1.5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: Colors.white.withValues(alpha: 0.92), // Translucent card background
+        color: Colors.white, // Opaque card background to prevent heavy GPU blending
         margin: const EdgeInsets.only(bottom: 16),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -145,18 +145,9 @@ class SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
     return FadeTransition(
       opacity: CurvedAnimation(
         parent: animation,
-        curve: Curves.easeInOutCubic,
+        curve: Curves.easeOut,
       ),
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0.06, 0.0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        )),
-        child: child,
-      ),
+      child: child,
     );
   }
 }
