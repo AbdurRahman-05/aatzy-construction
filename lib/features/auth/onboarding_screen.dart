@@ -1,17 +1,19 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api_settings_dialog.dart';
 import '../../core/theme.dart';
+import 'auth_provider.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
   String? _selectedRole; // 'CONSUMER' or 'PROVIDER'
@@ -46,6 +48,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final String _roleSelectionBgUrl = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80';
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = ref.read(authProvider);
+      if (auth.isInitialized && auth.id != null) {
+        _redirect(auth);
+      }
+    });
+  }
+
+  void _redirect(AuthState auth) {
+    if (!mounted) return;
+    if (auth.role == 'PROVIDER') {
+      context.go('/provider-home');
+    } else {
+      context.go('/');
+    }
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
@@ -62,6 +84,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.isInitialized && next.id != null) {
+        _redirect(next);
+      }
+    });
+
+    if (!auth.isInitialized) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF111827), Color(0xFF030712)],
+            ),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: Colors.amber),
+                SizedBox(height: 16),
+                Text(
+                  'Loading BuildConnect...',
+                  style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     String currentBgUrl = _currentIndex < 3 ? _pages[_currentIndex].bgImageUrl : _roleSelectionBgUrl;
 
     return Scaffold(

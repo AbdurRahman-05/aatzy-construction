@@ -195,7 +195,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                   const SizedBox(width: 4),
                   Text(location, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
                   const Spacer(),
-                  const Icon(Icons.attach_money, size: 16, color: Colors.green),
+                  const Icon(Icons.currency_rupee, size: 16, color: Colors.green),
                   Text(
                     budget.toStringAsFixed(0),
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 14),

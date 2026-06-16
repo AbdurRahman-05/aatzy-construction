@@ -9,11 +9,13 @@ import '../../core/constants.dart';
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String partnerId;
   final String partnerName;
+  final String? initialMessage;
 
   const ChatDetailScreen({
     super.key,
     required this.partnerId,
     required this.partnerName,
+    this.initialMessage,
   });
 
   @override
@@ -30,6 +32,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialMessage != null) {
+      _controller.text = widget.initialMessage!;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchMessages();
       // Start polling every 3 seconds for real-time messages

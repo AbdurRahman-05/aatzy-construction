@@ -142,7 +142,7 @@ class WallpaperBackground extends StatelessWidget {
     
     // Select background color matching theme
     final Color bgColor = backgroundColor ?? 
-        (isDark ? const Color(0xFF121B22) : const Color(0xFFF4EFE6));
+        (isDark ? const Color(0xFF121B22) : Colors.white);
 
     return Container(
       color: bgColor,

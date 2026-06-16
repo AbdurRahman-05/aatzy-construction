@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/full_screen_image_viewer.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -1276,13 +1277,39 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                     },
                                   ),
                                   if (hasPhoto) ...[
+                                    const SizedBox(height: 8),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => FullScreenImageViewer(
+                                              base64Image: task['photoUrl'] as String,
+                                              title: tTitle,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.memory(
+                                          base64Decode((task['photoUrl'] as String).split(',').last),
+                                          height: 140,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return const SizedBox.shrink();
+                                          },
+                                        ),
+                                      ),
+                                    ),
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
                                         const Icon(Icons.photo_library, size: 12, color: Colors.green),
                                         const SizedBox(width: 4),
                                         Text(
-                                          'Completion photo attached (Tap to view)',
+                                          'Completion photo attached (Tap to enlarge)',
                                           style: TextStyle(fontSize: 10, color: Colors.green.shade700, fontWeight: FontWeight.bold),
                                         ),
                                       ],
@@ -1419,24 +1446,53 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Proof of Completion attached by provider:',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.memory(
-                base64Decode(photoUrl.split(',').last),
-                width: double.infinity,
-                fit: BoxFit.contain,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Proof of Completion attached by provider (Tap image to zoom):',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(ctx); // Close dialog
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullScreenImageViewer(
+                        base64Image: photoUrl,
+                        title: title,
+                      ),
+                    ),
+                  );
+                },
+                child: SizedBox(
+                  height: 300,
+                  width: double.infinity,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      base64Decode(photoUrl.split(',').last),
+                      width: double.infinity,
+                      height: 300,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Text(
+                            'Failed to load completion image.',
+                            style: TextStyle(color: Colors.red, fontSize: 13),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

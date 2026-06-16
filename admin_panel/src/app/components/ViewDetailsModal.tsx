@@ -43,6 +43,7 @@ type ViewDetailsModalProps =
 
 export default function ViewDetailsModal(props: ViewDetailsModalProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
 
   const getStatusBadge = () => {
     if (props.type === 'user') {
@@ -196,8 +197,8 @@ export default function ViewDetailsModal(props: ViewDetailsModalProps) {
                   <div>
                     <label className="text-sm font-bold text-gray-900 block mb-3">KYC Documents</label>
                     <div className="grid grid-cols-2 gap-4">
-                      <DocumentCard label="Aadhar Card" src={props.data.aadharCard} />
-                      <DocumentCard label="PAN Card" src={props.data.panCard} />
+                      <DocumentCard label="Aadhar Card" src={props.data.aadharCard} onPreview={(src, label) => setPreviewImage({ src, title: label })} />
+                      <DocumentCard label="PAN Card" src={props.data.panCard} onPreview={(src, label) => setPreviewImage({ src, title: label })} />
                     </div>
                   </div>
 
@@ -207,9 +208,18 @@ export default function ViewDetailsModal(props: ViewDetailsModalProps) {
                       <label className="text-sm font-bold text-gray-900 block mb-3">Project Portfolio</label>
                       <div className="flex overflow-x-auto space-x-4 pb-2 scrollbar-thin scrollbar-thumb-gray-200">
                         {props.data.portfolioImages.map((img) => (
-                          <div key={img.id} className="flex-shrink-0 w-48 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                            <div className="aspect-video bg-gray-100">
+                          <div 
+                            key={img.id} 
+                            onClick={() => setPreviewImage({ src: img.imageData, title: img.title })}
+                            className="flex-shrink-0 w-48 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm cursor-pointer hover:border-blue-300 transition-all duration-200 hover:shadow-md"
+                          >
+                            <div className="aspect-video bg-gray-100 group relative">
                               <img src={img.imageData} alt={img.title} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/0 hover:bg-black/25 transition-colors flex items-center justify-center">
+                                <svg className="w-5 h-5 text-white opacity-0 hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                </svg>
+                              </div>
                             </div>
                             <div className="p-3">
                               <p className="text-xs font-bold text-gray-900 truncate">{img.title}</p>
@@ -244,6 +254,35 @@ export default function ViewDetailsModal(props: ViewDetailsModalProps) {
         </div>
       )}
 
+      {/* Image Preview Overlay Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 cursor-zoom-out animate-in fade-in duration-200"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all"
+              title="Close Preview"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={previewImage.src}
+              alt={previewImage.title}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl border border-white/10"
+            />
+            <div className="mt-4 text-center">
+              <p className="text-white font-bold text-base">{previewImage.title}</p>
+              <p className="text-gray-400 text-xs mt-1 font-medium">Click anywhere outside to close</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         @keyframes modalIn {
           from {
@@ -271,12 +310,15 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function DocumentCard({ label, src }: { label: string; src?: string | null }) {
+function DocumentCard({ label, src, onPreview }: { label: string; src?: string | null; onPreview?: (src: string, label: string) => void }) {
   return (
     <div className="space-y-2">
       <span className="text-xs font-medium text-gray-500">{label}</span>
       {src ? (
-        <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 hover:border-blue-300 transition-colors group relative cursor-pointer">
+        <div 
+          onClick={() => onPreview?.(src, label)}
+          className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 hover:border-blue-300 transition-colors group relative cursor-pointer"
+        >
           <img src={src} alt={label} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
             <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">

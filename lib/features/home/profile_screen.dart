@@ -7,6 +7,7 @@ import '../auth/auth_provider.dart';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
 import '../b2b/services/b2b_api_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -24,6 +25,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int _supplierLeadsCount = 0;
   int _serviceLeadsCount = 0;
   bool _isLoading = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -42,55 +44,89 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
+    // Phase 1: Fetch primary profile data to render the screen ASAP
     setState(() => _isLoading = true);
 
     try {
-      final responses = await Future.wait([
-        http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/profile')),
-        http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/portfolio')),
-        http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/projects')),
-        http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats')),
-        B2BApiService().get('/supplier/products', queryParameters: {'supplierId': auth.id!}),
-        B2BApiService().get('/supplier/leads', queryParameters: {'supplierId': auth.id!}),
-      ]);
-
-      if (mounted) {
-        final res0 = responses[0] as http.Response;
-        final res1 = responses[1] as http.Response;
-        final res2 = responses[2] as http.Response;
-        final res3 = responses[3] as http.Response;
-        final resProds = responses[4] as B2BApiResponse;
-        final resLeads = responses[5] as B2BApiResponse;
-
+      final profileRes = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/profile'));
+      if (mounted && profileRes.statusCode == 200) {
         setState(() {
-          if (res0.statusCode == 200) {
-            _providerData = jsonDecode(res0.body)['provider'];
-            _profileImage = _providerData?['profileImage'];
-          }
-          if (res1.statusCode == 200) {
-            _portfolio = jsonDecode(res1.body)['images'] ?? [];
-          }
-          if (res2.statusCode == 200) {
-            final projectsList = jsonDecode(res2.body) as List;
-            _completedProjectsCount = projectsList.where((p) => p['currentStage'] == 'Completed').length;
-          }
-          if (res3.statusCode == 200) {
-            final statsObj = jsonDecode(res3.body);
-            _serviceLeadsCount = statsObj['activeLeads'] ?? 0;
-          }
-          if (resProds.success && resProds.data != null) {
-            _supplierProducts = resProds.data['products'] ?? [];
-          }
-          if (resLeads.success && resLeads.data != null) {
-            final leadsList = resLeads.data['leads'] as List?;
-            _supplierLeadsCount = leadsList?.length ?? 0;
-          }
-          _isLoading = false;
+          _providerData = jsonDecode(profileRes.body)['provider'];
+          _profileImage = _providerData?['profileImage'];
+          _isLoading = false; // Render the UI immediately!
         });
       }
     } catch (e) {
-      debugPrint('Error fetching provider profile data: $e');
+      debugPrint('Error fetching primary profile data: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+
+    // Phase 2: Fetch other tabs/details in the background asynchronously
+    _fetchBackgroundDetails(auth.id!);
+  }
+
+  Future<void> _fetchBackgroundDetails(String providerId) async {
+    // 1. Fetch portfolio
+    try {
+      final res = await http.get(Uri.parse('$apiBaseUrl/providers/$providerId/portfolio'));
+      if (res.statusCode == 200 && mounted) {
+        setState(() {
+          _portfolio = jsonDecode(res.body)['images'] ?? [];
+        });
+      }
+    } catch (e) {
+      debugPrint('Error background fetching portfolio: $e');
+    }
+
+    // 2. Fetch projects (for completed projects count)
+    try {
+      final res = await http.get(Uri.parse('$apiBaseUrl/providers/$providerId/projects'));
+      if (res.statusCode == 200 && mounted) {
+        final projectsList = jsonDecode(res.body) as List;
+        setState(() {
+          _completedProjectsCount = projectsList.where((p) => p['currentStage'] == 'Completed').length;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error background fetching projects: $e');
+    }
+
+    // 3. Fetch stats
+    try {
+      final res = await http.get(Uri.parse('$apiBaseUrl/providers/$providerId/stats'));
+      if (res.statusCode == 200 && mounted) {
+        final statsObj = jsonDecode(res.body);
+        setState(() {
+          _serviceLeadsCount = statsObj['activeLeads'] ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error background fetching stats: $e');
+    }
+
+    // 4. Fetch supplier products
+    try {
+      final res = await B2BApiService().get('/supplier/products', queryParameters: {'supplierId': providerId});
+      if (res.success && res.data != null && mounted) {
+        setState(() {
+          _supplierProducts = res.data['products'] ?? [];
+        });
+      }
+    } catch (e) {
+      debugPrint('Error background fetching supplier products: $e');
+    }
+
+    // 5. Fetch supplier leads
+    try {
+      final res = await B2BApiService().get('/supplier/leads', queryParameters: {'supplierId': providerId});
+      if (res.success && res.data != null && mounted) {
+        final leadsList = res.data['leads'] as List?;
+        setState(() {
+          _supplierLeadsCount = leadsList?.length ?? 0;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error background fetching supplier leads: $e');
     }
   }
 
@@ -138,15 +174,54 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         pinned: true,
                         delegate: _SliverAppBarDelegate(
                           TabBar(
-                            indicatorColor: primaryColor,
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            labelColor: primaryColor,
-                            unselectedLabelColor: isDark ? Colors.white54 : Colors.grey,
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.center,
+                            indicatorColor: const Color(0xFF002E3B),
+                            indicatorSize: TabBarIndicatorSize.label,
+                            labelColor: const Color(0xFF002E3B),
+                            unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
+                            dividerColor: Colors.transparent,
                             tabs: const [
-                              Tab(icon: Icon(Icons.photo_library_outlined, size: 22)),
-                              Tab(icon: Icon(Icons.storefront_outlined, size: 22)),
-                              Tab(icon: Icon(Icons.star_outline_rounded, size: 24)),
-                              Tab(icon: Icon(Icons.info_outline_rounded, size: 22)),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.photo_library_outlined, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.storefront_outlined, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.star_outline_rounded, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.info_outline_rounded, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Ledger', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                           isDark,
@@ -179,181 +254,352 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final bio = _providerData!['bio'] ?? 'No bio provided.';
     final reviewsCount = (_providerData!['reviews'] as List?)?.length ?? 0;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: isDark 
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)] 
+              : [Colors.white, Colors.grey.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 4,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF002E3B), Color(0xFF002E3B)],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 78,
+                            height: 78,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF002E3B), width: 2),
+                              color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(2),
+                              child: CircleAvatar(
+                                radius: 36,
+                                backgroundColor: Colors.blue.shade100,
+                                backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
+                                    ? MemoryImage(base64Decode(_profileImage!.split(',').last))
+                                    : null,
+                                child: _profileImage == null || _profileImage!.isEmpty
+                                    ? Text(
+                                        name[0].toUpperCase(),
+                                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF002E3B),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.engineering_rounded, size: 12, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      letterSpacing: 0.1,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.verified_user_rounded, color: Colors.green, size: 18),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'User: $owner  •  $experience Yrs Exp',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: categories.take(2).map((c) {
+                                final cTrim = c.trim();
+                                if (cTrim.isEmpty) return const SizedBox();
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: Colors.blue.withValues(alpha: 0.15),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    cTrim,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isDark ? const Color(0xFF38BDF8) : Colors.blue.shade800,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF002E3B)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'ABOUT COMPANY',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          bio,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            height: 1.4,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDashboardMetric(
+                          icon: Icons.assignment_turned_in_rounded,
+                          label: 'Completed',
+                          value: '$_completedProjectsCount',
+                          color: Colors.green,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDashboardMetric(
+                          icon: Icons.storefront_rounded,
+                          label: 'B2B Products',
+                          value: '${_supplierProducts.length}',
+                          color: Colors.blue,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDashboardMetric(
+                          icon: Icons.leaderboard_rounded,
+                          label: 'Active Leads',
+                          value: '${_serviceLeadsCount + _supplierLeadsCount}',
+                          color: const Color(0xFF002E3B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF002E3B).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF002E3B).withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star_rounded, color: Color(0xFF002E3B), size: 18),
+                            const SizedBox(width: 4),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            Text(
+                              ' ($reviewsCount)',
+                              style: const TextStyle(color: Colors.grey, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            await context.push('/provider-profile-edit');
+                            _fetchProfileData();
+                          },
+                          icon: const Icon(Icons.edit_note_rounded, size: 18),
+                          label: const Text('Edit Provider Profile'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            side: BorderSide(
+                              color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardMetric({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Profile photo and metrics
           Row(
-            children: [
-              // Avatar
-              Container(
-                padding: const EdgeInsets.all(2.5),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Colors.purple, Colors.orange, Colors.amber],
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark ? const Color(0xFF121B22) : Colors.white,
-                  ),
-                  child: CircleAvatar(
-                    radius: 38,
-                    backgroundColor: Colors.blue.shade100,
-                    backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
-                        ? MemoryImage(base64Decode(_profileImage!.split(',').last))
-                        : null,
-                    child: _profileImage == null || _profileImage!.isEmpty
-                        ? Text(
-                            name[0].toUpperCase(),
-                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.blue),
-                          )
-                        : null,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 20),
-              // Metrics
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildMetricItem('Completed', '$_completedProjectsCount'),
-                    _buildMetricItem('B2B Products', '${_supplierProducts.length}'),
-                    _buildMetricItem('Total Leads', '${_serviceLeadsCount + _supplierLeadsCount}'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Business name & Verification Badge
-          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                name,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.2),
+                value,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.verified, color: Colors.blue, size: 16),
-              const Spacer(),
-              const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-              const SizedBox(width: 2),
-              Text(
-                '${rating.toStringAsFixed(1)} ($reviewsCount reviews)',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
+              Icon(icon, size: 18, color: color),
             ],
           ),
-          // Profession / Category Labels
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
-            categories.map((c) => c.trim()).where((c) => c.isNotEmpty).join(' • '),
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: isDark ? const Color(0xFF0F9B8E) : Colors.blue.shade800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Bio Text
-          Text(
-            bio,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Owner & Experience
-          RichText(
-            text: TextSpan(
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              children: [
-                const TextSpan(text: 'Founder: '),
-                TextSpan(text: owner, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const TextSpan(text: '  |  '),
-                TextSpan(text: '$experience Years Experience', style: const TextStyle(fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Edit Profile Action Button
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () async {
-                await context.push('/provider-profile-edit');
-                _fetchProfileData();
-              },
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                side: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
-              ),
-              child: const Text(
-                'Edit Profile',
-                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
-              ),
-            ),
+            label,
+            style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMetricItem(String label, String value) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPortfolioTab(bool isDark) {
     if (_portfolio.isEmpty) {
-      return const SingleChildScrollView(
+      return SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(40),
+          padding: const EdgeInsets.all(40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: 40),
-              Icon(Icons.camera_alt_outlined, size: 48, color: Colors.grey),
-              SizedBox(height: 12),
-              Text(
-                'No Portfolio Posts Yet',
+              const SizedBox(height: 40),
+              const Icon(Icons.architecture_rounded, size: 54, color: Color(0xFF002E3B)),
+              const SizedBox(height: 16),
+              const Text(
+                'No Showcase Projects Yet',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
               ),
-              SizedBox(height: 4),
-              Text(
-                'Add images to your portfolio by tapping "Edit Profile".',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-                textAlign: TextAlign.center,
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _addPortfolioImage,
+                icon: const Icon(Icons.add_a_photo_rounded, size: 18),
+                label: const Text('Add Project Photo'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF002E3B),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
               ),
             ],
           ),
@@ -362,37 +608,104 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(12),
       physics: const AlwaysScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 3,
-        mainAxisSpacing: 3,
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.85,
       ),
-      itemCount: _portfolio.length,
+      itemCount: _portfolio.length + 1,
       itemBuilder: (context, index) {
-        final img = _portfolio[index];
+        if (index == 0) {
+          return Card(
+            elevation: 0,
+            color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: const Color(0xFF002E3B).withValues(alpha: 0.4),
+                width: 1.5,
+                style: BorderStyle.solid,
+              ),
+            ),
+            child: InkWell(
+              onTap: _addPortfolioImage,
+              borderRadius: BorderRadius.circular(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF002E3B).withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add_a_photo_rounded, color: Color(0xFF002E3B), size: 28),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Upload Photo',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF002E3B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Showcase new work',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isDark ? Colors.white38 : Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final img = _portfolio[index - 1];
         final bytes = base64Decode(img['imageData'].split(',').last);
-        return InkWell(
-          onTap: () => _showPostDetailModal(context, img),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.memory(
-                bytes,
-                fit: BoxFit.cover,
-              ),
-              const Positioned(
-                top: 6,
-                right: 6,
-                child: Icon(
-                  Icons.layers_outlined,
-                  color: Colors.white,
-                  size: 16,
-                  shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
+        return Card(
+          elevation: 2,
+          shadowColor: Colors.black26,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          clipBehavior: Clip.antiAlias,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          child: InkWell(
+            onTap: () => _showPostDetailModal(context, img),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Image.memory(
+                    bytes,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-            ],
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      img['title'] ?? 'Showcase Project',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -408,20 +721,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade400),
-              const SizedBox(height: 12),
+              const Icon(Icons.construction_rounded, size: 54, color: Colors.blue),
+              const SizedBox(height: 16),
               const Text(
                 'No Catalog Products Yet',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () => context.push('/supplier-add-product').then((_) => _fetchProfileData()),
-                icon: const Icon(Icons.add, size: 18),
+                icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
                 label: const Text('Add B2B Product'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Colors.blue.shade700,
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
@@ -432,33 +746,236 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(12),
       physics: const AlwaysScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 3,
-        mainAxisSpacing: 3,
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.82,
       ),
-      itemCount: _supplierProducts.length,
+      itemCount: _supplierProducts.length + 1,
       itemBuilder: (context, index) {
-        final prod = _supplierProducts[index];
+        if (index == 0) {
+          return Card(
+            elevation: 0,
+            color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: Colors.blue.withValues(alpha: 0.4),
+                width: 1.5,
+                style: BorderStyle.solid,
+              ),
+            ),
+            child: InkWell(
+              onTap: () => context.push('/supplier-add-product').then((_) => _fetchProfileData()),
+              borderRadius: BorderRadius.circular(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add_box_rounded, color: Colors.blue, size: 28),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Add Product',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'List B2B Materials',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isDark ? Colors.white38 : Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        final prod = _supplierProducts[index - 1];
         final imgs = prod['images'] as List?;
         final imgUrl = (imgs != null && imgs.isNotEmpty)
             ? imgs[0] as String
             : 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=300';
-            
-        return InkWell(
-          onTap: () => _showProductDetailsDialog(context, prod),
-          child: Image.network(
-            imgUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              color: Colors.grey.shade200,
-              child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
+        final price = prod['price_per_unit'] ?? 0;
+        final unit = prod['unit_type'] ?? 'Unit';
+
+        return Card(
+          elevation: 2,
+          shadowColor: Colors.black26,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          clipBehavior: Clip.antiAlias,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          child: InkWell(
+            onTap: () => _showProductDetailsDialog(context, prod),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        imgUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade800,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '₹$price/$unit',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      prod['name'] ?? 'Product Name',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Future<void> _addPortfolioImage() async {
+    final titleController = TextEditingController();
+    final descController = TextEditingController();
+    String? tempBase64;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogContext, setModalState) => AlertDialog(
+          title: const Text('Add Project Photo'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (tempBase64 != null)
+                  Container(
+                    height: 150,
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: MemoryImage(base64Decode(tempBase64!.split(',').last)),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                else
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final XFile? image = await _picker.pickImage(
+                        source: ImageSource.gallery,
+                        maxWidth: 1000,
+                        maxHeight: 1000,
+                        imageQuality: 75,
+                      );
+                      if (image != null) {
+                        final bytes = await image.readAsBytes();
+                        final base64 = base64Encode(bytes);
+                        setModalState(() {
+                          tempBase64 = 'data:image/jpeg;base64,$base64';
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.add_a_photo),
+                    label: const Text('Select Photo'),
+                  ),
+                const SizedBox(height: 16),
+                TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Project Title')),
+                const SizedBox(height: 8),
+                TextField(controller: descController, decoration: const InputDecoration(labelText: 'Description (Optional)')),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')),
+            ElevatedButton(
+              onPressed: () async {
+                if (tempBase64 == null || titleController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an image and title')));
+                  return;
+                }
+                Navigator.pop(ctx);
+                
+                setState(() => _isLoading = true);
+                final auth = ref.read(authProvider);
+                try {
+                  final response = await http.post(
+                    Uri.parse('$apiBaseUrl/providers/${auth.id}/portfolio'),
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({
+                      'title': titleController.text.trim(),
+                      'description': descController.text.trim(),
+                      'imageData': tempBase64,
+                    }),
+                  );
+                  if (response.statusCode == 201) {
+                    _fetchProfileData();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo added to portfolio!')));
+                    }
+                  }
+                } catch (e) {
+                  debugPrint('Add portfolio error: $e');
+                } finally {
+                  setState(() => _isLoading = false);
+                }
+              },
+              child: const Text('ADD PHOTO'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -479,65 +996,93 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        prod['name'] ?? 'Product Info',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          prod['name'] ?? 'Product Info',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-              ),
-              AspectRatio(
-                aspectRatio: 1.2,
-                child: Image.network(
-                  imgUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.image, size: 50),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Rate: ₹$price / $unit',
-                      style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 15),
+                AspectRatio(
+                  aspectRatio: 1.2,
+                  child: Image.network(
+                    imgUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.image, size: 50),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      prod['description'] ?? 'No description provided.',
-                      style: TextStyle(
-                        color: isDark ? Colors.white70 : Colors.grey.shade700,
-                        fontSize: 12.5,
-                        height: 1.4,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Rate: ₹$price / $unit',
+                        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        prod['description'] ?? 'No description provided.',
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : Colors.grey.shade700,
+                          fontSize: 12.5,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        context.push('/supplier-add-product', extra: prod).then((_) {
+                          _fetchProfileData();
+                        });
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text(
+                        'Edit Product Details',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -608,7 +1153,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Row(
                   children: List.generate(5, (index) => Icon(
                     index < rating ? Icons.star : Icons.star_border,
-                    color: Colors.amber,
+                    color: const Color(0xFF002E3B),
                     size: 15,
                   )),
                 ),
@@ -680,7 +1225,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 const Divider(height: 24),
-                _buildInfoRow(Icons.person_rounded, 'Owner / Founder', ownerName),
+                _buildInfoRow(Icons.person_rounded, 'Owner / User', ownerName),
                 const SizedBox(height: 16),
                 _buildInfoRow(Icons.work_history_rounded, 'Professional Experience', '$experience Years'),
                 if (address != null && address.toString().trim().isNotEmpty) ...[
@@ -978,7 +1523,15 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: isDark ? const Color(0xFF121B22) : const Color(0xFFF4EFE6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+            width: 1,
+          ),
+        ),
+      ),
       child: tabBar,
     );
   }

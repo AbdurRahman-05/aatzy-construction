@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthState {
   final String? id;
@@ -6,16 +8,32 @@ class AuthState {
   final String? email;
   final String? businessName;
   final String? role; // 'CONSUMER' or 'PROVIDER'
+  final bool isInitialized;
 
-  AuthState({this.id, this.name, this.email, this.businessName, this.role});
+  AuthState({
+    this.id,
+    this.name,
+    this.email,
+    this.businessName,
+    this.role,
+    this.isInitialized = false,
+  });
 
-  AuthState copyWith({String? id, String? name, String? email, String? businessName, String? role}) {
+  AuthState copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? businessName,
+    String? role,
+    bool? isInitialized,
+  }) {
     return AuthState(
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
       businessName: businessName ?? this.businessName,
       role: role ?? this.role,
+      isInitialized: isInitialized ?? this.isInitialized,
     );
   }
 }
@@ -23,30 +41,83 @@ class AuthState {
 class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
-    return AuthState();
+    _loadPersistedAuth();
+    return AuthState(isInitialized: false);
   }
 
-  void login(Map<String, dynamic> data, String role) {
-    if (role == 'PROVIDER') {
-      state = AuthState(
-        id: data['id'],
-        name: data['ownerName'],
-        businessName: data['businessName'],
-        email: data['email'],
-        role: 'PROVIDER',
-      );
-    } else {
-      state = AuthState(
-        id: data['id'],
-        name: data['name'],
-        email: data['email'],
-        role: 'CONSUMER',
-      );
+  Future<void> _loadPersistedAuth() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = prefs.getString('auth_id');
+      final name = prefs.getString('auth_name');
+      final email = prefs.getString('auth_email');
+      final businessName = prefs.getString('auth_businessName');
+      final role = prefs.getString('auth_role');
+
+      if (id != null && role != null) {
+        state = AuthState(
+          id: id,
+          name: name,
+          email: email,
+          businessName: businessName,
+          role: role,
+          isInitialized: true,
+        );
+      } else {
+        state = AuthState(isInitialized: true);
+      }
+    } catch (e) {
+      debugPrint('Error loading persisted auth: $e');
+      state = AuthState(isInitialized: true);
     }
   }
 
-  void logout() {
-    state = AuthState();
+  Future<void> login(Map<String, dynamic> data, String role) async {
+    final AuthState newState;
+    if (role == 'PROVIDER') {
+      newState = AuthState(
+        id: data['id']?.toString(),
+        name: data['ownerName']?.toString(),
+        businessName: data['businessName']?.toString(),
+        email: data['email']?.toString(),
+        role: 'PROVIDER',
+        isInitialized: true,
+      );
+    } else {
+      newState = AuthState(
+        id: data['id']?.toString(),
+        name: data['name']?.toString(),
+        email: data['email']?.toString(),
+        role: 'CONSUMER',
+        isInitialized: true,
+      );
+    }
+    state = newState;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (newState.id != null) await prefs.setString('auth_id', newState.id!);
+      if (newState.name != null) await prefs.setString('auth_name', newState.name!);
+      if (newState.email != null) await prefs.setString('auth_email', newState.email!);
+      if (newState.businessName != null) await prefs.setString('auth_businessName', newState.businessName!);
+      if (newState.role != null) await prefs.setString('auth_role', newState.role!);
+    } catch (e) {
+      debugPrint('Error persisting auth: $e');
+    }
+  }
+
+  Future<void> logout() async {
+    state = AuthState(isInitialized: true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_id');
+      await prefs.remove('auth_name');
+      await prefs.remove('auth_email');
+      await prefs.remove('auth_businessName');
+      await prefs.remove('auth_role');
+    } catch (e) {
+      debugPrint('Error clearing persisted auth: $e');
+    }
   }
 }
 

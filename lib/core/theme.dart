@@ -31,7 +31,7 @@ class AppTheme {
           TargetPlatform.linux: SmoothPageTransitionsBuilder(),
         },
       ),
-      scaffoldBackgroundColor: const Color(0xFFF4EFE6), // Let wallpaper show through
+      scaffoldBackgroundColor: Colors.white, // Let wallpaper show through
       textTheme: GoogleFonts.interTextTheme().apply(
         bodyColor: textDark,
         displayColor: textDark,

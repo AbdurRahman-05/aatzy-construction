@@ -7,6 +7,7 @@ import 'dart:convert';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
 import '../chat/chat_detail_screen.dart';
+import '../../core/full_screen_image_viewer.dart';
 
 class Worker {
   final String id;
@@ -558,11 +559,24 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                           borderRadius: BorderRadius.circular(12),
                           child: Stack(
                             children: [
-                              Image.memory(
-                                base64Decode(base64Image!.split(',').last),
-                                height: 180,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => FullScreenImageViewer(
+                                        base64Image: base64Image!,
+                                        title: title,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Image.memory(
+                                  base64Decode(base64Image!.split(',').last),
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                               Positioned(
                                 top: 8,
@@ -1651,13 +1665,26 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                           ),
                                           if (task['photoUrl'] != null && (task['photoUrl'] as String).isNotEmpty) ...[
                                             const SizedBox(height: 12),
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
-                                              child: Image.memory(
-                                                base64Decode((task['photoUrl'] as String).split(',').last),
-                                                height: 120,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
+                                            GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => FullScreenImageViewer(
+                                                      base64Image: task['photoUrl'] as String,
+                                                      title: task['title'] ?? 'Task Photo',
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(8),
+                                                child: Image.memory(
+                                                  base64Decode((task['photoUrl'] as String).split(',').last),
+                                                  height: 120,
+                                                  width: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                ),
                                               ),
                                             ),
                                           ],

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
 import '../b2b/services/b2b_api_service.dart';
@@ -100,7 +101,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
     final businessName = _profileData?['businessName'] ?? auth.businessName ?? 'Your Business';
-    final ownerName = _profileData?['ownerName'] ?? auth.name ?? 'Founder';
+    final ownerName = _profileData?['ownerName'] ?? auth.name ?? 'User';
 
     // Calculate financials
     double totalRevenue = 0.0;
@@ -134,58 +135,83 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  // Premium transparent top app bar
+                  // Premium high-contrast custom header
                   SliverAppBar(
-                    pinned: false,
+                    pinned: true,
                     floating: true,
                     backgroundColor: Colors.transparent,
                     elevation: 0,
-                    title: const Text(
-                      'BuildMart Portal',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        letterSpacing: -0.5,
+                    flexibleSpace: ClipRRect(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: isDark
+                                ? [
+                                    const Color(0xFF121B22).withValues(alpha: 0.95),
+                                    const Color(0xFF121B22).withValues(alpha: 0.8),
+                                  ]
+                                : [
+                                    Colors.white.withValues(alpha: 0.95),
+                                    Colors.white.withValues(alpha: 0.8),
+                                  ],
+                          ),
+                        ),
                       ),
+                    ),
+                    title: Row(
+                      children: [
+                        const Icon(Icons.bolt, color: Colors.amber, size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'BuildMart Console',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 21,
+                            color: isDark ? Colors.white : const Color(0xFF064354),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
                     ),
                     actions: [
                       IconButton(
                         icon: const Icon(Icons.refresh_rounded),
                         onPressed: _fetchStats,
                       ),
+                      const SizedBox(width: 8),
                     ],
                   ),
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 32.0),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        // Welcome Profile Banner Card
+                        // Welcome Profile Banner Card (Modern Glassmorphic Style)
                         _buildWelcomeCard(businessName, ownerName, isDark, primaryColor),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
-                        // Sliding Tab Selector
+                        // Segmented Tab Selector
                         _buildPillTabSelector(isDark, primaryColor),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
                         // General Tab Content
                         if (_dashboardTab == 0) ...[
                           _buildGeneralOverviewSection(isDark, primaryColor),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           _buildActiveJobsSection(isDark, primaryColor),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           _buildRecentLeadsSection(isDark, primaryColor),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           _buildB2BToolsSection(isDark, primaryColor),
-                          const SizedBox(height: 30),
                         ]
                         // Finance Tab Content
                         else ...[
                           _buildFinanceStats(totalRevenue, totalExpenses, totalProfit),
-                          const SizedBox(height: 20),
-                          _buildFinanceChart(),
                           const SizedBox(height: 24),
+                          _buildFinanceChart(),
+                          const SizedBox(height: 28),
                           _buildProjectProfitabilitySection(isDark, primaryColor),
-                          const SizedBox(height: 30),
                         ],
                       ]),
                     ),
@@ -200,9 +226,9 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final avatarText = businessName.isNotEmpty ? businessName[0].toUpperCase() : 'B';
     
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
           colors: isDark
               ? [const Color(0xFF0F9B8E), const Color(0xFF0E5E6F)]
@@ -213,14 +239,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         boxShadow: [
           BoxShadow(
             color: primaryColor.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Profile Photo with gradient ring
+          // Profile Photo with dual glowing rings
           Container(
             padding: const EdgeInsets.all(3),
             decoration: const BoxDecoration(
@@ -228,7 +254,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               color: Colors.white24,
             ),
             child: CircleAvatar(
-              radius: 30,
+              radius: 32,
               backgroundColor: Colors.white,
               backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
                   ? MemoryImage(base64Decode(_profileImage!.split(',').last))
@@ -237,30 +263,37 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   ? Text(
                       avatarText,
                       style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
                         color: primaryColor,
                       ),
                     )
                   : null,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 18),
           // Business details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'WELCOME BACK',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'PORTAL ACTIVE • VERIFIED PROVIDER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
@@ -268,23 +301,23 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         businessName,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.w900,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.verified_rounded, color: Colors.blueAccent, size: 18),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.verified_rounded, color: Colors.blueAccent, size: 20),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
-                  'Founder: $ownerName',
+                  'User: $ownerName',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -300,7 +333,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark ? Colors.white10 : Colors.grey.shade200,
         ),
@@ -316,7 +349,16 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   color: _dashboardTab == 0
                       ? primaryColor
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: _dashboardTab == 0
+                      ? [
+                          BoxShadow(
+                            color: primaryColor.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          )
+                        ]
+                      : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -332,7 +374,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     Text(
                       'Overview',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         color: _dashboardTab == 0 ? Colors.white : (isDark ? Colors.white54 : Colors.grey.shade700),
                         fontSize: 13,
                       ),
@@ -351,7 +393,16 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   color: _dashboardTab == 1
                       ? primaryColor
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: _dashboardTab == 1
+                      ? [
+                          BoxShadow(
+                            color: primaryColor.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          )
+                        ]
+                      : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -367,7 +418,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     Text(
                       'Financials',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         color: _dashboardTab == 1 ? Colors.white : (isDark ? Colors.white54 : Colors.grey.shade700),
                         fontSize: 13,
                       ),
@@ -390,10 +441,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       children: [
         Expanded(
           child: _buildGlowMetricCard(
-            'Total Leads',
+            'Active Leads',
             '$activeLeadsCount',
             isDark ? const Color(0xFF0E5E6F) : const Color(0xFF007E8A),
             Icons.flash_on_rounded,
+            'Inquiries listed',
           ),
         ),
         const SizedBox(width: 16),
@@ -403,25 +455,26 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             '$runningProjects',
             isDark ? const Color(0xFF3B6B4C) : const Color(0xFF2E7D32),
             Icons.assignment_turned_in_rounded,
+            'Sites under work',
           ),
         ),
       ],
     );
   }
 
-  Widget _buildGlowMetricCard(String title, String count, Color baseColor, IconData icon) {
+  Widget _buildGlowMetricCard(String title, String count, Color baseColor, IconData icon, String subtitle) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
+        color: baseColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: baseColor.withValues(alpha: 0.35),
+          color: baseColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: baseColor.withValues(alpha: 0.05),
+            color: baseColor.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -434,16 +487,17 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                title,
+                title.toUpperCase(),
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
                   color: Colors.grey,
+                  letterSpacing: 0.5,
                 ),
               ),
               CircleAvatar(
-                radius: 14,
-                backgroundColor: baseColor.withValues(alpha: 0.25),
+                radius: 15,
+                backgroundColor: baseColor.withValues(alpha: 0.2),
                 child: Icon(icon, color: baseColor, size: 16),
               ),
             ],
@@ -452,10 +506,19 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           Text(
             count,
             style: TextStyle(
-              fontSize: 34,
+              fontSize: 36,
               fontWeight: FontWeight.w900,
               color: baseColor,
               letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 10.5,
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -479,37 +542,65 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Running Project Stages',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: -0.2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Running Project Stages',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900, 
+                    fontSize: 18, 
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                Text(
+                  'Track site progress timeline',
+                  style: TextStyle(
+                    fontSize: 11, 
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
             if (activeJobs.isNotEmpty)
-              Text(
-                '${activeJobs.length} active',
-                style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${activeJobs.length} ACTIVE',
+                  style: TextStyle(
+                    color: primaryColor, 
+                    fontSize: 9.5, 
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
           ],
         ),
         const SizedBox(height: 12),
         if (activeJobs.isEmpty)
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
             ),
             child: Column(
               children: [
                 CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.green.withValues(alpha: 0.1),
-                  child: const Icon(Icons.celebration_rounded, size: 32, color: Colors.green),
+                  radius: 28,
+                  backgroundColor: Colors.green.withValues(alpha: 0.08),
+                  child: const Icon(Icons.celebration_rounded, size: 30, color: Colors.green),
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'All Projects Executed!',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -520,12 +611,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () => ref.read(providerTabProvider.notifier).setTab(2),
-                  icon: const Icon(Icons.search_rounded, size: 18),
+                  icon: const Icon(Icons.search_rounded, size: 16),
                   label: const Text('Explore Client Leads'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
               ],
@@ -535,71 +628,89 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           Column(
             children: activeJobs.map((job) {
               final stage = job['currentStage'] ?? 'Planning';
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 0.5,
-                color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  side: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade200),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark 
+                        ? Colors.white.withValues(alpha: 0.08) 
+                        : Colors.grey.shade200,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
                 ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () async {
-                    await context.push('/provider-job/${job['id']}');
-                    _fetchStats();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: primaryColor.withValues(alpha: 0.1),
-                              child: Icon(Icons.handyman_rounded, color: primaryColor, size: 18),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    job['title'],
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Client: ${job['userName']}',
-                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-                                  ),
-                                ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () async {
+                      await context.push('/provider-job/${job['id']}');
+                      _fetchStats();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: primaryColor.withValues(alpha: 0.1),
+                                child: Icon(Icons.handyman_outlined, color: primaryColor, size: 18),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                stage,
-                                style: const TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      job['title'],
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Client: ${job['userName']}',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500, 
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildStageProgressBar(stage),
-                      ],
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.blue.withValues(alpha: 0.15), width: 1),
+                                ),
+                                child: Text(
+                                  stage.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          _buildStageProgressBar(stage),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -624,10 +735,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 children: [
                   Expanded(
                     child: Container(
-                      height: 4.5,
+                      height: 5,
                       decoration: BoxDecoration(
                         color: isDone ? Colors.green : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                   ),
@@ -637,12 +748,26 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             );
           }),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Stage: $stage', style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
-            const Text('Target: Completed', style: TextStyle(fontSize: 10, color: Colors.grey)),
+            Text(
+              'Current Stage: $stage', 
+              style: const TextStyle(
+                fontSize: 10.5, 
+                color: Colors.grey, 
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const Text(
+              'Target: Completed', 
+              style: TextStyle(
+                fontSize: 10.5, 
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ],
@@ -689,15 +814,32 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Hot Market Enquiries',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: -0.2),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Hot Market Enquiries',
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontSize: 18, 
+                letterSpacing: -0.4,
+              ),
+            ),
+            Text(
+              'Opportunities in your service areas',
+              style: TextStyle(
+                fontSize: 11, 
+                color: isDark ? Colors.white38 : Colors.grey.shade500,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         if (recentCombined.isEmpty)
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
                 'No inquiries in your area at the moment.',
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5),
@@ -708,79 +850,118 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           Column(
             children: recentCombined.map((lead) {
               final isMaterial = lead['isMaterial'] as bool;
-              return Card(
-                margin: const EdgeInsets.only(bottom: 10),
-                elevation: 0.3,
-                color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade100),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  leading: CircleAvatar(
-                    radius: 20,
-                    backgroundColor: isMaterial ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
-                    child: Icon(
-                      isMaterial ? Icons.local_shipping_outlined : Icons.engineering_outlined,
-                      color: isMaterial ? Colors.green : Colors.blue,
-                      size: 20,
-                    ),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark 
+                        ? Colors.white.withValues(alpha: 0.06) 
+                        : Colors.grey.shade200,
                   ),
-                  title: Row(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
                     children: [
-                      Expanded(
-                        child: Text(
-                          lead['title'],
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      // Stripe tag color
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 4,
+                        child: Container(
+                          color: isMaterial ? Colors.green : Colors.blue,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isMaterial ? Colors.green.withValues(alpha: 0.08) : Colors.blue.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          isMaterial ? 'Material' : 'Service',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        leading: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: isMaterial ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
+                          child: Icon(
+                            isMaterial ? Icons.local_shipping_outlined : Icons.engineering_outlined,
                             color: isMaterial ? Colors.green : Colors.blue,
+                            size: 18,
                           ),
                         ),
+                        title: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                lead['title'],
+                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isMaterial ? Colors.green.withValues(alpha: 0.08) : Colors.blue.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                isMaterial ? 'MATERIAL' : 'SERVICE',
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w900,
+                                  color: isMaterial ? Colors.green : Colors.blue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: [
+                              Icon(Icons.location_on_outlined, size: 13, color: Colors.red.shade400),
+                              const SizedBox(width: 2),
+                              Text(
+                                lead['location'],
+                                style: TextStyle(
+                                  color: Colors.grey.shade500, 
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                lead['subtitle'],
+                                style: TextStyle(
+                                  color: Colors.grey.shade600, 
+                                  fontSize: 10.5, 
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios_rounded, 
+                          size: 14, 
+                          color: isDark ? Colors.white24 : Colors.grey.shade400,
+                        ),
+                        onTap: () {
+                          if (isMaterial) {
+                            context.push('/supplier-leads');
+                          } else {
+                            context.push('/provider-lead/${lead['id']}');
+                          }
+                        },
                       ),
                     ],
                   ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Row(
-                      children: [
-                        Icon(Icons.location_on_outlined, size: 13, color: Colors.red.shade400),
-                        const SizedBox(width: 2),
-                        Text(
-                          lead['location'],
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-                        ),
-                        const Spacer(),
-                        Text(
-                          lead['subtitle'],
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 10.5, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-                  onTap: () {
-                    if (isMaterial) {
-                      context.push('/supplier-leads');
-                    } else {
-                      context.push('/provider-lead/${lead['id']}');
-                    }
-                  },
                 ),
               );
             }).toList(),
@@ -793,20 +974,38 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Supplier Management Console',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: -0.2),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Supplier Management Console',
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontSize: 18, 
+                letterSpacing: -0.4,
+              ),
+            ),
+            Text(
+              'Utilities to update items and quotes',
+              style: TextStyle(
+                fontSize: 11, 
+                color: isDark ? Colors.white38 : Colors.grey.shade500,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         Row(
           children: [
             Expanded(
               child: Container(
+                height: 110,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                   gradient: LinearGradient(
                     colors: isDark
-                        ? [const Color(0xFF1E3C72).withValues(alpha: 0.8), const Color(0xFF2A5298).withValues(alpha: 0.8)]
+                        ? [const Color(0xFF1E3C72).withValues(alpha: 0.85), const Color(0xFF2A5298).withValues(alpha: 0.85)]
                         : [Colors.blue.shade800, Colors.blue.shade600],
                   ),
                   boxShadow: [
@@ -820,23 +1019,24 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                     onTap: () => context.push('/supplier-products'),
                     child: Padding(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.storefront_rounded, size: 28, color: Colors.white),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                           Text(
                             _supplierProducts.isNotEmpty ? 'My Products (${_supplierProducts.length})' : 'My Products',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Colors.white),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             'Update rates & items',
-                            style: TextStyle(fontSize: 10.5, color: Colors.white.withValues(alpha: 0.8)),
+                            style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -848,11 +1048,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             const SizedBox(width: 16),
             Expanded(
               child: Container(
+                height: 110,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                   gradient: LinearGradient(
                     colors: isDark
-                        ? [const Color(0xFF0F9B8E).withValues(alpha: 0.8), const Color(0xFF0D7A71).withValues(alpha: 0.8)]
+                        ? [const Color(0xFF0F9B8E).withValues(alpha: 0.85), const Color(0xFF0D7A71).withValues(alpha: 0.85)]
                         : [const Color(0xFF064354), const Color(0xFF0C8A9B)],
                   ),
                   boxShadow: [
@@ -866,23 +1067,24 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                     onTap: () => context.push('/supplier-leads'),
                     child: Padding(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.inbox_rounded, size: 28, color: Colors.white),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                           const Text(
                             'Material Leads',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Colors.white),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             'Submit B2B quotes',
-                            style: TextStyle(fontSize: 10.5, color: Colors.white.withValues(alpha: 0.8)),
+                            style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -899,6 +1101,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
   Widget _buildFinanceStats(double revenue, double expenses, double profit) {
     final double profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0.0;
+    
+    final formattedRevenue = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(revenue);
+    final formattedExpenses = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(expenses);
+    final formattedProfit = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(profit);
+
     return Column(
       children: [
         Row(
@@ -906,7 +1113,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             Expanded(
               child: _buildFinanceCard(
                 'Total Revenue',
-                '₹${revenue.toStringAsFixed(0)}',
+                formattedRevenue,
                 Colors.blue,
                 Icons.trending_up_rounded,
               ),
@@ -915,7 +1122,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             Expanded(
               child: _buildFinanceCard(
                 'Est. Expenses',
-                '₹${expenses.toStringAsFixed(0)}',
+                formattedExpenses,
                 Colors.orange,
                 Icons.trending_down_rounded,
               ),
@@ -928,7 +1135,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             Expanded(
               child: _buildFinanceCard(
                 'Net Profit',
-                '₹${profit.toStringAsFixed(0)}',
+                formattedProfit,
                 Colors.green,
                 Icons.currency_rupee_rounded,
               ),
@@ -954,14 +1161,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
       ),
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: color.withValues(alpha: 0.1),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -969,13 +1176,13 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
+                  title.toUpperCase(),
+                  style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: color),
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5, color: color),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -1020,12 +1227,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
     final List<String> monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
-      elevation: 0.5,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1034,20 +1243,20 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               children: [
                 const Text(
                   'Monthly Profit & Revenue',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white10 : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: isDark ? Colors.white12 : Colors.grey.shade300),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int>(
                       value: _selectedYear,
                       isDense: true,
-                      style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87, fontSize: 13),
+                      style: TextStyle(fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87, fontSize: 12.5),
                       items: [2025, 2026, 2027].map((y) {
                         return DropdownMenuItem<int>(
                           value: y,
@@ -1079,7 +1288,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         final String type = rodIndex == 0 ? 'Revenue' : 'Profit';
                         return BarTooltipItem(
                           '$month\n$type: ₹${rod.toY.toStringAsFixed(0)}',
-                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                         );
                       },
                     ),
@@ -1096,7 +1305,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
                               monthNames[idx],
-                              style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Colors.grey, fontSize: 9.5, fontWeight: FontWeight.bold),
                             ),
                           );
                         },
@@ -1130,7 +1339,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -1149,14 +1358,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 10.5, color: Colors.grey, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -1166,15 +1375,32 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Project-wise Profitability',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: -0.2),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Project-wise Profitability',
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontSize: 18, 
+                letterSpacing: -0.4,
+              ),
+            ),
+            Text(
+              'Finance overview across active works',
+              style: TextStyle(
+                fontSize: 11, 
+                color: isDark ? Colors.white38 : Colors.grey.shade500,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         if (_projects.isEmpty)
           const Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+              padding: EdgeInsets.symmetric(vertical: 24),
               child: Text('No project financials recorded yet.'),
             ),
           )
@@ -1196,122 +1422,139 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               final isProfit = profit >= 0;
               final margin = revenue > 0 ? (profit / revenue) * 100 : 0.0;
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                elevation: 0.3,
-                color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade200),
+              final formattedRevenue = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(revenue);
+              final formattedExpenses = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(expenses);
+              final formattedProfit = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0).format(profit.abs());
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark 
+                        ? Colors.white.withValues(alpha: 0.08) 
+                        : Colors.grey.shade200,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
                 ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () async {
-                    await context.push('/provider-job/${proj['id']}');
-                    _fetchStats();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.white10 : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                stage,
-                                style: TextStyle(
-                                  color: isDark ? Colors.white70 : Colors.grey.shade700,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.bold,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () async {
+                      await context.push('/provider-job/${proj['id']}');
+                      _fetchStats();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Quoted Cost', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                  const SizedBox(height: 2),
-                                  Text('₹${revenue.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue)),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Total Cost', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                  const SizedBox(height: 2),
-                                  Text('₹${expenses.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.orange)),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(isProfit ? 'Profit' : 'Loss', style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${isProfit ? "+" : ""}₹${profit.toStringAsFixed(0)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: isProfit ? Colors.green : Colors.red,
-                                    ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.white10 : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  stage.toUpperCase(),
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white70 : Colors.grey.shade700,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
                                   ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Materials: ₹${materials.toStringAsFixed(0)} • Labor: ₹${labor.toStringAsFixed(0)}',
-                              style: TextStyle(color: Colors.grey.shade500, fontSize: 10.5),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: (isProfit ? Colors.green : Colors.red).withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '${margin.toStringAsFixed(1)}% Margin',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isProfit ? Colors.green : Colors.red,
-                                  fontSize: 10.5,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                          const Divider(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('QUOTED COST', style: TextStyle(fontSize: 8.5, color: Colors.grey, fontWeight: FontWeight.w900)),
+                                    const SizedBox(height: 3),
+                                    Text(formattedRevenue, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.blue)),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('TOTAL COST', style: TextStyle(fontSize: 8.5, color: Colors.grey, fontWeight: FontWeight.w900)),
+                                    const SizedBox(height: 3),
+                                    Text(formattedExpenses, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.orange)),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(isProfit ? 'PROFIT' : 'LOSS', style: const TextStyle(fontSize: 8.5, color: Colors.grey, fontWeight: FontWeight.w900)),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      '${isProfit ? "+" : "-"}$formattedProfit',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        color: isProfit ? Colors.green : Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Materials: ₹${materials.toStringAsFixed(0)} • Labor: ₹${labor.toStringAsFixed(0)}',
+                                style: TextStyle(color: Colors.grey.shade500, fontSize: 10.5, fontWeight: FontWeight.bold),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: (isProfit ? Colors.green : Colors.red).withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${margin.toStringAsFixed(1)}% Margin',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    color: isProfit ? Colors.green : Colors.red,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
