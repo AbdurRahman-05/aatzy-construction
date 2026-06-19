@@ -132,137 +132,14 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
   Future<void> _showEditProjectDialog() async {
     if (_project == null) return;
 
-    final titleController = TextEditingController(text: _project!['title']);
-    final budgetController = TextEditingController(text: _project!['budget']?.toString());
-    final locationController = TextEditingController(text: _project!['location']);
-    final timelineController = TextEditingController(text: _project!['timeline']);
-    final plotSizeController = TextEditingController(text: _project!['plotSize']?.toString());
-    final typeController = TextEditingController(text: _project!['type']);
-
-    final formKey = GlobalKey<FormState>();
-
     await showDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Edit Project Details'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Project Title'),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: budgetController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Budget (₹)'),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (double.tryParse(v.trim()) == null) return 'Invalid number';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: locationController,
-                    decoration: const InputDecoration(labelText: 'Location'),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: timelineController,
-                    decoration: const InputDecoration(labelText: 'Timeline (e.g. 6 months)'),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: plotSizeController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Plot Size (sq ft)'),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (double.tryParse(v.trim()) == null) return 'Invalid number';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: typeController,
-                    decoration: const InputDecoration(labelText: 'Category / Services (comma separated)'),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-
-                Navigator.pop(dialogContext); // Close dialog
-                setState(() => _isLoading = true);
-
-                try {
-                  final response = await http.patch(
-                    Uri.parse('$apiBaseUrl/projects/${widget.projectId}'),
-                    headers: {'Content-Type': 'application/json'},
-                    body: jsonEncode({
-                      'title': titleController.text.trim(),
-                      'budget': double.parse(budgetController.text.trim()),
-                      'location': locationController.text.trim(),
-                      'timeline': timelineController.text.trim(),
-                      'plotSize': double.parse(plotSizeController.text.trim()),
-                      'type': typeController.text.trim(),
-                    }),
-                  );
-
-                  if (response.statusCode == 200) {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Project updated successfully'), backgroundColor: Colors.green),
-                    );
-                    _fetchProjectDetails();
-                  } else {
-                    final data = jsonDecode(response.body);
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(data['error'] ?? 'Failed to update project'), backgroundColor: Colors.red),
-                    );
-                    setState(() => _isLoading = false);
-                  }
-                } catch (e) {
-                  debugPrint('Error updating project: $e');
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Connection error. Failed to update.'), backgroundColor: Colors.red),
-                  );
-                  setState(() => _isLoading = false);
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => _EditProjectDialog(
+        project: _project!,
+        projectId: widget.projectId,
+        onUpdated: _fetchProjectDetails,
+      ),
     );
-
-    titleController.dispose();
-    budgetController.dispose();
-    locationController.dispose();
-    timelineController.dispose();
-    plotSizeController.dispose();
-    typeController.dispose();
   }
 
   Future<void> _updateProjectStage(String stage) async {
@@ -788,6 +665,23 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           Text(timeline, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                         ],
                       ),
+                      if (currentStage.toLowerCase() == 'completed' || currentStage.toLowerCase() == 'finished') ...[
+                        const Divider(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Finished Date', style: TextStyle(color: Colors.grey)),
+                            Text(
+                              _project?['updatedAt'] != null 
+                                  ? _project!['updatedAt'].toString().split('T')[0] 
+                                  : (_project?['updated_at'] != null 
+                                      ? _project!['updated_at'].toString().split('T')[0] 
+                                      : 'N/A'),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.green),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -1501,6 +1395,178 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EditProjectDialog extends StatefulWidget {
+  final Map<String, dynamic> project;
+  final String projectId;
+  final VoidCallback onUpdated;
+
+  const _EditProjectDialog({
+    required this.project,
+    required this.projectId,
+    required this.onUpdated,
+  });
+
+  @override
+  State<_EditProjectDialog> createState() => _EditProjectDialogState();
+}
+
+class _EditProjectDialogState extends State<_EditProjectDialog> {
+  late TextEditingController _titleController;
+  late TextEditingController _budgetController;
+  late TextEditingController _locationController;
+  late TextEditingController _timelineController;
+  late TextEditingController _plotSizeController;
+  late TextEditingController _typeController;
+
+  final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.project['title']);
+    _budgetController = TextEditingController(text: widget.project['budget']?.toString());
+    _locationController = TextEditingController(text: widget.project['location']);
+    _timelineController = TextEditingController(text: widget.project['timeline']);
+    _plotSizeController = TextEditingController(text: widget.project['plotSize']?.toString());
+    _typeController = TextEditingController(text: widget.project['type']);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _budgetController.dispose();
+    _locationController.dispose();
+    _timelineController.dispose();
+    _plotSizeController.dispose();
+    _typeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProject() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$apiBaseUrl/projects/${widget.projectId}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'title': _titleController.text.trim(),
+          'budget': double.parse(_budgetController.text.trim()),
+          'location': _locationController.text.trim(),
+          'timeline': _timelineController.text.trim(),
+          'plotSize': double.parse(_plotSizeController.text.trim()),
+          'type': _typeController.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        widget.onUpdated();
+        if (!mounted) return;
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Project updated successfully'), backgroundColor: Colors.green),
+        );
+      } else {
+        final data = jsonDecode(response.body);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Failed to update project'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error updating project: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connection error. Failed to update.'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Project Details'),
+      content: _isSaving
+          ? const SizedBox(
+              height: 100,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(labelText: 'Project Title'),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _budgetController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Budget (₹)'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        if (double.tryParse(v.trim()) == null) return 'Invalid number';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _locationController,
+                      decoration: const InputDecoration(labelText: 'Location'),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _timelineController,
+                      decoration: const InputDecoration(labelText: 'Timeline (e.g. 6 months)'),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _plotSizeController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Plot Size (sq ft)'),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        if (double.tryParse(v.trim()) == null) return 'Invalid number';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _typeController,
+                      decoration: const InputDecoration(labelText: 'Category / Services (comma separated)'),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+      actions: _isSaving
+          ? []
+          : [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: _saveProject,
+                child: const Text('Save'),
+              ),
+            ],
     );
   }
 }

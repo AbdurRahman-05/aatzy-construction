@@ -21,6 +21,7 @@ class InquiryModel {
   final int? rating;
   final String? reviewText;
   final List<String> images;
+  final String finishedDate;
 
   InquiryModel({
     required this.id,
@@ -36,6 +37,7 @@ class InquiryModel {
     this.rating,
     this.reviewText,
     required this.images,
+    required this.finishedDate,
   });
 
   factory InquiryModel.fromJson(Map<String, dynamic> json) {
@@ -56,6 +58,11 @@ class InquiryModel {
       rating: json['rating'] != null ? int.tryParse(json['rating'].toString()) : null,
       reviewText: json['review_text'],
       images: json['images'] != null ? List<String>.from(json['images']) : [],
+      finishedDate: json['updated_at'] != null 
+          ? json['updated_at'].toString().split('T')[0] 
+          : (json['updatedAt'] != null 
+              ? json['updatedAt'].toString().split('T')[0] 
+              : ''),
     );
   }
 }
@@ -224,7 +231,9 @@ class _MyInquiriesScreenState extends ConsumerState<MyInquiriesScreen> {
                                               border: Border.all(color: _getStatusColor(inq.status).withValues(alpha: 0.3)),
                                             ),
                                             child: Text(
-                                              inq.status == 'Closed' ? 'Deal Finalized' : inq.status,
+                                              inq.status == 'Closed'
+                                                  ? 'Deal Finalized'
+                                                  : (inq.status == 'Quote Sent' ? 'Quote Received' : inq.status),
                                               style: TextStyle(color: _getStatusColor(inq.status), fontSize: 11, fontWeight: FontWeight.bold),
                                             ),
                                           ),
@@ -279,7 +288,7 @@ class _MyInquiriesScreenState extends ConsumerState<MyInquiriesScreen> {
                                           Row(
                                             children: [
                                               Text(
-                                                inq.status == 'Closed' ? 'Track Shipping' : 'Track Timeline',
+                                                inq.status == 'Closed' ? 'Track Shipping' : 'Track Status',
                                                 style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
                                               ),
                                               const SizedBox(width: 4),
@@ -1009,6 +1018,17 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
                   final dateStr = log['created_at'] != null 
                       ? log['created_at'].toString().split('T')[0] 
                       : '';
+                  final rawNotes = log['notes'] ?? '';
+                  String displayNotes = rawNotes;
+                  if (rawNotes == 'Quote proposed to the buyer.') {
+                    displayNotes = 'Quote proposed by seller.';
+                  } else if (rawNotes == 'Generated a revised quote for the buyer.') {
+                    displayNotes = 'Revised quote proposed by seller.';
+                  } else {
+                    displayNotes = rawNotes
+                        .replaceAll('buyer', 'seller')
+                        .replaceAll('Buyer', 'Seller');
+                  }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1022,7 +1042,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              log['status'] ?? 'Updated',
+                              log['status'] == 'Quote Sent' ? 'Quote Received' : (log['status'] ?? 'Updated'),
                               style: TextStyle(
                                 color: _getStatusColor(log['status'] ?? ''),
                                 fontSize: 10,
@@ -1038,7 +1058,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        log['notes'] ?? '',
+                        displayNotes,
                         style: const TextStyle(fontSize: 12.5, height: 1.3),
                       ),
                       if (log['changed_by_name'] != null) ...[

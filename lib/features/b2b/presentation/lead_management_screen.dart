@@ -22,6 +22,7 @@ class LeadItem {
   String deliveryStatus; 
   double gstPercent;
   final List<String> images;
+  final String finishedDate;
 
   LeadItem({
     required this.id,
@@ -40,6 +41,7 @@ class LeadItem {
     required this.deliveryStatus,
     required this.gstPercent,
     required this.images,
+    required this.finishedDate,
   });
 
   factory LeadItem.fromJson(Map<String, dynamic> json) {
@@ -64,6 +66,11 @@ class LeadItem {
       deliveryStatus: json['delivery_status'] ?? 'Pending',
       gstPercent: json['gst_percent'] != null ? double.parse(json['gst_percent'].toString()) : 18.0,
       images: json['images'] != null ? List<String>.from(json['images']) : [],
+      finishedDate: json['updated_at'] != null 
+          ? json['updated_at'].toString().split('T')[0] 
+          : (json['updatedAt'] != null 
+              ? json['updatedAt'].toString().split('T')[0] 
+              : ''),
     );
   }
 }

@@ -471,8 +471,23 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   }
 
   Widget _buildGeneralOverviewSection(bool isDark, Color primaryColor) {
-    final activeLeadsCount = (_stats?['activeLeads'] ?? 0) + _materialLeads.length;
-    final runningProjects = _projects.where((p) => p['currentStage'] != 'Completed').length;
+    // 1. Negotiation leads (Not Started)
+    final activeMaterialLeadsCount = _materialLeads.where((lead) {
+      final status = lead['status'] ?? 'New';
+      return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
+    }).length;
+    final activeLeadsCount = (_stats?['activeLeads'] ?? 0) + activeMaterialLeadsCount;
+
+    // 2. In-process material orders (Accepted or Closed/Ongoing delivery)
+    final ongoingMaterialJobsCount = _materialLeads.where((lead) {
+      final status = lead['status'] ?? 'New';
+      final deliveryStatus = lead['delivery_status'] ?? 'Pending';
+      return status == 'Accepted' || (status == 'Closed' && deliveryStatus != 'Delivered');
+    }).length;
+    
+    // Running projects + ongoing material jobs
+    final runningProjects = _projects.where((p) => p['currentStage'] != 'Completed' && p['currentStage'] != 'Finished').length;
+    final activeJobsCount = runningProjects + ongoingMaterialJobsCount;
     
     return Row(
       children: [
@@ -489,7 +504,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         Expanded(
           child: _buildGlowMetricCard(
             'Active Jobs',
-            '$runningProjects',
+            '$activeJobsCount',
             isDark ? const Color(0xFF3B6B4C) : const Color(0xFF2E7D32),
             Icons.assignment_turned_in_rounded,
             'Sites under work',
@@ -759,7 +774,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   }
 
   Widget _buildClosedDealsSection(bool isDark, Color primaryColor) {
-    final ongoingDeals = _materialLeads.where((lead) => lead['status'] == 'Closed').toList();
+    final ongoingDeals = _materialLeads.where((lead) {
+      final status = lead['status'];
+      final deliveryStatus = lead['delivery_status'];
+      return status == 'Accepted' || (status == 'Closed' && deliveryStatus != 'Delivered');
+    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -771,7 +790,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Closed Deals',
+                  'Ongoing Deals',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 18,
@@ -779,7 +798,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   ),
                 ),
                 Text(
-                  'Track closed bulk material deals',
+                  'Track in-progress processes and shipments',
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.white38 : Colors.grey.shade500,
@@ -789,7 +808,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               ],
             ),
             TextButton(
-              onPressed: () => ref.read(providerTabProvider.notifier).setTab(2), // index 2 is leads/material screen
+              onPressed: () => context.push('/b2b-materials'),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 backgroundColor: primaryColor.withValues(alpha: 0.08),
@@ -837,12 +856,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'No Closed Deals yet',
+                  'No Ongoing Deals',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Your closed material deals and active shipments will appear here.',
+                  'Your active material negotiations, accepted quotes, and pending deliveries will appear here.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey.shade500, fontSize: 12, height: 1.3),
                 ),
@@ -856,28 +875,31 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               final buyerName = lead['buyer_name'] ?? 'Client';
               final quantityVal = lead['quantity'] != null ? double.parse(lead['quantity'].toString()) : 0.0;
               final unitStr = lead['unit'] ?? 'Units';
+              final status = lead['status'] ?? 'New';
               final deliveryStatus = lead['delivery_status'] ?? 'Pending';
 
+              String statusLabel = '';
               Color statusColor = Colors.orange;
               IconData statusIcon = Icons.hourglass_top_rounded;
 
-              switch (deliveryStatus.toString().toLowerCase()) {
-                case 'packed':
-                  statusColor = Colors.blue;
-                  statusIcon = Icons.inventory_2_outlined;
-                  break;
-                case 'dispatched':
-                  statusColor = Colors.purple;
-                  statusIcon = Icons.local_shipping_outlined;
-                  break;
-                case 'delivered':
-                  statusColor = Colors.green;
-                  statusIcon = Icons.check_circle_outline_rounded;
-                  break;
-                default:
-                  statusColor = Colors.orange;
-                  statusIcon = Icons.hourglass_top_rounded;
-                  break;
+              if (status == 'Accepted') {
+                statusLabel = 'Accepted';
+                statusColor = Colors.teal;
+                statusIcon = Icons.handshake_outlined;
+              } else if (status == 'Closed') {
+                statusLabel = 'Ongoing ($deliveryStatus)';
+                statusColor = Colors.blue;
+                switch (deliveryStatus.toString().toLowerCase()) {
+                  case 'packed':
+                    statusIcon = Icons.inventory_2_outlined;
+                    break;
+                  case 'dispatched':
+                    statusIcon = Icons.local_shipping_outlined;
+                    break;
+                  default:
+                    statusIcon = Icons.hourglass_top_rounded;
+                    break;
+                }
               }
 
               return Container(
@@ -901,7 +923,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
                     onTap: () async {
-                      await context.push('/supplier-leads');
+                      await context.push('/b2b-materials');
                       _fetchStats();
                     },
                     child: Padding(
@@ -947,7 +969,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                                   border: Border.all(color: statusColor.withValues(alpha: 0.15), width: 1),
                                 ),
                                 child: Text(
-                                  deliveryStatus.toString().toUpperCase(),
+                                  statusLabel.toUpperCase(),
                                   style: TextStyle(
                                     color: statusColor,
                                     fontSize: 9.5,
@@ -957,9 +979,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 18),
-                          // Delivery Steps
-                          _buildDeliveryStepProgress(deliveryStatus, isDark, primaryColor),
+                          if (status == 'Closed') ...[
+                            const SizedBox(height: 18),
+                            // Delivery Steps
+                            _buildDeliveryStepProgress(deliveryStatus, isDark, primaryColor),
+                          ],
                         ],
                       ),
                     ),
@@ -1286,7 +1310,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         ),
                         onTap: () {
                           if (isMaterial) {
-                            context.push('/supplier-leads');
+                            context.push('/b2b-materials');
                           } else {
                             context.push('/provider-lead/${lead['id']}');
                           }
@@ -1400,7 +1424,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   color: Colors.transparent,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
-                    onTap: () => context.push('/supplier-leads'),
+                    onTap: () => context.push('/b2b-materials'),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Column(

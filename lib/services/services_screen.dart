@@ -17,8 +17,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   int _selectedTab = 0; // 0 for Services, 1 for Social
   List<dynamic> _socialPosts = [];
   bool _isLoadingSocial = false;
-  final Set<String> _likedPostIds = {};
-  final Map<String, int> _likeCounts = {};
+
 
   final List<Map<String, dynamic>> categories = const [
     {'name': 'Land & Legal', 'icon': Icons.landscape},
@@ -311,15 +310,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   Widget _buildCarouselPostCard(dynamic post, String categoryName) {
-    final postId = post['id'] ?? '';
     final provider = post['provider'] ?? {};
     final providerId = provider['id'] ?? '';
     final businessName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
     final title = post['title'] ?? 'Work Showcase';
     final imageData = post['imageData'] as String?;
-
-    final isLiked = _likedPostIds.contains(postId);
-    final likes = _likeCounts[postId] ?? 0;
 
     return Container(
       width: 230,
@@ -402,46 +397,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
             // Bottom Actions & Title
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (_likedPostIds.contains(postId)) {
-                              _likedPostIds.remove(postId);
-                              _likeCounts[postId] = likes - 1;
-                            } else {
-                              _likedPostIds.add(postId);
-                              _likeCounts[postId] = likes + 1;
-                            }
-                          });
-                        },
-                        child: Icon(
-                          isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: isLiked ? Colors.red : Colors.grey.shade700,
-                          size: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$likes likes',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 10.5, fontWeight: FontWeight.w600),
-                  ),
-                ],
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

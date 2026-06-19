@@ -17,8 +17,7 @@ class CategorySocialFeedScreen extends StatefulWidget {
 }
 
 class _CategorySocialFeedScreenState extends State<CategorySocialFeedScreen> {
-  final Set<String> _likedPostIds = {};
-  final Map<String, int> _likeCounts = {};
+
 
   @override
   Widget build(BuildContext context) {
@@ -54,16 +53,12 @@ class _CategorySocialFeedScreenState extends State<CategorySocialFeedScreen> {
               itemCount: widget.posts.length,
               itemBuilder: (context, index) {
                 final post = widget.posts[index];
-                final postId = post['id'] ?? 'post_$index';
                 final provider = post['provider'] ?? {};
                 final providerId = provider['id'] ?? '';
                 final businessName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
                 final title = post['title'] ?? 'Portfolio Work';
                 final description = post['description'] ?? '';
                 final imageData = post['imageData'] as String?;
-
-                final isLiked = _likedPostIds.contains(postId);
-                final likes = _likeCounts[postId] ?? 0;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -119,25 +114,12 @@ class _CategorySocialFeedScreenState extends State<CategorySocialFeedScreen> {
 
                       // Image
                       if (imageData != null)
-                        GestureDetector(
-                          onDoubleTap: () {
-                            setState(() {
-                              if (_likedPostIds.contains(postId)) {
-                                _likedPostIds.remove(postId);
-                                _likeCounts[postId] = likes - 1;
-                              } else {
-                                _likedPostIds.add(postId);
-                                _likeCounts[postId] = likes + 1;
-                              }
-                            });
-                          },
-                          child: AspectRatio(
-                            aspectRatio: 1.1,
-                            child: Image.memory(
-                              base64Decode(imageData.split(',').last),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
+                        AspectRatio(
+                          aspectRatio: 1.1,
+                          child: Image.memory(
+                            base64Decode(imageData.split(',').last),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
                           ),
                         ),
 
@@ -146,44 +128,12 @@ class _CategorySocialFeedScreenState extends State<CategorySocialFeedScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: Row(
                           children: [
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  if (_likedPostIds.contains(postId)) {
-                                    _likedPostIds.remove(postId);
-                                    _likeCounts[postId] = likes - 1;
-                                  } else {
-                                    _likedPostIds.add(postId);
-                                    _likeCounts[postId] = likes + 1;
-                                  }
-                                });
-                              },
-                              child: AnimatedScale(
-                                scale: isLiked ? 1.2 : 1.0,
-                                duration: const Duration(milliseconds: 150),
-                                child: Icon(
-                                  isLiked ? Icons.favorite : Icons.favorite_border,
-                                  color: isLiked ? Colors.red : Colors.black87,
-                                  size: 26,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
                             const Icon(Icons.mode_comment_outlined, size: 24, color: Colors.black87),
                             const SizedBox(width: 16),
                             const Icon(Icons.send_outlined, size: 24, color: Colors.black87),
                             const Spacer(),
                             const Icon(Icons.bookmark_border, size: 24, color: Colors.black87),
                           ],
-                        ),
-                      ),
-
-                      // Likes count
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text(
-                          '$likes likes',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ),
 

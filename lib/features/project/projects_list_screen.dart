@@ -210,6 +210,23 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                   ),
                 ],
               ),
+              if (currentStage.toLowerCase() == 'completed' || currentStage.toLowerCase() == 'finished') ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.event_available_rounded, size: 14, color: Colors.green),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Finished on: ${project['updatedAt'] != null ? project['updatedAt'].toString().split('T')[0] : (project['updated_at'] != null ? project['updated_at'].toString().split('T')[0] : "N/A")}',
+                      style: TextStyle(
+                        color: Colors.green.shade700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const Divider(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

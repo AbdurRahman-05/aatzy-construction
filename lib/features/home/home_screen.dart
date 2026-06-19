@@ -23,8 +23,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<dynamic> _materialOrders = [];
   bool _isLoading = true;
   bool _isLoadingSocial = true;
-  final Set<String> _likedPostIds = {};
-  final Map<String, int> _likeCounts = {};
+
 
   @override
   void initState() {
@@ -57,7 +56,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (mounted) {
           setState(() {
             _projects = projectsData;
-            _materialOrders = inquiriesData.where((i) => i['status'] == 'Closed').toList();
+            _materialOrders = inquiriesData.where((i) {
+              final status = i['status'];
+              final deliveryStatus = i['delivery_status'];
+              final isClosed = status == 'Completed' || (status == 'Closed' && deliveryStatus == 'Delivered');
+              return !isClosed && (
+                status == 'Closed' ||
+                status == 'Accepted' ||
+                status == 'New' ||
+                status == 'Viewed' ||
+                status == 'Contacted' ||
+                status == 'Quote Sent'
+              );
+            }).toList();
             _isLoading = false;
           });
         }
@@ -453,7 +464,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Closed Deals',
+                  'Material Orders',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 18,
@@ -461,7 +472,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 Text(
-                  'Track closed bulk material deals',
+                  'Track quotes, ongoing shipments & closed deals',
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.white38 : Colors.grey.shade500,
@@ -471,7 +482,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
             TextButton(
-              onPressed: () => context.push('/my-inquiries'),
+              onPressed: () => context.push('/b2b-materials'),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 backgroundColor: primaryColor.withValues(alpha: 0.08),
@@ -521,12 +532,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'No Closed Deals yet',
+                  'No Material Orders yet',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Your closed material deals and active shipments will appear here.',
+                  'Your active requests, negotiations, and completed shipments will appear here.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey.shade500, fontSize: 12, height: 1.3),
                 ),
@@ -540,28 +551,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               final supplierName = order['supplier_name'] ?? 'Supplier';
               final quantityVal = order['quantity'] != null ? double.parse(order['quantity'].toString()) : 0.0;
               final unitStr = order['unit'] ?? 'Units';
+              final status = order['status'] ?? 'New';
               final deliveryStatus = order['delivery_status'] ?? 'Pending';
 
+              String statusLabel = '';
               Color statusColor = Colors.orange;
               IconData statusIcon = Icons.hourglass_top_rounded;
 
-              switch (deliveryStatus.toString().toLowerCase()) {
-                case 'packed':
-                  statusColor = Colors.blue;
-                  statusIcon = Icons.inventory_2_outlined;
-                  break;
-                case 'dispatched':
-                  statusColor = Colors.purple;
-                  statusIcon = Icons.local_shipping_outlined;
-                  break;
-                case 'delivered':
+              if (status == 'Quote Sent') {
+                statusLabel = 'Quote Received';
+                statusColor = Colors.purple;
+                statusIcon = Icons.mark_email_unread_outlined;
+              } else if (status == 'New' || status == 'Viewed' || status == 'Contacted') {
+                statusLabel = 'Waiting Quote';
+                statusColor = Colors.orange;
+                statusIcon = Icons.hourglass_empty_rounded;
+              } else if (status == 'Accepted') {
+                statusLabel = 'Quote Accepted';
+                statusColor = Colors.teal;
+                statusIcon = Icons.handshake_outlined;
+              } else if (status == 'Closed' || status == 'Completed') {
+                if (deliveryStatus == 'Delivered' || status == 'Completed') {
+                  statusLabel = 'Closed Deal';
                   statusColor = Colors.green;
                   statusIcon = Icons.check_circle_outline_rounded;
-                  break;
-                default:
-                  statusColor = Colors.orange;
-                  statusIcon = Icons.hourglass_top_rounded;
-                  break;
+                } else {
+                  statusLabel = 'Ongoing ($deliveryStatus)';
+                  statusColor = Colors.blue;
+                  switch (deliveryStatus.toString().toLowerCase()) {
+                    case 'packed':
+                      statusIcon = Icons.inventory_2_outlined;
+                      break;
+                    case 'dispatched':
+                      statusIcon = Icons.local_shipping_outlined;
+                      break;
+                    default:
+                      statusIcon = Icons.hourglass_top_rounded;
+                      break;
+                  }
+                }
+              } else {
+                statusLabel = status;
+                statusColor = Colors.grey;
+                statusIcon = Icons.info_outline;
               }
 
               return Container(
@@ -584,7 +616,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(24),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
-                    onTap: () => context.push('/my-inquiries'),
+                    onTap: () => context.push('/b2b-materials'),
                     child: Padding(
                       padding: const EdgeInsets.all(18),
                       child: Column(
@@ -628,7 +660,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   border: Border.all(color: statusColor.withValues(alpha: 0.15), width: 1),
                                 ),
                                 child: Text(
-                                  deliveryStatus.toString().toUpperCase(),
+                                  statusLabel.toUpperCase(),
                                   style: TextStyle(
                                     color: statusColor,
                                     fontSize: 9.5,
@@ -638,9 +670,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 18),
-                          // Delivery Steps
-                          _buildDeliveryStepProgress(deliveryStatus, isDark, primaryColor),
+                          if (status == 'Closed' || status == 'Completed') ...[
+                            const SizedBox(height: 18),
+                            // Delivery Steps
+                            _buildDeliveryStepProgress(deliveryStatus, isDark, primaryColor),
+                          ],
                         ],
                       ),
                     ),
@@ -1149,7 +1183,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               subtitle: 'Track material requests & inquiries',
               icon: Icons.assignment_outlined,
               color: Colors.amber.shade800,
-              onTap: () => context.push('/b2b-my-inquiries'),
+              onTap: () => context.push('/b2b-materials'),
               isDark: isDark,
             ),
             _buildPremiumToolCard(
@@ -1343,7 +1377,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildHomeSocialPostCard(dynamic post, bool isDark, Color primaryColor) {
-    final postId = post['id'] ?? '';
     final provider = post['provider'] ?? {};
     final providerId = provider['id'] ?? '';
     final businessName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
@@ -1351,9 +1384,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final title = post['title'] ?? 'Work Showcase';
     final description = post['description'] ?? '';
     final imageData = post['imageData'] as String?;
-
-    final isLiked = _likedPostIds.contains(postId);
-    final likes = _likeCounts[postId] ?? 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -1477,64 +1507,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      // Modern Like Chip Button
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (_likedPostIds.contains(postId)) {
-                              _likedPostIds.remove(postId);
-                              _likeCounts[postId] = likes - 1;
-                            } else {
-                              _likedPostIds.add(postId);
-                              _likeCounts[postId] = likes + 1;
-                            }
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: isLiked 
-                                ? Colors.red.withValues(alpha: 0.08) 
-                                : Colors.grey.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isLiked ? Colors.red.withValues(alpha: 0.15) : Colors.transparent,
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                color: isLiked ? Colors.red : Colors.grey.shade600,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$likes',
-                                style: TextStyle(
-                                  fontSize: 11, 
-                                  color: isLiked ? Colors.red : Colors.grey.shade700, 
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 8),

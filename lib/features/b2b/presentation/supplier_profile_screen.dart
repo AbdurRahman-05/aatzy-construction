@@ -333,7 +333,7 @@ class _SupplierProfileScreenState extends ConsumerState<SupplierProfileScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () => context.push('/supplier-leads'),
+                            onPressed: () => context.push('/b2b-materials'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,

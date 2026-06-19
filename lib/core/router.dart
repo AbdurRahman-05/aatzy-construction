@@ -27,6 +27,7 @@ import '../features/b2b/presentation/news_screen.dart';
 import '../features/b2b/presentation/supplier_catalog_screen.dart';
 import '../features/b2b/presentation/supplier_product_management_screen.dart';
 import '../features/b2b/presentation/lead_management_screen.dart';
+import '../features/b2b/presentation/materials_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -136,6 +137,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/b2b-my-inquiries',
         builder: (context, state) => const MyInquiriesScreen(),
+      ),
+      GoRoute(
+        path: '/b2b-materials',
+        builder: (context, state) => const MaterialsScreen(),
       ),
       GoRoute(
         path: '/b2b-news',
