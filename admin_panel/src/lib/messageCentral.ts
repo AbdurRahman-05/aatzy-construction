@@ -17,6 +17,17 @@ const getCredentials = () => {
  * Fetch Authentication Token from Message Central
  */
 async function getAuthToken(customerId: string, key: string): Promise<string | null> {
+  // Try with the raw key first
+  const token = await attemptGetAuthToken(customerId, key);
+  if (token) return token;
+
+  // If failed, try base64 encoding the key (in case they provided the plain password)
+  const base64Key = Buffer.from(key).toString('base64');
+  console.log('Attempting Message Central authentication with Base64 encoded key...');
+  return await attemptGetAuthToken(customerId, base64Key);
+}
+
+async function attemptGetAuthToken(customerId: string, key: string): Promise<string | null> {
   try {
     const url = `https://cpaas.messagecentral.com/auth/v1/authentication/token?customerId=${customerId}&key=${key}&scope=NEW`;
     const response = await fetch(url, {
