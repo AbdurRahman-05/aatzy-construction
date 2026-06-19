@@ -70,6 +70,12 @@ export async function POST(request: Request) {
           isApproved: true,
         },
       });
+
+      // Send welcome email asynchronously for new Google sign-ups
+      const { sendWelcomeEmail } = require('@/lib/mail');
+      sendWelcomeEmail(user.email, user.name, user.role).catch((err: any) => {
+        console.error('Welcome email send error (Google login):', err);
+      });
     }
 
     return NextResponse.json({

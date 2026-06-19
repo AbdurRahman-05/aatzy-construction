@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { sendWelcomeEmail } from '@/lib/mail';
 
 export async function POST(request: Request) {
   try {
@@ -39,6 +40,11 @@ export async function POST(request: Request) {
         profileCompletion: profileCompletion ? parseInt(profileCompletion) : 0,
         isVerified: false, 
       },
+    });
+
+    // Send welcome email asynchronously
+    sendWelcomeEmail(provider.email, provider.ownerName || provider.businessName, 'PROVIDER').catch(err => {
+      console.error('Welcome email send error:', err);
     });
 
     return NextResponse.json({ 
