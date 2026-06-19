@@ -24,11 +24,17 @@ async function getAuthToken(customerId: string, key: string): Promise<string | n
       headers: { 'accept': '*/*' }
     });
 
+    const responseText = await response.text();
     if (response.ok) {
-      const data: any = await response.json();
-      return data.token || data.authToken || null;
+      try {
+        const data = responseText ? JSON.parse(responseText) : {};
+        return data.token || data.authToken || null;
+      } catch (parseError) {
+        console.error('Failed to parse auth token JSON:', responseText);
+        return null;
+      }
     }
-    console.error('Message Central Auth Token API failed with status:', response.status);
+    console.error(`Message Central Auth Token API failed (status ${response.status}):`, responseText);
     return null;
   } catch (error) {
     console.error('Failed to get Message Central Auth Token:', error);
@@ -89,14 +95,28 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; verifi
       }
     });
 
-    const data: any = await response.json();
+    const responseText = await response.text();
+    let data: any = {};
+    try {
+      if (responseText) {
+        data = JSON.parse(responseText);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Send OTP JSON response:', responseText);
+      return { 
+        success: false, 
+        verificationId: '', 
+        error: `HTTP ${response.status} - Invalid JSON response. Raw: ${responseText || '(empty)'}`
+      };
+    }
+
     if (response.ok && data.verificationId) {
       console.log(`Message Central OTP sent to ${phone}. VerificationID: ${data.verificationId}`);
       return { success: true, verificationId: data.verificationId };
     }
 
     console.error('Message Central send OTP failed:', data);
-    return { success: false, verificationId: '', error: data.message || 'Failed to send SMS OTP' };
+    return { success: false, verificationId: '', error: data.message || `Failed to send SMS OTP (status ${response.status})` };
   } catch (error: any) {
     console.error('Message Central sendOtp error:', error);
     return { success: false, verificationId: '', error: error.message || 'SMS Service error' };
@@ -155,13 +175,26 @@ export async function verifyOtp(phone: string, verificationId: string, code: str
       }
     });
 
-    const data: any = await response.json();
+    const responseText = await response.text();
+    let data: any = {};
+    try {
+      if (responseText) {
+        data = JSON.parse(responseText);
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Validate OTP JSON response:', responseText);
+      return { 
+        success: false, 
+        error: `HTTP ${response.status} - Invalid validation response. Raw: ${responseText || '(empty)'}`
+      };
+    }
+
     if (response.ok && data.status === 'VALIDATED') {
       return { success: true };
     }
 
     console.error('Message Central validation response:', data);
-    return { success: false, error: data.message || 'Invalid or incorrect OTP' };
+    return { success: false, error: data.message || `Invalid or incorrect OTP (status ${response.status})` };
   } catch (error: any) {
     console.error('Message Central verifyOtp error:', error);
     return { success: false, error: error.message || 'SMS verification service error' };
