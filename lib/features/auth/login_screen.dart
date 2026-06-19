@@ -127,6 +127,122 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _showOtpDialog({
+    required String email,
+    required String password,
+    required String phone,
+    required String verificationId,
+    required bool isProviderLogin,
+  }) async {
+    final otpController = TextEditingController();
+    bool isVerifying = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('2-Factor Authentication'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'An OTP has been sent to your registered phone number ending in ${phone.length > 4 ? phone.substring(phone.length - 4) : phone}.',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 8),
+                    decoration: InputDecoration(
+                      hintText: '••••',
+                      counterText: '',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying ? null : () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isVerifying
+                      ? null
+                      : () async {
+                          final code = otpController.text.trim();
+                          if (code.length < 4) return;
+
+                          final navigator = Navigator.of(context);
+                          final goRouter = GoRouter.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
+
+                          setDialogState(() => isVerifying = true);
+                          try {
+                            final response = await http.post(
+                              Uri.parse(isProviderLogin
+                                  ? '$apiBaseUrl/providers/login'
+                                  : '$apiBaseUrl/users/login'),
+                              headers: {'Content-Type': 'application/json'},
+                              body: jsonEncode({
+                                'email': email,
+                                'password': password,
+                                'verificationId': verificationId,
+                                'otpCode': code,
+                              }),
+                            );
+
+                            final data = jsonDecode(response.body);
+
+                            if (response.statusCode == 200) {
+                              if (!mounted) return;
+                              navigator.pop(); // Close dialog
+                              if (isProviderLogin) {
+                                ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+                                goRouter.go('/provider-home');
+                              } else {
+                                ref.read(authProvider.notifier).login(data['user'], 'CONSUMER');
+                                goRouter.go('/');
+                              }
+                            } else {
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                SnackBar(content: Text(data['error'] ?? 'Incorrect OTP code')),
+                              );
+                              setDialogState(() => isVerifying = false);
+                            }
+                          } catch (e) {
+                            if (!mounted) return;
+                            messenger.showSnackBar(
+                              const SnackBar(content: Text('Verification failed due to connection error.')),
+                            );
+                            setDialogState(() => isVerifying = false);
+                          }
+                        },
+                  child: isVerifying
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Verify'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _loginConsumer() async {
     setState(() => _isLoading = true);
     
@@ -143,6 +259,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
+        if (data['requiresOtp'] == true) {
+          setState(() => _isLoading = false);
+          _showOtpDialog(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            phone: data['phone'],
+            verificationId: data['verificationId'],
+            isProviderLogin: false,
+          );
+          return;
+        }
         if (!mounted) return;
         ref.read(authProvider.notifier).login(data['user'], 'CONSUMER');
         context.go('/');
@@ -185,6 +312,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
+        if (data['requiresOtp'] == true) {
+          setState(() => _isLoading = false);
+          _showOtpDialog(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            phone: data['phone'],
+            verificationId: data['verificationId'],
+            isProviderLogin: true,
+          );
+          return;
+        }
         if (!mounted) return;
         ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
         context.go('/provider-home');

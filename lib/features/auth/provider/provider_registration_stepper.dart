@@ -29,6 +29,9 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
   final _gstController = TextEditingController();
   final _servicesController = TextEditingController();
   final _pricingController = TextEditingController();
+  final _otpController = TextEditingController();
+
+  String _verificationId = '';
 
   // Image Data (Base64)
   String? _aadharBase64;
@@ -87,6 +90,102 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
   ];
   final Set<String> _selectedCategories = {};
 
+  Future<void> _sendOtp() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a phone number first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/auth/send-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'phone': phone}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _verificationId = data['verificationId'] ?? '';
+          _currentStep = 1;
+        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('OTP sent successfully to your phone!')),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Failed to send OTP')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Network error. Failed to trigger OTP.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _verifyOtpStep() async {
+    final phone = _phoneController.text.trim();
+    final otpCode = _otpController.text.trim();
+
+    if (otpCode.isEmpty || _verificationId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the verification code')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/auth/verify-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'phone': phone,
+          'verificationId': _verificationId,
+          'code': otpCode,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _currentStep = 2; // Proceed to step 2
+        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Phone number verified successfully!'), backgroundColor: Colors.green),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? 'Invalid OTP code')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Verification service error.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _submitRegistration() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -120,6 +219,8 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         'aadharCard': _aadharBase64,
         'panCard': _panBase64,
         'profileCompletion': ((_currentStep + 1) / 6 * 100).toInt(),
+        'verificationId': _verificationId,
+        'otpCode': _otpController.text.trim(),
       };
 
       debugPrint('Submitting registration for: $email');
@@ -179,6 +280,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
     _gstController.dispose();
     _servicesController.dispose();
     _pricingController.dispose();
+    _otpController.dispose();
     super.dispose();
   }
 
@@ -385,7 +487,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
             ),
             const SizedBox(height: 6),
             Text(
-              'Please enter the 6-digit OTP sent to ${_phoneController.text.isNotEmpty ? _phoneController.text : "your phone number"}.',
+              'Please enter the 4-digit OTP sent to ${_phoneController.text.isNotEmpty ? _phoneController.text : "your phone number"}.',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 32),
@@ -401,12 +503,13 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
             ),
             const SizedBox(height: 32),
             TextFormField(
+              controller: _otpController,
               keyboardType: TextInputType.number,
-              maxLength: 6,
+              maxLength: 4,
               style: const TextStyle(fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
               decoration: InputDecoration(
-                hintText: '• • • • • •',
+                hintText: '• • • •',
                 hintStyle: TextStyle(fontSize: 20, letterSpacing: 8, color: Colors.grey.shade400),
                 counterText: '',
                 filled: true,
@@ -424,7 +527,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
             const SizedBox(height: 16),
             Center(
               child: TextButton(
-                onPressed: () {},
+                onPressed: _sendOtp,
                 child: const Text('Resend Code', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF064354))),
               ),
             ),
@@ -647,7 +750,11 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
           Expanded(
             child: ElevatedButton(
               onPressed: () {
-                if (_currentStep < 5) {
+                if (_currentStep == 0) {
+                  _sendOtp();
+                } else if (_currentStep == 1) {
+                  _verifyOtpStep();
+                } else if (_currentStep < 5) {
                   setState(() => _currentStep += 1);
                 } else {
                   _submitRegistration();

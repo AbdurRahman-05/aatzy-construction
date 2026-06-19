@@ -13,6 +13,7 @@ model User {
   name       String
   email      String    @unique
   password   String
+  phone      String    @default("")
   role       Role      @default(CONSUMER)
   isApproved Boolean   @default(true)
   createdAt  DateTime  @default(now())

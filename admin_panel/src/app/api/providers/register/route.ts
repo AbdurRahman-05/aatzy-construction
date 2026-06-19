@@ -7,11 +7,19 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { 
       businessName, ownerName, email, password, phone, category, experience,
-      address, bio, aadharCard, panCard, profileCompletion 
+      address, bio, aadharCard, panCard, profileCompletion,
+      verificationId, otpCode
     } = body;
 
-    if (!email || !password || !businessName) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!email || !password || !businessName || !phone || !verificationId || !otpCode) {
+      return NextResponse.json({ error: 'Missing required fields (including Phone & OTP details)' }, { status: 400 });
+    }
+
+    // Verify OTP first
+    const { verifyOtp } = require('@/lib/messageCentral');
+    const otpResult = await verifyOtp(phone, verificationId, otpCode);
+    if (!otpResult.success) {
+      return NextResponse.json({ error: otpResult.error || 'Invalid OTP code' }, { status: 400 });
     }
 
     // Check if provider already exists

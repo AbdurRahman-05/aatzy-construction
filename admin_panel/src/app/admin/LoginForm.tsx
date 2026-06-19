@@ -4,25 +4,59 @@ import { useState } from 'react';
 
 export default function LoginForm({ correctPassword }: { correctPassword: string }) {
   const [password, setPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [verificationId, setVerificationId] = useState('');
+  const [requiresOtp, setRequiresOtp] = useState(false);
+  const [maskedPhone, setMaskedPhone] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    setTimeout(() => {
-      if (password === correctPassword) {
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password,
+          verificationId: requiresOtp ? verificationId : undefined,
+          otpCode: requiresOtp ? otpCode : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Authentication failed');
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.requiresOtp) {
+        setRequiresOtp(true);
+        setVerificationId(data.verificationId);
+        
+        // Mask the phone number for security
+        const phone = data.phone || '';
+        if (phone.length > 4) {
+          setMaskedPhone(`******${phone.slice(-4)}`);
+        } else {
+          setMaskedPhone(phone);
+        }
+        setIsLoading(false);
+      } else if (data.success) {
         // Set cookie for 1 day
         document.cookie = `admin_session=${password}; path=/; max-age=86400; SameSite=Lax`;
         window.location.reload();
-      } else {
-        setError('Incorrect administrator password. Please try again.');
-        setIsLoading(false);
       }
-    }, 600);
+    } catch (err) {
+      setError('Network error. Failed to reach the authentication server.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -40,44 +74,65 @@ export default function LoginForm({ correctPassword }: { correctPassword: string
           </div>
           <h2 className="text-2xl font-black text-white tracking-tight">BuildConnect Admin</h2>
           <p className="text-slate-400 text-sm mt-1.5 font-medium text-center">
-            Secure entry hub. Authentication required.
+            {requiresOtp ? '2-Factor SMS Verification' : 'Secure entry hub. Authentication required.'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-              Administrator Password
-            </label>
-            <div className="relative">
+          {!requiresOtp ? (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                Administrator Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all pr-12 text-sm"
+                  required
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl text-xs mb-4">
+                Enter the 4-digit code sent to your registered phone ending in <strong>{maskedPhone}</strong>.
+              </div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                One-Time OTP Code
+              </label>
               <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all pr-12 text-sm"
+                type="text"
+                maxLength={4}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="0000"
+                className="w-full text-center bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 rounded-xl px-4 py-3.5 text-white placeholder-slate-600 outline-none transition-all text-xl font-bold tracking-widest"
                 required
                 disabled={isLoading}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
-              </button>
             </div>
-          </div>
+          )}
 
           {error && (
             <div className="flex items-center space-x-2 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-xs font-semibold">
@@ -88,25 +143,41 @@ export default function LoginForm({ correctPassword }: { correctPassword: string
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all text-sm outline-none flex items-center justify-center space-x-2"
-          >
-            {isLoading ? (
-              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            ) : (
-              <>
-                <span>Unlock Dashboard</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          <div className="flex flex-col space-y-3">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all text-sm outline-none flex items-center justify-center space-x-2"
+            >
+              {isLoading ? (
+                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-              </>
+              ) : (
+                <>
+                  <span>{requiresOtp ? 'Verify & Enter' : 'Unlock Dashboard'}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </>
+              )}
+            </button>
+
+            {requiresOtp && (
+              <button
+                type="button"
+                onClick={() => {
+                  setRequiresOtp(false);
+                  setOtpCode('');
+                  setError('');
+                }}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 px-4 rounded-xl transition-all text-xs outline-none"
+              >
+                Back to Password Login
+              </button>
             )}
-          </button>
+          </div>
         </form>
       </div>
     </div>

@@ -4,10 +4,17 @@ import { sendWelcomeEmail } from '@/lib/mail';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password, role } = await request.json();
+    const { name, email, password, phone, role, verificationId, otpCode } = await request.json();
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!name || !email || !password || !phone || !verificationId || !otpCode) {
+      return NextResponse.json({ error: 'Missing required fields (including Phone & OTP details)' }, { status: 400 });
+    }
+
+    // Verify OTP first
+    const { verifyOtp } = require('@/lib/messageCentral');
+    const otpResult = await verifyOtp(phone, verificationId, otpCode);
+    if (!otpResult.success) {
+      return NextResponse.json({ error: otpResult.error || 'Invalid OTP code' }, { status: 400 });
     }
 
     // Check if user already exists
@@ -25,6 +32,7 @@ export async function POST(request: Request) {
         name,
         email,
         password, // In a real app, hash the password using bcrypt
+        phone,
         role: role || 'CONSUMER',
         isApproved: false, 
       },
