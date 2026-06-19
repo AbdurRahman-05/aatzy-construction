@@ -74,9 +74,10 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; verifi
   }
 
   try {
-    const token = await getAuthToken(customerId, key);
+    let token = await getAuthToken(customerId, key);
     if (!token) {
-      return { success: false, verificationId: '', error: 'Failed to authenticate with Message Central' };
+      console.log('Message Central getAuthToken failed. Falling back to using the key directly as authToken.');
+      token = key; // Fallback to direct Authorise Token usage
     }
 
     const sendUrl = `https://cpaas.messagecentral.com/verification/v2/verification/send?countryCode=${countryCode}&customerId=${customerId}&flowType=SMS&mobileNumber=${cleanPhone}&otpLength=4`;
@@ -139,9 +140,10 @@ export async function verifyOtp(phone: string, verificationId: string, code: str
   }
 
   try {
-    const token = await getAuthToken(customerId, key);
+    let token = await getAuthToken(customerId, key);
     if (!token) {
-      return { success: false, error: 'Failed to authenticate with Message Central' };
+      console.log('Message Central getAuthToken failed. Falling back to using the key directly as authToken.');
+      token = key; // Fallback to direct Authorise Token usage
     }
 
     const validateUrl = `https://cpaas.messagecentral.com/verification/v2/verification/validateOtp?countryCode=91&mobileNumber=${cleanPhone}&verificationId=${verificationId}&customerId=${customerId}&code=${code}`;
