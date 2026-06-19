@@ -5,6 +5,8 @@ import StatusToggle from '../components/StatusToggle';
 import DeleteButton from '../components/DeleteButton';
 import ViewDetailsModal from '../components/ViewDetailsModal';
 import DashboardAnalytics from '../components/DashboardAnalytics';
+import { cookies } from 'next/headers';
+import LoginForm from './LoginForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +16,14 @@ export default async function AdminDashboard({
   searchParams: Promise<{ view?: string }>;
 }) {
   const { view = 'dashboard' } = await searchParams;
+
+  const cookieStore = await cookies();
+  const adminSession = cookieStore.get('admin_session')?.value;
+  const correctPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
+  if (adminSession !== correctPassword) {
+    return <LoginForm correctPassword={correctPassword} />;
+  }
 
   const unapprovedProviders = await prisma.provider.findMany({
     where: { isVerified: false, isRejected: false },

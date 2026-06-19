@@ -65,12 +65,6 @@ export default function PortfolioLandingPage() {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <Link 
-              href="/admin" 
-              className="bg-gradient-to-r from-amber-500 to-amber-600 text-black font-extrabold text-xs px-5 py-2.5 rounded-xl uppercase tracking-wider hover:shadow-lg hover:shadow-amber-500/20 transition-all hover:scale-105 active:scale-95"
-            >
-              Admin Dashboard
-            </Link>
           </div>
         </div>
       </header>
@@ -102,12 +96,6 @@ export default function PortfolioLandingPage() {
               >
                 Try Interactive Demo
               </a>
-              <Link 
-                href="/admin" 
-                className="w-full sm:w-auto text-center bg-gray-900 border border-gray-800 text-gray-300 font-bold px-8 py-4 rounded-xl hover:bg-gray-800 transition-all hover:scale-[1.03] active:scale-95 text-sm"
-              >
-                Access Administrator Hub
-              </Link>
             </div>
 
             <div className="pt-6 grid grid-cols-3 gap-6 max-w-md mx-auto lg:mx-0 border-t border-gray-800/80">
@@ -413,12 +401,9 @@ export default function PortfolioLandingPage() {
               </div>
 
               <div className="mt-8">
-                <Link
-                  href="/admin"
-                  className="w-full block text-center bg-amber-500 hover:bg-amber-600 text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider text-xs transition-all hover:scale-105 active:scale-95"
-                >
-                  Inspect Admin Records
-                </Link>
+                <div className="w-full text-center bg-[#1F2937]/50 text-gray-400 font-bold py-3.5 rounded-xl text-xs border border-gray-800/80">
+                  Data Stream Synced
+                </div>
               </div>
             </div>
 
@@ -527,15 +512,9 @@ export default function PortfolioLandingPage() {
             </p>
             
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link 
-                href="/admin" 
-                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-8 py-4 rounded-xl text-sm transition-all hover:scale-105"
-              >
-                Go to Admin Dashboard
-              </Link>
               <button 
                 onClick={() => alert('App downloading initialized...')} 
-                className="w-full sm:w-auto bg-gray-900 border border-gray-800 hover:bg-gray-800 text-white font-bold px-8 py-4 rounded-xl text-sm transition-all hover:scale-105"
+                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-8 py-4 rounded-xl text-sm transition-all hover:scale-105"
               >
                 Download Mobile App
               </button>
@@ -565,7 +544,6 @@ export default function PortfolioLandingPage() {
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-4">Core Platform</h4>
             <ul className="space-y-2 text-xs">
-              <li><Link href="/admin?view=dashboard" className="hover:text-amber-500 transition-colors">Admin Dashboard</Link></li>
               <li><a href="#simulator" className="hover:text-amber-500 transition-colors">Interactive Demo</a></li>
               <li><a href="#features" className="hover:text-amber-500 transition-colors">Key Modules</a></li>
               <li><a href="#problems" className="hover:text-amber-500 transition-colors">Market Obstacles</a></li>
