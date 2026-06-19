@@ -22,9 +22,9 @@ export async function POST(
       where: { id: leadId },
       data: {
         status: status || undefined,
-        quotedPrice: quotedPrice !== undefined ? parseFloat(quotedPrice) : undefined,
-        deliveryStatus: deliveryStatus !== undefined ? deliveryStatus : undefined,
-        gstPercent: gstPercent !== undefined ? parseFloat(gstPercent) : undefined,
+        quotedPrice: (quotedPrice !== undefined && quotedPrice !== null) ? parseFloat(quotedPrice.toString()) : undefined,
+        deliveryStatus: (deliveryStatus !== undefined && deliveryStatus !== null) ? deliveryStatus : undefined,
+        gstPercent: (gstPercent !== undefined && gstPercent !== null) ? parseFloat(gstPercent.toString()) : undefined,
       },
     });
 

@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/features_carousel.dart';
 import '../auth/auth_provider.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'provider_layout.dart';
@@ -102,6 +103,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
     final businessName = _profileData?['businessName'] ?? auth.businessName ?? 'Your Business';
     final ownerName = _profileData?['ownerName'] ?? auth.name ?? 'User';
+    final gstNumber = _profileData?['gstNumber'] ?? auth.gstNumber ?? '';
 
     // Calculate financials
     double totalRevenue = 0.0;
@@ -128,101 +130,118 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      appBar: _isLoading ? null : AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: ClipRRect(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? [
+                        const Color(0xFF121B22).withValues(alpha: 0.95),
+                        const Color(0xFF121B22).withValues(alpha: 0.8),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.95),
+                        Colors.white.withValues(alpha: 0.8),
+                      ],
+              ),
+            ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                  )
+                ],
+              ),
+              child: Image.asset(
+                'assets/logo.png',
+                height: 20,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'BuildMart Console',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 21,
+                  color: isDark ? Colors.white : const Color(0xFF064354),
+                  letterSpacing: -0.5,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          ],
+        ),
+        actions: const [],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _fetchStats,
-              child: CustomScrollView(
+              child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  // Premium high-contrast custom header
-                  SliverAppBar(
-                    pinned: true,
-                    floating: true,
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    flexibleSpace: ClipRRect(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: isDark
-                                ? [
-                                    const Color(0xFF121B22).withValues(alpha: 0.95),
-                                    const Color(0xFF121B22).withValues(alpha: 0.8),
-                                  ]
-                                : [
-                                    Colors.white.withValues(alpha: 0.95),
-                                    Colors.white.withValues(alpha: 0.8),
-                                  ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    title: Row(
-                      children: [
-                        const Icon(Icons.bolt, color: Colors.amber, size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          'BuildMart Console',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 21,
-                            color: isDark ? Colors.white : const Color(0xFF064354),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 32.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Welcome Profile Banner Card (Modern Glassmorphic Style)
+                      _buildWelcomeCard(businessName, ownerName, gstNumber, isDark, primaryColor),
+                      const SizedBox(height: 24),
+
+                      // App Features & Benefits Carousel
+                      const AppFeaturesCarousel(isProvider: true),
+                      const SizedBox(height: 24),
+
+                      // Segmented Tab Selector
+                      _buildPillTabSelector(isDark, primaryColor),
+                      const SizedBox(height: 24),
+
+                      // General Tab Content
+                      if (_dashboardTab == 0) ...[
+                        _buildGeneralOverviewSection(isDark, primaryColor),
+                        const SizedBox(height: 28),
+                        _buildActiveJobsSection(isDark, primaryColor),
+                        const SizedBox(height: 28),
+                        _buildClosedDealsSection(isDark, primaryColor),
+                        const SizedBox(height: 28),
+                        _buildRecentLeadsSection(isDark, primaryColor),
+                        const SizedBox(height: 28),
+                        _buildB2BToolsSection(isDark, primaryColor),
+                      ]
+                      // Finance Tab Content
+                      else ...[
+                        _buildFinanceStats(totalRevenue, totalExpenses, totalProfit),
+                        const SizedBox(height: 24),
+                        _buildFinanceChart(),
+                        const SizedBox(height: 28),
+                        _buildProjectProfitabilitySection(isDark, primaryColor),
                       ],
-                    ),
-                    actions: [
-                      IconButton(
-                        icon: const Icon(Icons.refresh_rounded),
-                        onPressed: _fetchStats,
-                      ),
-                      const SizedBox(width: 8),
                     ],
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 32.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        // Welcome Profile Banner Card (Modern Glassmorphic Style)
-                        _buildWelcomeCard(businessName, ownerName, isDark, primaryColor),
-                        const SizedBox(height: 24),
-
-                        // Segmented Tab Selector
-                        _buildPillTabSelector(isDark, primaryColor),
-                        const SizedBox(height: 24),
-
-                        // General Tab Content
-                        if (_dashboardTab == 0) ...[
-                          _buildGeneralOverviewSection(isDark, primaryColor),
-                          const SizedBox(height: 28),
-                          _buildActiveJobsSection(isDark, primaryColor),
-                          const SizedBox(height: 28),
-                          _buildRecentLeadsSection(isDark, primaryColor),
-                          const SizedBox(height: 28),
-                          _buildB2BToolsSection(isDark, primaryColor),
-                        ]
-                        // Finance Tab Content
-                        else ...[
-                          _buildFinanceStats(totalRevenue, totalExpenses, totalProfit),
-                          const SizedBox(height: 24),
-                          _buildFinanceChart(),
-                          const SizedBox(height: 28),
-                          _buildProjectProfitabilitySection(isDark, primaryColor),
-                        ],
-                      ]),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
     );
   }
 
-  Widget _buildWelcomeCard(String businessName, String ownerName, bool isDark, Color primaryColor) {
+  Widget _buildWelcomeCard(String businessName, String ownerName, String gstNumber, bool isDark, Color primaryColor) {
     final avatarText = businessName.isNotEmpty ? businessName[0].toUpperCase() : 'B';
     
     return Container(
@@ -257,7 +276,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               radius: 32,
               backgroundColor: Colors.white,
               backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
-                  ? MemoryImage(base64Decode(_profileImage!.split(',').last))
+                  ? MemoryImage(Base64ImageCache.decode(_profileImage!))
                   : null,
               child: _profileImage == null || _profileImage!.isEmpty
                   ? Text(
@@ -320,6 +339,24 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (gstNumber.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.verified_user_rounded, color: Colors.white70, size: 13),
+                      const SizedBox(width: 4),
+                      Text(
+                        'GST: $gstNumber',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -721,6 +758,297 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     );
   }
 
+  Widget _buildClosedDealsSection(bool isDark, Color primaryColor) {
+    final ongoingDeals = _materialLeads.where((lead) => lead['status'] == 'Closed').toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Closed Deals',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                Text(
+                  'Track closed bulk material deals',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () => ref.read(providerTabProvider.notifier).setTab(2), // index 2 is leads/material screen
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                backgroundColor: primaryColor.withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'View All',
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, size: 12, color: primaryColor),
+                ],
+              ),
+            )
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (ongoingDeals.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                )
+              ],
+            ),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: primaryColor.withValues(alpha: 0.06),
+                  child: Icon(Icons.local_shipping_outlined, size: 30, color: primaryColor),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'No Closed Deals yet',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Your closed material deals and active shipments will appear here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12, height: 1.3),
+                ),
+              ],
+            ),
+          )
+        else
+          Column(
+            children: ongoingDeals.map((lead) {
+              final title = lead['title'] ?? lead['product_name'] ?? 'Material Lead';
+              final buyerName = lead['buyer_name'] ?? 'Client';
+              final quantityVal = lead['quantity'] != null ? double.parse(lead['quantity'].toString()) : 0.0;
+              final unitStr = lead['unit'] ?? 'Units';
+              final deliveryStatus = lead['delivery_status'] ?? 'Pending';
+
+              Color statusColor = Colors.orange;
+              IconData statusIcon = Icons.hourglass_top_rounded;
+
+              switch (deliveryStatus.toString().toLowerCase()) {
+                case 'packed':
+                  statusColor = Colors.blue;
+                  statusIcon = Icons.inventory_2_outlined;
+                  break;
+                case 'dispatched':
+                  statusColor = Colors.purple;
+                  statusIcon = Icons.local_shipping_outlined;
+                  break;
+                case 'delivered':
+                  statusColor = Colors.green;
+                  statusIcon = Icons.check_circle_outline_rounded;
+                  break;
+                default:
+                  statusColor = Colors.orange;
+                  statusIcon = Icons.hourglass_top_rounded;
+                  break;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () async {
+                      await context.push('/supplier-leads');
+                      _fetchStats();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: primaryColor.withValues(alpha: 0.1),
+                                child: Icon(statusIcon, color: primaryColor, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      title,
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Buyer: $buyerName • Qty: $quantityVal $unitStr',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: statusColor.withValues(alpha: 0.15), width: 1),
+                                ),
+                                child: Text(
+                                  deliveryStatus.toString().toUpperCase(),
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          // Delivery Steps
+                          _buildDeliveryStepProgress(deliveryStatus, isDark, primaryColor),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDeliveryStepProgress(String currentStatus, bool isDark, Color primaryColor) {
+    final statusLower = currentStatus.toLowerCase();
+    
+    int activeStep = 0;
+    if (statusLower == 'packed') activeStep = 1;
+    if (statusLower == 'dispatched') activeStep = 2;
+    if (statusLower == 'delivered') activeStep = 3;
+
+    final steps = ['Ordered', 'Packed', 'Dispatched', 'Delivered'];
+    final stepIcons = [
+      Icons.check_circle_rounded,
+      Icons.inventory_2_rounded,
+      Icons.local_shipping_rounded,
+      Icons.done_all_rounded
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(4, (index) {
+        final isCompleted = index <= activeStep;
+        final isActive = index == activeStep;
+        final color = isCompleted 
+            ? (index == 3 ? Colors.green : primaryColor) 
+            : (isDark ? Colors.white24 : Colors.grey.shade300);
+
+        return Expanded(
+          child: Row(
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted ? color.withValues(alpha: 0.1) : Colors.transparent,
+                      border: Border.all(
+                        color: color,
+                        width: isActive ? 2.5 : 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      stepIcons[index],
+                      size: 12,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    steps[index],
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: isActive ? FontWeight.w900 : FontWeight.bold,
+                      color: isCompleted 
+                          ? (isDark ? Colors.white : Colors.black87) 
+                          : Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+              if (index < 3)
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    color: index < activeStep 
+                        ? primaryColor 
+                        : (isDark ? Colors.white12 : Colors.grey.shade200),
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
   Widget _buildStageProgressBar(String stage) {
     final stages = ['Planning', 'Foundation', 'Structure', 'Finishing', 'Completed'];
     final currentIdx = stages.indexWhere((s) => s.toLowerCase() == stage.toLowerCase());
@@ -791,6 +1119,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     }
 
     for (final lead in _materialLeads) {
+      final status = (lead['status'] ?? 'New').toString().toLowerCase();
+      if (status == 'closed' || status == 'accepted' || status == 'rejected') {
+        continue;
+      }
       combinedLeads.add({
         'isMaterial': true,
         'id': lead['id'],

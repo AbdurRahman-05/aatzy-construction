@@ -5,7 +5,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     const { id } = await context.params;
     const body = await request.json();
-    const { status, notes, rating, reviewText, buyerId } = body;
+    const { status, notes, rating, reviewText, buyerId, images } = body;
 
     const inquiry = await prisma.inquiry.findUnique({
       where: { id },
@@ -27,8 +27,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       }
     }
 
-    if (rating !== undefined) {
-      updateData.rating = parseInt(rating);
+    if (images && Array.isArray(images)) {
+      updateData.images = images;
+    }
+
+    if (rating !== undefined && rating !== null) {
+      updateData.rating = parseInt(rating.toString());
       updateData.reviewText = reviewText || null;
       if (!logNotes) {
         logNotes = `Buyer rated supplier: ${rating} Stars. ${reviewText ? `Review: "${reviewText}"` : ''}`;

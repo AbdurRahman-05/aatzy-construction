@@ -191,13 +191,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       // Branding
                       Row(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                             child: Image.asset(
                               'assets/logo.png',
-                              width: 28,
-                              height: 28,
-                              fit: BoxFit.cover,
+                              height: 18,
+                              fit: BoxFit.contain,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -366,11 +369,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
                 child: data.title == 'BuildConnect'
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(34),
+                    ? Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(34),
+                        ),
+                        padding: const EdgeInsets.all(16),
                         child: Image.asset(
                           'assets/logo.png',
-                          fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                         ),
                       )
                     : Icon(

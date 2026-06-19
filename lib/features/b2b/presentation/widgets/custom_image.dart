@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../core/constants.dart';
 
 class BuildMartImage extends StatelessWidget {
   final String imageUrl;
@@ -30,7 +30,7 @@ class BuildMartImage extends StatelessWidget {
       try {
         final base64String = cleanUrl.split(',').last;
         return Image.memory(
-          base64Decode(base64String),
+          Base64ImageCache.decode(base64String),
           width: width,
           height: height,
           fit: fit,

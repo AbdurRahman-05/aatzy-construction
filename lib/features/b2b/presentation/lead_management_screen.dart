@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
+import 'widgets/custom_image.dart';
 
 class LeadItem {
   final String id;
@@ -20,6 +21,7 @@ class LeadItem {
   double? quotedPrice;
   String deliveryStatus; 
   double gstPercent;
+  final List<String> images;
 
   LeadItem({
     required this.id,
@@ -37,6 +39,7 @@ class LeadItem {
     this.quotedPrice,
     required this.deliveryStatus,
     required this.gstPercent,
+    required this.images,
   });
 
   factory LeadItem.fromJson(Map<String, dynamic> json) {
@@ -60,6 +63,7 @@ class LeadItem {
       quotedPrice: json['quoted_price'] != null ? double.parse(json['quoted_price'].toString()) : null,
       deliveryStatus: json['delivery_status'] ?? 'Pending',
       gstPercent: json['gst_percent'] != null ? double.parse(json['gst_percent'].toString()) : 18.0,
+      images: json['images'] != null ? List<String>.from(json['images']) : [],
     );
   }
 }
@@ -188,6 +192,8 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
         return Colors.red;
       case 'Closed':
         return Colors.green.shade800;
+      case 'Completed':
+        return Colors.green;
       default:
         return Colors.grey;
     }
@@ -274,7 +280,10 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
 
   void _showCloseDealDialog(LeadItem lead) {
     String selectedDeliveryStatus = lead.deliveryStatus;
-    final notesController = TextEditingController(text: lead.status == 'Closed' ? 'Updated delivery details.' : 'Deal finalized and closed successfully!');
+    final initialNotes = lead.deliveryStatus == 'Delivered'
+        ? 'Deal finalized and closed successfully!'
+        : 'Status updated to ${lead.deliveryStatus}';
+    final notesController = TextEditingController(text: initialNotes);
 
     showDialog(
       context: context,
@@ -283,7 +292,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(lead.status == 'Closed' ? 'Update Delivery Tracking' : 'Finalize & Close Deal'),
+              title: Text(selectedDeliveryStatus == 'Delivered' ? 'Finalize & Close Deal' : 'Update Status'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -298,6 +307,16 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
                         if (val != null) {
                           setDialogState(() {
                             selectedDeliveryStatus = val;
+                            // Update notes template if not customized
+                            if (notesController.text.startsWith('Status updated to') ||
+                                notesController.text == 'Deal finalized and closed successfully!' ||
+                                notesController.text.isEmpty) {
+                              if (val == 'Delivered') {
+                                notesController.text = 'Deal finalized and closed successfully!';
+                              } else {
+                                notesController.text = 'Status updated to $val';
+                              }
+                            }
                           });
                         }
                       },
@@ -329,7 +348,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
                       deliveryStatus: selectedDeliveryStatus,
                     );
                   },
-                  child: Text(lead.status == 'Closed' ? 'Save Status' : 'Close Deal'),
+                  child: Text(selectedDeliveryStatus == 'Delivered' ? 'Close Deal' : 'Update & Save'),
                 ),
               ],
             );
@@ -482,6 +501,50 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
   }
 
   Widget _buildActionButtons(LeadItem lead) {
+    if (lead.status == 'Completed') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Order Completed & Closed',
+                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          if (lead.images.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const Text(
+              'Material Delivery Proof (Uploaded by Consumer):',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: BuildMartImage(
+                imageUrl: lead.images.last,
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
     if (lead.status == 'Lead Rejected') {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 8),
@@ -534,8 +597,8 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: () => _showCloseDealDialog(lead),
-              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: const Text('Finalize & Close Deal'),
+              icon: const Icon(Icons.local_shipping_outlined, size: 18),
+              label: const Text('Update Status'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
@@ -601,7 +664,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
             child: OutlinedButton.icon(
               onPressed: () => _showCloseDealDialog(lead),
               icon: const Icon(Icons.local_shipping_outlined, size: 18),
-              label: const Text('Update Delivery Stage'),
+              label: const Text('Update Status'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),

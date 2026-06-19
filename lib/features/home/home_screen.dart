@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/features_carousel.dart';
 import '../auth/auth_provider.dart';
 import '../providers/provider_profile_screen.dart';
 import 'main_layout.dart'; // import tab provider
@@ -19,6 +20,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<dynamic> _projects = [];
   List<dynamic> _socialPosts = [];
+  List<dynamic> _materialOrders = [];
   bool _isLoading = true;
   bool _isLoadingSocial = true;
   final Set<String> _likedPostIds = {};
@@ -39,11 +41,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/users/${auth.id}/projects'));
-      if (response.statusCode == 200) {
+      final responses = await Future.wait([
+        http.get(Uri.parse('$apiBaseUrl/users/${auth.id}/projects')),
+        http.get(Uri.parse('$apiBaseUrl/buyer/inquiries?buyerId=${auth.id}')),
+      ]);
+
+      if (responses[0].statusCode == 200) {
+        final projectsData = jsonDecode(responses[0].body);
+        List<dynamic> inquiriesData = [];
+        if (responses[1].statusCode == 200) {
+          final decoded = jsonDecode(responses[1].body);
+          inquiriesData = decoded['inquiries'] ?? [];
+        }
+
         if (mounted) {
           setState(() {
-            _projects = jsonDecode(response.body);
+            _projects = projectsData;
+            _materialOrders = inquiriesData.where((i) => i['status'] == 'Closed').toList();
             _isLoading = false;
           });
         }
@@ -54,6 +68,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       debugPrint('Error fetching projects: $e');
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _handleRefresh() async {
+    await Future.wait([
+      _fetchProjects(),
+      _fetchSocialFeed(),
+    ]);
   }
 
   Future<void> _fetchSocialFeed() async {
@@ -86,115 +107,147 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          // Sleek custom glassmorphic top header
-          SliverAppBar(
-            pinned: true,
-            floating: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            flexibleSpace: ClipRRect(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isDark
-                        ? [
-                            const Color(0xFF121B22).withValues(alpha: 0.95),
-                            const Color(0xFF121B22).withValues(alpha: 0.8),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.95),
-                            Colors.white.withValues(alpha: 0.8),
-                          ],
-                  ),
-                ),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 68,
+        flexibleSpace: ClipRRect(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? [
+                        const Color(0xFF121B22).withValues(alpha: 0.95),
+                        const Color(0xFF121B22).withValues(alpha: 0.8),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.95),
+                        Colors.white.withValues(alpha: 0.8),
+                      ],
               ),
             ),
-            title: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+          ),
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Hello, $name',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                              color: isDark ? Colors.white : const Color(0xFF064354),
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.bolt, color: Colors.amber, size: 20),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Let\'s build your dream project today',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.white60 : Colors.grey.shade600,
-                          fontWeight: FontWeight.w600,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                            )
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/logo.png',
+                          height: 18,
+                          fit: BoxFit.contain,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Hello, $name',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 22,
+                            color: isDark ? Colors.white : const Color(0xFF064354),
+                            letterSpacing: -0.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.bolt, color: Colors.amber, size: 20),
                     ],
                   ),
-                ),
-              ],
-            ),
-            actions: [
-              // Digital Date Chip
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white10 : const Color(0xFF064354).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: isDark ? Colors.white24 : const Color(0xFF064354).withValues(alpha: 0.15),
-                    width: 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    todayStr,
+                  const SizedBox(height: 2),
+                  Text(
+                    'Let\'s build your dream project today',
                     style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354),
+                      fontSize: 12,
+                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          // Digital Date Chip
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white10 : const Color(0xFF064354).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: isDark ? Colors.white24 : const Color(0xFF064354).withValues(alpha: 0.15),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                todayStr,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354),
                 ),
               ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: CircleAvatar(
-                  backgroundColor: isDark ? Colors.white10 : Colors.white.withValues(alpha: 0.9),
-                  child: Icon(Icons.notifications_outlined, color: primaryColor, size: 20),
-                ),
-                onPressed: () {},
-              ),
-              const SizedBox(width: 12),
-            ],
+            ),
           ),
-          SliverPadding(
+          const SizedBox(width: 8),
+          IconButton(
+            icon: CircleAvatar(
+              backgroundColor: isDark ? Colors.white10 : Colors.white.withValues(alpha: 0.9),
+              child: Icon(Icons.notifications_outlined, color: primaryColor, size: 20),
+            ),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 32.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 // Create Project Action Banner (Modern Floating Style)
                 _buildCreateProjectBanner(context, isDark, primaryColor),
                 const SizedBox(height: 28),
 
+                // App Features & Benefits Carousel
+                const AppFeaturesCarousel(isProvider: false),
+                const SizedBox(height: 28),
+
                 // Ongoing Projects Section
                 _buildOngoingProjectsSection(isDark, primaryColor),
+                const SizedBox(height: 28),
+
+                // Closed Deals Section
+                _buildClosedDealsSection(isDark, primaryColor),
                 const SizedBox(height: 28),
 
                 // Tools & Services section
@@ -203,10 +256,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // Recent Showcases Section
                 _buildRecentShowcasesSection(isDark, primaryColor),
-              ]),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -386,6 +439,294 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+
+  Widget _buildClosedDealsSection(bool isDark, Color primaryColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Closed Deals',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                Text(
+                  'Track closed bulk material deals',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white38 : Colors.grey.shade500,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () => context.push('/my-inquiries'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                backgroundColor: primaryColor.withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'View All',
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, size: 12, color: primaryColor),
+                ],
+              ),
+            )
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_isLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (_materialOrders.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                )
+              ],
+            ),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: primaryColor.withValues(alpha: 0.06),
+                  child: Icon(Icons.local_shipping_outlined, size: 30, color: primaryColor),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'No Closed Deals yet',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Your closed material deals and active shipments will appear here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12, height: 1.3),
+                ),
+              ],
+            ),
+          )
+        else
+          Column(
+            children: _materialOrders.map((order) {
+              final title = order['title'] ?? order['product_name'] ?? 'Material Inquiry';
+              final supplierName = order['supplier_name'] ?? 'Supplier';
+              final quantityVal = order['quantity'] != null ? double.parse(order['quantity'].toString()) : 0.0;
+              final unitStr = order['unit'] ?? 'Units';
+              final deliveryStatus = order['delivery_status'] ?? 'Pending';
+
+              Color statusColor = Colors.orange;
+              IconData statusIcon = Icons.hourglass_top_rounded;
+
+              switch (deliveryStatus.toString().toLowerCase()) {
+                case 'packed':
+                  statusColor = Colors.blue;
+                  statusIcon = Icons.inventory_2_outlined;
+                  break;
+                case 'dispatched':
+                  statusColor = Colors.purple;
+                  statusIcon = Icons.local_shipping_outlined;
+                  break;
+                case 'delivered':
+                  statusColor = Colors.green;
+                  statusIcon = Icons.check_circle_outline_rounded;
+                  break;
+                default:
+                  statusColor = Colors.orange;
+                  statusIcon = Icons.hourglass_top_rounded;
+                  break;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => context.push('/my-inquiries'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: primaryColor.withValues(alpha: 0.1),
+                                child: Icon(statusIcon, color: primaryColor, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      title,
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Supplier: $supplierName • Qty: $quantityVal $unitStr',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: statusColor.withValues(alpha: 0.15), width: 1),
+                                ),
+                                child: Text(
+                                  deliveryStatus.toString().toUpperCase(),
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          // Delivery Steps
+                          _buildDeliveryStepProgress(deliveryStatus, isDark, primaryColor),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDeliveryStepProgress(String currentStatus, bool isDark, Color primaryColor) {
+    final statusLower = currentStatus.toLowerCase();
+    
+    int activeStep = 0;
+    if (statusLower == 'packed') activeStep = 1;
+    if (statusLower == 'dispatched') activeStep = 2;
+    if (statusLower == 'delivered') activeStep = 3;
+
+    final steps = ['Ordered', 'Packed', 'Dispatched', 'Delivered'];
+    final stepIcons = [
+      Icons.check_circle_rounded,
+      Icons.inventory_2_rounded,
+      Icons.local_shipping_rounded,
+      Icons.done_all_rounded
+    ];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(4, (index) {
+        final isCompleted = index <= activeStep;
+        final isActive = index == activeStep;
+        final color = isCompleted 
+            ? (index == 3 ? Colors.green : primaryColor) 
+            : (isDark ? Colors.white24 : Colors.grey.shade300);
+
+        return Expanded(
+          child: Row(
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted ? color.withValues(alpha: 0.1) : Colors.transparent,
+                      border: Border.all(
+                        color: color,
+                        width: isActive ? 2.5 : 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      stepIcons[index],
+                      size: 12,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    steps[index],
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: isActive ? FontWeight.w900 : FontWeight.bold,
+                      color: isCompleted 
+                          ? (isDark ? Colors.white : Colors.black87) 
+                          : Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+              if (index < 3)
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    color: index < activeStep 
+                        ? primaryColor 
+                        : (isDark ? Colors.white12 : Colors.grey.shade200),
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -1122,10 +1463,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: MemoryImage(base64Decode(imageData.split(',').last)),
-                      fit: BoxFit.cover,
-                    ),
+                      image: DecorationImage(
+                        image: MemoryImage(Base64ImageCache.decode(imageData)),
+                        fit: BoxFit.cover,
+                      ),
                   ),
                 ),
               ),

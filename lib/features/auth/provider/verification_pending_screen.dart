@@ -146,6 +146,28 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    height: 50,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
               // Icon block
               Center(
                 child: Container(

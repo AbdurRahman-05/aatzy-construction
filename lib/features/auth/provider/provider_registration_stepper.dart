@@ -26,6 +26,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
   final _experienceController = TextEditingController();
   final _addressController = TextEditingController();
   final _bioController = TextEditingController();
+  final _gstController = TextEditingController();
   final _servicesController = TextEditingController();
   final _pricingController = TextEditingController();
 
@@ -115,6 +116,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         'category': _selectedCategories.isNotEmpty ? _selectedCategories.join(', ') : 'General',
         'address': _addressController.text.trim(),
         'bio': _bioController.text.trim(),
+        'gstNumber': _gstController.text.trim(),
         'aadharCard': _aadharBase64,
         'panCard': _panBase64,
         'profileCompletion': ((_currentStep + 1) / 6 * 100).toInt(),
@@ -174,6 +176,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
     _experienceController.dispose();
     _addressController.dispose();
     _bioController.dispose();
+    _gstController.dispose();
     _servicesController.dispose();
     _pricingController.dispose();
     super.dispose();
@@ -515,6 +518,15 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
               controller: _bioController,
               maxLines: 3,
               decoration: _buildInputDecoration(label: 'Business Bio / Description', prefixIcon: Icons.info_outline_rounded),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _gstController,
+              decoration: _buildInputDecoration(
+                label: 'GST Number (Optional)',
+                prefixIcon: Icons.verified_user_rounded,
+                hintText: 'e.g. 27AAAAA1111A1Z1',
+              ),
             ),
           ],
         );

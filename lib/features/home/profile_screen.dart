@@ -8,6 +8,7 @@ import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'package:image_picker/image_picker.dart';
+import '../b2b/presentation/widgets/custom_image.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -145,98 +146,89 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: _isLoading ? null : AppBar(
+          title: Text(
+            name,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              onPressed: () => _showSettingsBottomSheet(context),
+            ),
+          ],
+        ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : DefaultTabController(
                 length: 4,
-                child: NestedScrollView(
-                  headerSliverBuilder: (context, innerBoxIsScrolled) {
-                    return [
-                      SliverAppBar(
-                        title: Text(
-                          name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                        pinned: true,
-                        floating: true,
-                        backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
-                        actions: [
-                          IconButton(
-                            icon: const Icon(Icons.menu_rounded),
-                            onPressed: () => _showSettingsBottomSheet(context),
-                          ),
-                        ],
-                      ),
-                      SliverToBoxAdapter(
-                        child: _buildProviderHeader(primaryColor, isDark),
-                      ),
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _SliverAppBarDelegate(
-                          TabBar(
-                            isScrollable: true,
-                            tabAlignment: TabAlignment.center,
-                            indicatorColor: const Color(0xFF002E3B),
-                            indicatorSize: TabBarIndicatorSize.label,
-                            labelColor: const Color(0xFF002E3B),
-                            unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
-                            dividerColor: Colors.transparent,
-                            tabs: const [
-                              Tab(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.photo_library_outlined, size: 16),
-                                    SizedBox(width: 6),
-                                    Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Tab(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.storefront_outlined, size: 16),
-                                    SizedBox(width: 6),
-                                    Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Tab(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.star_outline_rounded, size: 16),
-                                    SizedBox(width: 6),
-                                    Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                              Tab(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.info_outline_rounded, size: 16),
-                                    SizedBox(width: 6),
-                                    Text('Ledger', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
+                child: Column(
+                  children: [
+                    _buildProviderHeader(primaryColor, isDark),
+                    TabBar(
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.center,
+                      indicatorColor: const Color(0xFF002E3B),
+                      indicatorSize: TabBarIndicatorSize.label,
+                      labelColor: const Color(0xFF002E3B),
+                      unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
+                      dividerColor: Colors.transparent,
+                      tabs: const [
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.photo_library_outlined, size: 16),
+                              SizedBox(width: 6),
+                              Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                             ],
                           ),
-                          isDark,
                         ),
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.storefront_outlined, size: 16),
+                              SizedBox(width: 6),
+                              Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.star_outline_rounded, size: 16),
+                              SizedBox(width: 6),
+                              Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.info_outline_rounded, size: 16),
+                              SizedBox(width: 6),
+                              Text('Ledger', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          _buildPortfolioTab(isDark),
+                          _buildSupplierProductsTab(isDark),
+                          _buildReviewsTab(isDark),
+                          _buildInfoTab(isDark),
+                        ],
                       ),
-                    ];
-                  },
-                  body: TabBarView(
-                    children: [
-                      _buildPortfolioTab(isDark),
-                      _buildSupplierProductsTab(isDark),
-                      _buildReviewsTab(isDark),
-                      _buildInfoTab(isDark),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
       ),
@@ -318,7 +310,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 radius: 36,
                                 backgroundColor: Colors.blue.shade100,
                                 backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
-                                    ? MemoryImage(base64Decode(_profileImage!.split(',').last))
+                                    ? MemoryImage(Base64ImageCache.decode(_profileImage!))
                                     : null,
                                 child: _profileImage == null || _profileImage!.isEmpty
                                     ? Text(
@@ -373,6 +365,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 color: isDark ? Colors.white60 : Colors.grey.shade600,
                               ),
                             ),
+                            if ((_providerData!['gstNumber'] as String? ?? ref.read(authProvider).gstNumber ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.verified_user_rounded, color: primaryColor, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'GST: ${_providerData!['gstNumber'] as String? ?? ref.read(authProvider).gstNumber ?? ''}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? Colors.white70 : Colors.grey.shade800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 6),
                             Wrap(
                               spacing: 6,
@@ -667,7 +676,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
         }
         final img = _portfolio[index - 1];
-        final bytes = base64Decode(img['imageData'].split(',').last);
+        final bytes = Base64ImageCache.decode(img['imageData']);
         return Card(
           elevation: 2,
           shadowColor: Colors.black26,
@@ -828,10 +837,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        imgUrl,
+                      BuildMartImage(
+                        imageUrl: imgUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        placeholder: Container(
                           color: Colors.grey.shade200,
                           child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
                         ),
@@ -905,7 +914,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
                       image: DecorationImage(
-                        image: MemoryImage(base64Decode(tempBase64!.split(',').last)),
+                        image: MemoryImage(Base64ImageCache.decode(tempBase64!)),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -1025,10 +1034,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 AspectRatio(
                   aspectRatio: 1.2,
-                  child: Image.network(
-                    imgUrl,
+                  child: BuildMartImage(
+                    imageUrl: imgUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                    placeholder: Container(
                       color: Colors.grey.shade200,
                       child: const Icon(Icons.image, size: 50),
                     ),
@@ -1304,7 +1313,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _showPostDetailModal(BuildContext context, dynamic img) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bytes = base64Decode(img['imageData'].split(',').last);
+    final bytes = Base64ImageCache.decode(img['imageData']);
     
     showDialog(
       context: context,
@@ -1326,7 +1335,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       radius: 14,
                       backgroundColor: Colors.blue.shade100,
                       backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
-                          ? MemoryImage(base64Decode(_profileImage!.split(',').last))
+                          ? MemoryImage(Base64ImageCache.decode(_profileImage!))
                           : null,
                       child: _profileImage == null || _profileImage!.isEmpty
                           ? Text(
@@ -1449,6 +1458,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildConsumerProfile(BuildContext context, AuthState auth, bool isDark) {
     final name = auth.name ?? 'Guest User';
+    final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -1456,52 +1467,163 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         backgroundColor: Colors.transparent,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          const SizedBox(height: 20),
-          Center(
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.blue.shade100,
-              child: Text(
-                name[0].toUpperCase(),
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue),
+          // Curved Top Header card for User Profile (similar to provider profile header card)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                    : [const Color(0xFF064354), const Color(0xFF0B7C8E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Avatar with premium border and styling
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Colors.white24,
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircleAvatar(
+                    radius: 36,
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.1,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        auth.email ?? '',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      // Account type badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'CUSTOMER',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            auth.email ?? '',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 40),
-          ListTile(
-            leading: const Icon(Icons.settings_rounded, color: Colors.grey), 
-            title: const Text('Settings'), 
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () => context.push('/settings'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.help_outline_rounded, color: Colors.grey), 
-            title: const Text('Help & Support'), 
-            trailing: const Icon(Icons.chevron_right_rounded),
-            onTap: () => context.push('/help-support'),
-          ),
-          const Divider(height: 32),
-          ListTile(
-            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent), 
-            title: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)), 
-            onTap: () {
-              ref.read(authProvider.notifier).logout();
-              context.go('/login');
-            },
+          const SizedBox(height: 24),
+
+          // Menu items container styled beautifully
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  leading: Icon(Icons.settings_rounded, color: primaryColor),
+                  title: const Text(
+                    'Settings',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                  onTap: () => context.push('/settings'),
+                ),
+                Divider(
+                  height: 1,
+                  indent: 20,
+                  endIndent: 20,
+                  color: isDark ? Colors.white12 : Colors.grey.shade100,
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  leading: Icon(Icons.help_outline_rounded, color: primaryColor),
+                  title: const Text(
+                    'Help & Support',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.5),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                  onTap: () => context.push('/help-support'),
+                ),
+                Divider(
+                  height: 1,
+                  indent: 20,
+                  endIndent: 20,
+                  color: isDark ? Colors.white12 : Colors.grey.shade100,
+                ),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14.5),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: Colors.redAccent, size: 20),
+                  onTap: () {
+                    ref.read(authProvider.notifier).logout();
+                    context.go('/login');
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1509,35 +1631,4 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
-  final bool isDark;
 
-  _SliverAppBarDelegate(this.tabBar, this.isDark);
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
-            width: 1,
-          ),
-        ),
-      ),
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
-  }
-}

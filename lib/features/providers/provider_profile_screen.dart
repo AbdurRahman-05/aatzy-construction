@@ -8,6 +8,7 @@ import '../chat/chat_detail_screen.dart';
 import '../../core/wallpaper_background.dart';
 import '../b2b/services/b2b_api_service.dart';
 import '../../core/full_screen_image_viewer.dart';
+import '../b2b/presentation/widgets/custom_image.dart';
 
 class ProviderProfileScreen extends ConsumerStatefulWidget {
   final String providerId;
@@ -92,104 +93,99 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: _isLoading || _provider == null ? null : AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            _provider!['businessName'] ?? 'Provider Details',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.share_rounded),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Profile link copied to clipboard')),
+                );
+              },
+            )
+          ],
+        ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _provider == null
                 ? const Center(child: Text('Provider not found'))
                 : DefaultTabController(
                     length: 4,
-                    child: NestedScrollView(
-                      headerSliverBuilder: (context, innerBoxIsScrolled) {
-                        return [
-                          SliverAppBar(
-                            title: Text(
-                              _provider!['businessName'] ?? 'Provider Details',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                            ),
-                            pinned: true,
-                            floating: true,
-                            backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
-                            actions: [
-                              IconButton(
-                                icon: const Icon(Icons.share_rounded),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Profile link copied to clipboard')),
-                                  );
-                                },
-                              )
-                            ],
-                          ),
-                          SliverToBoxAdapter(
-                            child: _buildProfileHeader(primaryColor, isDark),
-                          ),
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _SliverAppBarDelegate(
-                              TabBar(
-                                isScrollable: true,
-                                tabAlignment: TabAlignment.center,
-                                indicatorColor: const Color(0xFF002E3B),
-                                indicatorSize: TabBarIndicatorSize.label,
-                                labelColor: const Color(0xFF002E3B),
-                                unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
-                                dividerColor: Colors.transparent,
-                                tabs: const [
-                                  Tab(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.photo_library_outlined, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ),
-                                  Tab(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.storefront_outlined, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ),
-                                  Tab(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.star_outline_rounded, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ),
-                                  Tab(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.info_outline_rounded, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('About', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ),
+                    child: Column(
+                      children: [
+                        _buildProfileHeader(primaryColor, isDark),
+                        TabBar(
+                          isScrollable: true,
+                          tabAlignment: TabAlignment.center,
+                          indicatorColor: const Color(0xFF002E3B),
+                          indicatorSize: TabBarIndicatorSize.label,
+                          labelColor: const Color(0xFF002E3B),
+                          unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
+                          dividerColor: Colors.transparent,
+                          tabs: const [
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.photo_library_outlined, size: 16),
+                                  SizedBox(width: 6),
+                                  Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                              isDark,
                             ),
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.storefront_outlined, size: 16),
+                                  SizedBox(width: 6),
+                                  Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.star_outline_rounded, size: 16),
+                                  SizedBox(width: 6),
+                                  Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            Tab(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.info_outline_rounded, size: 16),
+                                  SizedBox(width: 6),
+                                  Text('About', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              _buildPortfolioTab(isDark),
+                              _buildSupplierProductsTab(isDark),
+                              _buildReviewsTab(isDark),
+                              _buildInfoTab(isDark),
+                            ],
                           ),
-                        ];
-                      },
-                      body: TabBarView(
-                        children: [
-                          _buildPortfolioTab(isDark),
-                          _buildSupplierProductsTab(isDark),
-                          _buildReviewsTab(isDark),
-                          _buildInfoTab(isDark),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
       ),
@@ -270,7 +266,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                 radius: 36,
                                 backgroundColor: Colors.blue.shade100,
                                 backgroundImage: profileImage != null && profileImage.toString().isNotEmpty
-                                    ? MemoryImage(base64Decode(profileImage.toString().split(',').last))
+                                    ? MemoryImage(Base64ImageCache.decode(profileImage.toString()))
                                     : null,
                                 child: profileImage == null || profileImage.toString().isEmpty
                                     ? Text(
@@ -558,7 +554,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       itemCount: _portfolio.length,
       itemBuilder: (context, index) {
         final img = _portfolio[index];
-        final bytes = base64Decode(img['imageData'].split(',').last);
+        final bytes = Base64ImageCache.decode(img['imageData']);
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
@@ -650,10 +646,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        imgUrl,
+                      BuildMartImage(
+                        imageUrl: imgUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
+                        placeholder: Container(
                           color: Colors.grey.shade200,
                           child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
                         ),
@@ -764,10 +760,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   },
                   child: AspectRatio(
                     aspectRatio: 1.2,
-                    child: Image.network(
-                      imgUrl,
+                    child: BuildMartImage(
+                      imageUrl: imgUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      placeholder: Container(
                         color: Colors.grey.shade200,
                         child: const Icon(Icons.image, size: 50),
                       ),
@@ -1000,7 +996,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
 
   void _showPostDetailModal(BuildContext context, dynamic img) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bytes = base64Decode(img['imageData'].split(',').last);
+    final bytes = Base64ImageCache.decode(img['imageData']);
     
     showDialog(
       context: context,
@@ -1022,7 +1018,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                       radius: 14,
                       backgroundColor: Colors.blue.shade100,
                       backgroundImage: _provider!['profileImage'] != null && _provider!['profileImage'].toString().isNotEmpty
-                          ? MemoryImage(base64Decode(_provider!['profileImage'].split(',').last))
+                          ? MemoryImage(Base64ImageCache.decode(_provider!['profileImage']))
                           : null,
                       child: _provider!['profileImage'] == null || _provider!['profileImage'].toString().isEmpty
                           ? Text(
@@ -1268,27 +1264,4 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   }
 }
 
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
-  final bool isDark;
 
-  _SliverAppBarDelegate(this.tabBar, this.isDark);
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: isDark ? const Color(0xFF121B22) : Colors.white,
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
-  }
-}

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
+import 'widgets/custom_image.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
 
 class InquiryModel {
   final String id;
@@ -17,6 +20,7 @@ class InquiryModel {
   final double gstPercent;
   final int? rating;
   final String? reviewText;
+  final List<String> images;
 
   InquiryModel({
     required this.id,
@@ -31,6 +35,7 @@ class InquiryModel {
     required this.gstPercent,
     this.rating,
     this.reviewText,
+    required this.images,
   });
 
   factory InquiryModel.fromJson(Map<String, dynamic> json) {
@@ -50,6 +55,7 @@ class InquiryModel {
       gstPercent: json['gst_percent'] != null ? double.parse(json['gst_percent'].toString()) : 18.0,
       rating: json['rating'] != null ? int.tryParse(json['rating'].toString()) : null,
       reviewText: json['review_text'],
+      images: json['images'] != null ? List<String>.from(json['images']) : [],
     );
   }
 }
@@ -316,6 +322,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
   int _ratingInput = 5;
   final _reviewController = TextEditingController();
   bool _isSubmittingReview = false;
+  String? _materialPhotoBase64;
 
   @override
   void dispose() {
@@ -339,8 +346,73 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
         return Colors.red;
       case 'Closed':
         return Colors.green.shade800;
+      case 'Completed':
+        return Colors.green;
       default:
         return Colors.grey;
+    }
+  }
+
+  Future<void> _pickMaterialPhoto() async {
+    final picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 70,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        final dataUrl = 'data:image/jpeg;base64,$base64Image';
+        setState(() {
+          _materialPhotoBase64 = dataUrl;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking material photo: $e');
+    }
+  }
+
+  Future<void> _completeAndCloseOrder() async {
+    if (_materialPhotoBase64 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please capture a photo of the received material to close the order.')),
+      );
+      return;
+    }
+    setState(() => _isUpdating = true);
+    final auth = ref.read(authProvider);
+    try {
+      final api = B2BApiService();
+      final res = await api.post('/buyer/inquiries/${widget.inquiryId}/status', data: {
+        'status': 'Completed',
+        'buyerId': auth.id,
+        'notes': 'Delivery confirmed by consumer. Material photo uploaded.',
+        'images': [_materialPhotoBase64!]
+      });
+      if (res.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Order closed successfully! Delivery photo sent to provider.')),
+          );
+          widget.onStatusUpdated();
+          context.pop();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(res.data['error'] ?? 'Failed to close order')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error closing order: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdating = false);
+      }
     }
   }
 
@@ -355,15 +427,16 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
     final auth = ref.read(authProvider);
     try {
       final api = B2BApiService();
+      final isAccept = newStatus == 'Closed' || newStatus == 'Accepted';
       final res = await api.post('/buyer/inquiries/${widget.inquiryId}/status', data: {
         'status': newStatus,
         'buyerId': auth.id,
-        'notes': newStatus == 'Accepted' ? 'Quote accepted by buyer.' : 'Quote rejected by buyer.',
+        'notes': isAccept ? 'Quote accepted by buyer. Deal closed.' : 'Quote rejected by buyer.',
       });
       if (res.success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Quote $newStatus successfully!')),
+            SnackBar(content: Text('Quote ${isAccept ? "Accepted & Deal Closed" : "Rejected"} successfully!')),
           );
           widget.onStatusUpdated();
           context.pop();
@@ -706,7 +779,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _updateStatus('Accepted'),
+                      onPressed: () => _updateStatus('Closed'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -722,6 +795,127 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
           
           if (inq.status == 'Closed') ...[
             const SizedBox(height: 24),
+            if (inq.deliveryStatus == 'Delivered') ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Confirm Received Material',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Supplier marked the package as delivered. Take a photo of the received material to confirm delivery and close the order.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade700, height: 1.4),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_materialPhotoBase64 != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: BuildMartImage(
+                          imageUrl: _materialPhotoBase64!,
+                          height: 180,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    OutlinedButton.icon(
+                      onPressed: _pickMaterialPhoto,
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      label: Text(_materialPhotoBase64 != null ? 'Retake Photo' : 'Take Material Photo'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                    if (_materialPhotoBase64 != null) ...[
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _isUpdating ? null : _completeAndCloseOrder,
+                        icon: const Icon(Icons.check_circle_outline_rounded),
+                        label: const Text('Confirm Delivery & Close Order'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: Colors.orange.shade800),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Supplier is processing your order. You can upload delivery photo once marked as Delivered.',
+                        style: TextStyle(fontSize: 12.5, color: Colors.orange.shade900),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+
+          if (inq.status == 'Completed') ...[
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Order Completed & Closed',
+                    style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            if (inq.images.isNotEmpty) ...[
+              const Text(
+                'Material Delivery Photo (Uploaded by You):',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BuildMartImage(
+                  imageUrl: inq.images.last,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             if (inq.rating != null) ...[
               Container(
                 padding: const EdgeInsets.all(16),
@@ -788,7 +982,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white))
                     : const Text('Submit Rating & Review'),
               ),
-            ]
+            ],
           ],
           
           if (_timelineLogs.isNotEmpty) ...[

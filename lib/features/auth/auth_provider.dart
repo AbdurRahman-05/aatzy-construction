@@ -8,6 +8,7 @@ class AuthState {
   final String? email;
   final String? businessName;
   final String? role; // 'CONSUMER' or 'PROVIDER'
+  final String? gstNumber;
   final bool isInitialized;
 
   AuthState({
@@ -16,6 +17,7 @@ class AuthState {
     this.email,
     this.businessName,
     this.role,
+    this.gstNumber,
     this.isInitialized = false,
   });
 
@@ -25,6 +27,7 @@ class AuthState {
     String? email,
     String? businessName,
     String? role,
+    String? gstNumber,
     bool? isInitialized,
   }) {
     return AuthState(
@@ -33,6 +36,7 @@ class AuthState {
       email: email ?? this.email,
       businessName: businessName ?? this.businessName,
       role: role ?? this.role,
+      gstNumber: gstNumber ?? this.gstNumber,
       isInitialized: isInitialized ?? this.isInitialized,
     );
   }
@@ -53,6 +57,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final email = prefs.getString('auth_email');
       final businessName = prefs.getString('auth_businessName');
       final role = prefs.getString('auth_role');
+      final gstNumber = prefs.getString('auth_gstNumber');
 
       if (id != null && role != null) {
         state = AuthState(
@@ -61,6 +66,7 @@ class AuthNotifier extends Notifier<AuthState> {
           email: email,
           businessName: businessName,
           role: role,
+          gstNumber: gstNumber,
           isInitialized: true,
         );
       } else {
@@ -81,6 +87,7 @@ class AuthNotifier extends Notifier<AuthState> {
         businessName: data['businessName']?.toString(),
         email: data['email']?.toString(),
         role: 'PROVIDER',
+        gstNumber: data['gstNumber']?.toString(),
         isInitialized: true,
       );
     } else {
@@ -101,6 +108,11 @@ class AuthNotifier extends Notifier<AuthState> {
       if (newState.email != null) await prefs.setString('auth_email', newState.email!);
       if (newState.businessName != null) await prefs.setString('auth_businessName', newState.businessName!);
       if (newState.role != null) await prefs.setString('auth_role', newState.role!);
+      if (newState.gstNumber != null) {
+        await prefs.setString('auth_gstNumber', newState.gstNumber!);
+      } else {
+        await prefs.remove('auth_gstNumber');
+      }
     } catch (e) {
       debugPrint('Error persisting auth: $e');
     }
@@ -115,6 +127,7 @@ class AuthNotifier extends Notifier<AuthState> {
       await prefs.remove('auth_email');
       await prefs.remove('auth_businessName');
       await prefs.remove('auth_role');
+      await prefs.remove('auth_gstNumber');
     } catch (e) {
       debugPrint('Error clearing persisted auth: $e');
     }

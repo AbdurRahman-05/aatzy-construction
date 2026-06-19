@@ -19,9 +19,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       where: { id },
       data: {
         status: status || undefined,
-        quotedPrice: quotedPrice !== undefined ? parseFloat(quotedPrice.toString()) : undefined,
-        deliveryStatus: deliveryStatus || undefined,
-        gstPercent: gstPercent !== undefined ? parseFloat(gstPercent.toString()) : undefined,
+        quotedPrice: (quotedPrice !== undefined && quotedPrice !== null) ? parseFloat(quotedPrice.toString()) : undefined,
+        deliveryStatus: (deliveryStatus !== undefined && deliveryStatus !== null) ? deliveryStatus : undefined,
+        gstPercent: (gstPercent !== undefined && gstPercent !== null) ? parseFloat(gstPercent.toString()) : undefined,
       },
     });
 

@@ -162,13 +162,7 @@ class _SupplierProfileScreenState extends ConsumerState<SupplierProfileScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(_isEditing ? 'Edit Business Info' : 'B2B Supplier Profile'),
-        actions: [
-          if (!_isEditing)
-            IconButton(
-              icon: const Icon(Icons.refresh_rounded),
-              onPressed: _loadSupplierProfileData,
-            ),
-        ],
+        actions: const [],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
