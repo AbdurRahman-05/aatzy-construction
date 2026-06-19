@@ -1,6 +1,9 @@
 // Simple in-memory cache to store mock OTP codes for simulator mode
 const mockOtpCache = new Map<string, { code: string; phone: string; expires: number }>();
 
+// Simple store to hold the last authentication error for diagnostics
+let lastAuthError = '';
+
 /**
  * Get Message Central API Credentials
  */
@@ -17,14 +20,16 @@ const getCredentials = () => {
  * Fetch Authentication Token from Message Central
  */
 async function getAuthToken(customerId: string, key: string): Promise<string | null> {
+  lastAuthError = '';
   // Try with the raw key first
-  const token = await attemptGetAuthToken(customerId, key);
+  let token = await attemptGetAuthToken(customerId, key);
   if (token) return token;
 
   // If failed, try base64 encoding the key (in case they provided the plain password)
   const base64Key = Buffer.from(key).toString('base64');
   console.log('Attempting Message Central authentication with Base64 encoded key...');
-  return await attemptGetAuthToken(customerId, base64Key);
+  token = await attemptGetAuthToken(customerId, base64Key);
+  return token;
 }
 
 async function attemptGetAuthToken(customerId: string, key: string): Promise<string | null> {
@@ -41,13 +46,16 @@ async function attemptGetAuthToken(customerId: string, key: string): Promise<str
         const data = responseText ? JSON.parse(responseText) : {};
         return data.token || data.authToken || null;
       } catch (parseError) {
+        lastAuthError = `JSON parse failed for status 200. Raw response: ${responseText.slice(0, 100)}`;
         console.error('Failed to parse auth token JSON:', responseText);
         return null;
       }
     }
+    lastAuthError = `HTTP ${response.status}: ${responseText.slice(0, 150)}`;
     console.error(`Message Central Auth Token API failed (status ${response.status}):`, responseText);
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    lastAuthError = `Fetch exception: ${error.message}`;
     console.error('Failed to get Message Central Auth Token:', error);
     return null;
   }
@@ -92,9 +100,13 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; verifi
 
   try {
     let token = await getAuthToken(customerId, key);
+    let authMethod = 'Token Exchange API';
+    let authError = lastAuthError;
+
     if (!token) {
       console.log('Message Central getAuthToken failed. Falling back to using the key directly as authToken.');
       token = key; // Fallback to direct Authorise Token usage
+      authMethod = 'Direct Key Fallback';
     }
 
     const sendUrl = `https://cpaas.messagecentral.com/verification/v2/verification/send?countryCode=${countryCode}&customerId=${customerId}&flowType=SMS&mobileNumber=${cleanPhone}&otpLength=4`;
@@ -117,7 +129,7 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; verifi
       return { 
         success: false, 
         verificationId: '', 
-        error: `HTTP ${response.status} - Invalid JSON response. Raw: ${responseText || '(empty)'}`
+        error: `Send SMS failed (status ${response.status}). Auth method: ${authMethod}. Auth error: ${authError || 'none'}. Raw Response: ${responseText || '(empty)'}`
       };
     }
 
@@ -127,7 +139,11 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; verifi
     }
 
     console.error('Message Central send OTP failed:', data);
-    return { success: false, verificationId: '', error: data.message || `Failed to send SMS OTP (status ${response.status})` };
+    return { 
+      success: false, 
+      verificationId: '', 
+      error: data.message || `Failed to send SMS OTP (status ${response.status}). Method: ${authMethod}. Auth error: ${authError || 'none'}. Response: ${JSON.stringify(data)}` 
+    };
   } catch (error: any) {
     console.error('Message Central sendOtp error:', error);
     return { success: false, verificationId: '', error: error.message || 'SMS Service error' };
@@ -172,9 +188,13 @@ export async function verifyOtp(phone: string, verificationId: string, code: str
 
   try {
     let token = await getAuthToken(customerId, key);
+    let authMethod = 'Token Exchange API';
+    let authError = lastAuthError;
+
     if (!token) {
       console.log('Message Central getAuthToken failed. Falling back to using the key directly as authToken.');
       token = key; // Fallback to direct Authorise Token usage
+      authMethod = 'Direct Key Fallback';
     }
 
     const validateUrl = `https://cpaas.messagecentral.com/verification/v2/verification/validateOtp?countryCode=91&mobileNumber=${cleanPhone}&verificationId=${verificationId}&customerId=${customerId}&code=${code}`;
@@ -196,7 +216,7 @@ export async function verifyOtp(phone: string, verificationId: string, code: str
       console.error('Failed to parse Validate OTP JSON response:', responseText);
       return { 
         success: false, 
-        error: `HTTP ${response.status} - Invalid validation response. Raw: ${responseText || '(empty)'}`
+        error: `Validation failed (status ${response.status}). Auth method: ${authMethod}. Auth error: ${authError || 'none'}. Raw Response: ${responseText || '(empty)'}`
       };
     }
 
@@ -205,7 +225,10 @@ export async function verifyOtp(phone: string, verificationId: string, code: str
     }
 
     console.error('Message Central validation response:', data);
-    return { success: false, error: data.message || `Invalid or incorrect OTP (status ${response.status})` };
+    return { 
+      success: false, 
+      error: data.message || `Invalid or incorrect OTP (status ${response.status}). Method: ${authMethod}. Auth error: ${authError || 'none'}. Response: ${JSON.stringify(data)}` 
+    };
   } catch (error: any) {
     console.error('Message Central verifyOtp error:', error);
     return { success: false, error: error.message || 'SMS verification service error' };
