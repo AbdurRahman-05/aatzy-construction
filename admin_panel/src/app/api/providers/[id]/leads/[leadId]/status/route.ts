@@ -38,6 +38,12 @@ export async function POST(
       },
     });
 
+    // Notify status change asynchronously
+    const { notifyInquiryStatusChange } = require('@/lib/mail');
+    notifyInquiryStatusChange(leadId).catch((err: any) => {
+      console.error('Lead status change email notification error:', err);
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Lead status updated successfully',

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { sendApprovalEmail } from '@/lib/mail';
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -9,6 +10,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const user = await prisma.user.update({
       where: { id },
       data: { isApproved: true },
+    });
+
+    // Send approval email asynchronously
+    sendApprovalEmail(user.email, user.name, 'CONSUMER').catch(err => {
+      console.error('User approval email error:', err);
     });
 
     return NextResponse.json({ message: 'User approved successfully', user });

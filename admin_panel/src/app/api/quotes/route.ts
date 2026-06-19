@@ -20,6 +20,21 @@ export async function POST(request: Request) {
       }
     });
 
+    // Fetch details to send quote proposal notification emails
+    Promise.all([
+      prisma.project.findUnique({ where: { id: projectId }, include: { user: true } }),
+      prisma.provider.findUnique({ where: { id: providerId } }),
+    ]).then(([project, provider]) => {
+      if (project && project.user && provider) {
+        const { sendQuoteNotification } = require('@/lib/mail');
+        sendQuoteNotification(quote, project, project.user, provider).catch((err: any) => {
+          console.error('Quote proposal email error:', err);
+        });
+      }
+    }).catch(err => {
+      console.error('Failed to fetch details for quote notification:', err);
+    });
+
     return NextResponse.json(quote, { status: 201 });
   } catch (error) {
     console.error('Create quote error:', error);

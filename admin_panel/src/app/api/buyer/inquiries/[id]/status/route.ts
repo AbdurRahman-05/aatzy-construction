@@ -54,6 +54,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       },
     });
 
+    // Notify status change asynchronously
+    const { notifyInquiryStatusChange } = require('@/lib/mail');
+    notifyInquiryStatusChange(id).catch((err: any) => {
+      console.error('Inquiry status change email notification error:', err);
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Inquiry status updated successfully',

@@ -26,6 +26,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           where: { id: quote.projectId },
           data: { currentStage: 'Tracking' }
         });
+
+        // Fetch details to send quote acceptance notification emails
+        Promise.all([
+          prisma.project.findUnique({ where: { id: quote.projectId }, include: { user: true } }),
+          prisma.provider.findUnique({ where: { id: quote.providerId } }),
+        ]).then(([project, provider]) => {
+          if (project && project.user && provider) {
+            const { sendQuoteAcceptedNotification } = require('@/lib/mail');
+            sendQuoteAcceptedNotification(updatedQuote, project, project.user, provider).catch((err: any) => {
+              console.error('Quote acceptance notification email error:', err);
+            });
+          }
+        }).catch(err => {
+          console.error('Failed to fetch details for quote acceptance notification:', err);
+        });
       }
     }
 

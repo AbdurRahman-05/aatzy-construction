@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { sendWelcomeEmail } from '@/lib/mail';
+import { sendProviderWelcomeEmail } from '@/lib/mail';
 
 export async function POST(request: Request) {
   try {
@@ -42,8 +42,8 @@ export async function POST(request: Request) {
       },
     });
 
-    // Send welcome email asynchronously
-    sendWelcomeEmail(provider.email, provider.ownerName || provider.businessName, 'PROVIDER').catch(err => {
+    // Send welcome email with details asynchronously
+    sendProviderWelcomeEmail(provider).catch(err => {
       console.error('Welcome email send error:', err);
     });
 

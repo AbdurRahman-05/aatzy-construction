@@ -113,6 +113,21 @@ export async function POST(request: Request) {
       },
     });
 
+    // Fetch buyer and supplier details to send notification emails
+    Promise.all([
+      prisma.user.findUnique({ where: { id: buyerId } }),
+      prisma.provider.findUnique({ where: { id: supplierId } }),
+    ]).then(([buyer, provider]) => {
+      if (buyer && provider) {
+        const { sendInquiryNotification } = require('@/lib/mail');
+        sendInquiryNotification(inquiry, buyer, provider).catch((err: any) => {
+          console.error('Inquiry notification email error:', err);
+        });
+      }
+    }).catch(err => {
+      console.error('Failed to fetch users for inquiry notification:', err);
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Inquiry submitted successfully',
