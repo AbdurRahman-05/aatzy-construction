@@ -67,7 +67,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           await prefs.setString('google_client_id_override', fetchedId);
           
           try {
-            await GoogleSignIn.instance.initialize(clientId: fetchedId);
+            if (kIsWeb) {
+              await GoogleSignIn.instance.initialize(clientId: fetchedId);
+            } else {
+              await GoogleSignIn.instance.initialize(serverClientId: fetchedId);
+            }
           } catch (e) {
             debugPrint('Google Sign-In re-initialization warning: $e');
           }

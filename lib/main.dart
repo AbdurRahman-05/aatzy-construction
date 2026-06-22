@@ -64,7 +64,11 @@ void main() async {
         debugPrint('Google Sign-In Web: No Client ID configured yet.');
       }
     } else {
-      await GoogleSignIn.instance.initialize();
+      if (webClientId.isNotEmpty) {
+        await GoogleSignIn.instance.initialize(serverClientId: webClientId);
+      } else {
+        await GoogleSignIn.instance.initialize();
+      }
     }
   } catch (e) {
     debugPrint('Failed to initialize Google Sign-In: $e');
