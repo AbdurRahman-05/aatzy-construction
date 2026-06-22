@@ -109,7 +109,7 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; verifi
       authMethod = 'Direct Key Fallback';
     }
 
-    const sendUrl = `https://cpaas.messagecentral.com/verification/v2/verification/send?countryCode=${countryCode}&customerId=${customerId}&flowType=SMS&mobileNumber=${cleanPhone}&otpLength=4`;
+    const sendUrl = `https://cpaas.messagecentral.com/verification/v3/send?countryCode=${countryCode}&customerId=${customerId}&flowType=SMS&mobileNumber=${cleanPhone}&otpLength=4`;
     const response = await fetch(sendUrl, {
       method: 'POST',
       headers: {
@@ -133,9 +133,10 @@ export async function sendOtp(phone: string): Promise<{ success: boolean; verifi
       };
     }
 
-    if (response.ok && data.verificationId) {
-      console.log(`Message Central OTP sent to ${phone}. VerificationID: ${data.verificationId}`);
-      return { success: true, verificationId: data.verificationId };
+    const resultId = data.data?.verificationId || data.verificationId;
+    if (response.ok && resultId) {
+      console.log(`Message Central OTP sent to ${phone}. VerificationID: ${resultId}`);
+      return { success: true, verificationId: resultId };
     }
 
     console.error('Message Central send OTP failed:', data);
@@ -197,9 +198,9 @@ export async function verifyOtp(phone: string, verificationId: string, code: str
       authMethod = 'Direct Key Fallback';
     }
 
-    const validateUrl = `https://cpaas.messagecentral.com/verification/v2/verification/validateOtp?countryCode=91&mobileNumber=${cleanPhone}&verificationId=${verificationId}&customerId=${customerId}&code=${code}`;
+    const validateUrl = `https://cpaas.messagecentral.com/verification/v3/validateOtp?countryCode=91&mobileNumber=${cleanPhone}&verificationId=${verificationId}&customerId=${customerId}&code=${code}`;
     const response = await fetch(validateUrl, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'authToken': token,
         'accept': '*/*'
@@ -220,7 +221,15 @@ export async function verifyOtp(phone: string, verificationId: string, code: str
       };
     }
 
-    if (response.ok && data.status === 'VALIDATED') {
+    const isSuccess = response.ok && (
+      data.status === 'VALIDATED' || 
+      data.data?.status === 'VALIDATED' || 
+      data.data?.verificationStatus === 'VERIFICATION_COMPLETED' || 
+      data.responseCode === 200 || 
+      data.data?.responseCode === '200'
+    );
+
+    if (isSuccess) {
       return { success: true };
     }
 
