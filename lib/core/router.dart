@@ -93,7 +93,14 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       GoRoute(
         path: '/provider-register',
-        builder: (context, state) => const ProviderRegistrationStepper(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ProviderRegistrationStepper(
+            isGoogleSignUp: extra?['isGoogleSignUp'] ?? false,
+            email: extra?['email'],
+            ownerName: extra?['ownerName'],
+          );
+        },
       ),
       GoRoute(
         path: '/provider-verification-pending',

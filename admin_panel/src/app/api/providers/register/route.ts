@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { 
       businessName, ownerName, email, password, phone, category, experience,
-      address, bio, aadharCard, panCard, profileCompletion
+      address, bio, aadharCard, panCard, profileCompletion, isGoogleSignUp
     } = body;
 
     if (!email || !password || !businessName || !phone) {
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Provider with this email already exists' }, { status: 400 });
     }
 
-    // Default to false (Admin approval required)
+    // Default to false unless signed up via Google
     const provider = await prisma.provider.create({
       data: {
         businessName,
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         aadharCard: aadharCard || null,
         panCard: panCard || null,
         profileCompletion: profileCompletion ? parseInt(profileCompletion) : 0,
-        isVerified: false, 
+        isVerified: isGoogleSignUp === true || isGoogleSignUp === 'true', 
       },
     });
 
@@ -48,8 +48,15 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ 
-      message: 'Registration successful! Please wait for admin approval.',
-      provider: { id: provider.id, email: provider.email, isVerified: provider.isVerified }
+      message: 'Registration successful!',
+      provider: { 
+        id: provider.id, 
+        businessName: provider.businessName, 
+        ownerName: provider.ownerName, 
+        email: provider.email, 
+        gstNumber: provider.gstNumber,
+        isVerified: provider.isVerified 
+      }
     }, { status: 201 });
     
   } catch (error) {

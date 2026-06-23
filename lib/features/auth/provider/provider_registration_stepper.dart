@@ -3,16 +3,27 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
+import '../auth_provider.dart';
 
-class ProviderRegistrationStepper extends StatefulWidget {
-  const ProviderRegistrationStepper({super.key});
+class ProviderRegistrationStepper extends ConsumerStatefulWidget {
+  final bool isGoogleSignUp;
+  final String? email;
+  final String? ownerName;
+
+  const ProviderRegistrationStepper({
+    super.key,
+    this.isGoogleSignUp = false,
+    this.email,
+    this.ownerName,
+  });
 
   @override
-  State<ProviderRegistrationStepper> createState() => _ProviderRegistrationStepperState();
+  ConsumerState<ProviderRegistrationStepper> createState() => _ProviderRegistrationStepperState();
 }
 
-class _ProviderRegistrationStepperState extends State<ProviderRegistrationStepper> {
+class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrationStepper> {
   int _currentStep = 0;
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
@@ -37,6 +48,17 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
   String? _aadharBase64;
   String? _panBase64;
   String? _portfolioBase64;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isGoogleSignUp) {
+      _emailController.text = widget.email ?? '';
+      _ownerNameController.text = widget.ownerName ?? '';
+      _passwordController.text = 'google_oauth_placeholder_${DateTime.now().millisecondsSinceEpoch}';
+      _currentStep = 2;
+    }
+  }
 
   Future<void> _pickImage(String type) async {
     try {
@@ -110,7 +132,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         body: jsonEncode({'phone': phone}),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 200) {
         setState(() {
@@ -160,7 +182,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 200) {
         setState(() {
@@ -190,11 +212,12 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final businessName = _businessNameController.text.trim();
+    final phone = _phoneController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || businessName.isEmpty) {
+    if (email.isEmpty || password.isEmpty || businessName.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in Email, Password, and Business Name before submitting.'),
+          content: Text('Please fill in Email, Password, Phone, and Business Name before submitting.'),
           backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
         ),
@@ -207,7 +230,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
     try {
       final payload = {
         'ownerName': _ownerNameController.text.trim(),
-        'phone': _phoneController.text.trim(),
+        'phone': phone,
         'email': email,
         'password': password,
         'businessName': businessName,
@@ -221,6 +244,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         'profileCompletion': ((_currentStep + 1) / 6 * 100).toInt(),
         'verificationId': _verificationId,
         'otpCode': _otpController.text.trim(),
+        'isGoogleSignUp': widget.isGoogleSignUp,
       };
 
       debugPrint('Submitting registration for: $email');
@@ -234,14 +258,19 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
       debugPrint('Response status: ${response.statusCode}');
       debugPrint('Response body: ${response.body}');
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 201) {
         if (!mounted) return;
-        context.go('/provider-verification-pending', extra: {
-          'email': email,
-          'password': password,
-        });
+        if (widget.isGoogleSignUp) {
+          ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+          context.go('/provider-home');
+        } else {
+          context.go('/provider-verification-pending', extra: {
+            'email': email,
+            'password': password,
+          });
+        }
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -601,6 +630,14 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 24),
+            if (widget.isGoogleSignUp) ...[
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: _buildInputDecoration(label: 'Phone Number', prefixIcon: Icons.phone_outlined),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextFormField(
               controller: _businessNameController,
               decoration: _buildInputDecoration(label: 'Business Name', prefixIcon: Icons.business_outlined),
@@ -725,7 +762,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
       ),
       child: Row(
         children: [
-          if (_currentStep > 0) ...[
+          if (_currentStep > (widget.isGoogleSignUp ? 2 : 0)) ...[
             Expanded(
               child: OutlinedButton(
                 onPressed: () {
@@ -793,7 +830,7 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
-            if (_currentStep > 0) {
+            if (_currentStep > (widget.isGoogleSignUp ? 2 : 0)) {
               setState(() => _currentStep -= 1);
             } else {
               context.pop();
@@ -829,5 +866,16 @@ class _ProviderRegistrationStepperState extends State<ProviderRegistrationSteppe
             ],
           ),
     );
+  }
+
+  dynamic _parseResponse(http.Response response) {
+    if (response.body.isEmpty) {
+      throw Exception("Server returned empty response (Status: ${response.statusCode}). Please make sure your Next.js backend server is running.");
+    }
+    try {
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception("Invalid server response format (Status: ${response.statusCode}).");
+    }
   }
 }

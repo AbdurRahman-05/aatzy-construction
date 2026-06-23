@@ -19,7 +19,11 @@ void main() async {
   final overrideUrl = prefs.getString('api_base_url_override');
 
   if (overrideUrl != null && overrideUrl.isNotEmpty) {
-    apiBaseUrl = overrideUrl;
+    String sanitized = overrideUrl.trim();
+    while (sanitized.endsWith('/')) {
+      sanitized = sanitized.substring(0, sanitized.length - 1);
+    }
+    apiBaseUrl = sanitized;
   } else {
     // Dynamically configure API URL based on physical vs emulator device
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {

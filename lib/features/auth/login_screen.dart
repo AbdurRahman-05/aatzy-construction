@@ -98,20 +98,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         throw Exception("Failed to retrieve Google ID Token.");
       }
 
+      final url = isProvider 
+          ? '$apiBaseUrl/providers/google-login' 
+          : '$apiBaseUrl/users/google-login';
+
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/users/google-login'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'idToken': idToken,
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 200) {
         if (!mounted) return;
-        ref.read(authProvider.notifier).login(data['user'], 'CONSUMER');
-        context.go('/');
+        if (isProvider) {
+          if (data['exists'] == true) {
+            ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+            context.go('/provider-home');
+          } else {
+            // New provider sign-up via Google: navigate to stepper
+            context.push('/provider-register', extra: {
+              'isGoogleSignUp': true,
+              'email': data['email'],
+              'ownerName': data['name'],
+            });
+          }
+        } else {
+          ref.read(authProvider.notifier).login(data['user'], 'CONSUMER');
+          context.go('/');
+        }
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -204,7 +222,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               }),
                             );
 
-                            final data = jsonDecode(response.body);
+                            final data = _parseResponse(response);
 
                             if (response.statusCode == 200) {
                               if (!mounted) return;
@@ -260,7 +278,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 200) {
         if (data['requiresOtp'] == true) {
@@ -313,7 +331,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 200) {
         if (data['requiresOtp'] == true) {
@@ -656,5 +674,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  dynamic _parseResponse(http.Response response) {
+    if (response.body.isEmpty) {
+      throw Exception("Server returned empty response (Status: ${response.statusCode}). Please make sure your Next.js backend server is running.");
+    }
+    try {
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception("Invalid server response format (Status: ${response.statusCode}).");
+    }
   }
 }

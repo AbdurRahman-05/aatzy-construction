@@ -33,7 +33,7 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 200) {
         if (!mounted) return;
@@ -119,5 +119,16 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
         ),
       ),
     );
+  }
+
+  dynamic _parseResponse(http.Response response) {
+    if (response.body.isEmpty) {
+      throw Exception("Server returned empty response (Status: ${response.statusCode}). Please make sure your Next.js backend server is running.");
+    }
+    try {
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception("Invalid server response format (Status: ${response.statusCode}).");
+    }
   }
 }

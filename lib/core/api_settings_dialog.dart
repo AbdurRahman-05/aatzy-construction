@@ -56,9 +56,14 @@ class _ApiSettingsDialogState extends State<ApiSettingsDialog> {
       return;
     }
 
+    String sanitizedUrl = testUrl;
+    while (sanitizedUrl.endsWith('/')) {
+      sanitizedUrl = sanitizedUrl.substring(0, sanitizedUrl.length - 1);
+    }
+
     try {
       // Test endpoint using a quick GET request with 3 second timeout
-      final uri = Uri.parse(testUrl.endsWith('/api') ? '$testUrl/social/feed' : '$testUrl/api/social/feed');
+      final uri = Uri.parse(sanitizedUrl.endsWith('/api') ? '$sanitizedUrl/social/feed' : '$sanitizedUrl/api/social/feed');
       final response = await http.get(uri).timeout(const Duration(seconds: 3));
       
       if (mounted) {
@@ -83,14 +88,19 @@ class _ApiSettingsDialogState extends State<ApiSettingsDialog> {
     final newUrl = _urlController.text.trim();
     if (newUrl.isEmpty) return;
 
+    String sanitized = newUrl;
+    while (sanitized.endsWith('/')) {
+      sanitized = sanitized.substring(0, sanitized.length - 1);
+    }
+
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('api_base_url_override', newUrl);
-    apiBaseUrl = newUrl;
+    await prefs.setString('api_base_url_override', sanitized);
+    apiBaseUrl = sanitized;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('API URL updated to: $newUrl'),
+          content: Text('API URL updated to: $sanitized'),
           backgroundColor: Colors.green,
         ),
       );

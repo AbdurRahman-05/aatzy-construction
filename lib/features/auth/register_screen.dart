@@ -41,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         body: jsonEncode({'phone': phone}),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 200) {
         setState(() {
@@ -95,7 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }),
       );
 
-      final data = jsonDecode(response.body);
+      final data = _parseResponse(response);
 
       if (response.statusCode == 201) {
         if (!mounted) return;
@@ -244,5 +244,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+  }
+
+  dynamic _parseResponse(http.Response response) {
+    if (response.body.isEmpty) {
+      throw Exception("Server returned empty response (Status: ${response.statusCode}). Please make sure your Next.js backend server is running.");
+    }
+    try {
+      return jsonDecode(response.body);
+    } catch (e) {
+      throw Exception("Invalid server response format (Status: ${response.statusCode}).");
+    }
   }
 }
