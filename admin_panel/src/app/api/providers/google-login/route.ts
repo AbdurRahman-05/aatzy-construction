@@ -59,12 +59,11 @@ export async function POST(request: Request) {
     });
 
     if (provider) {
-      // Auto-verify provider signed in via Google to bypass admin approval permission
       if (!provider.isVerified) {
-        provider = await prisma.provider.update({
-          where: { email },
-          data: { isVerified: true },
-        });
+        return NextResponse.json({ 
+          error: 'Approval Pending', 
+          message: 'Your provider account is currently under review by an admin. Please wait for approval before logging in.'
+        }, { status: 403 });
       }
 
       return NextResponse.json({

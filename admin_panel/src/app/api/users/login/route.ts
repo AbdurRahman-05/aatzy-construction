@@ -19,6 +19,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
+    if (!user.isApproved) {
+      return NextResponse.json({ 
+        error: 'Approval Pending', 
+        message: 'Your account is currently under review by an admin. Please wait for approval before logging in.'
+      }, { status: 403 });
+    }
+
     return NextResponse.json({ 
       message: 'Login successful',
       user: { id: user.id, name: user.name, email: user.email, role: user.role }

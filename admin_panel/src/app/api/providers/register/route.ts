@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Provider with this email already exists' }, { status: 400 });
     }
 
-    // Default to false unless signed up via Google
+    // Default to false (Admin approval required)
     const provider = await prisma.provider.create({
       data: {
         businessName,
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         aadharCard: aadharCard || null,
         panCard: panCard || null,
         profileCompletion: profileCompletion ? parseInt(profileCompletion) : 0,
-        isVerified: isGoogleSignUp === true || isGoogleSignUp === 'true', 
+        isVerified: false, 
       },
     });
 

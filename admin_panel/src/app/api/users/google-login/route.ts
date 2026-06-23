@@ -67,7 +67,7 @@ export async function POST(request: Request) {
           name: name || email.split('@')[0],
           password: `google_oauth_placeholder_${Math.random().toString(36).substring(7)}`,
           role: 'CONSUMER',
-          isApproved: true,
+          isApproved: false,
         },
       });
 
@@ -76,6 +76,13 @@ export async function POST(request: Request) {
       sendWelcomeEmail(user.email, user.name, user.role).catch((err: any) => {
         console.error('Welcome email send error (Google login):', err);
       });
+    }
+
+    if (!user.isApproved) {
+      return NextResponse.json({ 
+        error: 'Approval Pending', 
+        message: 'Your account is currently under review by an admin. Please wait for approval before logging in.'
+      }, { status: 403 });
     }
 
     return NextResponse.json({

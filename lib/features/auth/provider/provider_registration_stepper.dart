@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
-import '../auth_provider.dart';
 
 class ProviderRegistrationStepper extends ConsumerStatefulWidget {
   final bool isGoogleSignUp;
@@ -262,15 +261,10 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
 
       if (response.statusCode == 201) {
         if (!mounted) return;
-        if (widget.isGoogleSignUp) {
-          ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
-          context.go('/provider-home');
-        } else {
-          context.go('/provider-verification-pending', extra: {
-            'email': email,
-            'password': password,
-          });
-        }
+        context.go('/provider-verification-pending', extra: {
+          'email': email,
+          'password': password,
+        });
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
