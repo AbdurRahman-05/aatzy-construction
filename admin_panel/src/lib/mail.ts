@@ -5,7 +5,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com',
-    pass: process.env.SMTP_PASS || 'aatz ytec hnol ogie s123', 
+    pass: process.env.SMTP_PASS || 'aatz ytec hnol ogie s123',
   },
 });
 
@@ -127,7 +127,7 @@ const getBaseTemplate = (title: string, bodyContent: string) => `
       </div>
       <div class="footer">
         <p>© ${new Date().getFullYear()} BuildConnect. All rights reserved.</p>
-        <p style="margin-top: 4px;">Bangalore, Karnataka, India</p>
+        <p style="margin-top: 4px;">Madurai,Tamilnadu,India</p>
       </div>
     </div>
   </body>
@@ -145,9 +145,9 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, role: 
     
     <div class="highlight-box">
       <p>
-        ${isProvider 
-          ? 'Your registration is currently under review by our admin team. We will verify your credentials and approve your dashboard shortly.' 
-          : 'You can now start managing your construction projects, requesting material quotes, and tracking work logs with real-time updates.'}
+        ${isProvider
+      ? 'Your registration is currently under review by our admin team. We will verify your credentials and approve your dashboard shortly.'
+      : 'You can now start managing your construction projects, requesting material quotes, and tracking work logs with real-time updates.'}
       </p>
     </div>
 
@@ -250,9 +250,9 @@ export async function sendApprovalEmail(toEmail: string, name: string, role: str
     
     <div class="highlight-box">
       <p>
-        ${isProvider 
-          ? 'Your profile is now verified and active in our Provider Directory. You will now receive project leads and inquiry bidding requests from clients.' 
-          : 'Your account is active. You can now build, track, and manage your construction projects.'}
+        ${isProvider
+      ? 'Your profile is now verified and active in our Provider Directory. You will now receive project leads and inquiry bidding requests from clients.'
+      : 'Your account is active. You can now build, track, and manage your construction projects.'}
       </p>
     </div>
 
