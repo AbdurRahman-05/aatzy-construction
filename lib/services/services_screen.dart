@@ -28,6 +28,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     {'name': 'Engineering (MEP)', 'icon': Icons.engineering},
     {'name': 'Materials & Supply', 'icon': Icons.inventory},
     {'name': 'Utilities', 'icon': Icons.power},
+    {'name': 'Borewell', 'icon': Icons.water_drop},
     {'name': 'Interiors & Finishing', 'icon': Icons.format_paint},
     {'name': 'Project Management', 'icon': Icons.assignment},
     {'name': 'Inspection & Compliance', 'icon': Icons.fact_check},

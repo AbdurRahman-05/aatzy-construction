@@ -139,6 +139,18 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           'duration': 5,
         });
       }
+      if (service.contains('borewell')) {
+        templateTasks.add({
+          'stage': 'Borewell',
+          'title': 'Borewell Drilling & Casing Pipe Installation',
+          'duration': 3,
+        });
+        templateTasks.add({
+          'stage': 'Borewell',
+          'title': 'Submersible Pump Installation & Testing',
+          'duration': 2,
+        });
+      }
       if (service.contains('structure') || service.contains('civil') || service.contains('foundation')) {
         templateTasks.add({
           'stage': 'Structure & Civil',

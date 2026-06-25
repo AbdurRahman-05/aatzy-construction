@@ -28,6 +28,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   final List<String> _categories = [
     'Land & Legal', 'Finance & Approvals', 'Survey & Analysis', 'Design & Planning',
     'Construction', 'Engineering (MEP)', 'Materials & Supply', 'Utilities',
+    'Borewell',
     'Interiors & Finishing', 'Project Management', 'Inspection & Compliance',
     'Smart & Security', 'Logistics & Equipment', 'Insurance'
   ];
@@ -111,6 +112,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       case 'Engineering (MEP)': return Icons.engineering_rounded;
       case 'Materials & Supply': return Icons.precision_manufacturing_rounded;
       case 'Utilities': return Icons.plumbing_rounded;
+      case 'Borewell': return Icons.water_drop_rounded;
       case 'Interiors & Finishing': return Icons.format_paint_rounded;
       case 'Project Management': return Icons.business_center_rounded;
       case 'Inspection & Compliance': return Icons.verified_rounded;

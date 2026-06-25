@@ -35,6 +35,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
   final List<String> _categories = const [
     'Land & Legal', 'Finance & Approvals', 'Survey & Analysis', 'Design & Planning',
     'Construction', 'Engineering (MEP)', 'Materials & Supply', 'Utilities',
+    'Borewell',
     'Interiors & Finishing', 'Project Management', 'Inspection & Compliance',
     'Smart & Security', 'Logistics & Equipment', 'Insurance'
   ];
