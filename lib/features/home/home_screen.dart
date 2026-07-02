@@ -1170,7 +1170,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             _buildPremiumToolCard(
               context,
-              title: 'B2B Marketplace',
+              title: 'Material Sourcing',
               subtitle: 'Direct builders wholesale pricing',
               icon: Icons.storefront_outlined,
               color: Colors.blueAccent,

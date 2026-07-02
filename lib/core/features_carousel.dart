@@ -10,22 +10,87 @@ class AppFeaturesCarousel extends StatefulWidget {
 }
 
 class _AppFeaturesCarouselState extends State<AppFeaturesCarousel> {
-  final PageController _pageController = PageController(viewportFraction: 0.9);
+  late final PageController _pageController;
   int _currentPage = 0;
   Timer? _timer;
+
+  List<Map<String, dynamic>> get _items => widget.isProvider
+      ? const [
+          {
+            'title': 'Verified Client Leads',
+            'desc': 'Get instant access to high-intent customer project leads in your region.',
+            'icon': Icons.flash_on_rounded,
+            'gradient': [Color(0xFF0F9B8E), Color(0xFF0E5E6F)],
+            'badge': 'LEAD GENERATION',
+          },
+          {
+            'title': 'Smart Cost Estimator',
+            'desc': 'Calculate precise foundation, structure, and labor costs in seconds.',
+            'icon': Icons.calculate_rounded,
+            'gradient': [Color(0xFF064354), Color(0xFF0B7C8E)],
+            'badge': 'PRO TOOLS',
+          },
+          {
+            'title': 'Showcase Portfolio',
+            'desc': 'Promote your completed sites and stand out to premium clients.',
+            'icon': Icons.photo_library_rounded,
+            'gradient': [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+            'badge': 'PORTFOLIO',
+          },
+          {
+            'title': 'Material Sourcing Sales',
+            'desc': 'List materials on BuildMart and secure bulk wholesale orders directly.',
+            'icon': Icons.storefront_rounded,
+            'gradient': [Color(0xFFF39C12), Color(0xFFD35400)],
+            'badge': 'B2B MERCHANT',
+          },
+        ]
+      : const [
+          {
+            'title': 'Premium Quote Comparison',
+            'desc': 'Compare contractor quotes side-by-side with full transparency.',
+            'icon': Icons.compare_arrows_rounded,
+            'gradient': [Color(0xFF064354), Color(0xFF0B7C8E)],
+            'badge': 'SMART CHOICE',
+          },
+          {
+            'title': 'Milestone-Based Escrow',
+            'desc': 'Your funds are secure. Payments are released only when milestones are met.',
+            'icon': Icons.security_rounded,
+            'gradient': [Color(0xFF0F9B8E), Color(0xFF0E5E6F)],
+            'badge': 'SECURE PAY',
+          },
+          {
+            'title': 'Material Sourcing',
+            'desc': 'Purchase high-grade construction materials at bulk wholesale prices.',
+            'icon': Icons.shopping_bag_rounded,
+            'gradient': [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+            'badge': 'WHOLESALE',
+          },
+          {
+            'title': 'Vetted Local Builders',
+            'desc': 'Connect directly with certified, licensed, and top-rated local contractors.',
+            'icon': Icons.verified_user_rounded,
+            'gradient': [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+            'badge': 'VERIFIED ONLY',
+          },
+        ];
 
   @override
   void initState() {
     super.initState();
-    // Auto-scroll every 4 seconds
+    final int itemsLength = _items.length;
+    // Start at a large index that is a multiple of itemsLength for seamless wrapping
+    final int initialPage = 5000 - (5000 % itemsLength);
+    _pageController = PageController(
+      initialPage: initialPage,
+      viewportFraction: 0.9,
+    );
+
+    // Auto-scroll every 4 seconds forward
     _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_pageController.hasClients) {
-        int nextPage = _currentPage + 1;
-        if (nextPage >= 4) {
-          nextPage = 0;
-        }
-        _pageController.animateToPage(
-          nextPage,
+        _pageController.nextPage(
           duration: const Duration(milliseconds: 600),
           curve: Curves.easeInOutCubic,
         );
@@ -43,69 +108,7 @@ class _AppFeaturesCarouselState extends State<AppFeaturesCarousel> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    // Define the features/benefits
-    final List<Map<String, dynamic>> items = widget.isProvider
-        ? [
-            {
-              'title': 'Verified Client Leads',
-              'desc': 'Get instant access to high-intent customer project leads in your region.',
-              'icon': Icons.flash_on_rounded,
-              'gradient': [const Color(0xFF0F9B8E), const Color(0xFF0E5E6F)],
-              'badge': 'LEAD GENERATION',
-            },
-            {
-              'title': 'Smart Cost Estimator',
-              'desc': 'Calculate precise foundation, structure, and labor costs in seconds.',
-              'icon': Icons.calculate_rounded,
-              'gradient': [const Color(0xFF064354), const Color(0xFF0B7C8E)],
-              'badge': 'PRO TOOLS',
-            },
-            {
-              'title': 'Showcase Portfolio',
-              'desc': 'Promote your completed sites and stand out to premium clients.',
-              'icon': Icons.photo_library_rounded,
-              'gradient': [const Color(0xFF8E2DE2), const Color(0xFF4A00E0)],
-              'badge': 'PORTFOLIO',
-            },
-            {
-              'title': 'B2B Marketplace Sales',
-              'desc': 'List materials on BuildMart and secure bulk wholesale orders directly.',
-              'icon': Icons.storefront_rounded,
-              'gradient': [const Color(0xFFF39C12), const Color(0xFFD35400)],
-              'badge': 'B2B MERCHANT',
-            },
-          ]
-        : [
-            {
-              'title': 'Premium Quote Comparison',
-              'desc': 'Compare contractor quotes side-by-side with full transparency.',
-              'icon': Icons.compare_arrows_rounded,
-              'gradient': [const Color(0xFF064354), const Color(0xFF0B7C8E)],
-              'badge': 'SMART CHOICE',
-            },
-            {
-              'title': 'Milestone-Based Escrow',
-              'desc': 'Your funds are secure. Payments are released only when milestones are met.',
-              'icon': Icons.security_rounded,
-              'gradient': [const Color(0xFF0F9B8E), const Color(0xFF0E5E6F)],
-              'badge': 'SECURE PAY',
-            },
-            {
-              'title': 'BuildMart B2B Marketplace',
-              'desc': 'Purchase high-grade construction materials at bulk wholesale prices.',
-              'icon': Icons.shopping_bag_rounded,
-              'gradient': [const Color(0xFF8E2DE2), const Color(0xFF4A00E0)],
-              'badge': 'WHOLESALE',
-            },
-            {
-              'title': 'Vetted Local Builders',
-              'desc': 'Connect directly with certified, licensed, and top-rated local contractors.',
-              'icon': Icons.verified_user_rounded,
-              'gradient': [const Color(0xFF2E7D32), const Color(0xFF1B5E20)],
-              'badge': 'VERIFIED ONLY',
-            },
-          ];
+    final items = _items;
 
     return Column(
       children: [
@@ -115,12 +118,12 @@ class _AppFeaturesCarouselState extends State<AppFeaturesCarousel> {
             controller: _pageController,
             onPageChanged: (int page) {
               setState(() {
-                _currentPage = page;
+                _currentPage = page % items.length;
               });
             },
-            itemCount: items.length,
+            itemCount: 10000,
             itemBuilder: (context, index) {
-              final item = items[index];
+              final item = items[index % items.length];
               return AnimatedBuilder(
                 animation: _pageController,
                 builder: (context, child) {

@@ -20,6 +20,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
 
   final List<Map<String, dynamic>> categories = const [
+    // --- Original Categories ---
     {'name': 'Land & Legal', 'icon': Icons.landscape},
     {'name': 'Finance & Approvals', 'icon': Icons.account_balance},
     {'name': 'Survey & Analysis', 'icon': Icons.map},
@@ -35,6 +36,57 @@ class _ServicesScreenState extends State<ServicesScreen> {
     {'name': 'Smart & Security', 'icon': Icons.security},
     {'name': 'Logistics & Equipment', 'icon': Icons.local_shipping},
     {'name': 'Insurance', 'icon': Icons.shield},
+
+    // --- Construction Services (from reference) ---
+    {'name': 'Blacksmith', 'icon': Icons.hardware},
+    {'name': 'Bricklayer/Stonemason', 'icon': Icons.view_module},
+    {'name': 'Builder/General Contractor', 'icon': Icons.apartment},
+    {'name': 'Cabinet Maker', 'icon': Icons.kitchen},
+    {'name': 'Carpenter', 'icon': Icons.carpenter},
+    {'name': 'Cement / Concrete', 'icon': Icons.foundation},
+    {'name': 'Commercial Builder', 'icon': Icons.domain},
+    {'name': 'Construction (Other)', 'icon': Icons.build_circle},
+    {'name': 'Construction Project Management', 'icon': Icons.assignment_turned_in},
+    {'name': 'Counter Top', 'icon': Icons.countertops},
+    {'name': 'Demolition Contractor', 'icon': Icons.delete_sweep},
+    {'name': 'Drainage', 'icon': Icons.water_damage},
+    {'name': 'Drywall', 'icon': Icons.grid_on},
+    {'name': 'Electrical Contractor', 'icon': Icons.electrical_services},
+    {'name': 'Electrician - Commercial', 'icon': Icons.bolt},
+    {'name': 'Elevator', 'icon': Icons.elevator},
+    {'name': 'Energy Services', 'icon': Icons.energy_savings_leaf},
+    {'name': 'Environmental Services', 'icon': Icons.eco},
+    {'name': 'Fences', 'icon': Icons.fence},
+    {'name': 'Fireplace & Oven Builder', 'icon': Icons.fireplace},
+    {'name': 'Flooring', 'icon': Icons.layers},
+    {'name': 'Garage Doors', 'icon': Icons.garage},
+    {'name': 'Glass', 'icon': Icons.window},
+    {'name': 'Ground Work', 'icon': Icons.terrain},
+    {'name': 'Handyman', 'icon': Icons.handyman},
+    {'name': 'Heating Engineer', 'icon': Icons.thermostat},
+    {'name': 'HVAC - Heating & Air', 'icon': Icons.hvac},
+    {'name': 'Interior Design - Commercial', 'icon': Icons.business_center},
+    {'name': 'Interior Design - Residential', 'icon': Icons.chair},
+    {'name': 'Kitchen Construction', 'icon': Icons.soup_kitchen},
+    {'name': 'Metal Work', 'icon': Icons.precision_manufacturing},
+    {'name': 'Painter', 'icon': Icons.format_paint_outlined},
+    {'name': 'Pest Control', 'icon': Icons.pest_control},
+    {'name': 'Plasterer', 'icon': Icons.imagesearch_roller},
+    {'name': 'Plumbing', 'icon': Icons.plumbing},
+    {'name': 'Pools, Spas & Saunas', 'icon': Icons.pool},
+    {'name': 'Power Generator', 'icon': Icons.power},
+    {'name': 'Power Washing', 'icon': Icons.cleaning_services},
+    {'name': 'Protective Coatings/Sealants', 'icon': Icons.format_color_fill},
+    {'name': 'Renovations/Remodeling', 'icon': Icons.home_repair_service},
+    {'name': 'Restoration', 'icon': Icons.restore},
+    {'name': 'Roofing & Gutters', 'icon': Icons.roofing},
+    {'name': 'Septic Systems', 'icon': Icons.water},
+    {'name': 'Shutters & Awnings', 'icon': Icons.blinds},
+    {'name': 'Solar', 'icon': Icons.solar_power},
+    {'name': 'Tile Worker', 'icon': Icons.grid_view},
+    {'name': 'Waterproofing-Weatherproofing', 'icon': Icons.umbrella},
+    {'name': 'Window Treatments', 'icon': Icons.curtains},
+    {'name': 'Windows & Doors', 'icon': Icons.door_sliding},
   ];
 
   @override
@@ -79,6 +131,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -114,7 +169,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: _selectedTab == 0 ? Colors.blue : Colors.transparent,
+                        color: _selectedTab == 0 ? primaryColor : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -147,7 +202,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: _selectedTab == 1 ? Colors.blue : Colors.transparent,
+                        color: _selectedTab == 1 ? primaryColor : Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -189,10 +244,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.1,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        crossAxisCount: 3,
+        childAspectRatio: 0.85,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -205,12 +260,17 @@ class _ServicesScreenState extends State<ServicesScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(cat['icon'] as IconData, size: 40, color: Colors.blue),
-                const SizedBox(height: 12),
-                Text(
-                  cat['name'] as String,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+                Icon(cat['icon'] as IconData, size: 32, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    cat['name'] as String,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
@@ -280,9 +340,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       );
                     },
                     child: Row(
-                      children: const [
-                        Text('View All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue)),
-                        Icon(Icons.chevron_right, size: 16, color: Colors.blue),
+                      children: [
+                        Text('View All', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).colorScheme.primary)),
+                        Icon(Icons.chevron_right, size: 16, color: Theme.of(context).colorScheme.primary),
                       ],
                     ),
                   ),
@@ -354,10 +414,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundColor: Colors.blue.shade100,
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       child: Text(
                         businessName.substring(0, 1).toUpperCase(),
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue.shade800),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
                       ),
                     ),
                     const SizedBox(width: 6),
