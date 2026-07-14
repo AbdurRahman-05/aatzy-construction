@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/api_settings_dialog.dart';
 import '../../core/theme.dart';
 import 'auth_provider.dart';
 
@@ -217,11 +216,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                       Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.wifi_tethering, color: Colors.white70),
-                            tooltip: 'Network Settings',
-                            onPressed: () => showApiSettingsDialog(context),
-                          ),
                           if (_currentIndex < 3)
                             TextButton(
                               onPressed: () {
