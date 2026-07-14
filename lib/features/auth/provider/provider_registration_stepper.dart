@@ -512,7 +512,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
             TextFormField(
               controller: _passwordController,
               obscureText: true,
-              decoration: _buildInputDecoration(label: 'Password', prefixIcon: Icons.lock_outline_rounded),
+              decoration: _buildInputDecoration(label: 'Create Password', prefixIcon: Icons.lock_outline_rounded),
             ),
           ],
         );

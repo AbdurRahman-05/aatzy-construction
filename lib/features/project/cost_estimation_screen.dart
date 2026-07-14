@@ -12,11 +12,12 @@ class CostEstimationScreen extends StatefulWidget {
 
 class _CostEstimationScreenState extends State<CostEstimationScreen> {
   // Input States
-  String _buildingType = 'House'; // House, Apartment, Villa, Office, Commercial, Warehouse
+  String _buildingType = 'House'; // House, Apartment, Villa, Office, Commercial, Warehouse, Renovation
   String _selectedBhk = '2 BHK'; // 1 BHK, 2 BHK, 3 BHK, 4 BHK, Custom (for residential)
   String _selectedLayout = 'Standard Corporate'; // for Office
   String _selectedWarehouseLayout = 'Standard Storage'; // for Warehouse
   String _selectedCommercialLayout = 'Retail Showroom'; // for Commercial
+  String _selectedRenovationLayout = 'Full Home Remodeling'; // for Renovation
   double _area = 1000;
   String _quality = 'Standard'; // Basic, Standard, Premium, Ultra Premium
   
@@ -61,6 +62,8 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         return 2500;
       case 'Warehouse':
         return 1100;
+      case 'Renovation':
+        return 1000;
       case 'House':
       default:
         return 1500;
@@ -90,6 +93,8 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
       return _selectedLayout;
     } else if (_buildingType == 'Warehouse') {
       return _selectedWarehouseLayout;
+    } else if (_buildingType == 'Renovation') {
+      return _selectedRenovationLayout;
     } else {
       return _selectedCommercialLayout;
     }
@@ -258,6 +263,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
       {'name': 'Office', 'icon': Icons.business_rounded, 'desc': 'Corporate workspaces & cabins'},
       {'name': 'Commercial', 'icon': Icons.storefront_rounded, 'desc': 'Retail stores, showrooms, malls'},
       {'name': 'Warehouse', 'icon': Icons.warehouse_rounded, 'desc': 'Storage & industrial sheds'},
+      {'name': 'Renovation', 'icon': Icons.construction_rounded, 'desc': 'Remodeling & structural upgrades'},
     ];
 
     return GridView.builder(
@@ -301,6 +307,8 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                   _selectedLayout = 'Standard Corporate';
                 } else if (_buildingType == 'Warehouse') {
                   _selectedWarehouseLayout = 'Standard Storage';
+                } else if (_buildingType == 'Renovation') {
+                  _selectedRenovationLayout = 'Full Home Remodeling';
                 } else {
                   _selectedCommercialLayout = 'Retail Showroom';
                 }
@@ -373,6 +381,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
       options = ['Standard Storage', 'Cold Storage Facility', 'Fulfillment Hub', 'Industrial Factory'];
       selected = _selectedWarehouseLayout;
       onSelected = (val) => setState(() => _selectedWarehouseLayout = val);
+    } else if (_buildingType == 'Renovation') {
+      options = ['Full Home Remodeling', 'Kitchen & Bath Upgrade', 'Structural Repairs', 'Interior Renovation'];
+      selected = _selectedRenovationLayout;
+      onSelected = (val) => setState(() => _selectedRenovationLayout = val);
     } else {
       options = ['Retail Showroom', 'Mixed Use Center', 'Strip Mall', 'Departmental Store'];
       selected = _selectedCommercialLayout;
@@ -1216,6 +1228,41 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             'Restrooms & Locker Rooms': 0.04,
           };
       }
+    } else if (buildingType == 'Renovation') {
+      switch (config) {
+        case 'Full Home Remodeling':
+          allocation = {
+            'Living Area Remodel': 0.35,
+            'Bedrooms Remodel': 0.25,
+            'Kitchen Remodel': 0.20,
+            'Bathrooms Remodel': 0.12,
+            'Balcony / Deck': 0.08,
+          };
+          break;
+        case 'Kitchen & Bath Upgrade':
+          allocation = {
+            'Kitchen Cabinetry & Counter': 0.40,
+            'Bathroom Tiling & Fixtures': 0.30,
+            'Plumbing Upgrades': 0.15,
+            'Electrical & Lighting': 0.15,
+          };
+          break;
+        case 'Structural Repairs':
+          allocation = {
+            'Wall & Column Reinforcement': 0.45,
+            'Waterproofing & Grouting': 0.25,
+            'Plastering & Masonry': 0.20,
+            'Debris Clearance': 0.10,
+          };
+          break;
+        default: // Interior Renovation
+          allocation = {
+            'False Ceiling & Lighting': 0.30,
+            'Wall Painting & Wallpaper': 0.25,
+            'Modular Furniture & Carpentry': 0.35,
+            'Flooring Polish/Overlay': 0.10,
+          };
+      }
     } else { // Commercial Building
       switch (config) {
         case 'Retail Showroom':
@@ -1282,6 +1329,16 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         return Icons.precision_manufacturing_rounded;
       } else if (lower.contains('shop') || lower.contains('retail') || lower.contains('showroom') || lower.contains('display')) {
         return Icons.storefront_rounded;
+      } else if (lower.contains('cabinet') || lower.contains('furniture') || lower.contains('carpentry')) {
+        return Icons.chair_rounded;
+      } else if (lower.contains('ceiling') || lower.contains('wall') || lower.contains('plastering') || lower.contains('painting') || lower.contains('masonry')) {
+        return Icons.format_paint_rounded;
+      } else if (lower.contains('plumbing') || lower.contains('waterproofing')) {
+        return Icons.plumbing_rounded;
+      } else if (lower.contains('electrical') || lower.contains('lighting')) {
+        return Icons.electrical_services_rounded;
+      } else if (lower.contains('clearance') || lower.contains('debris')) {
+        return Icons.delete_outline_rounded;
       }
       return Icons.space_dashboard_rounded;
     }

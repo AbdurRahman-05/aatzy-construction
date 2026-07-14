@@ -10,6 +10,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             email: true,
           }
@@ -18,8 +19,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
           include: {
             provider: {
               select: {
+                id: true,
                 businessName: true,
                 ownerName: true,
+                phone: true,
+                email: true,
+                profileImage: true,
               }
             }
           }

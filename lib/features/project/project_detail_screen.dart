@@ -8,6 +8,7 @@ import 'dart:convert';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
 import '../../core/full_screen_image_viewer.dart';
+import '../chat/chat_detail_screen.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -687,6 +688,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+              if (hasAcceptedQuote) ...[
+                _buildServiceProviderCard(context, acceptedQuote),
+                const SizedBox(height: 24),
+              ],
               
               Text('Project Progress', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
@@ -1394,6 +1399,153 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
             child: const Text('CLOSE'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildServiceProviderCard(BuildContext context, Map<String, dynamic> acceptedQuote) {
+    final provider = acceptedQuote['provider'] ?? {};
+    final providerName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
+    final ownerName = provider['ownerName'] ?? 'N/A';
+    final phone = provider['phone'] ?? 'No phone provided';
+    final email = provider['email'] ?? 'No email provided';
+    final rating = (provider['avgRating'] ?? provider['rating'] ?? 0.0) as num;
+    final profileImage = provider['profileImage'];
+    final providerId = acceptedQuote['providerId'];
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.handshake_rounded, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  'Assigned Service Provider',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.blue.shade100,
+                  backgroundImage: profileImage != null && profileImage.toString().isNotEmpty
+                      ? MemoryImage(Base64ImageCache.decode(profileImage.toString()))
+                      : null,
+                  child: profileImage == null || profileImage.toString().isEmpty
+                      ? Text(
+                          providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        providerName,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.person, size: 14, color: Colors.grey.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Owner: $ownerName',
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      if (rating > 0.0) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            Row(
+              children: [
+                const Icon(Icons.phone, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(phone, style: const TextStyle(fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.email, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(email, style: const TextStyle(fontSize: 13)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      context.push('/provider-profile/$providerId');
+                    },
+                    icon: const Icon(Icons.person_outline_rounded, size: 18),
+                    label: const Text('View Profile'),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                      foregroundColor: Theme.of(context).primaryColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatDetailScreen(
+                            partnerId: providerId,
+                            partnerName: providerName,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                    label: const Text('Chat'),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
