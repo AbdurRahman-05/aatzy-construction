@@ -213,3 +213,13 @@ model MaterialNews {
   publishedAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Ad {
+  id        String   @id @default(uuid())
+  title     String
+  desc      String
+  badge     String
+  icon      String   @default("star")
+  gradient  String   @default("0xFF064354,0xFF0B7C8E")
+  createdAt DateTime @default(now())
+}

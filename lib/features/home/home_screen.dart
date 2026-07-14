@@ -249,16 +249,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildCreateProjectBanner(context, isDark, primaryColor),
                 const SizedBox(height: 28),
 
-                // App Features & Benefits Carousel
-                const AppFeaturesCarousel(isProvider: false),
-                const SizedBox(height: 28),
-
                 // Ongoing Projects Section
                 _buildOngoingProjectsSection(isDark, primaryColor),
                 const SizedBox(height: 28),
 
                 // Closed Deals Section
                 _buildClosedDealsSection(isDark, primaryColor),
+                const SizedBox(height: 28),
+
+                // App Features & Benefits Carousel (Ads Manager Managed)
+                const AppFeaturesCarousel(isProvider: false),
                 const SizedBox(height: 28),
 
                 // Tools & Services section

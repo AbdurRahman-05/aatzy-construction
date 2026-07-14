@@ -7,6 +7,7 @@ import ViewDetailsModal from '../components/ViewDetailsModal';
 import DashboardAnalytics from '../components/DashboardAnalytics';
 import { cookies } from 'next/headers';
 import LoginForm from './LoginForm';
+import AdsManager from '../components/AdsManager';
 
 export const dynamic = 'force-dynamic';
 
@@ -122,6 +123,20 @@ export default async function AdminDashboard({
     ownerName: p.ownerName
   }));
 
+  const allAdsRaw = await (prisma as any).ad.findMany({
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const adsJson = allAdsRaw.map((ad: any) => ({
+    id: ad.id,
+    title: ad.title,
+    desc: ad.desc,
+    badge: ad.badge,
+    icon: ad.icon,
+    gradient: ad.gradient,
+    createdAt: ad.createdAt.toISOString()
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-40">
@@ -179,6 +194,15 @@ export default async function AdminDashboard({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <span>Provider Directory</span>
+            </Link>
+            <Link 
+              href="/admin?view=ads" 
+              className={`flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all ${view === 'ads' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+              </svg>
+              <span>Manage Ads</span>
             </Link>
           </nav>
         </aside>
@@ -374,6 +398,10 @@ export default async function AdminDashboard({
                   </table>
                 </div>
               </div>
+            )}
+
+            {view === 'ads' && (
+              <AdsManager initialAds={adsJson} />
             )}
           </div>
         </main>
