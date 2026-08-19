@@ -19,27 +19,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   final List<OnboardingData> _pages = [
     OnboardingData(
-      title: 'BuildConnect',
-      subtitle: 'Connecting Dreams to Reality',
-      description: 'Welcome to BuildConnect, the premium platform that seamlessly connects homeowners and project builders with top-tier construction and design professionals.',
+      title: 'Plan Your Project',
+      subtitle: 'Accurate Estimations',
+      description: 'Estimate your construction cost before you begin using our intelligent calculator and market rate benchmark engine.',
       icon: Icons.architecture_rounded,
-      gradientColors: [Color(0xFF2196F3), Color(0xFF1565C0)],
+      gradientColors: [Color(0xFF1F2937), Color(0xFF374151)],
       bgImageUrl: 'https://images.unsplash.com/photo-1503387762-592ded58c454?auto=format&fit=crop&w=1200&q=80',
     ),
     OnboardingData(
-      title: 'For Service Providers',
-      subtitle: 'Grow & Scale Your Business',
-      description: 'Access high-quality local project leads, showcase your work portfolio, submit transparent proposals, and manage your pipeline under one verified profile.',
+      title: 'Find Trusted Contractors',
+      subtitle: 'Verified Professionals',
+      description: 'Access high-quality local project leads, compare transparent contractor proposals, and track milestone execution safely.',
       icon: Icons.construction_rounded,
-      gradientColors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+      gradientColors: [Color(0xFF111111), Color(0xFF2A2A2A)],
       bgImageUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80',
     ),
     OnboardingData(
-      title: 'For Consumers',
-      subtitle: 'Build with Confidence',
-      description: 'Plan your project using our estimation tools, browse through verified builders, compare competitive bids, and track your milestones safely.',
+      title: 'Buy Building Materials',
+      subtitle: 'B2B Wholesale Directory',
+      description: 'Source raw building materials directly from verified suppliers, compare unit prices, and manage bulk delivery inquiries.',
       icon: Icons.home_work_rounded,
-      gradientColors: [Color(0xFFFF9800), Color(0xFFE65100)],
+      gradientColors: [Color(0xFF1F2937), Color(0xFF111827)],
       bgImageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
     ),
   ];
@@ -95,20 +95,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       return Scaffold(
         body: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF111827), Color(0xFF030712)],
-            ),
+            color: Color(0xFF121B22),
           ),
           child: const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(color: Colors.amber),
+                CircularProgressIndicator(color: AppTheme.primaryOrange),
                 SizedBox(height: 16),
                 Text(
-                  'Loading BuildConnect...',
+                  'Loading Platform...',
                   style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -139,7 +135,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   return Container(
                     color: Colors.black87,
                     child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white70),
+                      child: CircularProgressIndicator(color: AppTheme.primaryOrange),
                     ),
                   );
                 },
@@ -150,7 +146,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                        colors: [Color(0xFF1B2730), Color(0xFF121B22)],
                       ),
                     ),
                   );
@@ -159,7 +155,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
 
-          // Premium Dark Gradient Overlay
+          // Dark Gradient Overlay to reduce wallpaper brightness
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -167,9 +163,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.65),
-                    Colors.black.withValues(alpha: 0.4),
-                    Colors.black.withValues(alpha: 0.88),
+                    Colors.black.withValues(alpha: 0.78),
+                    Colors.black.withValues(alpha: 0.60),
+                    Colors.black.withValues(alpha: 0.94),
                   ],
                   stops: const [0.0, 0.45, 1.0],
                 ),
@@ -191,22 +187,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
+                              color: AppTheme.primaryOrange,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Image.asset(
-                              'assets/logo.png',
-                              height: 18,
-                              fit: BoxFit.contain,
+                            child: const Icon(
+                              Icons.construction_rounded,
+                              color: Colors.white,
+                              size: 18,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           const Text(
-                            'BuildConnect',
+                            'Buildzy',
                             style: TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -0.5,
                               color: Colors.white,
@@ -277,10 +273,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                   duration: const Duration(milliseconds: 300),
                                   margin: const EdgeInsets.only(right: 8),
                                   height: 8,
-                                  width: isActive ? 24 : 8,
+                                  width: isActive ? 28 : 8,
                                   decoration: BoxDecoration(
                                     color: isActive
-                                        ? Colors.white
+                                        ? AppTheme.primaryOrange
                                         : Colors.white.withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
@@ -291,14 +287,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ElevatedButton(
                               onPressed: _nextPage,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black87,
+                                backgroundColor: AppTheme.primaryOrange,
+                                foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                                 elevation: 8,
-                                shadowColor: Colors.black.withValues(alpha: 0.4),
+                                shadowColor: AppTheme.primaryOrange.withValues(alpha: 0.4),
                               ),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -320,11 +316,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ] else ...[
                         // Selection page helper text
                         Text(
-                          'Choose your path to shape the future of building.',
+                          'Choose your role to get started',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.white.withValues(alpha: 0.6),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -352,37 +348,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Container(
-                width: 140,
-                height: 140,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: AppTheme.primaryOrange.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(36),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: AppTheme.primaryOrange.withValues(alpha: 0.4),
                     width: 1.5,
                   ),
                 ),
-                child: data.title == 'BuildConnect'
-                    ? Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(34),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Image.asset(
-                          'assets/logo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      )
-                    : Icon(
-                        data.icon,
-                        size: 60,
-                        color: Colors.white,
-                      ),
+                child: Icon(
+                  data.icon,
+                  size: 56,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 40),
 
           // Subtitle
           Text(
@@ -390,7 +374,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w900,
-              color: Colors.white70,
+              color: AppTheme.primaryOrange,
               letterSpacing: 2,
             ),
             textAlign: TextAlign.center,
@@ -416,7 +400,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Text(
               data.description,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: Colors.white.withValues(alpha: 0.75),
                 height: 1.6,
               ),
@@ -439,7 +423,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const Text(
             'Who are you?',
             style: TextStyle(
-              fontSize: 34,
+              fontSize: 32,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: -0.8,
@@ -448,7 +432,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tell us how you intend to use BuildConnect to tailor your experience.',
+            'Select your account type to personalize your experience.',
             style: TextStyle(
               fontSize: 15,
               color: Colors.white.withValues(alpha: 0.7),
@@ -463,18 +447,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             children: [
               _buildGlassRoleCard(
                 role: 'CONSUMER',
-                title: 'I am a Consumer',
-                description: 'Seeking construction quotes, estimations, project planning, and hiring professionals.',
+                title: "I'M A CONSUMER",
+                description: 'Homeowner seeking project estimates, hiring top contractors, and managing budgets.',
                 icon: Icons.person_rounded,
-                activeColor: AppTheme.primaryBlue,
+                activeColor: AppTheme.primaryOrange,
               ),
               const SizedBox(height: 16),
               _buildGlassRoleCard(
                 role: 'PROVIDER',
-                title: 'I am a Service Provider',
-                description: 'Contractor, architect, designer looking for leads, bidding, and showcasing portfolios.',
+                title: "I'M A SERVICE PROVIDER",
+                description: 'Contractor, architect, or material supplier bidding on projects and logging work.',
                 icon: Icons.engineering_rounded,
-                activeColor: AppTheme.primaryGreen,
+                activeColor: const Color(0xFF16A34A),
               ),
             ],
           ),
@@ -489,7 +473,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     height: 120,
                     alignment: Alignment.center,
                     child: Text(
-                      'Please select a role to continue',
+                      'Select a role to proceed',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.4),
                         fontStyle: FontStyle.italic,
@@ -511,18 +495,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _selectedRole == 'CONSUMER'
-                              ? AppTheme.primaryBlue
-                              : AppTheme.primaryGreen,
+                              ? AppTheme.primaryOrange
+                              : const Color(0xFF16A34A),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(22),
                           ),
                           elevation: 8,
-                          shadowColor: (_selectedRole == 'CONSUMER'
-                                  ? AppTheme.primaryBlue
-                                  : AppTheme.primaryGreen)
-                              .withValues(alpha: 0.4),
+                          shadowColor: AppTheme.primaryOrange.withValues(alpha: 0.4),
                         ),
                         child: Text(
                           _selectedRole == 'CONSUMER'
@@ -536,7 +517,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                       const SizedBox(height: 14),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(22),
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                           child: OutlinedButton(
@@ -551,14 +532,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               foregroundColor: Colors.white,
                               side: BorderSide(
                                 color: _selectedRole == 'CONSUMER'
-                                    ? AppTheme.primaryBlue
-                                    : AppTheme.primaryGreen,
+                                    ? AppTheme.primaryOrange
+                                    : const Color(0xFF16A34A),
                                 width: 2,
                               ),
                               backgroundColor: Colors.white.withValues(alpha: 0.05),
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16)),
+                                  borderRadius: BorderRadius.circular(22)),
                             ),
                             child: Text(
                               _selectedRole == 'CONSUMER'
@@ -604,7 +585,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isSelected
-                  ? activeColor.withValues(alpha: 0.15)
+                  ? activeColor.withValues(alpha: 0.18)
                   : Colors.white.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
@@ -638,8 +619,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       Text(
                         title,
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
                           color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
@@ -666,20 +648,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     border: Border.all(
                       color: isSelected ? activeColor : Colors.white.withValues(alpha: 0.4),
                       width: 2,
-                ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: activeColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    )
-                  : null,
+                    ),
+                  ),
+                  child: isSelected
+                      ? Center(
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: activeColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        )
+                      : null,
                 ),
               ],
             ),

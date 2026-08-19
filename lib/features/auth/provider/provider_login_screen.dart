@@ -97,7 +97,35 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock)),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  final email = _emailController.text.trim();
+                  context.push(
+                    Uri(
+                      path: '/forgot-password',
+                      queryParameters: {
+                        if (email.isNotEmpty) 'email': email,
+                        'role': 'provider',
+                      },
+                    ).toString(),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: const Color(0xFF64748B),
+                ),
+                child: const Text(
+                  'Forgot Password?',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
             ElevatedButton(
               onPressed: _isLoading ? null : _loginProvider,
               child: _isLoading 

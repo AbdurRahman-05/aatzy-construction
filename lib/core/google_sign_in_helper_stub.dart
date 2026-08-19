@@ -1,39 +1,48 @@
 import 'package:flutter/material.dart';
+import 'widgets/google_logo_icon.dart';
 
 Widget buildGoogleSignInButton({
   required VoidCallback onPressed,
   required bool isLoading,
   bool useCustomStyle = false,
 }) {
-  return OutlinedButton.icon(
-    onPressed: isLoading ? null : onPressed,
-    icon: Image.network(
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/480px-Google_%22G%22_logo.svg.png',
-      height: 20,
-      errorBuilder: (context, error, stackTrace) => const Text(
-        'G',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Colors.blue,
+  return SizedBox(
+    width: double.infinity,
+    height: 48,
+    child: OutlinedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Color(0xFFDADCE0), width: 1),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF3C4043),
+        disabledBackgroundColor: Colors.white.withValues(alpha: 0.7),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
         ),
+        elevation: 0,
       ),
-    ),
-    label: const Text(
-      'Sign in with Google',
-      style: TextStyle(
-        color: Colors.black87,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    style: OutlinedButton.styleFrom(
-      side: BorderSide(color: Colors.grey.shade300),
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black87,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(30),
-      ),
+      child: isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF4285F4)),
+            )
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GoogleLogoIcon(size: 20),
+                SizedBox(width: 12),
+                Text(
+                  'Sign in with Google',
+                  style: TextStyle(
+                    color: Color(0xFF3C4043),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
     ),
   );
 }

@@ -643,3 +643,44 @@ export async function notifyInquiryStatusChange(inquiryId: string) {
     console.error('Failed to notify inquiry status change:', error);
   }
 }
+
+// -------------------------------------------------------------
+// Action Email: Password Reset Verification Code (OTP)
+// -------------------------------------------------------------
+export async function sendPasswordResetEmail(email: string, otp: string, recipientName: string = 'User') {
+  const subject = 'Your Password Reset Code - Buildzy';
+  const body = `
+    <p>Hi ${recipientName},</p>
+    <p>We received a request to reset your password. Use the verification code below to complete the reset process:</p>
+    
+    <div style="background-color: #f8fafc; border: 2px dashed #f59e0b; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0;">
+      <span style="font-family: monospace, Courier, sans-serif; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #064354; display: inline-block;">
+        ${otp}
+      </span>
+      <p style="color: #64748b; font-size: 13px; margin: 10px 0 0 0; font-weight: 500;">
+        This code is valid for <strong>10 minutes</strong>.
+      </p>
+    </div>
+
+    <div class="highlight-box">
+      <p>If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+    </div>
+
+    <p>Best regards,<br>The Buildzy Team</p>
+  `;
+
+  try {
+    await transporter.sendMail({
+      from: `"Buildzy Security" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+      to: email,
+      subject: subject,
+      html: getBaseTemplate('Password Reset Request', body),
+    });
+    console.log(`Password reset OTP email sent successfully to ${email}`);
+    return { success: true };
+  } catch (error) {
+    console.error(`Failed to send password reset email to ${email}:`, error);
+    return { success: false, error };
+  }
+}
+

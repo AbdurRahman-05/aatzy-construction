@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
+import '../../core/theme.dart';
 import 'auth_provider.dart';
 import '../../core/api_settings_dialog.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -424,209 +425,222 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundNeutral,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.wifi_tethering, color: Colors.white),
+            icon: const Icon(Icons.wifi_tethering, color: AppTheme.primaryOrange),
             tooltip: 'Network Settings',
             onPressed: () => showApiSettingsDialog(context),
           ),
         ],
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).colorScheme.secondary,
-              Theme.of(context).primaryColor,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: Center(
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Top Header with Logo
-              SafeArea(
-                child: Container(
-                  height: 170,
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 180,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Image.asset(
-                      'assets/logo.png',
-                      fit: BoxFit.contain,
-                    ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 20),
+                // Modern Header Badge
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryOrange.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.construction_rounded,
+                    size: 40,
+                    color: AppTheme.primaryOrange,
                   ),
                 ),
-              ),
-              // Bottom Form Card with Entry Animation
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 750),
-                curve: Curves.easeOutBack,
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(0, 80 * (1.0 - value)),
-                    child: Opacity(
-                      opacity: value.clamp(0.0, 1.0),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height - 230,
+                const SizedBox(height: 16),
+                const Text(
+                  'Welcome Back',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                    color: Color(0xFF111111),
                   ),
-                  decoration: const BoxDecoration(
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Sign in to manage your construction projects',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 28),
+
+                // Main Login Card
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFE8E8E5), width: 1.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Center(
-                        child: Text(
-                          'hello!',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
+                      // Role Selector Pill
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F3),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => isProvider = false),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: !isProvider ? AppTheme.primaryOrange : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    'Consumer',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: !isProvider ? Colors.white : Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => isProvider = true),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: isProvider ? AppTheme.primaryOrange : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    'Provider',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: isProvider ? Colors.white : Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Welcome to BuildConnect',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ChoiceChip(
-                            label: const Text('Consumer'),
-                            selected: !isProvider,
-                            selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.15),
-                            labelStyle: TextStyle(
-                              color: !isProvider ? Theme.of(context).primaryColor : Colors.grey.shade600,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            onSelected: (val) => setState(() => isProvider = false),
-                          ),
-                          const SizedBox(width: 16),
-                          ChoiceChip(
-                            label: const Text('Provider'),
-                            selected: isProvider,
-                            selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.15),
-                            labelStyle: TextStyle(
-                              color: isProvider ? Theme.of(context).primaryColor : Colors.grey.shade600,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            onSelected: (val) => setState(() => isProvider = true),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
+
                       TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
-                          labelText: 'Email',
-                          labelStyle: TextStyle(color: Colors.grey.shade600),
-                          floatingLabelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                          prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
-                          ),
+                          labelText: 'Email Address',
+                          prefixIcon: const Icon(Icons.email_outlined, size: 20),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          labelStyle: TextStyle(color: Colors.grey.shade600),
-                          floatingLabelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                          prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            final email = _emailController.text.trim();
+                            final role = isProvider ? 'provider' : 'consumer';
+                            context.push(
+                              Uri(
+                                path: '/forgot-password',
+                                queryParameters: {
+                                  if (email.isNotEmpty) 'email': email,
+                                  'role': role,
+                                },
+                              ).toString(),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            foregroundColor: const Color(0xFF64748B),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 18),
+
                       SizedBox(
                         height: 52,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : () {
-                            if (isProvider) {
-                              _loginProvider();
-                            } else {
-                              _loginConsumer();
-                            }
-                          },
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  if (isProvider) {
+                                    _loginProvider();
+                                  } else {
+                                    _loginConsumer();
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
+                            backgroundColor: AppTheme.primaryOrange,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(18),
                             ),
-                            elevation: 2,
+                            elevation: 0,
                           ),
-                          child: _isLoading 
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : Text(
-                                isProvider ? 'Provider Login' : 'Login',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                )
+                              : Text(
+                                  isProvider ? 'Sign In as Provider' : 'Sign In as Consumer',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+
                       TextButton(
                         onPressed: () {
                           if (isProvider) {
@@ -636,30 +650,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           }
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: AppTheme.primaryOrange,
                         ),
                         child: Text(
-                          isProvider ? 'Register as Service Provider' : 'New here? Register',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          isProvider ? 'New Provider? Create Account' : 'New Consumer? Create Account',
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(child: Divider(color: Colors.grey.shade300)),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
                             child: Text(
                               'or continue with',
                               style: TextStyle(
                                 color: Colors.grey.shade500,
-                                fontSize: 13,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                           Expanded(child: Divider(color: Colors.grey.shade300)),
                         ],
                       ),
+                      const SizedBox(height: 16),
                       buildGoogleSignInButton(
                         onPressed: _loginWithGoogle,
                         isLoading: _isLoading,
@@ -668,8 +684,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

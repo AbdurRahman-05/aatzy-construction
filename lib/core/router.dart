@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
 import '../features/auth/onboarding_screen.dart';
+import '../features/auth/forgot_password_screen.dart';
 import '../features/home/main_layout.dart';
 import '../features/project/create_project_screen.dart';
 import '../features/project/project_detail_screen.dart';
@@ -28,11 +29,16 @@ import '../features/b2b/presentation/supplier_catalog_screen.dart';
 import '../features/b2b/presentation/supplier_product_management_screen.dart';
 import '../features/b2b/presentation/lead_management_screen.dart';
 import '../features/b2b/presentation/materials_screen.dart';
+import '../features/splash/splash_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/onboarding',
+    initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
@@ -42,6 +48,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final role = state.uri.queryParameters['role'];
           return LoginScreen(initialRole: role);
+        },
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'];
+          final role = state.uri.queryParameters['role'];
+          return ForgotPasswordScreen(initialEmail: email, initialRole: role);
         },
       ),
       GoRoute(

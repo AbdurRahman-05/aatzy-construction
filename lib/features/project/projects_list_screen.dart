@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/providers/projects_provider.dart';
 import '../auth/auth_provider.dart';
 
 class ProjectsListScreen extends ConsumerStatefulWidget {
@@ -15,8 +13,6 @@ class ProjectsListScreen extends ConsumerStatefulWidget {
 }
 
 class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with SingleTickerProviderStateMixin {
-  List<dynamic> _projects = [];
-  bool _isLoading = true;
   String _searchQuery = "";
   late TabController _tabController;
 
@@ -24,7 +20,9 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _fetchProjects();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchProjects();
+    });
   }
 
   @override
@@ -35,31 +33,13 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
   Future<void> _fetchProjects() async {
     final auth = ref.read(authProvider);
-    if (auth.id == null) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
-
-    try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/users/${auth.id}/projects'));
-      if (response.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            _projects = jsonDecode(response.body);
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error fetching projects: $e');
-      if (mounted) setState(() => _isLoading = false);
+    if (auth.id != null) {
+      ref.invalidate(userProjectsProvider(auth.id!));
     }
   }
 
-  List<dynamic> _filterProjectsByStage(List<String> stages) {
-    return _projects.where((project) {
+  List<dynamic> _filterProjectsByStage(List<String> stages, List<dynamic> projects) {
+    return projects.where((project) {
       final stage = (project['currentStage'] as String? ?? 'Design & Planning').toLowerCase();
       final title = (project['title'] as String? ?? '').toLowerCase();
       final location = (project['location'] as String? ?? '').toLowerCase();
@@ -258,8 +238,8 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     );
   }
 
-  Widget _buildProjectsTab(List<String> stages) {
-    final filtered = _filterProjectsByStage(stages);
+  Widget _buildProjectsTab(List<String> stages, List<dynamic> projects) {
+    final filtered = _filterProjectsByStage(stages, projects);
     
     if (filtered.isEmpty) {
       return Center(
@@ -292,6 +272,12 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+    final projectsAsync = auth.id != null ? ref.watch(userProjectsProvider(auth.id!)) : null;
+    final projectsData = projectsAsync?.asData?.value ?? projectsAsync?.value;
+    final projects = projectsData?.projects ?? const [];
+    final isLoading = projectsAsync != null ? (projectsAsync.isLoading && projectsData == null) : false;
+
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -345,7 +331,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
             ],
           ),
         ),
-        body: _isLoading
+        body: isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
@@ -374,10 +360,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildProjectsTab(['Design & Planning', 'Tracking', 'Execution', 'On Hold']),
-                        _buildProjectsTab(['Finished Pending Approval']),
-                        _buildProjectsTab(['Completed', 'Finished']),
-                        _buildProjectsTab(['Cancelled']),
+                        _buildProjectsTab(['Design & Planning', 'Tracking', 'Execution', 'On Hold'], projects),
+                        _buildProjectsTab(['Finished Pending Approval'], projects),
+                        _buildProjectsTab(['Completed', 'Finished'], projects),
+                        _buildProjectsTab(['Cancelled'], projects),
                       ],
                     ),
                   ),

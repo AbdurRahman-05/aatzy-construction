@@ -27,30 +27,34 @@ void main() async {
     apiBaseUrl = "https://aatzy-construction.vercel.app/api";
   }
 
-  // Fetch Google Client ID from backend
-  String webClientId = prefs.getString('google_client_id_override') ?? '';
-  try {
-    final response = await http.get(Uri.parse('$apiBaseUrl/users/google-client-id'))
-        .timeout(const Duration(seconds: 2));
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final fetchedId = data['clientId'] as String? ?? '';
-      if (fetchedId.isNotEmpty) {
-        webClientId = fetchedId;
-        await prefs.setString('google_client_id_override', fetchedId);
-      }
-    }
-  } catch (e) {
-    debugPrint('Failed to fetch Google Client ID from backend: $e');
-  }
+  // Start the UI immediately without blocking on network calls
+  runApp(const ProviderScope(child: ConstructionApp()));
 
-  // Initialize Google Sign-In singleton once at startup
+  // Initialize network & auth dependencies in parallel
+  _initAsyncServices(prefs);
+}
+
+Future<void> _initAsyncServices(SharedPreferences prefs) async {
   try {
+    String webClientId = prefs.getString('google_client_id_override') ?? '';
+    try {
+      final response = await http.get(Uri.parse('$apiBaseUrl/users/google-client-id'))
+          .timeout(const Duration(seconds: 3));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final fetchedId = data['clientId'] as String? ?? '';
+        if (fetchedId.isNotEmpty) {
+          webClientId = fetchedId;
+          await prefs.setString('google_client_id_override', fetchedId);
+        }
+      }
+    } catch (e) {
+      debugPrint('Background Google Client ID fetch: $e');
+    }
+
     if (kIsWeb) {
       if (webClientId.isNotEmpty) {
         await GoogleSignIn.instance.initialize(clientId: webClientId);
-      } else {
-        debugPrint('Google Sign-In Web: No Client ID configured yet.');
       }
     } else {
       if (webClientId.isNotEmpty) {
@@ -60,10 +64,8 @@ void main() async {
       }
     }
   } catch (e) {
-    debugPrint('Failed to initialize Google Sign-In: $e');
+    debugPrint('Background Google Sign-In init error: $e');
   }
-
-  runApp(const ProviderScope(child: ConstructionApp()));
 }
 
 final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
@@ -97,7 +99,7 @@ class ConstructionApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'Construction Platform',
+      title: 'Buildzy',
       scrollBehavior: const SmoothScrollBehavior(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

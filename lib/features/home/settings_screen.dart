@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../auth/auth_provider.dart';
 import '../../core/constants.dart';
 import '../../main.dart'; // import themeModeProvider
+import 'widgets/user_tutorial_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -263,6 +264,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 20),
+          _buildSectionHeader('Tutorial & App Guide'),
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.school, color: Colors.deepOrange),
+                  title: const Text('View User Side Benefits Tutorial'),
+                  subtitle: const Text('Re-open the interactive pop-up guide'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    final auth = ref.read(authProvider);
+                    UserTutorialDialog.show(context, userId: auth.id, force: true);
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.restart_alt, color: Colors.blueGrey),
+                  title: const Text('Reset Tutorial Status'),
+                  subtitle: const Text('Pop up tutorial automatically on next home view'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    final auth = ref.read(authProvider);
+                    await UserTutorialDialog.resetSeenState(userId: auth.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Tutorial status reset! It will pop up next time you open Home.')),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           _buildSectionHeader('Security & Privacy'),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -281,7 +317,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showDocumentModal(
                     'Terms of Service',
-                    'Welcome to Aatzy Construction!\n\n1. Acceptance of Terms\nBy using our platform, you agree to comply with our general user terms and agreements.\n\n2. Service Provider Responsibility\nAll providers registered on our platform verify that their credentials, details, and works uploaded to portfolio are true and accurate.\n\n3. Consumer Guarantee\nAatzy acts as an aggregation platform to connect building owners with contractors, engineers, and suppliers. Real-time contracts are signed directly between both parties.',
+                    'Welcome to Buildzy!\n\n1. Acceptance of Terms\nBy using our platform, you agree to comply with our general user terms and agreements.\n\n2. Service Provider Responsibility\nAll providers registered on our platform verify that their credentials, details, and works uploaded to portfolio are true and accurate.\n\n3. Consumer Guarantee\nBuildzy acts as an aggregation platform to connect building owners with contractors, engineers, and suppliers. Real-time contracts are signed directly between both parties.',
                   ),
                 ),
                 const Divider(height: 1),
@@ -291,7 +327,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showDocumentModal(
                     'Privacy Policy',
-                    'Privacy Policy for Aatzy Construction App:\n\nWe care deeply about your privacy. We collect data regarding your coordinates (when location is enabled), profile bio, document copies for registration, and text messages sent during quote estimations to ensure safe transactions inside our application.\n\nWe never sell your identity details to third-party marketing companies.',
+                    'Privacy Policy for Buildzy App:\n\nWe care deeply about your privacy. We collect data regarding your coordinates (when location is enabled), profile bio, document copies for registration, and text messages sent during quote estimations to ensure safe transactions inside our application.\n\nWe never sell your identity details to third-party marketing companies.',
                   ),
                 ),
               ],
@@ -300,7 +336,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 40),
           Center(
             child: Text(
-              'Aatzy v1.0.0',
+              'Buildzy v1.0.0',
               style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
             ),
           ),

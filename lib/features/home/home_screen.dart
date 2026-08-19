@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
-import '../../core/features_carousel.dart';
+import '../../core/theme.dart';
+import '../../core/ads_carousel.dart';
+import '../../core/providers/projects_provider.dart';
+import '../../core/providers/social_feed_provider.dart';
 import '../auth/auth_provider.dart';
 import '../providers/provider_profile_screen.dart';
 import 'main_layout.dart'; // import tab provider
+
+import 'widgets/user_tutorial_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -19,101 +22,71 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<dynamic> _projects = [];
-  List<dynamic> _socialPosts = [];
   List<dynamic> _materialOrders = [];
-  bool _isLoading = true;
-  bool _isLoadingSocial = true;
-
+  List<dynamic> _socialPosts = [];
+  bool _isLoading = false;
+  bool _isLoadingSocial = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchProjects();
-    _fetchSocialFeed();
+    _checkShowTutorial();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchProjects();
+    });
+  }
+
+  void _checkShowTutorial() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = ref.read(authProvider);
+      if (auth.role == 'CONSUMER' || auth.role == null) {
+        UserTutorialDialog.show(context, userId: auth.id);
+      }
+    });
   }
 
   Future<void> _fetchProjects() async {
     final auth = ref.read(authProvider);
-    if (auth.id == null) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
+    if (auth.id != null) {
+      ref.invalidate(userProjectsProvider(auth.id!));
     }
-
-    try {
-      final responses = await Future.wait([
-        http.get(Uri.parse('$apiBaseUrl/users/${auth.id}/projects')),
-        http.get(Uri.parse('$apiBaseUrl/buyer/inquiries?buyerId=${auth.id}')),
-      ]);
-
-      if (responses[0].statusCode == 200) {
-        final projectsData = jsonDecode(responses[0].body);
-        List<dynamic> inquiriesData = [];
-        if (responses[1].statusCode == 200) {
-          final decoded = jsonDecode(responses[1].body);
-          inquiriesData = decoded['inquiries'] ?? [];
-        }
-
-        if (mounted) {
-          setState(() {
-            _projects = projectsData;
-            _materialOrders = inquiriesData.where((i) {
-              final status = i['status'];
-              final deliveryStatus = i['delivery_status'];
-              final isClosed = status == 'Completed' || (status == 'Closed' && deliveryStatus == 'Delivered');
-              return !isClosed && (
-                status == 'Closed' ||
-                status == 'Accepted' ||
-                status == 'New' ||
-                status == 'Viewed' ||
-                status == 'Contacted' ||
-                status == 'Quote Sent'
-              );
-            }).toList();
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } catch (e) {
-      debugPrint('Error fetching projects: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
+    ref.invalidate(socialFeedProvider);
   }
 
   Future<void> _handleRefresh() async {
-    await Future.wait([
-      _fetchProjects(),
-      _fetchSocialFeed(),
-    ]);
-  }
-
-  Future<void> _fetchSocialFeed() async {
-    try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/social/feed'));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (mounted) {
-          setState(() {
-            _socialPosts = data['images'] ?? [];
-            _isLoadingSocial = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoadingSocial = false);
-      }
-    } catch (e) {
-      debugPrint('Error fetching home social feed: $e');
-      if (mounted) setState(() => _isLoadingSocial = false);
+    final auth = ref.read(authProvider);
+    final futures = <Future<dynamic>>[];
+    if (auth.id != null) {
+      futures.add(ref.refresh(userProjectsProvider(auth.id!).future));
     }
+    futures.add(ref.refresh(socialFeedProvider.future));
+    await Future.wait(futures);
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
+    if (auth.id != null) {
+      final projectsAsync = ref.watch(userProjectsProvider(auth.id!));
+      final projData = projectsAsync.asData?.value ?? projectsAsync.value;
+      if (projData != null) {
+        _projects = projData.projects;
+        _materialOrders = projData.materialOrders;
+      }
+      _isLoading = projectsAsync.isLoading && _projects.isEmpty;
+    }
+
+    final socialAsync = ref.watch(socialFeedProvider);
+    final socialData = socialAsync.asData?.value ?? socialAsync.value;
+    if (socialData != null) {
+      _socialPosts = socialData;
+    }
+    _isLoadingSocial = socialAsync.isLoading && _socialPosts.isEmpty;
+
     final name = auth.name ?? 'Guest';
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
+    final primaryColor = AppTheme.primaryOrange;
     final todayStr = DateFormat('EEEE, MMM d').format(DateTime.now());
 
     return Scaffold(
@@ -122,78 +95,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        toolbarHeight: 68,
-        flexibleSpace: ClipRRect(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [
-                        const Color(0xFF121B22).withValues(alpha: 0.95),
-                        const Color(0xFF121B22).withValues(alpha: 0.8),
-                      ]
-                    : [
-                        Colors.white.withValues(alpha: 0.95),
-                        Colors.white.withValues(alpha: 0.8),
-                      ],
-              ),
-            ),
-          ),
-        ),
+        toolbarHeight: 70,
         title: Row(
           children: [
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.primaryOrange, width: 2),
+              ),
+              child: const CircleAvatar(
+                radius: 18,
+                backgroundColor: AppTheme.primaryOrange,
+                child: Icon(Icons.person_rounded, color: Colors.white, size: 20),
+              ),
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 4,
-                            )
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/logo.png',
-                          height: 18,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Hello, $name',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 22,
-                            color: isDark ? Colors.white : const Color(0xFF064354),
-                            letterSpacing: -0.5,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      const Icon(Icons.bolt, color: Colors.amber, size: 20),
-                    ],
+                  Text(
+                    'Hey $name 👋',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      color: isDark ? Colors.white : const Color(0xFF111111),
+                      letterSpacing: -0.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Let\'s build your dream project today',
+                    'Here\'s your construction update',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.white60 : Colors.grey.shade600,
-                      fontWeight: FontWeight.w600,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -202,34 +142,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
-          // Digital Date Chip
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white10 : const Color(0xFF064354).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isDark ? Colors.white24 : const Color(0xFF064354).withValues(alpha: 0.15),
-                width: 1,
-              ),
+              color: isDark ? const Color(0xFF1B2730) : const Color(0xFFE8E8E5),
+              borderRadius: BorderRadius.circular(999),
             ),
-            child: Center(
-              child: Text(
-                todayStr,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354),
-                ),
+            child: Text(
+              todayStr,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white70 : const Color(0xFF111111),
               ),
             ),
           ),
           const SizedBox(width: 8),
           IconButton(
             icon: CircleAvatar(
-              backgroundColor: isDark ? Colors.white10 : Colors.white.withValues(alpha: 0.9),
-              child: Icon(Icons.notifications_outlined, color: primaryColor, size: 20),
+              radius: 18,
+              backgroundColor: isDark ? const Color(0xFF1B2730) : Colors.white,
+              child: const Icon(Icons.notifications_none_rounded, color: AppTheme.primaryOrange, size: 20),
             ),
             onPressed: () {},
           ),
@@ -237,6 +170,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: RefreshIndicator(
+        color: AppTheme.primaryOrange,
         onRefresh: _handleRefresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -245,20 +179,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Create Project Action Banner (Modern Floating Style)
+                // Active Hero Project Card & KPI Grid
+                _buildActiveProjectHeroCard(context, isDark),
+                const SizedBox(height: 24),
+
+                // Consumer Quick Action Bar
+                _buildQuickActionsGrid(context, isDark),
+                const SizedBox(height: 28),
+
+                // Create Project Action Banner
                 _buildCreateProjectBanner(context, isDark, primaryColor),
+                const SizedBox(height: 28),
+
+                // Sponsored Ads Carousel
+                const AppAdsCarousel(),
                 const SizedBox(height: 28),
 
                 // Ongoing Projects Section
                 _buildOngoingProjectsSection(isDark, primaryColor),
                 const SizedBox(height: 28),
 
-                // Closed Deals Section
+                // Closed Deals Section (Material Orders)
                 _buildClosedDealsSection(isDark, primaryColor),
-                const SizedBox(height: 28),
-
-                // App Features & Benefits Carousel (Ads Manager Managed)
-                const AppFeaturesCarousel(isProvider: false),
                 const SizedBox(height: 28),
 
                 // Tools & Services section
@@ -271,6 +213,391 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildActiveProjectHeroCard(BuildContext context, bool isDark) {
+    final ongoingProjects = _projects.where((p) {
+      final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+      return stage != 'completed' &&
+             stage != 'finished' &&
+             stage != 'finished pending approval' &&
+             stage != 'cancelled';
+    }).toList();
+
+    if (ongoingProjects.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1B2730) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE8E8E5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryOrange.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.architecture_rounded, size: 36, color: AppTheme.primaryOrange),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'No Ongoing Sites',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : const Color(0xFF111111),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'You have no active ongoing construction sites. Start a new project or explore contractor quotes.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373),
+              ),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              onPressed: () => context.push('/create-project'),
+              icon: const Icon(Icons.add_rounded, size: 20),
+              label: const Text('Start Project'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryOrange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final project = ongoingProjects.first;
+    final title = project['title'] ?? 'Ongoing Construction';
+    final location = project['location'] ?? 'Location';
+    final currentStage = project['currentStage'] ?? 'Design & Planning';
+    final budget = (project['budget'] as num? ?? 0.0).toDouble();
+
+    final tasks = (project['tasks'] as List? ?? []);
+    final totalTasks = tasks.length;
+    final completedTasks = tasks.where((t) => (t['status'] as String? ?? '').toLowerCase() == 'completed').length;
+    
+    double progress = 0.0;
+    if (totalTasks > 0) {
+      progress = (completedTasks / totalTasks).clamp(0.0, 1.0);
+    } else {
+      if (currentStage.toLowerCase() == 'execution' || currentStage.toLowerCase() == 'tracking') {
+        progress = 0.4;
+      } else {
+        progress = 0.1;
+      }
+    }
+    final progressPercent = (progress * 100).toInt();
+
+    double totalSpent = 0.0;
+    for (var t in tasks) {
+      if ((t['status'] as String? ?? '').toLowerCase() == 'completed') {
+        totalSpent += (t['quotedCost'] as num? ?? t['taskCost'] as num? ?? 0.0).toDouble();
+      }
+    }
+
+    final formattedBudget = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 0,
+    ).format(budget);
+
+    final formattedSpent = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 0,
+    ).format(totalSpent);
+
+    return InkWell(
+      onTap: () {
+        if (project['id'] != null) {
+          context.push('/project-detail/${project['id']}');
+        }
+      },
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1B2730) : Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE8E8E5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryOrange.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.business_rounded, color: AppTheme.primaryOrange, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? Colors.white : const Color(0xFF111111),
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_rounded, size: 13, color: Colors.grey.shade500),
+                          const SizedBox(width: 3),
+                          Text(
+                            location,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.circle, size: 6, color: Color(0xFF16A34A)),
+                      SizedBox(width: 5),
+                      Text(
+                        'Ongoing Site',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Completion Percentage Callout & Progress Bar
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '$progressPercent%',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : const Color(0xFF111111),
+                    letterSpacing: -1,
+                  ),
+                ),
+                Text(
+                  'Stage: $currentStage',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryOrange,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              height: 8,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE8E8E5),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress.clamp(0.05, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryOrange,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // KPI Cards Row inside Active Project Card
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF5F5F3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Budget', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373))),
+                        const SizedBox(height: 4),
+                        Text(formattedBudget, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF111111))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF5F5F3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Spent', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373))),
+                        const SizedBox(height: 4),
+                        Text(formattedSpent, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF111111))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF5F5F3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Tasks', style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373))),
+                        const SizedBox(height: 4),
+                        Text(totalTasks > 0 ? '$completedTasks/$totalTasks' : '0', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF111111))),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsGrid(BuildContext context, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: isDark ? Colors.white : const Color(0xFF111111),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildCircularActionItem(context, isDark, icon: Icons.calculate_rounded, label: 'Cost Estimate', onTap: () => context.push('/cost-estimation')),
+              const SizedBox(width: 16),
+              _buildCircularActionItem(context, isDark, icon: Icons.engineering_rounded, label: 'Find Contractor', onTap: () => context.push('/providers/All')),
+              const SizedBox(width: 16),
+              _buildCircularActionItem(context, isDark, icon: Icons.compare_arrows_rounded, label: 'Compare Quotes', onTap: () {
+                if (_projects.isNotEmpty) {
+                  context.push('/compare-quotes/${_projects.first['id']}');
+                } else {
+                  context.push('/create-project');
+                }
+              }),
+              const SizedBox(width: 16),
+              _buildCircularActionItem(context, isDark, icon: Icons.storefront_rounded, label: 'Buy Materials', onTap: () => context.push('/b2b-products')),
+              const SizedBox(width: 16),
+              _buildCircularActionItem(context, isDark, icon: Icons.assignment_rounded, label: 'My Inquiries', onTap: () => context.push('/b2b-my-inquiries')),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCircularActionItem(BuildContext context, bool isDark, {required IconData icon, required String label, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1B2730) : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE8E8E5)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: AppTheme.primaryOrange, size: 26),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : const Color(0xFF111111),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -321,8 +648,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                     colors: [
-                      Colors.black.withValues(alpha: 0.85),
-                      Colors.black.withValues(alpha: 0.3),
+                      Colors.black.withValues(alpha: 0.55),
+                      Colors.black.withValues(alpha: 0.15),
                     ],
                   ),
                 ),

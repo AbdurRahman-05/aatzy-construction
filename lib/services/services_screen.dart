@@ -1,22 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../core/constants.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../core/providers/social_feed_provider.dart';
 import '../features/providers/provider_profile_screen.dart';
 import 'category_social_feed_screen.dart';
 
-class ServicesScreen extends StatefulWidget {
+class ServicesScreen extends ConsumerStatefulWidget {
   const ServicesScreen({super.key});
 
   @override
-  State<ServicesScreen> createState() => _ServicesScreenState();
+  ConsumerState<ServicesScreen> createState() => _ServicesScreenState();
 }
 
-class _ServicesScreenState extends State<ServicesScreen> {
+class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   int _selectedTab = 0; // 0 for Services, 1 for Social
-  List<dynamic> _socialPosts = [];
-  bool _isLoadingSocial = false;
 
 
   final List<Map<String, dynamic>> categories = const [
@@ -92,33 +90,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchSocialFeed();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchSocialFeed();
+    });
   }
 
   Future<void> _fetchSocialFeed() async {
-    setState(() => _isLoadingSocial = true);
-    try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/social/feed'));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (mounted) {
-          setState(() {
-            _socialPosts = data['images'] ?? [];
-            _isLoadingSocial = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoadingSocial = false);
-      }
-    } catch (e) {
-      debugPrint('Error fetching social feed: $e');
-      if (mounted) setState(() => _isLoadingSocial = false);
-    }
+    ref.invalidate(socialFeedProvider);
   }
 
-  Map<String, List<dynamic>> _groupPostsByCategory() {
+  Map<String, List<dynamic>> _groupPostsByCategory(List<dynamic> posts) {
     Map<String, List<dynamic>> groups = {};
-    for (var post in _socialPosts) {
+    for (var post in posts) {
       final provider = post['provider'] ?? {};
       final category = provider['category'] ?? 'General';
       if (!groups.containsKey(category)) {
@@ -281,11 +264,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   Widget _buildSocialFeedView() {
-    if (_isLoadingSocial) {
+    final socialAsync = ref.watch(socialFeedProvider);
+    final socialPosts = socialAsync.asData?.value ?? const [];
+    final isLoadingSocial = socialAsync.isLoading && socialPosts.isEmpty;
+
+    if (isLoadingSocial) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final groupedPosts = _groupPostsByCategory();
+    final groupedPosts = _groupPostsByCategory(socialPosts);
 
     if (groupedPosts.isEmpty) {
       return Center(
