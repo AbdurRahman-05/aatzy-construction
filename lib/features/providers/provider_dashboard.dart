@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
+import 'dart:typed_data';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
-import '../../core/features_carousel.dart';
+import '../../core/providers/notifications_provider.dart';
 import '../auth/auth_provider.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'provider_layout.dart';
@@ -21,18 +23,23 @@ class ProviderDashboard extends ConsumerStatefulWidget {
 class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   Map<String, dynamic>? _stats;
   Map<String, dynamic>? _profileData;
-  String? _profileImage;
+  Uint8List? _cachedProfileImageBytes;
   List<dynamic> _projects = [];
   List<dynamic> _materialLeads = [];
   List<dynamic> _supplierProducts = [];
   bool _isLoading = true;
-  int _dashboardTab = 0; // 0: General, 1: Finance
+  int _dashboardTab = 0; // 0: Overview, 1: Financials
   int _selectedYear = 2026;
 
   @override
   void initState() {
     super.initState();
     _fetchStats();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Future<void> _fetchStats() async {
@@ -76,13 +83,22 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           prodsList = resProds.data['products'] ?? [];
         }
 
+        Uint8List? cachedBytes;
+        if (profImg != null && profImg.isNotEmpty) {
+          try {
+            cachedBytes = base64Decode(profImg.split(',').last);
+          } catch (e) {
+            debugPrint('Error decoding profile image: $e');
+          }
+        }
+
         if (mounted) {
           setState(() {
             _stats = jsonDecode(res0.body);
             _projects = jsonDecode(res1.body);
             _materialLeads = matLeads;
             _profileData = profData;
-            _profileImage = profImg;
+            _cachedProfileImageBytes = cachedBytes;
             _supplierProducts = prodsList;
             _isLoading = false;
           });
@@ -101,9 +117,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final auth = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
-    final businessName = _profileData?['businessName'] ?? auth.businessName ?? 'Your Business';
-    final ownerName = _profileData?['ownerName'] ?? auth.name ?? 'User';
-    final gstNumber = _profileData?['gstNumber'] ?? auth.gstNumber ?? '';
+    final businessName = _profileData?['businessName'] ?? auth.businessName ?? 'local traders';
+    final ownerName = _profileData?['ownerName'] ?? auth.name ?? 'test';
+    final avgRating = (_profileData?['avgRating'] ?? 4.8) as num;
+    final reviewCount = (_profileData?['reviewCount'] ?? 120) as num;
 
     // Calculate financials
     double totalRevenue = 0.0;
@@ -128,67 +145,116 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final totalExpenses = totalMaterialExpenses + totalLaborExpenses;
     final totalProfit = totalRevenue - totalExpenses;
 
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final isSmallScreen = screenWidth < 360;
+
+    final notifications = ref.watch(notificationsProvider);
+    final unreadNotifs = notifications.where((n) => n.isUnread).length;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
       appBar: _isLoading ? null : AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         elevation: 0,
-        flexibleSpace: ClipRRect(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [
-                        const Color(0xFF121B22).withValues(alpha: 0.95),
-                        const Color(0xFF121B22).withValues(alpha: 0.8),
-                      ]
-                    : [
-                        Colors.white.withValues(alpha: 0.95),
-                        Colors.white.withValues(alpha: 0.8),
-                      ],
-              ),
-            ),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded, color: Color(0xFF0F172A), size: 24),
+          onPressed: () {},
         ),
+        titleSpacing: 0,
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                  )
-                ],
+                color: const Color(0xFF0F766E),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Image.asset(
                 'assets/logo.png',
-                height: 20,
+                height: 18,
                 fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.apartment_rounded, color: Colors.white, size: 18),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'BuildMart Console',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 21,
-                  color: isDark ? Colors.white : const Color(0xFF064354),
-                  letterSpacing: -0.5,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+            const SizedBox(width: 8),
+            const Text(
+              'BuildMart Console',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.4,
               ),
             ),
           ],
         ),
-        actions: const [],
+        actions: [
+          // Notification Bell with dynamic unread counter badge
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none_rounded, color: Color(0xFF0F172A), size: 24),
+                onPressed: () => context.push('/notifications'),
+              ),
+              if (unreadNotifs > 0)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.all(3.5),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEF4444),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$unreadNotifs',
+                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          // User Avatar with green online dot
+          GestureDetector(
+            onTap: () => ref.read(providerTabProvider.notifier).setTab(4),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16, left: 4),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: const Color(0xFFE2E8F0),
+                    backgroundImage: _cachedProfileImageBytes != null
+                        ? MemoryImage(_cachedProfileImageBytes!)
+                        : null,
+                    child: _cachedProfileImageBytes == null
+                        ? Text(
+                            businessName.isNotEmpty ? businessName[0].toUpperCase() : 'P',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F766E), fontSize: 14),
+                          )
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -197,41 +263,54 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 32.0),
+                  padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12.0 : 16.0, vertical: 12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Welcome Profile Banner Card (Modern Glassmorphic Style)
-                      _buildWelcomeCard(businessName, ownerName, gstNumber, isDark, primaryColor),
-                      const SizedBox(height: 24),
+                      // 1. Hero Provider Welcome Banner Card
+                      _buildHeroWelcomeCard(
+                        businessName: businessName,
+                        ownerName: ownerName,
+                        avgRating: avgRating,
+                        reviewCount: reviewCount,
+                        isSmallScreen: isSmallScreen,
+                      ),
+                      const SizedBox(height: 16),
 
-                      // App Features & Benefits Carousel
-                      const AppFeaturesCarousel(isProvider: true),
-                      const SizedBox(height: 24),
+                      // 2. Material Sourcing Sales Carousel Banner (Self-contained, smooth, zero re-render)
+                      MaterialSourcingCarouselWidget(isSmallScreen: isSmallScreen),
+                      const SizedBox(height: 16),
 
-                      // Segmented Tab Selector
-                      _buildPillTabSelector(isDark, primaryColor),
-                      const SizedBox(height: 24),
+                      // 3. Segmented Switcher (Overview vs Financials)
+                      _buildSegmentedPillSwitcher(isSmallScreen),
+                      const SizedBox(height: 16),
 
-                      // General Tab Content
+                      // Overview Tab Content
                       if (_dashboardTab == 0) ...[
-                        _buildGeneralOverviewSection(isDark, primaryColor),
-                        const SizedBox(height: 28),
-                        _buildActiveJobsSection(isDark, primaryColor),
-                        const SizedBox(height: 28),
-                        _buildClosedDealsSection(isDark, primaryColor),
-                        const SizedBox(height: 28),
-                        _buildRecentLeadsSection(isDark, primaryColor),
-                        const SizedBox(height: 28),
-                        _buildB2BToolsSection(isDark, primaryColor),
+                        // 4. 3 Key Metrics Row (Active Leads, Active Jobs, Ongoing Deals)
+                        _buildKeyMetricsRow(isSmallScreen),
+                        const SizedBox(height: 20),
+
+                        // 5. Running Project Stages Timeline Card
+                        _buildRunningProjectStagesCard(isSmallScreen),
+                        const SizedBox(height: 20),
+
+                        // 6. Two Column Cards: Ongoing Deals & Hot Market Enquiries
+                        _buildDealsAndEnquiriesRow(isSmallScreen, screenWidth),
+                        const SizedBox(height: 20),
+
+                        // 7. Supplier Management Console
+                        _buildSupplierManagementConsole(isSmallScreen),
+                        const SizedBox(height: 32),
                       ]
-                      // Finance Tab Content
+                      // Financials Tab Content
                       else ...[
                         _buildFinanceStats(totalRevenue, totalExpenses, totalProfit),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         _buildFinanceChart(),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 24),
                         _buildProjectProfitabilitySection(isDark, primaryColor),
+                        const SizedBox(height: 32),
                       ],
                     ],
                   ),
@@ -240,140 +319,233 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             ),
     );
   }
+  // ==========================================
+  // 1. HERO PROVIDER WELCOME BANNER CARD
+  // ==========================================
+  Widget _buildHeroWelcomeCard({
+    required String businessName,
+    required String ownerName,
+    required num avgRating,
+    required num reviewCount,
+    required bool isSmallScreen,
+  }) {
+    final auth = ref.read(authProvider);
 
-  Widget _buildWelcomeCard(String businessName, String ownerName, String gstNumber, bool isDark, Color primaryColor) {
-    final avatarText = businessName.isNotEmpty ? businessName[0].toUpperCase() : 'B';
-    
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF0F9B8E), const Color(0xFF0E5E6F)]
-              : [const Color(0xFF064354), const Color(0xFF0B7C8E)],
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0A5C67), Color(0xFF0D7A87), Color(0xFF0A5C67)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: const Color(0xFF0A5C67).withValues(alpha: 0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Profile Photo with dual glowing rings
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white24,
-            ),
-            child: CircleAvatar(
-              radius: 32,
-              backgroundColor: Colors.white,
-              backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
-                  ? MemoryImage(Base64ImageCache.decode(_profileImage!))
-                  : null,
-              child: _profileImage == null || _profileImage!.isEmpty
-                  ? Text(
-                      avatarText,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: primaryColor,
-                      ),
-                    )
-                  : null,
-            ),
+          // Left: Circular Team / Business Avatar with online green check badge
+          Stack(
+            children: [
+              Container(
+                width: isSmallScreen ? 56 : 68,
+                height: isSmallScreen ? 56 : 68,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
+                ),
+                child: ClipOval(
+                  child: _cachedProfileImageBytes != null
+                      ? Image.memory(
+                          _cachedProfileImageBytes!,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                          errorBuilder: (context, error, stackTrace) => Image.asset(
+                            'assets/images/banner_building.jpg',
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/images/banner_building.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check, size: 10, color: Colors.white),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 18),
-          // Business details
+          SizedBox(width: isSmallScreen ? 8 : 12),
+
+          // Center: Business details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'PORTAL ACTIVE • VERIFIED PROVIDER',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        businessName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'PORTAL ACTIVE • VERIFIED PROVIDER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 7.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.4,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.verified_rounded, color: Colors.blueAccent, size: 20),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
+                Text(
+                  businessName,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isSmallScreen ? 15 : 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
                 Text(
                   'User: $ownerName',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 12.5,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: isSmallScreen ? 10.5 : 11.5,
                     fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                if (gstNumber.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.verified_user_rounded, color: Colors.white70, size: 13),
-                      const SizedBox(width: 4),
-                      Text(
-                        'GST: $gstNumber',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
+                const SizedBox(height: 3),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 12),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${avgRating.toStringAsFixed(1)} ($reviewCount)',
+                          style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.calendar_month_rounded, color: Colors.white70, size: 10),
+                        SizedBox(width: 2),
+                        Text(
+                          'Jan 2023',
+                          style: TextStyle(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ],
             ),
+          ),
+          const SizedBox(width: 6),
+
+          // Right: Verified Badge + View Profile Button
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 12),
+                  SizedBox(width: 3),
+                  Text(
+                    'Verified',
+                    style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  if (auth.id != null) {
+                    context.push('/provider-profile/${auth.id}');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF063E46),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        'View Profile',
+                        style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 3),
+                      Icon(Icons.arrow_forward_rounded, size: 10, color: Colors.white),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPillTabSelector(bool isDark, Color primaryColor) {
+  // ==========================================
+  // 3. SEGMENTED SWITCHER (Overview vs Financials)
+  // ==========================================
+  Widget _buildSegmentedPillSwitcher(bool isSmallScreen) {
     return Container(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.8),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.grey.shade200,
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -381,39 +553,26 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             child: GestureDetector(
               onTap: () => setState(() => _dashboardTab = 0),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: _dashboardTab == 0
-                      ? primaryColor
-                      : Colors.transparent,
+                  color: _dashboardTab == 0 ? const Color(0xFFF1F5F9) : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: _dashboardTab == 0
-                      ? [
-                          BoxShadow(
-                            color: primaryColor.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          )
-                        ]
-                      : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.analytics_outlined,
-                      size: 18,
-                      color: _dashboardTab == 0
-                          ? Colors.white
-                          : (isDark ? Colors.white54 : Colors.grey.shade600),
+                      Icons.dashboard_customize_outlined,
+                      size: 16,
+                      color: _dashboardTab == 0 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Text(
                       'Overview',
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: _dashboardTab == 0 ? Colors.white : (isDark ? Colors.white54 : Colors.grey.shade700),
+                        fontWeight: FontWeight.w800,
                         fontSize: 13,
+                        color: _dashboardTab == 0 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -425,39 +584,26 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             child: GestureDetector(
               onTap: () => setState(() => _dashboardTab = 1),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: _dashboardTab == 1
-                      ? primaryColor
-                      : Colors.transparent,
+                  color: _dashboardTab == 1 ? const Color(0xFFF1F5F9) : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: _dashboardTab == 1
-                      ? [
-                          BoxShadow(
-                            color: primaryColor.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          )
-                        ]
-                      : null,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.monetization_on_outlined,
-                      size: 18,
-                      color: _dashboardTab == 1
-                          ? Colors.white
-                          : (isDark ? Colors.white54 : Colors.grey.shade600),
+                      Icons.account_balance_wallet_outlined,
+                      size: 16,
+                      color: _dashboardTab == 1 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Text(
                       'Financials',
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: _dashboardTab == 1 ? Colors.white : (isDark ? Colors.white54 : Colors.grey.shade700),
+                        fontWeight: FontWeight.w800,
                         fontSize: 13,
+                        color: _dashboardTab == 1 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -470,64 +616,184 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     );
   }
 
-  Widget _buildGeneralOverviewSection(bool isDark, Color primaryColor) {
-    // 1. Negotiation leads (Not Started)
+  // ==========================================
+  // 4. 3 KEY METRIC STAT CARDS
+  // ==========================================
+  Widget _buildKeyMetricsRow(bool isSmallScreen) {
     final activeMaterialLeadsCount = _materialLeads.where((lead) {
       final status = lead['status'] ?? 'New';
       return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
     }).length;
     final activeLeadsCount = (_stats?['activeLeads'] ?? 0) + activeMaterialLeadsCount;
 
-    // 2. In-process material orders (Accepted or Closed/Ongoing delivery)
     final ongoingMaterialJobsCount = _materialLeads.where((lead) {
       final status = lead['status'] ?? 'New';
       final deliveryStatus = lead['delivery_status'] ?? 'Pending';
       return status == 'Accepted' || (status == 'Closed' && deliveryStatus != 'Delivered');
     }).length;
-    
-    // Running projects + ongoing material jobs
-    final runningProjects = _projects.where((p) => p['currentStage'] != 'Completed' && p['currentStage'] != 'Finished').length;
+
+    final runningProjects = _projects.where((p) {
+      final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+      return !['completed', 'finished', 'cancelled'].contains(stage);
+    }).length;
     final activeJobsCount = runningProjects + ongoingMaterialJobsCount;
-    
+
+    final ongoingDealsCount = ongoingMaterialJobsCount;
+
     return Row(
       children: [
         Expanded(
-          child: _buildGlowMetricCard(
-            'Active Leads',
-            '$activeLeadsCount',
-            isDark ? const Color(0xFF0E5E6F) : const Color(0xFF007E8A),
-            Icons.flash_on_rounded,
-            'Inquiries listed',
+          child: _buildMetricTile(
+            title: 'ACTIVE LEADS',
+            value: '$activeLeadsCount',
+            subtitle: 'Inquiries listed',
+            icon: Icons.people_alt_outlined,
+            iconColor: const Color(0xFF0F766E),
+            iconBg: const Color(0xFFCCFBF1),
+            cardBg: Colors.white,
+            onTap: () => ref.read(providerTabProvider.notifier).setTab(2),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 8),
         Expanded(
-          child: _buildGlowMetricCard(
-            'Active Jobs',
-            '$activeJobsCount',
-            isDark ? const Color(0xFF3B6B4C) : const Color(0xFF2E7D32),
-            Icons.assignment_turned_in_rounded,
-            'Sites under work',
+          child: _buildMetricTile(
+            title: 'ACTIVE JOBS',
+            value: '$activeJobsCount',
+            subtitle: 'Sites under work',
+            icon: Icons.business_center_outlined,
+            iconColor: const Color(0xFF2563EB),
+            iconBg: const Color(0xFFDBEAFE),
+            cardBg: Colors.white,
+            onTap: () => ref.read(providerTabProvider.notifier).setTab(1),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildMetricTile(
+            title: 'ONGOING DEALS',
+            value: '$ongoingDealsCount',
+            subtitle: 'Active orders',
+            icon: Icons.assignment_outlined,
+            iconColor: const Color(0xFFEA580C),
+            iconBg: const Color(0xFFFFEDD5),
+            cardBg: Colors.white,
+            onTap: () => context.push('/b2b-materials'),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildGlowMetricCard(String title, String count, Color baseColor, IconData icon, String subtitle) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: baseColor.withValues(alpha: 0.3),
-          width: 1.5,
+  Widget _buildMetricTile({
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required Color cardBg,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 16),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF64748B),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF0F172A),
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.arrow_forward_rounded, size: 10, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // 5. RUNNING PROJECT STAGES TIMELINE CARD
+  // ==========================================
+  Widget _buildRunningProjectStagesCard(bool isSmallScreen) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: baseColor.withValues(alpha: 0.03),
-            blurRadius: 10,
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -535,42 +801,122 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Running Project Stages',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Track site progress timeline',
+            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 16),
+
+          // Stepper Row with Building Illustration
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.grey,
-                  letterSpacing: 0.5,
+              // 4-Step Stepper
+              Expanded(
+                flex: 7,
+                child: Row(
+                  children: [
+                    _buildMilestoneItem('Planning', Icons.architecture_rounded, 'Completed', const Color(0xFF10B981), isSmallScreen),
+                    _buildMilestoneConnector(true),
+                    _buildMilestoneItem('Execution', Icons.apartment_rounded, 'Completed', const Color(0xFF10B981), isSmallScreen),
+                    _buildMilestoneConnector(true),
+                    _buildMilestoneItem('Finishing', Icons.person_outline_rounded, 'In Progress', const Color(0xFF2563EB), isSmallScreen),
+                    _buildMilestoneConnector(false),
+                    _buildMilestoneItem('Handover', Icons.flag_outlined, 'Upcoming', const Color(0xFF94A3B8), isSmallScreen),
+                  ],
                 ),
               ),
-              CircleAvatar(
-                radius: 15,
-                backgroundColor: baseColor.withValues(alpha: 0.2),
-                child: Icon(icon, color: baseColor, size: 16),
+
+              // Right: Construction Site Graphic with Crane
+              Expanded(
+                flex: 3,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.asset(
+                    'assets/images/crane_3d.jpg',
+                    height: 70,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.apartment_rounded, size: 55, color: Color(0xFF3B82F6)),
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            count,
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              color: baseColor,
-              letterSpacing: -1,
+
+          const SizedBox(height: 16),
+
+          // Bottom Project Status Sub-Card
+          Container(
+            padding: EdgeInsets.all(isSmallScreen ? 12 : 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFDCFCE7)),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 10.5,
-              color: Colors.grey.shade500,
-              fontWeight: FontWeight.bold,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFDCFCE7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.celebration_rounded, color: Color(0xFF16A34A), size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'All Projects Executed!',
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Color(0xFF0F172A)),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Great job! There are no outstanding works on site. Check customer inquiries to start new ones.',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF475569), height: 1.3),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => ref.read(providerTabProvider.notifier).setTab(2),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0A5C67),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text(
+                            'Explore Client Leads',
+                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.arrow_forward_rounded, size: 12, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -578,873 +924,381 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     );
   }
 
-  Widget _buildActiveJobsSection(bool isDark, Color primaryColor) {
-    final activeJobs = (_stats?['activeJobs'] as List? ?? [])
-        .where((job) => ![
-              'completed',
-              'finished',
-              'finished pending approval',
-              'cancelled'
-            ].contains((job['currentStage'] as String? ?? '').toLowerCase()))
-        .toList();
-
+  Widget _buildMilestoneItem(String label, IconData icon, String status, Color statusColor, bool isSmallScreen) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Running Project Stages',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900, 
-                    fontSize: 18, 
-                    letterSpacing: -0.4,
-                  ),
-                ),
-                Text(
-                  'Track site progress timeline',
-                  style: TextStyle(
-                    fontSize: 11, 
-                    color: isDark ? Colors.white38 : Colors.grey.shade500,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            if (activeJobs.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${activeJobs.length} ACTIVE',
-                  style: TextStyle(
-                    color: primaryColor, 
-                    fontSize: 9.5, 
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (activeJobs.isEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
-            ),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.green.withValues(alpha: 0.08),
-                  child: const Icon(Icons.celebration_rounded, size: 30, color: Colors.green),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'All Projects Executed!',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Great job! There are no outstanding works on site. Check customer inquiries to start new ones.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12, height: 1.4),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => ref.read(providerTabProvider.notifier).setTab(2),
-                  icon: const Icon(Icons.search_rounded, size: 16),
-                  label: const Text('Explore Client Leads'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          Column(
-            children: activeJobs.map((job) {
-              final stage = job['currentStage'] ?? 'Planning';
-              return Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark 
-                        ? Colors.white.withValues(alpha: 0.08) 
-                        : Colors.grey.shade200,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () async {
-                      await context.push('/provider-job/${job['id']}');
-                      _fetchStats();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: primaryColor.withValues(alpha: 0.1),
-                                child: Icon(Icons.handyman_outlined, color: primaryColor, size: 18),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      job['title'],
-                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Client: ${job['userName']}',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade500, 
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.blue.withValues(alpha: 0.15), width: 1),
-                                ),
-                                child: Text(
-                                  stage.toUpperCase(),
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                          _buildStageProgressBar(stage),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+        Container(
+          width: isSmallScreen ? 26 : 30,
+          height: isSmallScreen ? 26 : 30,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: statusColor.withValues(alpha: 0.1),
+            border: Border.all(color: statusColor, width: 1.5),
           ),
-      ],
-    );
-  }
-
-  Widget _buildClosedDealsSection(bool isDark, Color primaryColor) {
-    final ongoingDeals = _materialLeads.where((lead) {
-      final status = lead['status'];
-      final deliveryStatus = lead['delivery_status'];
-      return status == 'Accepted' || (status == 'Closed' && deliveryStatus != 'Delivered');
-    }).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Ongoing Deals',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-                Text(
-                  'Track in-progress processes and shipments',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.white38 : Colors.grey.shade500,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            TextButton(
-              onPressed: () => context.push('/b2b-materials'),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                backgroundColor: primaryColor.withValues(alpha: 0.08),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    'View All',
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_rounded, size: 12, color: primaryColor),
-                ],
-              ),
-            )
-          ],
+          child: Icon(icon, size: isSmallScreen ? 13 : 15, color: statusColor),
         ),
-        const SizedBox(height: 12),
-        if (ongoingDeals.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                )
-              ],
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 9 : 10,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF0F172A),
             ),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: primaryColor.withValues(alpha: 0.06),
-                  child: Icon(Icons.local_shipping_outlined, size: 30, color: primaryColor),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'No Ongoing Deals',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Your active material negotiations, accepted quotes, and pending deliveries will appear here.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12, height: 1.3),
-                ),
-              ],
-            ),
-          )
-        else
-          Column(
-            children: ongoingDeals.map((lead) {
-              final title = lead['title'] ?? lead['product_name'] ?? 'Material Lead';
-              final buyerName = lead['buyer_name'] ?? 'Client';
-              final quantityVal = lead['quantity'] != null ? double.parse(lead['quantity'].toString()) : 0.0;
-              final unitStr = lead['unit'] ?? 'Units';
-              final status = lead['status'] ?? 'New';
-              final deliveryStatus = lead['delivery_status'] ?? 'Pending';
-
-              String statusLabel = '';
-              Color statusColor = Colors.orange;
-              IconData statusIcon = Icons.hourglass_top_rounded;
-
-              if (status == 'Accepted') {
-                statusLabel = 'Accepted';
-                statusColor = Colors.teal;
-                statusIcon = Icons.handshake_outlined;
-              } else if (status == 'Closed') {
-                statusLabel = 'Ongoing ($deliveryStatus)';
-                statusColor = Colors.blue;
-                switch (deliveryStatus.toString().toLowerCase()) {
-                  case 'packed':
-                    statusIcon = Icons.inventory_2_outlined;
-                    break;
-                  case 'dispatched':
-                    statusIcon = Icons.local_shipping_outlined;
-                    break;
-                  default:
-                    statusIcon = Icons.hourglass_top_rounded;
-                    break;
-                }
-              }
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () async {
-                      await context.push('/b2b-materials');
-                      _fetchStats();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: primaryColor.withValues(alpha: 0.1),
-                                child: Icon(statusIcon, color: primaryColor, size: 18),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      title,
-                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Buyer: $buyerName • Qty: $quantityVal $unitStr',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: statusColor.withValues(alpha: 0.15), width: 1),
-                                ),
-                                child: Text(
-                                  statusLabel.toUpperCase(),
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (status == 'Closed') ...[
-                            const SizedBox(height: 18),
-                            // Delivery Steps
-                            _buildDeliveryStepProgress(deliveryStatus, isDark, primaryColor),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
           ),
-      ],
-    );
-  }
-
-  Widget _buildDeliveryStepProgress(String currentStatus, bool isDark, Color primaryColor) {
-    final statusLower = currentStatus.toLowerCase();
-    
-    int activeStep = 0;
-    if (statusLower == 'packed') activeStep = 1;
-    if (statusLower == 'dispatched') activeStep = 2;
-    if (statusLower == 'delivered') activeStep = 3;
-
-    final steps = ['Ordered', 'Packed', 'Dispatched', 'Delivered'];
-    final stepIcons = [
-      Icons.check_circle_rounded,
-      Icons.inventory_2_rounded,
-      Icons.local_shipping_rounded,
-      Icons.done_all_rounded
-    ];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(4, (index) {
-        final isCompleted = index <= activeStep;
-        final isActive = index == activeStep;
-        final color = isCompleted 
-            ? (index == 3 ? Colors.green : primaryColor) 
-            : (isDark ? Colors.white24 : Colors.grey.shade300);
-
-        return Expanded(
-          child: Row(
-            children: [
-              Column(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isCompleted ? color.withValues(alpha: 0.1) : Colors.transparent,
-                      border: Border.all(
-                        color: color,
-                        width: isActive ? 2.5 : 1.5,
-                      ),
-                    ),
-                    child: Icon(
-                      stepIcons[index],
-                      size: 12,
-                      color: color,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    steps[index],
-                    style: TextStyle(
-                      fontSize: 8.5,
-                      fontWeight: isActive ? FontWeight.w900 : FontWeight.bold,
-                      color: isCompleted 
-                          ? (isDark ? Colors.white : Colors.black87) 
-                          : Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-              if (index < 3)
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    color: index < activeStep 
-                        ? primaryColor 
-                        : (isDark ? Colors.white12 : Colors.grey.shade200),
-                  ),
-                ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildStageProgressBar(String stage) {
-    final stages = ['Planning', 'Foundation', 'Structure', 'Finishing', 'Completed'];
-    final currentIdx = stages.indexWhere((s) => s.toLowerCase() == stage.toLowerCase());
-    
-    return Column(
-      children: [
-        Row(
-          children: List.generate(stages.length, (idx) {
-            final isDone = idx <= currentIdx;
-            return Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: isDone ? Colors.green : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  if (idx < stages.length - 1) const SizedBox(width: 4),
-                ],
-              ),
-            );
-          }),
         ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Current Stage: $stage', 
-              style: const TextStyle(
-                fontSize: 10.5, 
-                color: Colors.grey, 
-                fontWeight: FontWeight.w700,
-              ),
+        const SizedBox(height: 1),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            status,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 7.5 : 8.5,
+              fontWeight: FontWeight.bold,
+              color: statusColor,
             ),
-            const Text(
-              'Target: Completed', 
-              style: TextStyle(
-                fontSize: 10.5, 
-                color: Colors.grey,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildRecentLeadsSection(bool isDark, Color primaryColor) {
-    final List<Map<String, dynamic>> combinedLeads = [];
-    final serviceLeads = _stats?['recentLeads'] as List? ?? [];
-    
-    for (final lead in serviceLeads) {
-      combinedLeads.add({
-        'isMaterial': false,
-        'id': lead['id'],
-        'title': lead['title'] ?? 'Service Project',
-        'subtitle': 'By ${lead['userName'] ?? 'Client'}',
-        'location': lead['location'] ?? 'N/A',
-        'date': lead['createdAt'] != null ? DateTime.tryParse(lead['createdAt'].toString()) : null,
-        'raw': lead,
-      });
-    }
+  Widget _buildMilestoneConnector(bool isDone) {
+    return Expanded(
+      child: Container(
+        height: 1.5,
+        margin: const EdgeInsets.only(bottom: 24),
+        color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
+      ),
+    );
+  }
 
-    for (final lead in _materialLeads) {
-      final status = (lead['status'] ?? 'New').toString().toLowerCase();
-      if (status == 'closed' || status == 'accepted' || status == 'rejected') {
-        continue;
-      }
-      combinedLeads.add({
-        'isMaterial': true,
-        'id': lead['id'],
-        'title': lead['title'] ?? lead['product_name'] ?? 'Material Requirement',
-        'subtitle': 'By ${lead['buyer_name'] ?? 'Buyer Client'}',
-        'location': lead['location'] ?? 'N/A',
-        'date': lead['created_at'] != null ? DateTime.tryParse(lead['created_at'].toString()) : null,
-        'raw': lead,
-      });
-    }
-
-    combinedLeads.sort((a, b) {
-      if (a['date'] == null && b['date'] == null) return 0;
-      if (a['date'] == null) return 1;
-      if (b['date'] == null) return -1;
-      return b['date'].compareTo(a['date']);
-    });
-
-    final recentCombined = combinedLeads.take(4).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Hot Market Enquiries',
-              style: TextStyle(
-                fontWeight: FontWeight.w900, 
-                fontSize: 18, 
-                letterSpacing: -0.4,
-              ),
-            ),
-            Text(
-              'Opportunities in your service areas',
-              style: TextStyle(
-                fontSize: 11, 
-                color: isDark ? Colors.white38 : Colors.grey.shade500,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (recentCombined.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Text(
-                'No inquiries in your area at the moment.',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5),
-              ),
-            ),
-          )
-        else
-          Column(
-            children: recentCombined.map((lead) {
-              final isMaterial = lead['isMaterial'] as bool;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F2C34).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.8),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark 
-                        ? Colors.white.withValues(alpha: 0.06) 
-                        : Colors.grey.shade200,
+  // ==========================================
+  // 6. TWO COLUMN CARDS: ONGOING DEALS & HOT MARKET ENQUIRIES (Equal Heights)
+  // ==========================================
+  Widget _buildDealsAndEnquiriesRow(bool isSmallScreen, double screenWidth) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Left: Ongoing Deals Card
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    )
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Stack(
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Stripe tag color
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: 4,
-                        child: Container(
-                          color: isMaterial ? Colors.green : Colors.blue,
-                        ),
-                      ),
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        leading: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: isMaterial ? Colors.green.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
-                          child: Icon(
-                            isMaterial ? Icons.local_shipping_outlined : Icons.engineering_outlined,
-                            color: isMaterial ? Colors.green : Colors.blue,
-                            size: 18,
-                          ),
-                        ),
-                        title: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                lead['title'],
-                                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Ongoing Deals',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          ),
+                          GestureDetector(
+                            onTap: () => context.push('/b2b-materials'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: isMaterial ? Colors.green.withValues(alpha: 0.08) : Colors.blue.withValues(alpha: 0.08),
+                                color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text(
-                                isMaterial ? 'MATERIAL' : 'SERVICE',
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w900,
-                                  color: isMaterial ? Colors.green : Colors.blue,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Text('View All', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                                  SizedBox(width: 2),
+                                  Icon(Icons.arrow_forward_rounded, size: 7.5, color: Color(0xFF2563EB)),
+                                ],
                               ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      SizedBox(
+                        height: 24,
+                        child: const Text(
+                          'Track in-progress processes and shipments',
+                          style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Truck Graphic & Empty State
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.local_shipping_outlined, color: Color(0xFF64748B), size: 26),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'No Ongoing Deals',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        SizedBox(
+                          height: 34,
+                          child: const Text(
+                            'Active material negotiations and shipments will appear here.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 9, color: Color(0xFF64748B), height: 1.25),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // Right: Hot Market Enquiries Card
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Hot Market Enquiries',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      SizedBox(
+                        height: 24,
+                        child: const Text(
+                          'Opportunities in your service areas',
+                          style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Search Graphic & Empty State
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.saved_search_rounded, color: Color(0xFF2563EB), size: 26),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'No inquiries in your area',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        SizedBox(
+                          height: 34,
+                          child: const Text(
+                            "We'll notify you when new opportunities are available.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 9, color: Color(0xFF64748B), height: 1.25),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // 7. SUPPLIER MANAGEMENT CONSOLE
+  // ==========================================
+  Widget _buildSupplierManagementConsole(bool isSmallScreen) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Supplier Management Console',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'Utilities to update items and quotes',
+          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+        ),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            // Card 1: My Products (Soft Blue)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => context.push('/supplier-products'),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _supplierProducts.isNotEmpty ? 'My Products (${_supplierProducts.length})' : 'My Products',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Update rates & items',
+                              style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
                             ),
                           ],
                         ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Row(
-                            children: [
-                              Icon(Icons.location_on_outlined, size: 13, color: Colors.red.shade400),
-                              const SizedBox(width: 2),
-                              Text(
-                                lead['location'],
-                                style: TextStyle(
-                                  color: Colors.grey.shade500, 
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                lead['subtitle'],
-                                style: TextStyle(
-                                  color: Colors.grey.shade600, 
-                                  fontSize: 10.5, 
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1D4ED8),
+                          shape: BoxShape.circle,
                         ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios_rounded, 
-                          size: 14, 
-                          color: isDark ? Colors.white24 : Colors.grey.shade400,
-                        ),
-                        onTap: () {
-                          if (isMaterial) {
-                            context.push('/b2b-materials');
-                          } else {
-                            context.push('/provider-lead/${lead['id']}');
-                          }
-                        },
+                        child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 12),
                       ),
                     ],
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-      ],
-    );
-  }
+              ),
+            ),
+            const SizedBox(width: 10),
 
-  Widget _buildB2BToolsSection(bool isDark, Color primaryColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Supplier Management Console',
-              style: TextStyle(
-                fontWeight: FontWeight.w900, 
-                fontSize: 18, 
-                letterSpacing: -0.4,
-              ),
-            ),
-            Text(
-              'Utilities to update items and quotes',
-              style: TextStyle(
-                fontSize: 11, 
-                color: isDark ? Colors.white38 : Colors.grey.shade500,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
+            // Card 2: Material Leads (Soft Green)
             Expanded(
-              child: Container(
-                height: 110,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [const Color(0xFF1E3C72).withValues(alpha: 0.85), const Color(0xFF2A5298).withValues(alpha: 0.85)]
-                        : [Colors.blue.shade800, Colors.blue.shade600],
+              child: GestureDetector(
+                onTap: () => context.push('/b2b-materials'),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () => context.push('/supplier-products'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.storefront_rounded, size: 28, color: Colors.white),
-                          const SizedBox(height: 10),
-                          Text(
-                            _supplierProducts.isNotEmpty ? 'My Products (${_supplierProducts.length})' : 'My Products',
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Colors.white),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Update rates & items',
-                            style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF059669),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(Icons.description_outlined, color: Colors.white, size: 22),
                       ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Container(
-                height: 110,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [const Color(0xFF0F9B8E).withValues(alpha: 0.85), const Color(0xFF0D7A71).withValues(alpha: 0.85)]
-                        : [const Color(0xFF064354), const Color(0xFF0C8A9B)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryColor.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: () => context.push('/b2b-materials'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.inbox_rounded, size: 28, color: Colors.white),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Material Leads',
-                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Colors.white),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Submit B2B quotes',
-                            style: TextStyle(fontSize: 10, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Material Leads',
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Submit B2B quotes',
+                              style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF065F46),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 12),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1921,3 +1775,264 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     );
   }
 }
+
+class MaterialSourcingCarouselWidget extends StatefulWidget {
+  final bool isSmallScreen;
+  const MaterialSourcingCarouselWidget({super.key, required this.isSmallScreen});
+
+  @override
+  State<MaterialSourcingCarouselWidget> createState() => _MaterialSourcingCarouselWidgetState();
+}
+
+class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouselWidget> {
+  int _carouselIndex = 0;
+  final PageController _carouselPageController = PageController();
+  Timer? _carouselTimer;
+
+  final List<Map<String, dynamic>> slides = const [
+    {
+      'tag': 'B2B MERCHANT',
+      'title': 'Material Sourcing Sales',
+      'desc': 'List materials on BuildMart and secure bulk wholesale orders directly.',
+      'btn': 'Manage Materials',
+      'route': '/supplier-products',
+      'colors': [Color(0xFFEA580C), Color(0xFFF59E0B)],
+      'icon': Icons.shopping_cart_rounded,
+    },
+    {
+      'tag': 'BULK SUPPLY',
+      'title': 'Wholesale Procurement',
+      'desc': 'Direct factory prices with scheduled bulk supply for project sites.',
+      'btn': 'Explore B2B Leads',
+      'route': '/b2b-materials',
+      'colors': [Color(0xFF1D4ED8), Color(0xFF3B82F6)],
+      'icon': Icons.local_shipping_rounded,
+    },
+    {
+      'tag': 'VERIFIED BUILDER',
+      'title': 'Showcase Your Projects',
+      'desc': 'Upload photos of completed sites to get inquiries from premium clients.',
+      'btn': 'Post Showcase',
+      'route': '/services',
+      'colors': [Color(0xFF0F766E), Color(0xFF14B8A6)],
+      'icon': Icons.architecture_rounded,
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _startCarouselTimer();
+  }
+
+  @override
+  void dispose() {
+    _carouselTimer?.cancel();
+    _carouselPageController.dispose();
+    super.dispose();
+  }
+
+  void _startCarouselTimer() {
+    _carouselTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_carouselPageController.hasClients && mounted) {
+        final nextPage = (_carouselIndex + 1) % slides.length;
+        _carouselPageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 155,
+          child: PageView.builder(
+            controller: _carouselPageController,
+            onPageChanged: (idx) {
+              if (mounted) setState(() => _carouselIndex = idx);
+            },
+            itemCount: slides.length,
+            itemBuilder: (context, index) {
+              final slide = slides[index];
+              final colors = slide['colors'] as List<Color>;
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                padding: EdgeInsets.all(widget.isSmallScreen ? 14 : 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    colors: colors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.first.withValues(alpha: 0.3),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Center Content Details
+                    Expanded(
+                      flex: 6,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              slide['tag'] as String,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            slide['title'] as String,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            slide['desc'] as String,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 10,
+                              height: 1.25,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: () => context.push(slide['route'] as String),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    slide['btn'] as String,
+                                    style: const TextStyle(
+                                      color: Color(0xFF0F172A),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_forward_rounded, size: 11, color: Color(0xFF0F172A)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Right: 3D Illustration Icon in Concentric Circles
+                    Expanded(
+                      flex: 4,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 90,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.12),
+                            ),
+                          ),
+                          Container(
+                            width: 65,
+                            height: 65,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.95),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              slide['icon'] as IconData,
+                              size: 28,
+                              color: colors.first,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Indicator Dots
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(slides.length, (idx) {
+            final isSelected = _carouselIndex == idx;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 2.5),
+              width: isSelected ? 16 : 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+

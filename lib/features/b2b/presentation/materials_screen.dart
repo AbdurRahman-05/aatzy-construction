@@ -587,7 +587,13 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: Colors.grey.shade400),
+            Image.asset(
+              'assets/images/no_materials_orders.png',
+              width: 160,
+              height: 160,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => Icon(icon, size: 64, color: Colors.grey.shade400),
+            ),
             const SizedBox(height: 16),
             Text(
               title,

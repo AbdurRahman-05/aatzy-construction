@@ -318,7 +318,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               'User: $owner  •  $experience Yrs Exp',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark ? Colors.white60 : Colors.grey.shade600,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -331,17 +332,17 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                 return Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(4),
+                                    color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: Colors.blue.withValues(alpha: 0.15),
+                                      color: isDark ? const Color(0xFF38BDF8).withValues(alpha: 0.3) : const Color(0xFFBFDBFE),
                                     ),
                                   ),
                                   child: Text(
                                     cTrim,
                                     style: TextStyle(
-                                      fontSize: 10,
-                                      color: isDark ? const Color(0xFF38BDF8) : Colors.blue.shade800,
+                                      fontSize: 10.5,
+                                      color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1D4ED8),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -358,22 +359,29 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF002E3B)),
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 14,
+                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0F766E),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               'ABOUT COMPANY',
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -381,11 +389,12 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          bio,
+                          bio.isNotEmpty ? bio : 'No bio provided yet.',
                           style: TextStyle(
                             fontSize: 12.5,
                             height: 1.4,
-                            color: isDark ? Colors.white70 : Colors.black87,
+                            color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -588,13 +597,13 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     if (_supplierProducts.isEmpty) {
       return SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(40),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
-              const Icon(Icons.storefront_rounded, size: 54, color: Colors.blue),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              const Icon(Icons.storefront_rounded, size: 44, color: Colors.blue),
+              const SizedBox(height: 12),
               const Text(
                 'No Catalog Products Yet',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
@@ -610,6 +619,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         ),
       );
     }
+
 
     return GridView.builder(
       padding: const EdgeInsets.all(12),

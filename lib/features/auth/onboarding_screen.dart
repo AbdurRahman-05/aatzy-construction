@@ -101,7 +101,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(color: AppTheme.primaryOrange),
+                CircularProgressIndicator(color: Color(0xFFF59E0B)),
                 SizedBox(height: 16),
                 Text(
                   'Loading Platform...',
@@ -189,12 +189,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryOrange,
+                              color: const Color(0xFFF59E0B),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Icon(
                               Icons.construction_rounded,
-                              color: Colors.white,
+                              color: Colors.black,
                               size: 18,
                             ),
                           ),
@@ -276,7 +276,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                   width: isActive ? 28 : 8,
                                   decoration: BoxDecoration(
                                     color: isActive
-                                        ? AppTheme.primaryOrange
+                                        ? const Color(0xFFF59E0B)
                                         : Colors.white.withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
@@ -287,14 +287,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ElevatedButton(
                               onPressed: _nextPage,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryOrange,
-                                foregroundColor: Colors.white,
+                                backgroundColor: const Color(0xFFF59E0B),
+                                foregroundColor: Colors.black,
                                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                                 elevation: 8,
-                                shadowColor: AppTheme.primaryOrange.withValues(alpha: 0.4),
+                                shadowColor: const Color(0xFFF59E0B).withValues(alpha: 0.5),
                               ),
                               child: const Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -351,10 +351,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryOrange.withValues(alpha: 0.15),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(36),
                   border: Border.all(
-                    color: AppTheme.primaryOrange.withValues(alpha: 0.4),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.6),
                     width: 1.5,
                   ),
                 ),
@@ -374,7 +374,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w900,
-              color: AppTheme.primaryOrange,
+              color: Color(0xFFF59E0B), // Bright amber — visible on dark bg
               letterSpacing: 2,
             ),
             textAlign: TextAlign.center,
@@ -450,7 +450,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 title: "I'M A CONSUMER",
                 description: 'Homeowner seeking project estimates, hiring top contractors, and managing budgets.',
                 icon: Icons.person_rounded,
-                activeColor: AppTheme.primaryOrange,
+                activeColor: const Color(0xFFF59E0B),
               ),
               const SizedBox(height: 16),
               _buildGlassRoleCard(
@@ -495,15 +495,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _selectedRole == 'CONSUMER'
-                              ? AppTheme.primaryOrange
+                              ? const Color(0xFFF59E0B)
                               : const Color(0xFF16A34A),
-                          foregroundColor: Colors.white,
+                          foregroundColor: _selectedRole == 'CONSUMER' ? Colors.black : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(22),
                           ),
                           elevation: 8,
-                          shadowColor: AppTheme.primaryOrange.withValues(alpha: 0.4),
+                          shadowColor: const Color(0xFFF59E0B).withValues(alpha: 0.4),
                         ),
                         child: Text(
                           _selectedRole == 'CONSUMER'
@@ -532,7 +532,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               foregroundColor: Colors.white,
                               side: BorderSide(
                                 color: _selectedRole == 'CONSUMER'
-                                    ? AppTheme.primaryOrange
+                                    ? const Color(0xFFF59E0B)
                                     : const Color(0xFF16A34A),
                                 width: 2,
                               ),

@@ -240,7 +240,7 @@ class _ApiSettingsDialogState extends State<ApiSettingsDialog> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
-                        child: const Text('Save'),
+                        child: const Text ('Save'),
                       ),
                     ],
                   ),

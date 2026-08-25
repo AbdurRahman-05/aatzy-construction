@@ -6,8 +6,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
 
-    if (!category) {
-      // If no category specified, return all active providers
+    if (!category || category.trim().toLowerCase() === 'all') {
+      // If no category or "All" specified, return all active providers
       const allProviders = await prisma.provider.findMany({
         where: {
           isRejected: false,

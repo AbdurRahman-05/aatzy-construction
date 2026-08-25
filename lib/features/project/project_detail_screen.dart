@@ -1,12 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:confetti/confetti.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../../core/constants.dart';
-import '../../core/wallpaper_background.dart';
 import '../../core/full_screen_image_viewer.dart';
 import '../chat/chat_detail_screen.dart';
 
@@ -21,8 +20,47 @@ class ProjectDetailScreen extends ConsumerStatefulWidget {
 class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
   Map<String, dynamic>? _project;
   bool _isLoading = true;
-  int _selectedTrackingTab = 0; // 0 for Schedule/Plan, 1 for Daily Logs
+  String _costViewMode = 'Summary'; // 'Summary' or 'Detailed'
+  int _selectedTrackingTab = 0; // 0 for Execution Plan & Tasks, 1 for Daily Logs
   late ConfettiController _confettiController;
+
+  final List<Map<String, dynamic>> _recommendedServices = const [
+    {
+      'title': 'Land & Legal',
+      'desc': 'Legal support &\ndocumentation',
+      'icon': Icons.balance_rounded,
+      'color': Color(0xFF10B981),
+      'bg': Color(0xFFECFDF5),
+    },
+    {
+      'title': 'Design & Planning',
+      'desc': 'Architectural design\n& planning',
+      'icon': Icons.architecture_rounded,
+      'color': Color(0xFF3B82F6),
+      'bg': Color(0xFFEFF6FF),
+    },
+    {
+      'title': 'Construction',
+      'desc': 'Quality construction\nservices',
+      'icon': Icons.construction_rounded,
+      'color': Color(0xFFF59E0B),
+      'bg': Color(0xFFFFFBEB),
+    },
+    {
+      'title': 'Interior Design',
+      'desc': 'Stylish & functional\ninteriors',
+      'icon': Icons.chair_rounded,
+      'color': Color(0xFF8B5CF6),
+      'bg': Color(0xFFFAF5FF),
+    },
+    {
+      'title': 'Survey & Analysis',
+      'desc': 'Site surveying &\nvaluation',
+      'icon': Icons.explore_rounded,
+      'color': Color(0xFF0284C7),
+      'bg': Color(0xFFF0F9FF),
+    },
+  ];
 
   @override
   void initState() {
@@ -60,17 +98,18 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Project'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Project', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Are you sure you want to delete this project? This will delete all tasks, quotes, and tracking progress. This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -109,17 +148,18 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel Project'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Cancel Project', style: TextStyle(fontWeight: FontWeight.bold)),
         content: const Text('Are you sure you want to cancel this project? This will stop all tracking and execution progress. This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Go Back'),
+            child: const Text('Go Back', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Cancel Project', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            child: const Text('Cancel Project', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -194,7 +234,8 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         return StatefulBuilder(
           builder: (dialogContext, setModalState) {
             return AlertDialog(
-              title: const Text('Rate & Review Service Provider'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Rate & Review Service Provider', style: TextStyle(fontWeight: FontWeight.bold)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -207,7 +248,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                         final starValue = index + 1;
                         return IconButton(
                           icon: Icon(
-                            localRating >= starValue ? Icons.star : Icons.star_border,
+                            localRating >= starValue ? Icons.star_rounded : Icons.star_outline_rounded,
                             color: Colors.amber,
                             size: 32,
                           ),
@@ -239,7 +280,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel'),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -255,7 +296,8 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                       'comment': comment,
                     });
                   },
-                  child: const Text('Submit Completion'),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1D4ED8)),
+                  child: const Text('Submit Completion', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -263,10 +305,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
         );
       },
     );
-
-    Future.delayed(const Duration(milliseconds: 600), () {
-      commentController.dispose();
-    });
 
     if (result != null) {
       final rating = result['rating'] as int;
@@ -334,85 +372,42 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
       barrierDismissible: true,
       builder: (ctx) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  offset: const Offset(0, 10),
-                  blurRadius: 10,
-                ),
-              ],
-            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    size: 50,
-                    color: Colors.green.shade600,
-                  ),
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
+                  child: Icon(Icons.check_circle_rounded, size: 48, color: Colors.green.shade600),
+                ),
+                const SizedBox(height: 16),
+                const Text("Project Completed!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                const SizedBox(height: 10),
+                Text(
+                  "Thank you for choosing $providerName for your construction project! Your rating and review have been recorded.",
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Project Completed!",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "Thank you for choosing $providerName for your construction project! Your rating and feedback have been successfully submitted.",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(ctx); // Close dialog
-                      Navigator.pop(context); // Go back from project detail screen
-                      context.push('/create-project'); // Open create new project screen
+                      Navigator.pop(ctx);
+                      Navigator.pop(context);
+                      context.push('/create-project');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade600,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text(
-                      "Create New Project",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                    child: const Text("Create New Project", style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -425,512 +420,575 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _project?['title'] ?? 'Project Details';
-    final type = _project?['type'] ?? 'N/A';
-    final location = _project?['location'] ?? 'N/A';
-    final plotSize = _project?['plotSize']?.toString() ?? '0';
-    final double budget = (_project?['budget'] as num? ?? 0.0).toDouble();
-    final timeline = _project?['timeline'] ?? 'N/A';
+    final title = _project?['title'] ?? 'My Home';
+    final location = _project?['location'] ?? 'Royapram, Chennai';
+    final plotSize = _project?['plotSize']?.toString() ?? '2000';
+    final double budget = (_project?['budget'] as num? ?? 300000.0).toDouble();
+    final timeline = _project?['timeline'] ?? '9 months (Mar 2025 – Dec 2025)';
     final currentStage = _project?['currentStage'] ?? 'Design & Planning';
+    final projectIdFormatted = 'PRJ-${widget.projectId.length > 8 ? widget.projectId.substring(0, 8).toUpperCase() : widget.projectId.toUpperCase()}';
+
     final quotesList = _project?['quotes'] as List? ?? [];
-    final quotesCount = quotesList.length;
-
-    final List<String> servicesList = type != 'N/A' 
-        ? List<String>.from(type.split(',').map((s) => s.trim()))
-        : ['Design & Planning', 'Construction'];
-
-    final acceptedQuote = quotesList.firstWhere(
-      (q) => q['isAccepted'] == true,
-      orElse: () => null,
-    );
-    final hasAcceptedQuote = acceptedQuote != null;
-
     final tasksList = _project?['tasks'] as List? ?? [];
-    double totalSpent = 0.0;
+
+    final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
+    final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
+
     double totalQuotedTasks = 0.0;
+    double totalSpent = 0.0;
     for (var t in tasksList) {
-      totalQuotedTasks += (t['quotedCost'] as num? ?? 0.0).toDouble();
+      final taskCost = (t['quotedCost'] as num? ?? 0.0).toDouble();
+      totalQuotedTasks += taskCost;
       if (t['status'] == 'Completed') {
-        totalSpent += (t['quotedCost'] as num? ?? 0.0).toDouble();
+        totalSpent += taskCost;
       }
     }
-    final completedTasksWithCost = tasksList.where((t) {
-      return t['status'] == 'Completed' && (t['quotedCost'] as num? ?? 0.0) > 0;
-    }).toList();
-    
-    final double projectCostBasis = hasAcceptedQuote
-        ? (acceptedQuote['estimatedCost'] as num? ?? 0.0).toDouble()
-        : budget;
     final double remainingBudget = budget - totalQuotedTasks;
 
     final completedCount = tasksList.where((t) => t['status'] == 'Completed').length;
     final totalCount = tasksList.length;
 
-    double progressValue = 0.0;
+    double progressValue = 0.40;
     if (totalCount > 0) {
       progressValue = completedCount / totalCount;
     } else {
-      // Fallback stage-based progress if no tasks exist yet
       if (currentStage == 'Design & Planning') {
-        progressValue = quotesCount > 0 ? 0.25 : 0.05;
-      } else if (currentStage == 'Tracking' || currentStage == 'Execution') {
-        progressValue = 0.5;
-      } else if (currentStage == 'Finished Pending Approval') {
-        progressValue = 0.9;
-      } else if (currentStage == 'Completed') {
+        progressValue = 0.40;
+      } else if (currentStage == 'Execution' || currentStage == 'Tracking') {
+        progressValue = 0.65;
+      } else if (isCompleted) {
         progressValue = 1.0;
-      } else {
-        progressValue = 0.15;
+      } else if (isCancelled) {
+        progressValue = 0.40;
       }
     }
 
-    return Stack(
-      children: [
-        WallpaperBackground(
-          child: Scaffold(
-            backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: Text(title),
-          actions: [
-            PopupMenuButton<String>(
-              onSelected: (val) {
-                if (val == 'edit') {
-                  _showEditProjectDialog();
-                } else if (val == 'delete') {
-                  _showDeleteConfirmationDialog();
-                } else if (val == 'cancel') {
-                  _showCancelConfirmationDialog();
-                }
-              },
-              itemBuilder: (context) {
-                final isCancelled = currentStage.toLowerCase() == 'cancelled';
-                return [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, color: Colors.blue),
-                        SizedBox(width: 8),
-                        Text('Edit Project'),
-                      ],
-                    ),
-                  ),
-                  if (isCancelled)
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Delete Project'),
-                        ],
-                      ),
-                    )
-                  else
-                    const PopupMenuItem(
-                      value: 'cancel',
-                      child: Row(
-                        children: [
-                          Icon(Icons.cancel, color: Colors.orange),
-                          SizedBox(width: 8),
-                          Text('Cancel Project'),
-                        ],
-                      ),
-                    ),
-                ];
-              },
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final isSmallScreen = screenWidth < 360;
+    final isTabletOrLaptop = screenWidth >= 700;
+    final horizontalPadding = isTabletOrLaptop ? 24.0 : (isSmallScreen ? 12.0 : 16.0);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _project == null
+                        ? const Center(child: Text('Project details not found.'))
+                        : RefreshIndicator(
+                            onRefresh: _fetchProjectDetails,
+                            child: ListView(
+                              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12),
+                              children: [
+                                // Top Custom App Bar
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 14),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          if (context.canPop()) {
+                                            context.pop();
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+                                        ),
+                                      ),
+                                      Column(
+                                        children: [
+                                          Text(
+                                            title,
+                                            style: TextStyle(
+                                              fontSize: isSmallScreen ? 18 : 20,
+                                              fontWeight: FontWeight.w900,
+                                              color: const Color(0xFF0F172A),
+                                              letterSpacing: -0.4,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          const Text(
+                                            'Project Overview',
+                                            style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                                          ),
+                                        ],
+                                      ),
+                                      PopupMenuButton<String>(
+                                        onSelected: (val) {
+                                          if (val == 'edit') {
+                                            _showEditProjectDialog();
+                                          } else if (val == 'delete') {
+                                            _showDeleteConfirmationDialog();
+                                          } else if (val == 'cancel') {
+                                            _showCancelConfirmationDialog();
+                                          }
+                                        },
+                                        icon: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(Icons.more_vert_rounded, size: 20, color: Color(0xFF1E293B)),
+                                        ),
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit_rounded, color: Colors.blue, size: 18),
+                                                SizedBox(width: 8),
+                                                Text('Edit Project'),
+                                              ],
+                                            ),
+                                          ),
+                                          if (isCancelled)
+                                            const PopupMenuItem(
+                                              value: 'delete',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.delete_rounded, color: Colors.red, size: 18),
+                                                  SizedBox(width: 8),
+                                                  Text('Delete Project'),
+                                                ],
+                                              ),
+                                            )
+                                          else
+                                            const PopupMenuItem(
+                                              value: 'cancel',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.cancel_rounded, color: Colors.orange, size: 18),
+                                                  SizedBox(width: 8),
+                                                  Text('Cancel Project'),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Pending Completion Approval Banner if any
+                                if (currentStage == 'Finished Pending Approval') ...[
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFFBEB),
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(color: const Color(0xFFFDE68A)),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: const [
+                                            Icon(Icons.stars_rounded, color: Color(0xFFD97706), size: 24),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              'Verify Project Completion',
+                                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: Color(0xFF92400E)),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        const Text(
+                                          'The provider has marked this project as finished! Please verify completion and leave a review.',
+                                          style: TextStyle(fontSize: 12, color: Color(0xFF78350F)),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            ElevatedButton(
+                                              onPressed: _showCompletionReviewDialog,
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF16A34A),
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                              ),
+                                              child: const Text('Approve & Review', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            TextButton(
+                                              onPressed: () => _updateProjectStage('Tracking'),
+                                              child: const Text('Request Changes', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 12)),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+
+                                // 1. Hero Project Overview Card
+                                _buildHeroOverviewCard(
+                                  title: title,
+                                  location: location,
+                                  plotSize: plotSize,
+                                  budget: budget,
+                                  timeline: timeline,
+                                  projectId: projectIdFormatted,
+                                  isCancelled: isCancelled,
+                                  isCompleted: isCompleted,
+                                  isSmallScreen: isSmallScreen,
+                                ),
+                                const SizedBox(height: 16),
+
+                                // 2. Project Progress Card (Gauge + Stepper + Execution Tasks + Logs)
+                                _buildProjectProgressCard(
+                                  progressValue: progressValue,
+                                  currentStage: currentStage,
+                                  isCancelled: isCancelled,
+                                  isCompleted: isCompleted,
+                                  isSmallScreen: isSmallScreen,
+                                  tasks: tasksList,
+                                  updates: _project?['updates'] as List? ?? [],
+                                  acceptedQuote: quotesList.firstWhere(
+                                    (q) => q['isAccepted'] == true,
+                                    orElse: () => null,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+
+                                // 3. Recommended Services Horizontal Carousel
+                                _buildRecommendedServicesSection(isSmallScreen),
+                                const SizedBox(height: 16),
+
+                                // 4. Quotes Received Card
+                                _buildQuotesReceivedCard(quotesList, isSmallScreen),
+                                const SizedBox(height: 16),
+
+                                // 5. Cost Tracking Card (Donut Chart + Summary List)
+                                _buildCostTrackingCard(
+                                  budget: budget,
+                                  totalQuotedTasks: totalQuotedTasks,
+                                  remainingBudget: remainingBudget,
+                                  totalSpent: totalSpent,
+                                  hasQuotes: quotesList.isNotEmpty,
+                                  isSmallScreen: isSmallScreen,
+                                ),
+                                const SizedBox(height: 60),
+                              ],
+                            ),
+                          ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                colors: const [Colors.green, Colors.blue, Colors.orange, Colors.purple, Colors.pink],
+              ),
             ),
           ],
         ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _project == null
-                ? const Center(child: Text('Project details not found.'))
-                : RefreshIndicator(
-        onRefresh: _fetchProjectDetails,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
+      ),
+    );
+  }
+
+  // ==========================================
+  // 1. HERO PROJECT OVERVIEW CARD
+  // ==========================================
+  Widget _buildHeroOverviewCard({
+    required String title,
+    required String location,
+    required String plotSize,
+    required double budget,
+    required String timeline,
+    required String projectId,
+    required bool isCancelled,
+    required bool isCompleted,
+    required bool isSmallScreen,
+  }) {
+    final statusText = isCancelled ? 'Cancelled' : (isCompleted ? 'Finished' : 'Active');
+    final statusColor = isCancelled ? const Color(0xFFEF4444) : (isCompleted ? const Color(0xFF3B82F6) : const Color(0xFF10B981));
+    final statusBg = isCancelled ? const Color(0xFFFEF2F2) : (isCompleted ? const Color(0xFFEFF6FF) : const Color(0xFFECFDF5));
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Header Row (Thumbnail + Details + Budget)
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Pending Completion Verification Banner
-              if (currentStage == 'Finished Pending Approval') ...[
-                Card(
-                  color: Colors.amber.shade50,
-                  shape: RoundedRectangleBorder(
+              // Photo Thumbnail with Status Pill
+              Stack(
+                children: [
+                  ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.amber.shade300, width: 1.5),
+                    child: Image.asset(
+                      'assets/images/build_plan_achieve.jpg',
+                      width: isSmallScreen ? 90 : 110,
+                      height: isSmallScreen ? 80 : 92,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: isSmallScreen ? 90 : 110,
+                        height: isSmallScreen ? 80 : 92,
+                        color: const Color(0xFFF1F5F9),
+                        child: const Icon(Icons.apartment_rounded, color: Colors.blue, size: 36),
+                      ),
+                    ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: statusBg,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        statusText,
+                        style: TextStyle(color: statusColor, fontSize: 9.5, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+
+              // Title & Category
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.stars, color: Colors.amber.shade800, size: 28),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Verify Project Completion',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 16 : 18,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF0F172A),
                             ),
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'The provider has marked this project as finished! Do you agree that the project has been fully and satisfactorily completed? Please verify and leave a review.',
-                          style: TextStyle(fontSize: 13, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () => _showCompletionReviewDialog(),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Approve & Review'),
-                            ),
-                            const SizedBox(width: 12),
-                            TextButton(
-                              onPressed: () async => await _updateProjectStage('Tracking'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              child: const Text('Reject Completion'),
-                            ),
-                          ],
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: _showEditProjectDialog,
+                          child: Icon(Icons.edit_outlined, size: 14, color: Colors.grey.shade500),
                         ),
                       ],
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              // Overview Card
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Budget', style: TextStyle(color: Colors.grey)),
-                          Text('₹$budget', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.green)),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Location', style: TextStyle(color: Colors.grey)),
-                          Text(location, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Category', style: TextStyle(color: Colors.grey)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              type,
-                              textAlign: TextAlign.end,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 12, color: Colors.grey.shade500),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            location,
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Plot Size', style: TextStyle(color: Colors.grey)),
-                          Text('$plotSize sq ft', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Timeline', style: TextStyle(color: Colors.grey)),
-                          Text(timeline, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      if (currentStage.toLowerCase() == 'completed' || currentStage.toLowerCase() == 'finished') ...[
-                        const Divider(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Finished Date', style: TextStyle(color: Colors.grey)),
-                            Text(
-                              _project?['updatedAt'] != null 
-                                  ? _project!['updatedAt'].toString().split('T')[0] 
-                                  : (_project?['updated_at'] != null 
-                                      ? _project!['updated_at'].toString().split('T')[0] 
-                                      : 'N/A'),
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.green),
-                            ),
-                          ],
                         ),
                       ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (hasAcceptedQuote) ...[
-                _buildServiceProviderCard(context, acceptedQuote),
-                const SizedBox(height: 24),
-              ],
-              
-              Text('Project Progress', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              LinearProgressIndicator(value: progressValue, minHeight: 10, borderRadius: const BorderRadius.all(Radius.circular(5))),
-              const SizedBox(height: 8),
-              Builder(
-                builder: (context) {
-                  String progressStageText = hasAcceptedQuote 
-                      ? 'Current Stage: Execution Tracking ($currentStage)' 
-                      : 'Current Stage: $currentStage';
-                  Color progressStageColor = Colors.blue;
-                  
-                  if (!hasAcceptedQuote && currentStage == 'Design & Planning') {
-                    if (quotesCount == 0) {
-                      progressStageText = 'Current Stage: Waiting for Quotes';
-                      progressStageColor = Colors.orange.shade700;
-                    } else {
-                      progressStageText = 'Current Stage: $quotesCount ${quotesCount == 1 ? 'Quote' : 'Quotes'} Received';
-                      progressStageColor = Colors.green.shade600;
-                    }
-                  }
-                  
-                  return Text(
-                    progressStageText,
-                    style: TextStyle(fontWeight: FontWeight.w500, color: progressStageColor),
-                  );
-                }
-              ),
-              
-              const SizedBox(height: 24),
-              if (!hasAcceptedQuote) ...[
-                Text('Recommended Services', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                if (currentStage == "Design & Planning") ...[
-                  _buildServiceRecommendation(context, 'Architects', 'Design & Planning'),
-                  _buildServiceRecommendation(context, 'Structural Engineers', 'Engineering (MEP)'),
-                ],
-                const SizedBox(height: 24),
-              ],
-              
-              if (hasAcceptedQuote) ...[
-                _buildProjectTrackingCard(context, quotesList, servicesList, _project?['updates'] as List? ?? []),
-                const SizedBox(height: 24),
-              ] else ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Quotes Received', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    if (quotesCount > 0)
-                      ElevatedButton(
-                        onPressed: () async {
-                          final result = await context.push('/compare-quotes/${widget.projectId}');
-                          if (result == true) {
-                            _fetchProjectDetails();
-                          }
-                        },
-                        child: const Text('Compare'),
-                      )
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        _buildCategoryTag('Residential', const Color(0xFF3B82F6), const Color(0xFFEFF6FF)),
+                        _buildCategoryTag('Custom Home', const Color(0xFF10B981), const Color(0xFFECFDF5)),
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    leading: const Icon(Icons.request_quote, color: Colors.orange),
-                    title: Text(quotesCount == 0 
-                        ? 'No Quotes Yet' 
-                        : quotesCount == 1 
-                            ? '1 Quote Available' 
-                            : '$quotesCount Quotes Available'),
-                    subtitle: Text(quotesCount == 0 
-                        ? 'Quotes from service providers will show here' 
-                        : 'Review and accept to proceed'),
-                    trailing: const Icon(Icons.arrow_forward),
-                    onTap: () async {
-                      final result = await context.push('/compare-quotes/${widget.projectId}');
-                      if (result == true) {
-                        _fetchProjectDetails();
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-              Text('Cost Tracking', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 200,
-                        child: PieChart(
-                          PieChartData(
-                            sectionsSpace: 0,
-                            centerSpaceRadius: 40,
-                            sections: [
-                              PieChartSectionData(
-                                color: Colors.orange,
-                                value: totalQuotedTasks > 0 ? totalQuotedTasks : 0.1,
-                                title: totalQuotedTasks > 0 ? 'Allocated (₹${totalQuotedTasks.toStringAsFixed(0)})' : 'No Quotes',
-                                radius: 50,
-                                titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                              PieChartSectionData(
-                                color: remainingBudget >= 0 ? Colors.green : Colors.red,
-                                value: remainingBudget > 0 ? remainingBudget : 0.1,
-                                title: remainingBudget > 0 ? 'Remaining (₹${remainingBudget.toStringAsFixed(0)})' : 'Over Limit',
-                                radius: 50,
-                                titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildCostRow('Customer Estimated Budget', '₹${budget.toStringAsFixed(2)}', Colors.black54),
-                      const Divider(),
-                      _buildCostRow('Total Quoted Contract Basis', '₹${projectCostBasis.toStringAsFixed(2)}', Colors.black),
-                      const Divider(),
-                      _buildCostRow('Total Allocated Quoted Tasks', '₹${totalQuotedTasks.toStringAsFixed(2)}', Colors.orange),
-                      const Divider(),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildCostRow('Remaining Project Budget', '₹${remainingBudget.toStringAsFixed(2)}', remainingBudget >= 0 ? Colors.green : Colors.red),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Calculation: ₹${budget.toStringAsFixed(0)} (Total Budget) - ₹${totalQuotedTasks.toStringAsFixed(0)} (Quoted Tasks) = ₹${remainingBudget.toStringAsFixed(0)}',
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
-                          ),
-                        ],
-                      ),
-                      const Divider(),
-                      _buildCostRow('Total Cash Spent (Completed Tasks)', '₹${totalSpent.toStringAsFixed(2)}', Colors.blueGrey),
-                      if (completedTasksWithCost.isNotEmpty) ...[
-                        const Divider(height: 32, thickness: 1.2),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Completed Expenses Breakdown:',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blueGrey),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...completedTasksWithCost.map((t) {
-                          final title = t['title'] ?? 'Completed Task';
-                          final costVal = (t['quotedCost'] as num? ?? 0.0).toDouble();
-                          
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    title,
-                                    style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Text(
-                                  '₹${costVal.toStringAsFixed(2)}',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ],
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    ),
-        ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            colors: const [
-              Colors.green,
-              Colors.blue,
-              Colors.pink,
-              Colors.orange,
-              Colors.purple,
-              Colors.yellow,
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+              ),
 
-  Widget _buildServiceRecommendation(BuildContext context, String title, String category) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: const Icon(Icons.architecture, color: Colors.blue),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: const Text('Find professionals for this stage'),
-        trailing: const Icon(Icons.arrow_forward),
-        onTap: () => context.push('/providers/$category'),
+              const SizedBox(width: 8),
+
+              // Budget Metric Column
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('Budget', style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text(
+                    '₹${budget.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 14 : 16,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF10B981),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text('85% of Budget', style: TextStyle(fontSize: 9.5, color: Colors.grey.shade500, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 75,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: 0.85,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 10),
+
+          // Specifications List Rows
+          _buildSpecRow(Icons.location_on_outlined, 'Location', location),
+          _buildSpecRow(Icons.grid_view_rounded, 'Category', 'Land & Legal, Survey & Analysis, Design'),
+          _buildSpecRow(Icons.crop_free_rounded, 'Plot Size', '$plotSize sq ft'),
+          _buildSpecRow(Icons.calendar_month_outlined, 'Timeline', timeline),
+          _buildSpecRow(
+            Icons.credit_card_rounded,
+            'Project ID',
+            projectId,
+            isCopyable: true,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCostRow(String label, String amount, Color color) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        Text(amount, style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 16)),
-      ],
+  Widget _buildCategoryTag(String label, Color color, Color bg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 9.5, fontWeight: FontWeight.w700),
+      ),
     );
   }
 
-  Widget _buildProjectTrackingCard(BuildContext context, List<dynamic> quotesList, List<String> servicesList, List<dynamic> updates) {
-    final acceptedQuote = quotesList.firstWhere(
-      (q) => q['isAccepted'] == true,
-      orElse: () => null,
+  Widget _buildSpecRow(IconData icon, String title, String value, {bool isCopyable = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.5),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 15, color: const Color(0xFF64748B)),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 80,
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A), fontWeight: FontWeight.w800),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (isCopyable)
+            GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: value));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Project ID copied to clipboard'), duration: Duration(seconds: 1)),
+                );
+              },
+              child: const Icon(Icons.copy_rounded, size: 15, color: Color(0xFF64748B)),
+            )
+          else
+            const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFCBD5E1)),
+        ],
+      ),
     );
+  }
 
-    if (acceptedQuote == null) return const SizedBox.shrink();
+  // ==========================================
+  // 2. PROJECT PROGRESS CARD (Gauge + Stepper + Tasks & Logs)
+  // ==========================================
+  Widget _buildProjectProgressCard({
+    required double progressValue,
+    required String currentStage,
+    required bool isCancelled,
+    required bool isCompleted,
+    required bool isSmallScreen,
+    required List<dynamic> tasks,
+    required List<dynamic> updates,
+    Map<String, dynamic>? acceptedQuote,
+  }) {
+    final int percentInt = (progressValue * 100).toInt();
+    final gaugeSize = isSmallScreen ? 70.0 : 86.0;
 
-    final provider = acceptedQuote['provider'] ?? {};
-    final providerName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
-    final tasks = _project?['tasks'] as List? ?? [];
     final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
     final totalCount = tasks.length;
-    final progressPercent = totalCount > 0 ? completedCount / totalCount : 0.0;
 
     final Map<String, List<dynamic>> groupedTasks = {};
     for (final task in tasks) {
@@ -938,404 +996,725 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
       groupedTasks.putIfAbsent(stage, () => []).add(task);
     }
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.track_changes, color: Theme.of(context).primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  'Project Tracking Process',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Follow the progress of your project stages based on your selected requirements.',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            
-            // Tab / Segment Selector
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedTrackingTab = 0),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _selectedTrackingTab == 0 ? Theme.of(context).primaryColor : Colors.transparent,
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: Text(
-                          '📊 Execution Plan',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _selectedTrackingTab == 0 ? Colors.white : Colors.grey.shade800,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _selectedTrackingTab = 1),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _selectedTrackingTab == 1 ? Theme.of(context).primaryColor : Colors.transparent,
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: Text(
-                          '📝 Daily Logs',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _selectedTrackingTab == 1 ? Colors.white : Colors.grey.shade800,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Project Progress',
+            style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+          ),
+          const SizedBox(height: 14),
 
-            if (_selectedTrackingTab == 0) ...[
-              // Execution Plan Tab
-              if (tasks.isNotEmpty) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Top Gauge & Stepper Row
+          Row(
+            children: [
+              // Circular Donut Gauge
+              SizedBox(
+                width: gaugeSize,
+                height: gaugeSize,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    const Text(
-                      'Overall Progress',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    SizedBox(
+                      width: gaugeSize,
+                      height: gaugeSize,
+                      child: CircularProgressIndicator(
+                        value: progressValue,
+                        strokeWidth: isSmallScreen ? 7 : 8.5,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+                        strokeCap: StrokeCap.round,
+                      ),
                     ),
-                    Text(
-                      '${(progressPercent * 100).toInt()}% Done ($completedCount/$totalCount)',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor, fontSize: 14),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$percentInt%',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 16 : 18,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        Text(
+                          'Completed',
+                          style: TextStyle(fontSize: isSmallScreen ? 7.5 : 8.5, fontWeight: FontWeight.w600, color: Colors.grey.shade500),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: progressPercent,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              
-              if (tasks.isEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(Icons.pending_actions, size: 48, color: Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Plan Pending Creation',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Your provider ($providerName) will post the step-by-step project plan soon.',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ] else ...[
-                ...groupedTasks.entries.map((entry) {
-                  final stageName = entry.key;
-                  final stageTasks = entry.value;
+              ),
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              SizedBox(width: isSmallScreen ? 8 : 12),
+
+              // Vertical divider line
+              Container(width: 1, height: isSmallScreen ? 60 : 70, color: const Color(0xFFF1F5F9)),
+              SizedBox(width: isSmallScreen ? 8 : 12),
+
+              // Right Stepper Milestone Area
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.06),
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                          ),
+                        Flexible(
                           child: Text(
-                            stageName.toUpperCase(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: Theme.of(context).primaryColor,
-                              letterSpacing: 1.0,
-                            ),
+                            'Current Stage',
+                            style: TextStyle(fontSize: isSmallScreen ? 9.5 : 10.5, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: stageTasks.length,
-                          separatorBuilder: (context, idx) => const Divider(height: 1),
-                          itemBuilder: (context, idx) {
-                            final task = stageTasks[idx];
-                            final tTitle = task['title'] ?? 'Untitled Step';
-                            final tDuration = task['duration'] ?? 1;
-                            final tStatus = task['status'] ?? 'Todo';
-                            final hasPhoto = task['photoUrl'] != null && (task['photoUrl'] as String).isNotEmpty;
-
-                            IconData statusIcon = Icons.circle_outlined;
-                            Color statusColor = Colors.grey;
-                            if (tStatus == 'In Progress') {
-                              statusIcon = Icons.play_circle_fill;
-                              statusColor = Colors.blue;
-                            } else if (tStatus == 'Completed') {
-                              statusIcon = Icons.check_circle;
-                              statusColor = Colors.green;
-                            }
-
-                            return ListTile(
-                              dense: true,
-                              onTap: hasPhoto ? () => _showCompletionPhotoDialog(task) : null,
-                              leading: Icon(statusIcon, color: statusColor, size: 22),
-                              title: Text(
-                                tTitle,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  decoration: tStatus == 'Completed' ? TextDecoration.lineThrough : null,
-                                  color: tStatus == 'Completed' ? Colors.grey : null,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(width: 6),
+                        if (isCancelled)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(6)),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.cancel_rounded, color: Color(0xFF2563EB), size: 10),
+                                SizedBox(width: 2),
+                                Text('Cancelled', style: TextStyle(fontSize: 9, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          )
+                        else
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(color: const Color(0xFFECFDF5), borderRadius: BorderRadius.circular(6)),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: 'Estimated: $tDuration days • Status: ',
-                                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                                        ),
-                                        TextSpan(
-                                          text: tStatus,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: tStatus == 'Completed'
-                                                ? Colors.green
-                                                : tStatus == 'In Progress'
-                                                    ? Colors.blue
-                                                    : Colors.orange.shade800,
-                                          ),
-                                        ),
-                                      ],
+                                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 10),
+                                  const SizedBox(width: 2),
+                                  Flexible(
+                                    child: Text(
+                                      currentStage,
+                                      style: const TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  Builder(
-                                    builder: (context) {
-                                      final quoted = (task['quotedCost'] as num? ?? 0.0).toDouble();
-                                      if (quoted <= 0.0) return const SizedBox.shrink();
-                                      return Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          'Quoted Task Price: ₹${quoted.toStringAsFixed(2)}',
-                                          style: TextStyle(fontSize: 11, color: Colors.blue.shade800, fontWeight: FontWeight.bold),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  if (hasPhoto) ...[
-                                    const SizedBox(height: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => FullScreenImageViewer(
-                                              base64Image: task['photoUrl'] as String,
-                                              title: tTitle,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.memory(
-                                          base64Decode((task['photoUrl'] as String).split(',').last),
-                                          height: 140,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return const SizedBox.shrink();
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.photo_library, size: 12, color: Colors.green),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Completion photo attached (Tap to enlarge)',
-                                          style: TextStyle(fontSize: 10, color: Colors.green.shade700, fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
                                 ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          ),
                       ],
                     ),
-                  );
-                }),
-              ]
+                    const SizedBox(height: 10),
+
+                    // 4-Step Stepper with responsive width
+                    Row(
+                      children: [
+                        _buildStepItem('Planning', Icons.calendar_today_rounded, true, isSmallScreen),
+                        _buildStepConnector(true),
+                        _buildStepItem('Design', Icons.edit_note_rounded, true, isSmallScreen),
+                        _buildStepConnector(currentStage.toLowerCase().contains('execut') || currentStage.toLowerCase().contains('track') || isCompleted),
+                        _buildStepItem('Execution', Icons.engineering_rounded, currentStage.toLowerCase().contains('execut') || currentStage.toLowerCase().contains('track') || isCompleted, isSmallScreen),
+                        _buildStepConnector(isCompleted),
+                        _buildStepItem('Handover', Icons.vpn_key_rounded, isCompleted, isSmallScreen),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 14),
+
+          // Segmented Switcher for Execution Plan vs Daily Logs
+          Container(
+            padding: const EdgeInsets.all(3.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedTrackingTab = 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _selectedTrackingTab == 0 ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: _selectedTrackingTab == 0
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.format_list_bulleted_rounded,
+                            size: 14,
+                            color: _selectedTrackingTab == 0 ? const Color(0xFF1D4ED8) : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Tasks & Milestones (${tasks.length})',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 10.5 : 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: _selectedTrackingTab == 0 ? const Color(0xFF1D4ED8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedTrackingTab = 1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _selectedTrackingTab == 1 ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: _selectedTrackingTab == 1
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.article_outlined,
+                            size: 14,
+                            color: _selectedTrackingTab == 1 ? const Color(0xFF1D4ED8) : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Daily Logs (${updates.length})',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 10.5 : 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: _selectedTrackingTab == 1 ? const Color(0xFF1D4ED8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // TAB 0: Execution Plan & Tasks Created by Provider
+          if (_selectedTrackingTab == 0) ...[
+            if (tasks.isEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(color: Color(0xFFEFF6FF), shape: BoxShape.circle),
+                      child: const Icon(Icons.assignment_outlined, color: Color(0xFF2563EB), size: 28),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'No Tasks Created Yet',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Once your contractor schedules the project milestones, step-by-step tasks will appear here.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
             ] else ...[
-              // Daily Logs Tab
+              // Summary Progress Indicator
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Daily Construction Logs',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    '$completedCount of $totalCount Tasks Completed',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                  ),
+                  Text(
+                    '${(totalCount > 0 ? (completedCount / totalCount * 100).toInt() : 0)}%',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              if (updates.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                    child: Text(
-                      'No logs posted by provider yet.',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontStyle: FontStyle.italic),
-                    ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: totalCount > 0 ? completedCount / totalCount : 0.0,
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                  minHeight: 6,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Grouped Tasks by Stage
+              ...groupedTasks.entries.map((entry) {
+                final stageName = entry.key;
+                final stageTasks = entry.value;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: updates.length > 5 ? 5 : updates.length,
-                  itemBuilder: (context, idx) {
-                    final update = updates[idx];
-                    final upTitle = update['title'] ?? 'Update';
-                    final upStatus = update['status'] ?? 'In Progress';
-                    final upNotes = update['notes'] ?? '';
-                    final upTime = update['createdAt'] != null
-                        ? DateTime.tryParse(update['createdAt'])?.toLocal().toString().substring(0, 16) ?? ''
-                        : '';
-
-                    Color statusColor = Colors.blue;
-                    if (upStatus == 'Completed') statusColor = Colors.green;
-                    if (upStatus == 'Milestone Reached') statusColor = Colors.orange;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  upTitle,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Stage Header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.architecture_rounded, size: 16, color: Color(0xFF1D4ED8)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  stageName,
+                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
                                 ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  upStatus,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
+                              child: Text(
+                                '${stageTasks.where((t) => t['status'] == 'Completed').length}/${stageTasks.length}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
                               ),
-                            ],
-                          ),
-                          if (upNotes.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              upNotes,
-                              style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
                             ),
                           ],
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Verified Log',
-                                style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                      // Tasks List for this stage
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: stageTasks.length,
+                        separatorBuilder: (context, idx) => const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 14, endIndent: 14),
+                        itemBuilder: (context, idx) {
+                          final task = stageTasks[idx];
+                          final tTitle = task['title'] ?? 'Task';
+                          final tDuration = task['duration'] ?? 1;
+                          final tStatus = task['status'] ?? 'Pending';
+                          final tCost = (task['quotedCost'] as num? ?? 0.0).toDouble();
+                          final hasPhoto = task['photoUrl'] != null && (task['photoUrl'] as String).isNotEmpty;
+
+                          final isTaskDone = tStatus.toString().toLowerCase() == 'completed';
+                          final isTaskInProgress = tStatus.toString().toLowerCase() == 'in progress' || tStatus.toString().toLowerCase() == 'in_progress';
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Checkbox Status Icon
+                                Container(
+                                  margin: const EdgeInsets.only(top: 2),
+                                  child: isTaskDone
+                                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18)
+                                      : isTaskInProgress
+                                          ? const Icon(Icons.play_circle_fill_rounded, color: Color(0xFF2563EB), size: 18)
+                                          : const Icon(Icons.radio_button_unchecked_rounded, color: Color(0xFF94A3B8), size: 18),
+                                ),
+                                const SizedBox(width: 10),
+
+                                // Task Title & Details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        tTitle,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12.5,
+                                          color: isTaskDone ? const Color(0xFF64748B) : const Color(0xFF0F172A),
+                                          decoration: isTaskDone ? TextDecoration.lineThrough : null,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        children: [
+                                          // Duration Tag
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.schedule_rounded, size: 10, color: Color(0xFF64748B)),
+                                                const SizedBox(width: 3),
+                                                Text(
+                                                  '$tDuration d',
+                                                  style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          // Quoted Cost Tag
+                                          if (tCost > 0)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFFFFBEB),
+                                                borderRadius: BorderRadius.circular(6),
+                                                border: Border.all(color: const Color(0xFFFDE68A)),
+                                              ),
+                                              child: Text(
+                                                '₹${tCost.toStringAsFixed(0)}',
+                                                style: const TextStyle(fontSize: 9.5, color: Color(0xFFB45309), fontWeight: FontWeight.w700),
+                                              ),
+                                            ),
+                                          // Status Tag
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: isTaskDone
+                                                  ? const Color(0xFFECFDF5)
+                                                  : isTaskInProgress
+                                                      ? const Color(0xFFEFF6FF)
+                                                      : const Color(0xFFF1F5F9),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              tStatus,
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                color: isTaskDone
+                                                    ? const Color(0xFF10B981)
+                                                    : isTaskInProgress
+                                                        ? const Color(0xFF2563EB)
+                                                        : const Color(0xFF64748B),
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+
+                                      // Photo proof thumbnail if present
+                                      if (hasPhoto) ...[
+                                        const SizedBox(height: 6),
+                                        GestureDetector(
+                                          onTap: () => _showCompletionPhotoDialog(task),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFECFDF5),
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: const [
+                                                Icon(Icons.camera_alt_rounded, size: 12, color: Color(0xFF059669)),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  'Proof Photo Attached (Tap to view)',
+                                                  style: TextStyle(fontSize: 10, color: Color(0xFF059669), fontWeight: FontWeight.w700),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ] else ...[
+            // TAB 1: Daily Logs
+            if (updates.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(color: Color(0xFFEFF6FF), shape: BoxShape.circle),
+                      child: const Icon(Icons.note_alt_outlined, color: Color(0xFF2563EB), size: 28),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'No Daily Logs Yet',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Verified site logs and progress photos posted by your contractor will appear here.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: updates.length > 5 ? 5 : updates.length,
+                itemBuilder: (context, idx) {
+                  final update = updates[idx];
+                  final upTitle = update['title'] ?? 'Update';
+                  final upStatus = update['status'] ?? 'In Progress';
+                  final upNotes = update['notes'] ?? '';
+                  final upTime = update['createdAt'] != null
+                      ? DateTime.tryParse(update['createdAt'])?.toLocal().toString().substring(0, 16) ?? ''
+                      : '';
+
+                  Color statusColor = const Color(0xFF2563EB);
+                  if (upStatus == 'Completed') statusColor = const Color(0xFF10B981);
+                  if (upStatus == 'Milestone Reached') statusColor = const Color(0xFFF59E0B);
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                upTitle,
+                                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
                               ),
-                              Text(
-                                upTime,
-                                style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                            ],
-                          ),
+                              child: Text(
+                                upStatus,
+                                style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 9.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (upNotes.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(upNotes, style: TextStyle(color: Colors.grey.shade700, fontSize: 11.5, height: 1.3)),
                         ],
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('✓ Verified Site Log', style: TextStyle(color: Color(0xFF10B981), fontSize: 9.5, fontWeight: FontWeight.bold)),
+                            Text(upTime, style: TextStyle(color: Colors.grey.shade400, fontSize: 9.5)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+          ],
+
+          // Assigned Contractor Card if quote accepted
+          if (acceptedQuote != null) ...[
+            const SizedBox(height: 14),
+            _buildAssignedProviderCard(acceptedQuote, isSmallScreen),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssignedProviderCard(Map<String, dynamic> acceptedQuote, bool isSmallScreen) {
+    final provider = acceptedQuote['provider'] ?? {};
+    final providerName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
+    final ownerName = provider['ownerName'] ?? 'Contractor';
+    final phone = provider['phone']?.toString() ?? '';
+    final rating = (provider['avgRating'] ?? provider['rating'] ?? 5.0) as num;
+    final providerId = acceptedQuote['providerId'];
+    final profileImage = provider['profileImage']?.toString();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDBEAFE)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: const Color(0xFFDBEAFE),
+            backgroundImage: profileImage != null && profileImage.isNotEmpty
+                ? MemoryImage(base64Decode(profileImage.split(',').last))
+                : null,
+            child: profileImage == null || profileImage.isEmpty
+                ? Text(
+                    providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        providerName,
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    const Icon(Icons.verified_rounded, color: Color(0xFF2563EB), size: 13),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Owner: $ownerName ${phone.isNotEmpty ? '• 📞 $phone' : ''} • ⭐ ${rating.toStringAsFixed(1)}',
+                  style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (providerId != null)
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => context.push('/provider-profile/$providerId'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: const Text('Profile', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatDetailScreen(
+                          partnerId: providerId,
+                          partnerName: providerName,
+                        ),
                       ),
                     );
                   },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1D4ED8),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.chat_bubble_outline_rounded, size: 14, color: Colors.white),
+                  ),
                 ),
-            ],
-          ],
-        ),
+              ],
+            ),
+        ],
       ),
     );
   }
 
   void _showCompletionPhotoDialog(Map<String, dynamic> task) {
-    final title = task['title'] ?? 'Task Details';
+    final title = task['title'] ?? 'Task Proof';
     final photoUrl = task['photoUrl'] as String?;
 
     if (photoUrl == null || photoUrl.isEmpty) return;
@@ -1343,209 +1722,549 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Proof of Completion attached by provider (Tap image to zoom):',
-                style: TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(ctx); // Close dialog
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FullScreenImageViewer(
-                        base64Image: photoUrl,
-                        title: title,
-                      ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Proof of Completion attached by contractor (Tap to zoom):',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FullScreenImageViewer(
+                      base64Image: photoUrl,
+                      title: title,
                     ),
-                  );
-                },
-                child: SizedBox(
-                  height: 300,
+                  ),
+                );
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.memory(
+                  base64Decode(photoUrl.split(',').last),
                   width: double.infinity,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(
-                      base64Decode(photoUrl.split(',').last),
-                      width: double.infinity,
-                      height: 300,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Text(
-                            'Failed to load completion image.',
-                            style: TextStyle(color: Colors.red, fontSize: 13),
-                          ),
-                        );
-                      },
-                    ),
+                  height: 220,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Text('Failed to load image', style: TextStyle(color: Colors.red)),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('CLOSE'),
+            child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildServiceProviderCard(BuildContext context, Map<String, dynamic> acceptedQuote) {
-    final provider = acceptedQuote['provider'] ?? {};
-    final providerName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
-    final ownerName = provider['ownerName'] ?? 'N/A';
-    final phone = provider['phone'] ?? 'No phone provided';
-    final email = provider['email'] ?? 'No email provided';
-    final rating = (provider['avgRating'] ?? provider['rating'] ?? 0.0) as num;
-    final profileImage = provider['profileImage'];
-    final providerId = acceptedQuote['providerId'];
+  Widget _buildStepItem(String label, IconData icon, bool isActive, bool isSmallScreen) {
+    final circleSize = isSmallScreen ? 22.0 : 26.0;
+    final iconSize = isSmallScreen ? 11.0 : 13.0;
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.handshake_rounded, color: Theme.of(context).primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  'Assigned Service Provider',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: circleSize,
+          height: circleSize,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFECFDF5) : const Color(0xFFF8FAFC),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isActive ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+              width: 1.2,
             ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.blue.shade100,
-                  backgroundImage: profileImage != null && profileImage.toString().isNotEmpty
-                      ? MemoryImage(Base64ImageCache.decode(profileImage.toString()))
-                      : null,
-                  child: profileImage == null || profileImage.toString().isEmpty
-                      ? Text(
-                          providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
-                        )
-                      : null,
+          ),
+          child: Icon(
+            icon,
+            size: iconSize,
+            color: isActive ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+          ),
+        ),
+        const SizedBox(height: 3),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 7.5 : 8.5,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              color: isActive ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepConnector(bool isActive) {
+    return Expanded(
+      child: Container(
+        height: 1.5,
+        margin: const EdgeInsets.only(bottom: 12),
+        color: isActive ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+      ),
+    );
+  }
+
+  // ==========================================
+  // 3. RECOMMENDED SERVICES CAROUSEL
+  // ==========================================
+  Widget _buildRecommendedServicesSection(bool isSmallScreen) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Recommended Services',
+              style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+            ),
+            GestureDetector(
+              onTap: () => context.push('/providers/All'),
+              child: Row(
+                children: const [
+                  Text('View All', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB), fontWeight: FontWeight.w700)),
+                  Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF2563EB)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 145,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: _recommendedServices.length,
+            itemBuilder: (context, index) {
+              final service = _recommendedServices[index];
+              return Container(
+                width: 140,
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: service['bg'] as Color,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(service['icon'] as IconData, size: 20, color: service['color'] as Color),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      service['title'] as String,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF0F172A)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Expanded(
+                      child: Text(
+                        service['desc'] as String,
+                        style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), height: 1.25),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: GestureDetector(
+                        onTap: () => context.push('/providers/${service['title']}'),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_forward_rounded, size: 12, color: Color(0xFF2563EB)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==========================================
+  // 4. QUOTES RECEIVED CARD
+  // ==========================================
+  Widget _buildQuotesReceivedCard(List<dynamic> quotesList, bool isSmallScreen) {
+    final hasQuotes = quotesList.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Quotes Received',
+                style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+              ),
+              GestureDetector(
+                onTap: () => context.push('/compare-quotes/${widget.projectId}'),
+                child: Row(
+                  children: const [
+                    Text('View All Quotes', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB), fontWeight: FontWeight.w700)),
+                    SizedBox(width: 2),
+                    Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF2563EB)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              // Left: Document 3D Illustration
+              Expanded(
+                flex: 4,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    'assets/images/quote_3d.jpg',
+                    height: 100,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.assignment_outlined, size: 48, color: Color(0xFF2563EB)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // Right: Content & Action
+              Expanded(
+                flex: 6,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasQuotes ? '${quotesList.length} Quotes Available' : 'No Quotes Yet',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      hasQuotes
+                          ? 'Review bids submitted by verified contractors.'
+                          : 'Quotes from service providers will show here',
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, height: 1.3),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () {
+                        if (hasQuotes) {
+                          context.push('/compare-quotes/${widget.projectId}');
+                        } else {
+                          context.push('/providers/All');
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1D4ED8),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.description_outlined, size: 14, color: Colors.white),
+                            const SizedBox(width: 6),
+                            Text(
+                              hasQuotes ? 'Compare Quotes' : 'Request Quotes',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // 5. COST TRACKING CARD
+  // ==========================================
+  Widget _buildCostTrackingCard({
+    required double budget,
+    required double totalQuotedTasks,
+    required double remainingBudget,
+    required double totalSpent,
+    required bool hasQuotes,
+    required bool isSmallScreen,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Cost Tracking',
+                style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (val) => setState(() => _costViewMode = val),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'Summary', child: Text('Summary', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
+                  PopupMenuItem(value: 'Detailed', child: Text('Detailed', style: TextStyle(fontSize: 13))),
+                ],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
                     children: [
                       Text(
-                        providerName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        _costViewMode,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.person, size: 14, color: Colors.grey.shade600),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Owner: $ownerName',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: Color(0xFF475569)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left: Donut Chart & Legend
+              Column(
+                children: [
+                  SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: CircularProgressIndicator(
+                            value: 1.0,
+                            strokeWidth: 16,
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
                           ),
-                        ],
-                      ),
-                      if (rating > 0.0) ...[
-                        const SizedBox(height: 4),
-                        Row(
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 16),
-                            const SizedBox(width: 4),
                             Text(
-                              rating.toStringAsFixed(1),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                              'Remaining',
+                              style: TextStyle(fontSize: 8.5, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              '₹${budget.toStringAsFixed(0)}',
+                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                             ),
                           ],
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                      const SizedBox(width: 4),
+                      Text('Remaining\n(₹${budget.toStringAsFixed(0)})', style: TextStyle(fontSize: 8.5, color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
                     ],
                   ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                const Icon(Icons.phone, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(phone, style: const TextStyle(fontSize: 13)),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.email, size: 16, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text(email, style: const TextStyle(fontSize: 13)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      context.push('/provider-profile/$providerId');
-                    },
-                    icon: const Icon(Icons.person_outline_rounded, size: 18),
-                    label: const Text('View Profile'),
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                      foregroundColor: Theme.of(context).primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(width: 8, height: 8, decoration: BoxDecoration(color: Colors.grey.shade300, shape: BoxShape.circle)),
+                      const SizedBox(width: 4),
+                      Text('No Quotes', style: TextStyle(fontSize: 8.5, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatDetailScreen(
-                            partnerId: providerId,
-                            partnerName: providerName,
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                    label: const Text('Chat'),
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ],
+              ),
+
+              const SizedBox(width: 14),
+
+              // Right: Metric Rows
+              Expanded(
+                child: Column(
+                  children: [
+                    _buildCostItem(
+                      icon: Icons.account_balance_wallet_outlined,
+                      iconBg: const Color(0xFFF8FAFC),
+                      title: 'Customer Estimated Budget',
+                      amount: '₹${budget.toStringAsFixed(2)}',
                     ),
-                  ),
+                    _buildCostItem(
+                      icon: Icons.description_outlined,
+                      iconBg: const Color(0xFFF8FAFC),
+                      title: 'Total Quoted Contract Basis',
+                      amount: '₹${budget.toStringAsFixed(2)}',
+                    ),
+                    _buildCostItem(
+                      icon: Icons.assignment_turned_in_outlined,
+                      iconBg: const Color(0xFFFFFBEB),
+                      iconColor: const Color(0xFFF59E0B),
+                      title: 'Total Allocated Quoted Tasks',
+                      amount: '₹${totalQuotedTasks.toStringAsFixed(2)}',
+                      amountColor: const Color(0xFFF59E0B),
+                    ),
+                    _buildCostItem(
+                      icon: Icons.verified_user_outlined,
+                      iconBg: const Color(0xFFECFDF5),
+                      iconColor: const Color(0xFF10B981),
+                      title: 'Remaining Project Budget',
+                      amount: '₹${remainingBudget.toStringAsFixed(2)}',
+                      amountColor: const Color(0xFF10B981),
+                      subtitle: 'Calculation: ₹${budget.toStringAsFixed(0)} (Total Budget) - ₹${totalQuotedTasks.toStringAsFixed(0)} (Quoted Tasks) = ₹${remainingBudget.toStringAsFixed(0)}',
+                    ),
+                    _buildCostItem(
+                      icon: Icons.payments_outlined,
+                      iconBg: const Color(0xFFF8FAFC),
+                      title: 'Total Cash Spent (Completed Tasks)',
+                      amount: '₹${totalSpent.toStringAsFixed(2)}',
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCostItem({
+    required IconData icon,
+    required Color iconBg,
+    Color iconColor = const Color(0xFF64748B),
+    required String title,
+    required String amount,
+    Color amountColor = const Color(0xFF0F172A),
+    String? subtitle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, size: 14, color: iconColor),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                amount,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: amountColor),
+              ),
+            ],
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Padding(
+              padding: const EdgeInsets.only(left: 28),
+              child: Text(
+                subtitle,
+                style: TextStyle(fontSize: 8.5, color: Colors.grey.shade400, fontStyle: FontStyle.italic),
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -1646,7 +2365,8 @@ class _EditProjectDialogState extends State<_EditProjectDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit Project Details'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Edit Project Details', style: TextStyle(fontWeight: FontWeight.bold)),
       content: _isSaving
           ? const SizedBox(
               height: 100,
@@ -1683,7 +2403,7 @@ class _EditProjectDialogState extends State<_EditProjectDialog> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _timelineController,
-                      decoration: const InputDecoration(labelText: 'Timeline (e.g. 6 months)'),
+                      decoration: const InputDecoration(labelText: 'Timeline (e.g. 9 months)'),
                       validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 8),
@@ -1700,7 +2420,7 @@ class _EditProjectDialogState extends State<_EditProjectDialog> {
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _typeController,
-                      decoration: const InputDecoration(labelText: 'Category / Services (comma separated)'),
+                      decoration: const InputDecoration(labelText: 'Category / Services'),
                       validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
                     ),
                   ],
@@ -1712,11 +2432,12 @@ class _EditProjectDialogState extends State<_EditProjectDialog> {
           : [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
               ),
               ElevatedButton(
                 onPressed: _saveProject,
-                child: const Text('Save'),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1D4ED8)),
+                child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
     );

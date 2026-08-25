@@ -151,9 +151,13 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
                                         children: [
                                           const Icon(Icons.location_on, size: 14, color: Colors.red),
                                           const SizedBox(width: 4),
-                                          Text(
-                                            lead['location'] ?? 'N/A',
-                                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                          Expanded(
+                                            child: Text(
+                                              lead['location'] ?? 'N/A',
+                                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
                                         ],
                                       ),

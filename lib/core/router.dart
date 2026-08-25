@@ -5,6 +5,8 @@ import '../features/auth/register_screen.dart';
 import '../features/auth/onboarding_screen.dart';
 import '../features/auth/forgot_password_screen.dart';
 import '../features/home/main_layout.dart';
+import '../features/home/dashboard_screen.dart';
+import '../features/home/notifications_screen.dart';
 import '../features/project/create_project_screen.dart';
 import '../features/project/project_detail_screen.dart';
 import '../features/project/cost_estimation_screen.dart';
@@ -69,6 +71,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'create-project',
             builder: (context, state) => const CreateProjectScreen(),
+          ),
+          GoRoute(
+            path: 'dashboard',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: 'notifications',
+            builder: (context, state) => const NotificationsScreen(),
           ),
           GoRoute(
             path: 'project-detail/:id',

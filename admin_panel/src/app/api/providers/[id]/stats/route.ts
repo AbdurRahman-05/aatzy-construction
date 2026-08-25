@@ -76,7 +76,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const activeLeadsCount = matchedProjects.length;
     const recentLeads = matchedProjects.slice(0, 5);
 
-    // Fetch active jobs (where provider's quote is accepted)
+    // Fetch active jobs (where provider's quote is accepted and project is ongoing)
     const acceptedQuotes = await prisma.quote.findMany({
       where: {
         providerId: id,
@@ -91,7 +91,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       }
     });
 
-    const activeJobs = acceptedQuotes.map(q => ({
+    const activeJobs = acceptedQuotes.filter(q => {
+      const stage = (q.project?.currentStage || '').toLowerCase().trim();
+      return !['completed', 'finished', 'cancelled'].includes(stage);
+    }).map(q => ({
       id: q.project.id,
       title: q.project.title,
       userName: q.project.user.name,
@@ -101,6 +104,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       currentStage: q.project.currentStage,
       quoteId: q.id
     }));
+
+    const projectsCount = activeJobs.length;
 
     return NextResponse.json({
       activeLeads: activeLeadsCount,
