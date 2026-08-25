@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/services/push_notification_service.dart';
 import '../chat/chat_detail_screen.dart';
 import '../../core/full_screen_image_viewer.dart';
 
@@ -683,6 +684,28 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                         }),
                                       );
                                       if (response.statusCode == 200) {
+                                        final taskTitle = task['title'] ?? 'Task';
+                                        final projTitle = _project?['title'] ?? 'Project';
+                                        if (selectedStatus == 'Completed') {
+                                          PushNotificationService().showNotification(
+                                            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                                            title: '✅ Task Finished: $taskTitle',
+                                            body: 'Milestone marked as finished on "$projTitle"!',
+                                            payload: '/provider-job/${widget.projectId}',
+                                            channelId: 'buildzy_leads_v2',
+                                            channelName: 'Tasks & Milestones',
+                                          );
+                                        } else if (selectedStatus == 'In Progress') {
+                                          PushNotificationService().showNotification(
+                                            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                                            title: '🚀 Task Started: $taskTitle',
+                                            body: 'Work is now ongoing for "$projTitle".',
+                                            payload: '/provider-job/${widget.projectId}',
+                                            channelId: 'buildzy_leads_v2',
+                                            channelName: 'Tasks & Milestones',
+                                          );
+                                        }
+
                                         if (sheetContext.mounted) {
                                           Navigator.pop(sheetContext);
                                           ScaffoldMessenger.of(sheetContext).showSnackBar(
@@ -752,6 +775,15 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
       if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final projTitle = _project?['title'] ?? 'Project';
+        PushNotificationService().showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: '📋 Task Created: $title',
+          body: 'New task created under stage "$stage" for "$projTitle".',
+          payload: '/provider-job/${widget.projectId}',
+          channelId: 'buildzy_leads_v2',
+          channelName: 'Tasks & Milestones',
+        );
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Custom task added to plan!')));
         _fetchProjectDetails();
       } else {

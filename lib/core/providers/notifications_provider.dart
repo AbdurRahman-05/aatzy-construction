@@ -88,6 +88,35 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
               route: '/provider-job/${job['id']}',
               isUnread: false,
             ));
+
+            final tasks = job['tasks'] as List? ?? [];
+            for (var t in tasks) {
+              final tStatus = t['status'] ?? 'Todo';
+              final tTitle = t['title'] ?? 'Task';
+              if (tStatus == 'Completed') {
+                list.add(NotificationModel(
+                  id: 'task_done_${t['id'] ?? tTitle.hashCode}',
+                  title: 'Task Finished: $tTitle',
+                  body: 'Completed on "${job['title'] ?? 'Project'}". Stage: ${t['stage'] ?? 'General'}.',
+                  time: 'Recent',
+                  icon: Icons.check_circle_rounded,
+                  color: const Color(0xFF10B981),
+                  route: '/provider-job/${job['id']}',
+                  isUnread: false,
+                ));
+              } else if (tStatus == 'In Progress') {
+                list.add(NotificationModel(
+                  id: 'task_prog_${t['id'] ?? tTitle.hashCode}',
+                  title: 'Task in Progress: $tTitle',
+                  body: 'Work underway on "${job['title'] ?? 'Project'}".',
+                  time: 'Active',
+                  icon: Icons.trending_up_rounded,
+                  color: const Color(0xFF3B82F6),
+                  route: '/provider-job/${job['id']}',
+                  isUnread: false,
+                ));
+              }
+            }
           }
         }
 
@@ -150,7 +179,7 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
             }
           }
 
-          for (var project in projectsData.projects.take(3)) {
+          for (var project in projectsData.projects.take(4)) {
             final title = project['title'] ?? 'Project';
             final quotes = project['quotes'] as List? ?? [];
             if (quotes.isNotEmpty) {
@@ -163,6 +192,33 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
                 color: const Color(0xFF4F46E5),
                 route: '/compare-quotes/${project['id']}',
               ));
+            }
+
+            final tasks = project['tasks'] as List? ?? [];
+            for (var t in tasks) {
+              final tStatus = t['status'] ?? 'Todo';
+              final tTitle = t['title'] ?? 'Task';
+              if (tStatus == 'Completed') {
+                list.add(NotificationModel(
+                  id: 'usr_task_done_${t['id'] ?? tTitle.hashCode}',
+                  title: 'Task Finished: $tTitle',
+                  body: 'Milestone finished on "$title". Quality verified.',
+                  time: 'Recent',
+                  icon: Icons.task_alt_rounded,
+                  color: const Color(0xFF10B981),
+                  route: '/project-detail/${project['id']}',
+                ));
+              } else if (tStatus == 'In Progress') {
+                list.add(NotificationModel(
+                  id: 'usr_task_prog_${t['id'] ?? tTitle.hashCode}',
+                  title: 'Task Started: $tTitle',
+                  body: 'Work started on "$title" (${t['stage'] ?? 'General'}).',
+                  time: 'Recent',
+                  icon: Icons.engineering_rounded,
+                  color: const Color(0xFF0F766E),
+                  route: '/project-detail/${project['id']}',
+                ));
+              }
             }
           }
         }
