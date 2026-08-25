@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../router.dart';
 
@@ -38,7 +37,7 @@ class PushNotificationService {
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
-    // 2. Create High Importance Android Channels
+    // 2. Create High Importance Android Channels & Request Permissions
     final androidImpl = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidImpl != null) {
       await androidImpl.requestNotificationsPermission();
@@ -72,11 +71,6 @@ class PushNotificationService {
       await androidImpl.createNotificationChannel(leadChannel);
       await androidImpl.createNotificationChannel(orderChannel);
       await androidImpl.createNotificationChannel(generalChannel);
-    }
-
-    // 3. Request runtime permission on Android 13+ (API 33+)
-    if (await Permission.notification.isDenied) {
-      await Permission.notification.request();
     }
 
     _isInitialized = true;
