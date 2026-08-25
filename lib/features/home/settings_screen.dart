@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../auth/auth_provider.dart';
 import '../../core/constants.dart';
+import '../../core/services/push_notification_service.dart';
 import '../../main.dart'; // import themeModeProvider
 import 'widgets/user_tutorial_dialog.dart';
 
@@ -227,6 +228,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   subtitle: const Text('Get real-time updates on quotes & tasks'),
                   value: _pushNotifications,
                   onChanged: (val) => _updatePreference('push_notifications', val),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.send_to_mobile_rounded, color: Color(0xFF0F766E)),
+                  title: const Text('Send Test Notification', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Preview how leads and job alerts appear'),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  onTap: () async {
+                    await PushNotificationService().showTestNotification();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Test notification sent to your system tray!'),
+                          backgroundColor: Color(0xFF0F766E),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
                 ),
                 const Divider(height: 1),
                 SwitchListTile(

@@ -33,8 +33,13 @@ import '../features/b2b/presentation/lead_management_screen.dart';
 import '../features/b2b/presentation/materials_screen.dart';
 import '../features/splash/splash_screen.dart';
 
+import 'package:flutter/material.dart';
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     routes: [
       GoRoute(

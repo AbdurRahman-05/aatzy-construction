@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../constants.dart';
+import '../services/push_notification_service.dart';
 import '../../features/auth/auth_provider.dart';
 import 'projects_provider.dart';
 
@@ -178,6 +179,19 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
       }
 
       state = list;
+
+      // Trigger native push notifications for freshly received unread alerts
+      for (final n in list.where((x) => x.isUnread)) {
+        PushNotificationService().showNotification(
+          id: n.id.hashCode,
+          title: n.title,
+          body: n.body,
+          payload: n.route ?? '/notifications',
+          channelId: n.route?.contains('lead') == true ? 'buildzy_leads' : (n.route?.contains('materials') == true ? 'buildzy_orders' : 'buildzy_general'),
+          channelName: n.route?.contains('lead') == true ? 'Leads & Proposals' : 'General Updates',
+          uniqueKey: n.id,
+        );
+      }
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
     }

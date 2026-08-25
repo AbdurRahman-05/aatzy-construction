@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'core/theme.dart';
 import 'core/router.dart';
 import 'core/constants.dart';
+import 'core/services/push_notification_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -63,8 +64,13 @@ Future<void> _initAsyncServices(SharedPreferences prefs) async {
         await GoogleSignIn.instance.initialize();
       }
     }
+
+    // Initialize Push Notifications (Channels & Permissions)
+    if (!kIsWeb) {
+      await PushNotificationService().initialize();
+    }
   } catch (e) {
-    debugPrint('Background Google Sign-In init error: $e');
+    debugPrint('Background services init error: $e');
   }
 }
 
