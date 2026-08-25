@@ -187,7 +187,7 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
           title: n.title,
           body: n.body,
           payload: n.route ?? '/notifications',
-          channelId: n.route?.contains('lead') == true ? 'buildzy_leads' : (n.route?.contains('materials') == true ? 'buildzy_orders' : 'buildzy_general'),
+          channelId: n.route?.contains('lead') == true ? 'buildzy_leads_v2' : (n.route?.contains('materials') == true ? 'buildzy_orders_v2' : 'buildzy_general_v2'),
           channelName: n.route?.contains('lead') == true ? 'Leads & Proposals' : 'General Updates',
           uniqueKey: n.id,
         );

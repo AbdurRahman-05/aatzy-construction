@@ -42,30 +42,35 @@ class PushNotificationService {
     if (androidImpl != null) {
       await androidImpl.requestNotificationsPermission();
 
+      const customSound = RawResourceAndroidNotificationSound('construction_chime');
+
       const leadChannel = AndroidNotificationChannel(
-        'buildzy_leads',
+        'buildzy_leads_v2',
         'Leads & Proposals',
         description: 'Instant alerts for customer project inquiries, quote acceptances, and bids.',
         importance: Importance.max,
         playSound: true,
+        sound: customSound,
         enableVibration: true,
       );
 
       const orderChannel = AndroidNotificationChannel(
-        'buildzy_orders',
+        'buildzy_orders_v2',
         'Material Inquiries & Orders',
         description: 'Updates on wholesale materials, RFQs, dispatches, and deliveries.',
         importance: Importance.high,
         playSound: true,
+        sound: customSound,
         enableVibration: true,
       );
 
       const generalChannel = AndroidNotificationChannel(
-        'buildzy_general',
+        'buildzy_general_v2',
         'General Announcements',
         description: 'General system notifications, updates, and reminders.',
         importance: Importance.defaultImportance,
         playSound: true,
+        sound: customSound,
       );
 
       await androidImpl.createNotificationChannel(leadChannel);
@@ -86,14 +91,14 @@ class PushNotificationService {
     }
   }
 
-  /// Show a native device heads-up push notification
+  /// Show a native device heads-up push notification with custom construction chime
   Future<void> showNotification({
     int id = 0,
     required String title,
     required String body,
     String? payload,
-    String channelId = 'buildzy_general',
-    String channelName = 'General',
+    String channelId = 'buildzy_leads_v2',
+    String channelName = 'Leads & Proposals',
     String? uniqueKey,
   }) async {
     if (!_isInitialized) {
@@ -111,6 +116,8 @@ class PushNotificationService {
       _shownNotificationKeys.add(uniqueKey);
     }
 
+    const customSound = RawResourceAndroidNotificationSound('construction_chime');
+
     final androidDetails = AndroidNotificationDetails(
       channelId,
       channelName,
@@ -126,12 +133,14 @@ class PushNotificationService {
       icon: '@mipmap/launcher_icon',
       enableVibration: true,
       playSound: true,
+      sound: customSound,
     );
 
     const darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: 'construction_chime.wav',
     );
 
     final notificationDetails = NotificationDetails(
