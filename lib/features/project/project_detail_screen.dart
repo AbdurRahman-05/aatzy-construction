@@ -985,7 +985,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     Map<String, dynamic>? acceptedQuote,
   }) {
     final int percentInt = (progressValue * 100).toInt();
-    final gaugeSize = isSmallScreen ? 70.0 : 86.0;
+    final gaugeSize = isSmallScreen ? 66.0 : 76.0;
 
     final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
     final totalCount = tasks.length;
@@ -1034,7 +1034,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                       height: gaugeSize,
                       child: CircularProgressIndicator(
                         value: progressValue,
-                        strokeWidth: isSmallScreen ? 7 : 8.5,
+                        strokeWidth: isSmallScreen ? 6.5 : 7.5,
                         backgroundColor: const Color(0xFFF1F5F9),
                         valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
                         strokeCap: StrokeCap.round,
@@ -1046,14 +1046,14 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                         Text(
                           '$percentInt%',
                           style: TextStyle(
-                            fontSize: isSmallScreen ? 16 : 18,
+                            fontSize: isSmallScreen ? 15 : 17,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF0F172A),
                           ),
                         ),
                         Text(
                           'Completed',
-                          style: TextStyle(fontSize: isSmallScreen ? 7.5 : 8.5, fontWeight: FontWeight.w600, color: Colors.grey.shade500),
+                          style: TextStyle(fontSize: isSmallScreen ? 7.0 : 8.0, fontWeight: FontWeight.w600, color: Colors.grey.shade500),
                         ),
                       ],
                     ),
@@ -1061,11 +1061,11 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 ),
               ),
 
-              SizedBox(width: isSmallScreen ? 8 : 12),
+              SizedBox(width: isSmallScreen ? 6 : 8),
 
               // Vertical divider line
-              Container(width: 1, height: isSmallScreen ? 60 : 70, color: const Color(0xFFF1F5F9)),
-              SizedBox(width: isSmallScreen ? 8 : 12),
+              Container(width: 1, height: isSmallScreen ? 52 : 62, color: const Color(0xFFF1F5F9)),
+              SizedBox(width: isSmallScreen ? 6 : 8),
 
               // Right Stepper Milestone Area
               Expanded(
@@ -1077,11 +1077,11 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                         Flexible(
                           child: Text(
                             'Current Stage',
-                            style: TextStyle(fontSize: isSmallScreen ? 9.5 : 10.5, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
+                            style: TextStyle(fontSize: isSmallScreen ? 9.0 : 10.0, color: Colors.grey.shade500, fontWeight: FontWeight.w600),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         if (isCancelled)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
@@ -1118,7 +1118,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
 
                     // 4-Step Stepper with responsive width
                     Row(
@@ -1772,8 +1772,8 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
   }
 
   Widget _buildStepItem(String label, IconData icon, bool isActive, bool isSmallScreen) {
-    final circleSize = isSmallScreen ? 22.0 : 26.0;
-    final iconSize = isSmallScreen ? 11.0 : 13.0;
+    final circleSize = isSmallScreen ? 20.0 : 23.0;
+    final iconSize = isSmallScreen ? 10.0 : 11.5;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1795,16 +1795,17 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
             color: isActive ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 2),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
             label,
             style: TextStyle(
-              fontSize: isSmallScreen ? 7.5 : 8.5,
+              fontSize: isSmallScreen ? 7.0 : 8.0,
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
               color: isActive ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
             ),
+            maxLines: 1,
           ),
         ),
       ],
@@ -1815,7 +1816,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     return Expanded(
       child: Container(
         height: 1.5,
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 10),
         color: isActive ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
       ),
     );

@@ -14,13 +14,6 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
 
-    // Projects = Projects taken by this provider (where quote is accepted)
-    const projectsCount = await prisma.quote.count({
-      where: { 
-        providerId: id,
-        isAccepted: true
-      }
-    });
 
     // Helper to match locations case-insensitively
     const locationsMatch = (projLoc: string, provAddr: string | null): boolean => {

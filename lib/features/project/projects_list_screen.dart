@@ -159,7 +159,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
             // Right Column (Details)
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(isSmallScreen ? 9 : 12),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 8 : 11,
+                  vertical: isSmallScreen ? 7 : 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -230,10 +233,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     // Bottom: Budget & Deadline
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(10),
@@ -256,7 +259,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                               ],
                             ),
                           ),
-                          Container(width: 1, height: 20, margin: const EdgeInsets.symmetric(horizontal: 6), color: Colors.grey.shade200),
+                          Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 6), color: Colors.grey.shade200),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,7 +412,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                           crossAxisCount: crossAxisCount,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          mainAxisExtent: 135,
+                          mainAxisExtent: 142,
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => _buildProjectCard(context, filtered[index], isSmallScreen: isSmall, isGrid: true),
@@ -419,7 +422,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                     : SliverList(
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => SizedBox(
-                            height: 135,
+                            height: 142,
                             child: _buildProjectCard(context, filtered[index], isSmallScreen: isSmall, isGrid: false),
                           ),
                           childCount: filtered.length,

@@ -668,7 +668,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   Widget _buildHeroBanner(bool isSmallScreen) {
     return Container(
       width: double.infinity,
-      height: isSmallScreen ? 145 : 160,
+      height: isSmallScreen ? 152 : 166,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFF60A5FA)],
@@ -700,7 +700,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             ),
             // Left content overlay
             Padding(
-              padding: EdgeInsets.all(isSmallScreen ? 14.0 : 18.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 13.0 : 16.0,
+                vertical: isSmallScreen ? 11.0 : 13.0,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -710,7 +713,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       children: [
                         // White round compass icon badge
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
@@ -725,27 +728,27 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                           child: const Icon(
                             Icons.architecture_rounded,
                             color: Color(0xFF4F46E5),
-                            size: 22,
+                            size: 19,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           "Let's build something\ngreat together!",
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: isSmallScreen ? 15 : 17,
+                            fontSize: isSmallScreen ? 14.5 : 16.5,
                             fontWeight: FontWeight.w900,
-                            height: 1.2,
+                            height: 1.18,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           'Share your project details and get quotes from verified experts.',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.88),
-                            fontSize: isSmallScreen ? 10 : 11,
+                            fontSize: isSmallScreen ? 9.5 : 10.5,
                             fontWeight: FontWeight.w500,
-                            height: 1.25,
+                            height: 1.2,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
