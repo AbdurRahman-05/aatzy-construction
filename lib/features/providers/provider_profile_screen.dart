@@ -65,8 +65,13 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       final res = await http.get(Uri.parse('$apiBaseUrl/providers/${widget.providerId}/projects'));
       if (res.statusCode == 200 && mounted) {
         final projectsList = jsonDecode(res.body) as List;
+        final completed = projectsList.where((p) {
+          final s = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+          return s == 'completed' || s == 'finished';
+        }).length;
+
         setState(() {
-          _completedProjectsCount = projectsList.where((p) => p['currentStage'] == 'Completed').length;
+          _completedProjectsCount = completed;
         });
       }
     } catch (e) {

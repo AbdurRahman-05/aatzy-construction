@@ -130,7 +130,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
         _fetchProjects();
       },
       child: Container(
-        margin: isGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 14),
+        margin: isGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -140,227 +140,97 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Left Column (Color Block & Progress)
-            Container(
-              width: leftBarWidth,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [cardColor.withValues(alpha: 0.85), cardColor],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left Column (Color Block & Progress)
+              Container(
+                width: leftBarWidth,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [cardColor.withValues(alpha: 0.85), cardColor],
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(isSmallScreen ? 5 : 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: Colors.white, size: isSmallScreen ? 18 : 22),
+                    ),
+                    SizedBox(height: isSmallScreen ? 3 : 5),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${(progress * 100).toInt()}%',
+                        style: TextStyle(color: Colors.white, fontSize: isSmallScreen ? 16 : 18, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    Text(
+                      'DONE',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: isSmallScreen ? 7.5 : 8.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: Colors.white, size: isSmallScreen ? 20 : 24),
-                  ),
-                  SizedBox(height: isSmallScreen ? 4 : 6),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '${(progress * 100).toInt()}%',
-                      style: TextStyle(color: Colors.white, fontSize: isSmallScreen ? 18 : 20, fontWeight: FontWeight.w900),
-                    ),
-                  ),
-                  Text(
-                    'DONE',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: isSmallScreen ? 7.5 : 8.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Right Column (Details)
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(isSmallScreen ? 9 : 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Top: Title & Status Badge
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: isSmallScreen ? 13.5 : 15,
-                                  color: const Color(0xFF1E1E2D),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Icon(Icons.person_outline_rounded, size: 12, color: Colors.grey.shade400),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    clientName,
-                                    style: TextStyle(color: Colors.grey.shade700, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w600),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Icon(Icons.location_on_rounded, size: 11, color: Colors.grey.shade400),
-                                  const SizedBox(width: 2),
-                                  Expanded(
-                                    child: Text(
-                                      location,
-                                      style: TextStyle(color: Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isCancelled
-                                ? Colors.red.shade50
-                                : (isCompleted
-                                    ? Colors.green.shade50
-                                    : (isPendingApproval ? Colors.amber.shade50 : const Color(0xFFEEF2FF))),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isCancelled
-                                  ? Colors.red.shade200
-                                  : (isCompleted
-                                      ? Colors.green.shade200
-                                      : (isPendingApproval ? Colors.amber.shade300 : const Color(0xFFC7D2FE))),
-                              width: 0.8,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isCancelled
-                                    ? Icons.cancel_rounded
-                                    : (isCompleted
-                                        ? Icons.check_circle_rounded
-                                        : (isPendingApproval ? Icons.rate_review_rounded : Icons.sync_rounded)),
-                                color: isCancelled
-                                    ? Colors.red
-                                    : (isCompleted
-                                        ? Colors.green.shade700
-                                        : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
-                                size: 10,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                isCancelled
-                                    ? 'Cancelled'
-                                    : (isCompleted
-                                        ? 'Finished'
-                                        : (isPendingApproval ? 'Pending' : 'Ongoing')),
-                                style: TextStyle(
-                                  color: isCancelled
-                                      ? Colors.red
-                                      : (isCompleted
-                                          ? Colors.green.shade700
-                                          : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    // Bottom: Budget & Deadline
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Row(
+              // Right Column (Details)
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 10, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Top: Title & Status Badge
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('CONTRACT VALUE',
-                                    style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 7.5,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.3),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis),
-                                const SizedBox(height: 1),
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Text('₹ ${budget.toStringAsFixed(0)}',
-                                      style: TextStyle(
-                                          color: Colors.green.shade700,
-                                          fontSize: isSmallScreen ? 12 : 13,
-                                          fontWeight: FontWeight.w900)),
+                                Text(
+                                  title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: isSmallScreen ? 13.5 : 15,
+                                    color: const Color(0xFF1E1E2D),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
-                            ),
-                          ),
-                          Container(width: 1, height: 20, margin: const EdgeInsets.symmetric(horizontal: 6), color: Colors.grey.shade200),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('STAGE',
-                                    style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 7.5,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.3),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis),
-                                const SizedBox(height: 1),
+                                const SizedBox(height: 2),
                                 Row(
                                   children: [
-                                    Icon(Icons.calendar_month_rounded, size: 10, color: Colors.grey.shade600),
+                                    Icon(Icons.person_outline_rounded, size: 12, color: Colors.grey.shade400),
                                     const SizedBox(width: 3),
+                                    Text(
+                                      clientName,
+                                      style: TextStyle(color: Colors.grey.shade700, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w600),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Icon(Icons.location_on_rounded, size: 11, color: Colors.grey.shade400),
+                                    const SizedBox(width: 2),
                                     Expanded(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          dateStr,
-                                          style: TextStyle(
-                                              color: Colors.grey.shade800,
-                                              fontSize: isSmallScreen ? 10.5 : 11.5,
-                                              fontWeight: FontWeight.w700),
-                                        ),
+                                      child: Text(
+                                        location,
+                                        style: TextStyle(color: Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
@@ -368,14 +238,146 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                               ],
                             ),
                           ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isCancelled
+                                  ? Colors.red.shade50
+                                  : (isCompleted
+                                      ? Colors.green.shade50
+                                      : (isPendingApproval ? Colors.amber.shade50 : const Color(0xFFEEF2FF))),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isCancelled
+                                    ? Colors.red.shade200
+                                    : (isCompleted
+                                        ? Colors.green.shade200
+                                        : (isPendingApproval ? Colors.amber.shade300 : const Color(0xFFC7D2FE))),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isCancelled
+                                      ? Icons.cancel_rounded
+                                      : (isCompleted
+                                          ? Icons.check_circle_rounded
+                                          : (isPendingApproval ? Icons.rate_review_rounded : Icons.sync_rounded)),
+                                  color: isCancelled
+                                      ? Colors.red
+                                      : (isCompleted
+                                          ? Colors.green.shade700
+                                          : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
+                                  size: 10,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  isCancelled
+                                      ? 'Cancelled'
+                                      : (isCompleted
+                                          ? 'Finished'
+                                          : (isPendingApproval ? 'Pending' : 'Ongoing')),
+                                  style: TextStyle(
+                                    color: isCancelled
+                                        ? Colors.red
+                                        : (isCompleted
+                                            ? Colors.green.shade700
+                                            : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      // Bottom: Budget & Deadline
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('CONTRACT VALUE',
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 7.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
+                                  const SizedBox(height: 1),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text('₹ ${budget.toStringAsFixed(0)}',
+                                        style: TextStyle(
+                                            color: Colors.green.shade700,
+                                            fontSize: isSmallScreen ? 11.5 : 12.5,
+                                            fontWeight: FontWeight.w900)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 6), color: Colors.grey.shade200),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('STAGE',
+                                      style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 7.5,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 0.3),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
+                                  const SizedBox(height: 1),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.calendar_month_rounded, size: 10, color: Colors.grey.shade600),
+                                      const SizedBox(width: 3),
+                                      Expanded(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            dateStr,
+                                            style: TextStyle(
+                                                color: Colors.grey.shade800,
+                                                fontSize: isSmallScreen ? 10 : 11,
+                                                fontWeight: FontWeight.w700),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -495,7 +497,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                           crossAxisCount: crossAxisCount,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
-                          mainAxisExtent: 135,
+                          mainAxisExtent: 148,
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => _buildProjectCard(context, filtered[index], isSmallScreen: isSmall, isGrid: true),
@@ -504,10 +506,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                       )
                     : SliverList(
                         delegate: SliverChildBuilderDelegate(
-                          (context, index) => SizedBox(
-                            height: 135,
-                            child: _buildProjectCard(context, filtered[index], isSmallScreen: isSmall, isGrid: false),
-                          ),
+                          (context, index) => _buildProjectCard(context, filtered[index], isSmallScreen: isSmall, isGrid: false),
                           childCount: filtered.length,
                         ),
                       ),

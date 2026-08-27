@@ -429,6 +429,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     final projectIdFormatted = 'PRJ-${widget.projectId.length > 8 ? widget.projectId.substring(0, 8).toUpperCase() : widget.projectId.toUpperCase()}';
 
     final quotesList = _project?['quotes'] as List? ?? [];
+    final acceptedQuote = quotesList.firstWhere(
+      (q) => q['isAccepted'] == true,
+      orElse: () => null,
+    );
     final tasksList = _project?['tasks'] as List? ?? [];
 
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
@@ -662,8 +666,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   isCompleted: isCompleted,
                                   isSmallScreen: isSmallScreen,
                                 ),
-                                const SizedBox(height: 16),
-
                                 // 2. Project Progress Card (Gauge + Stepper + Execution Tasks + Logs)
                                 _buildProjectProgressCard(
                                   progressValue: progressValue,
@@ -673,10 +675,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   isSmallScreen: isSmallScreen,
                                   tasks: tasksList,
                                   updates: _project?['updates'] as List? ?? [],
-                                  acceptedQuote: quotesList.firstWhere(
-                                    (q) => q['isAccepted'] == true,
-                                    orElse: () => null,
-                                  ),
+                                  acceptedQuote: acceptedQuote,
                                 ),
                                 const SizedBox(height: 16),
 
@@ -684,8 +683,11 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                 _buildRecommendedServicesSection(isSmallScreen),
                                 const SizedBox(height: 16),
 
-                                // 4. Quotes Received Card
-                                _buildQuotesReceivedCard(quotesList, isSmallScreen),
+                                // 4. Accepted Quotation & Agreed Cost Card OR Quotes Received Comparison Card
+                                if (acceptedQuote != null)
+                                  _buildAcceptedQuoteCard(acceptedQuote, isSmallScreen)
+                                else
+                                  _buildQuotesReceivedCard(quotesList, isSmallScreen),
                                 const SizedBox(height: 16),
 
                                 // 5. Cost Tracking Card (Donut Chart + Summary List)
@@ -1597,12 +1599,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 },
               ),
           ],
-
-          // Assigned Contractor Card if quote accepted
-          if (acceptedQuote != null) ...[
-            const SizedBox(height: 14),
-            _buildAssignedProviderCard(acceptedQuote, isSmallScreen),
-          ],
         ],
       ),
     );
@@ -1924,7 +1920,353 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
   }
 
   // ==========================================
-  // 4. QUOTES RECEIVED CARD
+  // 4A. ACCEPTED QUOTATION & CONTRACTOR AGREEMENT CARD
+  // ==========================================
+  Widget _buildAcceptedQuoteCard(Map<String, dynamic> acceptedQuote, bool isSmallScreen) {
+    final provider = acceptedQuote['provider'] ?? {};
+    final providerName = provider['businessName'] ?? provider['ownerName'] ?? 'Assigned Contractor';
+    final ownerName = provider['ownerName'] ?? '';
+    final phone = provider['phone']?.toString() ?? '';
+    final rating = (provider['avgRating'] ?? provider['rating'] ?? 4.9) as num;
+    final providerId = acceptedQuote['providerId'] ?? provider['id']?.toString();
+    final profileImage = provider['profileImage']?.toString();
+    final quotedCostNum = (acceptedQuote['estimatedCost'] as num?)?.toDouble() ??
+        (acceptedQuote['quotedCost'] as num?)?.toDouble() ??
+        0.0;
+    final quotedTimeline = (acceptedQuote['timeline']?.toString().isNotEmpty ?? false)
+        ? acceptedQuote['timeline'].toString()
+        : 'As scheduled';
+    final quoteNotes = acceptedQuote['notes']?.toString() ?? '';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Status Badge & Section Title
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: const Icon(Icons.handshake_rounded, color: Color(0xFF059669), size: 15),
+                    ),
+                    const SizedBox(width: 7),
+                    Flexible(
+                      child: Text(
+                        'Accepted Quotation',
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 14.0 : 15.0,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF10B981), width: 1),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 11),
+                    SizedBox(width: 3),
+                    Text(
+                      'Agreement Active',
+                      style: TextStyle(
+                        color: Color(0xFF059669),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Provider Profile Box
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: isSmallScreen ? 22 : 25,
+                      backgroundColor: const Color(0xFFEEF2FF),
+                      backgroundImage: profileImage != null && profileImage.isNotEmpty
+                          ? MemoryImage(base64Decode(profileImage.split(',').last))
+                          : null,
+                      child: profileImage == null || profileImage.isEmpty
+                          ? Text(
+                              providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF4F46E5),
+                              ),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check, size: 9, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              providerName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                color: Color(0xFF0F172A),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.verified_rounded, color: Color(0xFF2563EB), size: 14),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded, size: 13, color: Color(0xFFF59E0B)),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              ownerName.isNotEmpty ? '• Owner: $ownerName' : '• Verified Contractor',
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (phone.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '📞 $phone',
+                          style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (providerId != null) ...[
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => context.push('/provider-profile/$providerId'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('Profile', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                          SizedBox(width: 2),
+                          Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF64748B)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 2 Metric Tiles: Quoted Cost & Agreed Timeline
+          Row(
+            children: [
+              // Quoted Project Cost
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.currency_rupee_rounded, size: 12, color: Color(0xFF059669)),
+                          SizedBox(width: 3),
+                          Text(
+                            'QUOTED COST',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF047857),
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          quotedCostNum > 0 ? '₹${quotedCostNum.toStringAsFixed(0)}' : '₹${acceptedQuote['estimatedCost'] ?? '0'}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF065F46),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              // Agreed Timeline
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.calendar_month_rounded, size: 12, color: Color(0xFF2563EB)),
+                          SizedBox(width: 3),
+                          Text(
+                            'AGREED TIMELINE',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF1D4ED8),
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          quotedTimeline,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF1E40AF),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Notes / Scope description if present
+          if (quoteNotes.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF64748B)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Terms: $quoteNotes',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF475569), height: 1.3),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // 4B. QUOTES RECEIVED CARD
   // ==========================================
   Widget _buildQuotesReceivedCard(List<dynamic> quotesList, bool isSmallScreen) {
     final hasQuotes = quotesList.isNotEmpty;

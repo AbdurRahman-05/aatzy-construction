@@ -40,8 +40,13 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (mounted) {
+          final allProjects = data['projects'] as List? ?? [];
+          final activeProjects = allProjects.where((p) {
+            final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+            return !['completed', 'finished', 'cancelled'].contains(stage);
+          }).toList();
           setState(() {
-            _userProjects = data['projects'] ?? [];
+            _userProjects = activeProjects;
           });
         }
       }

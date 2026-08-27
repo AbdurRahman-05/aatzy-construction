@@ -176,93 +176,131 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
 
   void _showPlotSizeDialog() {
     final controller = TextEditingController(text: _plotSizeController.text);
+    final focusNode = FocusNode();
     final quickSizes = ['600', '1200', '1500', '2400', '3000', '4000'];
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Enter Plot Size', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
-                ],
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: 'Plot Area',
-                  suffixText: 'sq ft',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.square_foot_rounded, color: Color(0xFF6366F1)),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: bottomInset + 20,
+              ),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Enter Plot Size', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      keyboardType: TextInputType.number,
+                      autofocus: false,
+                      onSubmitted: (_) {
+                        if (controller.text.trim().isNotEmpty) {
+                          setState(() => _plotSizeController.text = controller.text.trim());
+                        }
+                        Navigator.pop(context);
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Plot Area',
+                        suffixText: 'sq ft',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.square_foot_rounded, color: Color(0xFF6366F1)),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: quickSizes.map((size) {
+                        return ActionChip(
+                          label: Text('$size sq ft'),
+                          onPressed: () {
+                            setModalState(() {
+                              controller.text = size;
+                            });
+                          },
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (controller.text.trim().isNotEmpty) {
+                            setState(() {
+                              _plotSizeController.text = controller.text.trim();
+                            });
+                          }
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4F46E5),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Save Plot Size', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 14),
-              const Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: quickSizes.map((size) {
-                  return ActionChip(
-                    label: Text('$size sq ft'),
-                    onPressed: () {
-                      controller.text = size;
-                    },
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (controller.text.trim().isNotEmpty) {
-                      setState(() {
-                        _plotSizeController.text = controller.text.trim();
-                      });
-                    }
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Save Plot Size', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
+    });
   }
 
   void _showBudgetDialog() {
     final controller = TextEditingController(text: _budgetController.text);
+    final focusNode = FocusNode();
     final quickBudgets = [
       {'label': '₹25 Lakhs', 'val': '2500000'},
       {'label': '₹45 Lakhs', 'val': '4500000'},
@@ -274,246 +312,350 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Set Budget Limit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
-                ],
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: 'Estimated Budget',
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.currency_rupee_rounded, color: Color(0xFF10B981)),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: bottomInset + 20,
+              ),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Set Budget Limit', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      keyboardType: TextInputType.number,
+                      autofocus: false,
+                      onSubmitted: (_) {
+                        if (controller.text.trim().isNotEmpty) {
+                          setState(() => _budgetController.text = controller.text.trim());
+                        }
+                        Navigator.pop(context);
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Estimated Budget',
+                        prefixText: '₹ ',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.currency_rupee_rounded, color: Color(0xFF10B981)),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: quickBudgets.map((b) {
+                        return ActionChip(
+                          label: Text(b['label']!),
+                          onPressed: () {
+                            setModalState(() {
+                              controller.text = b['val']!;
+                            });
+                          },
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (controller.text.trim().isNotEmpty) {
+                            setState(() {
+                              _budgetController.text = controller.text.trim();
+                            });
+                          }
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Save Budget', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 14),
-              const Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: quickBudgets.map((b) {
-                  return ActionChip(
-                    label: Text(b['label']!),
-                    onPressed: () {
-                      controller.text = b['val']!;
-                    },
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (controller.text.trim().isNotEmpty) {
-                      setState(() {
-                        _budgetController.text = controller.text.trim();
-                      });
-                    }
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Save Budget', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
+    });
   }
 
   void _showTimelineDialog() {
     final controller = TextEditingController(text: _timelineController.text);
+    final focusNode = FocusNode();
     final quickTimelines = ['3-6 Months', '6-9 Months', '9-12 Months', '12-18 Months', '18-24 Months'];
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Select Target Timeline', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
-                ],
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: 'Expected Duration',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.calendar_month_rounded, color: Color(0xFFF59E0B)),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: bottomInset + 20,
+              ),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Select Target Timeline', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      autofocus: false,
+                      onSubmitted: (_) {
+                        if (controller.text.trim().isNotEmpty) {
+                          setState(() => _timelineController.text = controller.text.trim());
+                        }
+                        Navigator.pop(context);
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Expected Duration',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.calendar_month_rounded, color: Color(0xFFF59E0B)),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: quickTimelines.map((t) {
+                        return ActionChip(
+                          label: Text(t),
+                          onPressed: () {
+                            setModalState(() {
+                              controller.text = t;
+                            });
+                          },
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (controller.text.trim().isNotEmpty) {
+                            setState(() {
+                              _timelineController.text = controller.text.trim();
+                            });
+                          }
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF59E0B),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Save Timeline', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 14),
-              const Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: quickTimelines.map((t) {
-                  return ActionChip(
-                    label: Text(t),
-                    onPressed: () {
-                      controller.text = t;
-                    },
-                    backgroundColor: const Color(0xFFF1F5F9),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (controller.text.trim().isNotEmpty) {
-                      setState(() {
-                        _timelineController.text = controller.text.trim();
-                      });
-                    }
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF59E0B),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Save Timeline', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
+    });
   }
 
   void _showProjectDetailsDialog() {
     final titleCtrl = TextEditingController(text: _titleController.text);
     final locCtrl = TextEditingController(text: _locationController.text);
+    final titleFocusNode = FocusNode();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Project Identity & Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
-                ],
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: titleCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Project Title',
-                  hintText: 'e.g. 3BHK Villa Construction',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.edit_note_rounded, color: Color(0xFF6366F1)),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: bottomInset + 20,
+              ),
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Project Identity & Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: titleCtrl,
+                      focusNode: titleFocusNode,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        labelText: 'Project Title',
+                        hintText: 'e.g. 3BHK Villa Construction',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.edit_note_rounded, color: Color(0xFF6366F1)),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: locCtrl,
+                      textInputAction: TextInputAction.done,
+                      decoration: InputDecoration(
+                        labelText: 'Site Location',
+                        hintText: 'e.g. Indiranagar, Bangalore',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.location_on_rounded, color: Color(0xFFE11D48)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            if (titleCtrl.text.trim().isNotEmpty) _titleController.text = titleCtrl.text.trim();
+                            if (locCtrl.text.trim().isNotEmpty) _locationController.text = locCtrl.text.trim();
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4F46E5),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Save Details', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: locCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Site Location',
-                  hintText: 'e.g. Indiranagar, Bangalore',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.location_on_rounded, color: Color(0xFFE11D48)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      if (titleCtrl.text.trim().isNotEmpty) _titleController.text = titleCtrl.text.trim();
-                      if (locCtrl.text.trim().isNotEmpty) _locationController.text = locCtrl.text.trim();
-                    });
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Save Details', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (titleFocusNode.canRequestFocus) {
+        titleFocusNode.requestFocus();
+      }
+    });
   }
 
   String _formatBudget(String rawBudget) {

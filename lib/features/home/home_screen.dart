@@ -1265,18 +1265,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _handleCompareQuotesTap() {
-    if (_projects.isEmpty) {
-      context.push('/create-project');
+    final activeProjects = _projects.where((p) {
+      final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+      return !['completed', 'finished', 'cancelled'].contains(stage);
+    }).toList();
+
+    if (activeProjects.isEmpty) {
+      if (_projects.isEmpty) {
+        context.push('/create-project');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No active projects available for quote comparison.'),
+            backgroundColor: Color(0xFF1E293B),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
-    if (_projects.length == 1) {
-      context.push('/compare-quotes/${_projects.first['id']}');
+    if (activeProjects.length == 1) {
+      context.push('/compare-quotes/${activeProjects.first['id']}');
       return;
     }
-    _showProjectPickerBottomSheet();
+    _showProjectPickerBottomSheet(activeProjects);
   }
 
-  void _showProjectPickerBottomSheet() {
+  void _showProjectPickerBottomSheet(List<dynamic> activeProjects) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1312,9 +1327,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               constraints: const BoxConstraints(maxHeight: 320),
               child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: _projects.length,
+                itemCount: activeProjects.length,
                 itemBuilder: (context, idx) {
-                  final p = _projects[idx];
+                  final p = activeProjects[idx];
                   final pid = p['id'] ?? '';
                   final title = p['title'] ?? 'Project ${idx + 1}';
                   final location = p['location'] ?? 'N/A';

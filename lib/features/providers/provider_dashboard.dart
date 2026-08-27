@@ -1850,7 +1850,7 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
     return Column(
       children: [
         SizedBox(
-          height: 155,
+          height: widget.isSmallScreen ? 162 : 168,
           child: PageView.builder(
             controller: _carouselPageController,
             onPageChanged: (idx) {
@@ -1863,7 +1863,7 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
 
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 2),
-                padding: EdgeInsets.all(widget.isSmallScreen ? 14 : 16),
+                padding: EdgeInsets.symmetric(horizontal: widget.isSmallScreen ? 12 : 16, vertical: 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   gradient: LinearGradient(
@@ -1889,7 +1889,7 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.25),
                               borderRadius: BorderRadius.circular(8),
@@ -1904,12 +1904,12 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
                               ),
                             ),
                           ),
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 4),
                           Text(
                             slide['title'] as String,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 16,
+                              fontSize: 15.5,
                               fontWeight: FontWeight.w900,
                               height: 1.1,
                             ),
@@ -1919,17 +1919,17 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
                             slide['desc'] as String,
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 10,
-                              height: 1.25,
+                              fontSize: 9.5,
+                              height: 1.2,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           GestureDetector(
                             onTap: () => context.push(slide['route'] as String),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
@@ -1948,12 +1948,12 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
                                     slide['btn'] as String,
                                     style: const TextStyle(
                                       color: Color(0xFF0F172A),
-                                      fontSize: 10,
+                                      fontSize: 9.5,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_forward_rounded, size: 11, color: Color(0xFF0F172A)),
+                                  const Icon(Icons.arrow_forward_rounded, size: 10, color: Color(0xFF0F172A)),
                                 ],
                               ),
                             ),

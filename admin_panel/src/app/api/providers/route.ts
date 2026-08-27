@@ -18,6 +18,24 @@ export async function GET(request: Request) {
               rating: true,
             },
           },
+          quotes: {
+            where: {
+              isAccepted: true,
+            },
+            select: {
+              id: true,
+              project: {
+                select: {
+                  currentStage: true,
+                },
+              },
+            },
+          },
+          portfolioImages: {
+            select: {
+              id: true,
+            },
+          },
         },
       });
 
@@ -25,6 +43,14 @@ export async function GET(request: Request) {
         const avgRating = p.reviews.length > 0
           ? parseFloat((p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length).toFixed(1))
           : 0.0;
+
+        const completedCount = p.quotes.filter((q) => {
+          const stage = (q.project?.currentStage || '').toLowerCase().trim();
+          return stage === 'completed' || stage === 'finished';
+        }).length;
+
+        const totalProjectsCount = p.quotes.length > 0 ? p.quotes.length : (p.portfolioImages?.length || 0);
+
         return {
           id: p.id,
           businessName: p.businessName,
@@ -38,6 +64,8 @@ export async function GET(request: Request) {
           bio: p.bio,
           avgRating,
           reviewCount: p.reviews.length,
+          projectsCount: totalProjectsCount,
+          completedProjects: completedCount,
         };
       });
 
@@ -59,6 +87,24 @@ export async function GET(request: Request) {
             rating: true,
           },
         },
+        quotes: {
+          where: {
+            isAccepted: true,
+          },
+          select: {
+            id: true,
+            project: {
+              select: {
+                currentStage: true,
+              },
+            },
+          },
+        },
+        portfolioImages: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
@@ -66,6 +112,14 @@ export async function GET(request: Request) {
       const avgRating = p.reviews.length > 0
         ? parseFloat((p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length).toFixed(1))
         : 0.0;
+
+      const completedCount = p.quotes.filter((q) => {
+        const stage = (q.project?.currentStage || '').toLowerCase().trim();
+        return stage === 'completed' || stage === 'finished';
+      }).length;
+
+      const totalProjectsCount = p.quotes.length > 0 ? p.quotes.length : (p.portfolioImages?.length || 0);
+
       return {
         id: p.id,
         businessName: p.businessName,
@@ -79,6 +133,8 @@ export async function GET(request: Request) {
         bio: p.bio,
         avgRating,
         reviewCount: p.reviews.length,
+        projectsCount: totalProjectsCount,
+        completedProjects: completedCount,
       };
     });
 

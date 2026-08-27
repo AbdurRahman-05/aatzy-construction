@@ -18,17 +18,60 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
   String _errorMessage = '';
   String _searchQuery = '';
   String _activeCategoryFilter = 'All';
+  int _currentPage = 1;
 
-  final List<String> _popularCategories = const [
-    'All',
-    'Builder/General Contractor',
-    'Design & Planning',
-    'Construction',
-    'Commercial Builder',
-    'Interiors & Finishing',
-    'Plumbing',
-    'Electrical Contractor',
-    'Civil Engineer',
+  final Map<String, int> _completedCounts = {};
+
+  final List<Map<String, dynamic>> _popularCategories = const [
+    {
+      'name': 'All',
+      'icon': Icons.grid_view_rounded,
+      'color': Color(0xFF6366F1),
+      'bg': Color(0xFFEEF2FF),
+      'border': Color(0xFFC7D2FE),
+    },
+    {
+      'name': 'Builder/General Contractor',
+      'icon': Icons.apartment_rounded,
+      'color': Color(0xFF0284C7),
+      'bg': Color(0xFFF0F9FF),
+      'border': Color(0xFFBAE6FD),
+    },
+    {
+      'name': 'Design & Planning',
+      'icon': Icons.draw_rounded,
+      'color': Color(0xFF16A34A),
+      'bg': Color(0xFFF0FDF4),
+      'border': Color(0xFFBBF7D0),
+    },
+    {
+      'name': 'Construction',
+      'icon': Icons.construction_rounded,
+      'color': Color(0xFFEA580C),
+      'bg': Color(0xFFFFF7ED),
+      'border': Color(0xFFFED7AA),
+    },
+    {
+      'name': 'Commercial',
+      'icon': Icons.storefront_rounded,
+      'color': Color(0xFFDB2777),
+      'bg': Color(0xFFFDF2F8),
+      'border': Color(0xFFFBCFE8),
+    },
+    {
+      'name': 'Interiors & Finishing',
+      'icon': Icons.chair_rounded,
+      'color': Color(0xFF9333EA),
+      'bg': Color(0xFFFAF5FF),
+      'border': Color(0xFFE9D5FF),
+    },
+    {
+      'name': 'Plumbing',
+      'icon': Icons.plumbing_rounded,
+      'color': Color(0xFF0891B2),
+      'bg': Color(0xFFECFEFF),
+      'border': Color(0xFFA5F3FC),
+    },
   ];
 
   @override
@@ -54,12 +97,14 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final list = data['providers'] ?? [];
         if (mounted) {
           setState(() {
-            _providers = data['providers'] ?? [];
+            _providers = list;
             _isLoading = false;
           });
         }
+        _fetchActualCompletedProjects(list);
       } else {
         if (mounted) {
           setState(() {
@@ -78,6 +123,45 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
     }
   }
 
+  Future<void> _fetchActualCompletedProjects(List<dynamic> providers) async {
+    for (final p in providers) {
+      final id = p['id']?.toString() ?? '';
+      if (id.isEmpty) continue;
+
+      if (p['completedProjects'] != null && p['completedProjects'] is num) {
+        if (mounted) {
+          setState(() {
+            _completedCounts[id] = (p['completedProjects'] as num).toInt();
+          });
+        }
+        continue;
+      }
+
+      // Fetch actual completed projects from database
+      try {
+        final res = await http
+            .get(Uri.parse('$apiBaseUrl/providers/$id/projects'))
+            .timeout(const Duration(seconds: 5));
+        if (res.statusCode == 200) {
+          final list = jsonDecode(res.body);
+          if (list is List) {
+            final count = list.where((proj) {
+              final s = (proj['currentStage'] as String? ?? '').toLowerCase().trim();
+              return s == 'completed' || s == 'finished';
+            }).length;
+            if (mounted) {
+              setState(() {
+                _completedCounts[id] = count;
+              });
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Error fetching completed projects for $id: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -90,7 +174,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
       appBar: AppBar(
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF0F172A)),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A)),
         ),
         elevation: 0,
         backgroundColor: Colors.white,
@@ -100,7 +184,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF4F46E5)),
+            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF6366F1)),
             onPressed: _fetchProviders,
           ),
         ],
@@ -113,7 +197,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4F46E5)),
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
         ),
       );
     }
@@ -138,7 +222,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                 icon: const Icon(Icons.replay_rounded),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: const Color(0xFF6366F1),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -163,74 +247,129 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
 
     return Column(
       children: [
-        // Top Search Bar
+        // Top Search Bar & Filter Action Button
         Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           color: Colors.white,
-          child: Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: TextField(
-              onChanged: (v) => setState(() => _searchQuery = v),
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-              decoration: InputDecoration(
-                hintText: 'Search contractors, trades, or locations...',
-                hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
-                prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF64748B)),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 16, color: Color(0xFF94A3B8)),
-                        onPressed: () => setState(() => _searchQuery = ''),
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    onChanged: (v) => setState(() => _searchQuery = v),
+                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                    decoration: InputDecoration(
+                      hintText: 'Search contractors, trades, or locations...',
+                      hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                      prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF6366F1)),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear_rounded, size: 16, color: Color(0xFF94A3B8)),
+                              onPressed: () => setState(() => _searchQuery = ''),
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              // Filter Button on Right
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.tune_rounded, color: Color(0xFF6366F1), size: 20),
+                  onPressed: () {},
+                ),
+              ),
+            ],
           ),
         ),
 
         // Horizontal Category Filter Chips
         Container(
-          height: 48,
+          height: 52,
           color: Colors.white,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             itemCount: _popularCategories.length,
             itemBuilder: (context, idx) {
               final cat = _popularCategories[idx];
-              final isSelected = _activeCategoryFilter.toLowerCase() == cat.toLowerCase() ||
-                  (_activeCategoryFilter == 'All' && cat == 'All');
+              final name = cat['name'] as String;
+              final icon = cat['icon'] as IconData;
+              final color = cat['color'] as Color;
+              final bg = cat['bg'] as Color;
+              final border = cat['border'] as Color;
+              final isSelected = _activeCategoryFilter.toLowerCase() == name.toLowerCase() ||
+                  (_activeCategoryFilter == 'All' && name == 'All');
 
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(cat),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _activeCategoryFilter = cat;
-                      });
-                      _fetchProviders();
-                    }
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    setState(() {
+                      _activeCategoryFilter = name;
+                    });
+                    _fetchProviders();
                   },
-                  selectedColor: const Color(0xFF4F46E5),
-                  backgroundColor: const Color(0xFFF1F5F9),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF64748B),
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    fontSize: 11.5,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    side: BorderSide(
-                      color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF6366F1) : bg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? const Color(0xFF6366F1) : border,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 15,
+                          color: isSelected ? Colors.white : color,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          name,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : const Color(0xFF334155),
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -275,8 +414,8 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                               _fetchProviders();
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF4F46E5),
-                              side: const BorderSide(color: Color(0xFF4F46E5)),
+                              foregroundColor: const Color(0xFF6366F1),
+                              side: const BorderSide(color: Color(0xFF6366F1)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                             child: const Text('Show All Contractors', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -287,258 +426,615 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(14),
-                  itemCount: filteredProviders.length,
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                  itemCount: filteredProviders.length + 1,
                   itemBuilder: (context, index) {
+                    // Pagination Bar as the last item in the list
+                    if (index == filteredProviders.length) {
+                      return _buildPaginationBar();
+                    }
+
                     final provider = filteredProviders[index];
-                    final id = provider['id'] ?? '';
-                    final businessName = provider['businessName'] ?? provider['ownerName'] ?? 'Verified Contractor';
-                    final isVerified = provider['isVerified'] ?? false;
-                    final experience = provider['experience'] ?? 0;
-                    final address = provider['address'] ?? '';
-                    final bio = provider['bio'] ?? '';
-                    final avgRating = provider['avgRating'] ?? 0.0;
-                    final reviewCount = provider['reviewCount'] ?? 0;
-                    final profileImage = provider['profileImage'] as String? ?? '';
-                    final category = provider['category'] ?? _activeCategoryFilter;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () {
-                            if (id.isNotEmpty) {
-                              context.push('/provider-profile/$id');
-                            }
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Avatar / Initial with Verification Badge
-                                Stack(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 26,
-                                      backgroundColor: const Color(0xFFEEF2FF),
-                                      backgroundImage: profileImage.isNotEmpty
-                                          ? MemoryImage(base64Decode(profileImage.split(',').last))
-                                          : null,
-                                      child: profileImage.isEmpty
-                                          ? Text(
-                                              businessName.isNotEmpty ? businessName.substring(0, 1).toUpperCase() : 'P',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                                color: Color(0xFF4F46E5),
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                    if (isVerified)
-                                      Positioned(
-                                        bottom: 0,
-                                        right: 0,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF10B981),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.check,
-                                            color: Colors.white,
-                                            size: 11,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(width: 12),
-
-                                // Main Info Block
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              businessName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 15,
-                                                color: Color(0xFF1E293B),
-                                              ),
-                                            ),
-                                          ),
-                                          if (isVerified) ...[
-                                            const SizedBox(width: 4),
-                                            const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 16),
-                                          ],
-                                        ],
-                                      ),
-                                       const SizedBox(height: 3),
-                                       // Category tag + Experience (with multi-category support and overflow safety)
-                                       Builder(
-                                         builder: (context) {
-                                           final catList = category.toString().split(',').map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
-                                           final primaryCat = catList.isNotEmpty ? catList.first : 'Contractor';
-                                           final extraCount = catList.length > 1 ? catList.length - 1 : 0;
-
-                                           return Row(
-                                             children: [
-                                               Flexible(
-                                                 child: Container(
-                                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                   decoration: BoxDecoration(
-                                                     color: const Color(0xFFF1F5F9),
-                                                     borderRadius: BorderRadius.circular(6),
-                                                   ),
-                                                   child: Text(
-                                                     primaryCat,
-                                                     style: const TextStyle(
-                                                       fontSize: 10.5,
-                                                       fontWeight: FontWeight.bold,
-                                                       color: Color(0xFF475569),
-                                                     ),
-                                                     maxLines: 1,
-                                                     overflow: TextOverflow.ellipsis,
-                                                   ),
-                                                 ),
-                                               ),
-                                               if (extraCount > 0) ...[
-                                                 const SizedBox(width: 4),
-                                                 Container(
-                                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                                   decoration: BoxDecoration(
-                                                     color: const Color(0xFFEEF2FF),
-                                                     borderRadius: BorderRadius.circular(6),
-                                                   ),
-                                                   child: Text(
-                                                     '+$extraCount',
-                                                     style: const TextStyle(
-                                                       fontSize: 9.5,
-                                                       fontWeight: FontWeight.bold,
-                                                       color: Color(0xFF4F46E5),
-                                                     ),
-                                                   ),
-                                                 ),
-                                               ],
-                                               const SizedBox(width: 6),
-                                               Text(
-                                                 '$experience yrs exp',
-                                                 style: const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w600),
-                                               ),
-                                             ],
-                                           );
-                                         },
-                                       ),
-                                      if (address.isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.location_on_outlined, color: Color(0xFF94A3B8), size: 13),
-                                            const SizedBox(width: 2),
-                                            Expanded(
-                                              child: Text(
-                                                address,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                      if (bio.isNotEmpty) ...[
-                                        const SizedBox(height: 5),
-                                        Text(
-                                          bio,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Color(0xFF475569),
-                                            fontSize: 11.5,
-                                            height: 1.25,
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(height: 7),
-                                      
-                                      // Ratings & Reviews
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.star_rounded,
-                                            color: Color(0xFFF59E0B),
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            avgRating > 0 ? avgRating.toStringAsFixed(1) : '4.8',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12.5,
-                                              color: Color(0xFF1E293B),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            avgRating > 0 
-                                                ? '($reviewCount reviews)'
-                                                : '(Verified)',
-                                            style: const TextStyle(
-                                              color: Color(0xFF94A3B8),
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-
-                                // View profile action button
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 20),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                    return _buildProviderCard(provider, index);
                   },
                 ),
         ),
       ],
     );
   }
+
+  // Card Palette configurations matching reference (Purple, Sky Blue, Mint Green, Amber/Orange)
+  List<CardPalette> get _palettes => const [
+        CardPalette(
+          bg: Color(0xFFF7F5FF),
+          border: Color(0xFFE9D5FF),
+          accent: Color(0xFF6366F1),
+          gradient: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+          tagBg: Color(0xFFF3E8FF),
+          tagText: Color(0xFF7E22CE),
+        ),
+        CardPalette(
+          bg: Color(0xFFF0F9FF),
+          border: Color(0xFFBAE6FD),
+          accent: Color(0xFF0284C7),
+          gradient: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+          tagBg: Color(0xFFE0F2FE),
+          tagText: Color(0xFF0369A1),
+        ),
+        CardPalette(
+          bg: Color(0xFFF0FDF4),
+          border: Color(0xFFBBF7D0),
+          accent: Color(0xFF16A34A),
+          gradient: [Color(0xFF22C55E), Color(0xFF16A34A)],
+          tagBg: Color(0xFFDCFCE7),
+          tagText: Color(0xFF15803D),
+        ),
+        CardPalette(
+          bg: Color(0xFFFFF7ED),
+          border: Color(0xFFFED7AA),
+          accent: Color(0xFFEA580C),
+          gradient: [Color(0xFFF97316), Color(0xFFEA580C)],
+          tagBg: Color(0xFFFFEDD5),
+          tagText: Color(0xFFC2410C),
+        ),
+      ];
+
+  Widget _buildProviderCard(Map<String, dynamic> provider, int index) {
+    final palette = _palettes[index % _palettes.length];
+
+    final id = provider['id']?.toString() ?? '';
+    final businessName = provider['businessName'] ?? provider['ownerName'] ?? 'Verified Contractor';
+    final isVerified = provider['isVerified'] == true || provider['isVerified'] == 1 || provider['isVerified'] == 'true';
+    final experience = (provider['experience'] as num?)?.toInt() ?? 0;
+    final address = (provider['address'] as String?)?.trim() ?? '';
+    final bio = (provider['bio'] as String?)?.trim() ?? '';
+    final avgRating = (provider['avgRating'] as num?)?.toDouble() ?? 0.0;
+    final reviewCount = (provider['reviewCount'] as num?)?.toInt() ?? 0;
+    final profileImage = provider['profileImage'] as String? ?? '';
+    final category = provider['category'] ?? _activeCategoryFilter;
+
+    // Strictly show the actual completed projects count stored in database
+    final projectsCount = _completedCounts[id] ??
+        ((provider['completedProjects'] as num?)?.toInt()) ??
+        ((provider['projectsCount'] as num?)?.toInt()) ??
+        0;
+
+    final catList = category.toString().split(',').map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
+    final primaryCat = catList.isNotEmpty ? catList.first : 'Contractor';
+    final extraCount = catList.length > 1 ? catList.length - 1 : 0;
+
+    final initial = businessName.isNotEmpty ? businessName[0].toUpperCase() : 'P';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: palette.bg,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: palette.border, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: palette.accent.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          // Background Architectural Silhouette
+          Positioned(
+            right: 0,
+            bottom: 0,
+            top: 0,
+            width: 200,
+            child: Opacity(
+              opacity: 0.22,
+              child: Image.asset(
+                'assets/images/provider_card_city.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => const SizedBox(),
+              ),
+            ),
+          ),
+
+          // Foreground Content
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Left Column: Avatar & Projects Counter
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Square Gradient Avatar with Online Green Badge
+                    Stack(
+                      children: [
+                        Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: palette.gradient,
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: palette.accent.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: profileImage.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.memory(
+                                    base64Decode(profileImage.split(',').last),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Center(
+                                      child: Text(
+                                        initial,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 24,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    initial,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 24,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        Positioned(
+                          bottom: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(2.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 9,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Projects Count Pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: palette.border),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.business_center_outlined, size: 11, color: palette.accent),
+                              const SizedBox(width: 3),
+                              Text(
+                                '$projectsCount',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Text(
+                            'Projects',
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+
+                // Middle Info Block
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Business Title & Top-Right Verified Badge
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              businessName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                color: Color(0xFF0F172A),
+                                letterSpacing: -0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isVerified) ...[
+                            const SizedBox(width: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 14),
+                                SizedBox(width: 3),
+                                Text(
+                                  'Verified',
+                                  style: TextStyle(
+                                    color: Color(0xFF10B981),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+
+                      // Tags Row: Category, +extra, Experience
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: palette.tagBg,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              primaryCat,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: palette.tagText,
+                              ),
+                            ),
+                          ),
+                          if (extraCount > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: palette.tagBg.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '+$extraCount',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: palette.tagText,
+                                ),
+                              ),
+                            ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+                            ),
+                            child: Text(
+                              '$experience yrs exp',
+                              style: const TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Address / Location Row
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, color: Color(0xFF64748B), size: 13),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              address.isNotEmpty ? address : 'Tamil Nadu',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+
+                      // Bio text
+                      Text(
+                        bio.isNotEmpty ? bio : 'none',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF475569),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Rating & "View Profile ->" Action Button
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 16),
+                          const SizedBox(width: 2),
+                          Text(
+                            avgRating > 0 ? avgRating.toStringAsFixed(1) : '4.8',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            reviewCount > 0 ? '($reviewCount reviews)' : '(Verified)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: palette.accent,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+
+                          // White "View Profile ->" Pill Button
+                          InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              if (id.isNotEmpty) {
+                                context.push('/provider-profile/$id');
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'View Profile',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: palette.accent,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.arrow_forward_rounded, size: 12, color: palette.accent),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Far Right Circular Next Arrow Button
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    if (id.isNotEmpty) {
+                      context.push('/provider-profile/$id');
+                    }
+                  },
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: palette.accent,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: palette.accent.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Bottom Pagination Controls Matching Reference
+  Widget _buildPaginationBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Left Chevron Box
+          _buildPageBox(
+            child: const Icon(Icons.chevron_left_rounded, size: 16, color: Color(0xFF64748B)),
+            onTap: () {
+              if (_currentPage > 1) {
+                setState(() => _currentPage--);
+              }
+            },
+          ),
+          const SizedBox(width: 6),
+
+          // Active Page 1
+          _buildPageBox(
+            child: const Text(
+              '1',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
+            ),
+            isSelected: _currentPage == 1,
+            onTap: () => setState(() => _currentPage = 1),
+          ),
+          const SizedBox(width: 6),
+
+          // Page 2
+          _buildPageBox(
+            child: const Text(
+              '2',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF475569)),
+            ),
+            isSelected: _currentPage == 2,
+            onTap: () => setState(() => _currentPage = 2),
+          ),
+          const SizedBox(width: 6),
+
+          // Page 3
+          _buildPageBox(
+            child: const Text(
+              '3',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF475569)),
+            ),
+            isSelected: _currentPage == 3,
+            onTap: () => setState(() => _currentPage = 3),
+          ),
+          const SizedBox(width: 6),
+
+          // Ellipsis
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text('...', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 6),
+
+          // Page 10
+          _buildPageBox(
+            child: const Text(
+              '10',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF475569)),
+            ),
+            isSelected: _currentPage == 10,
+            onTap: () => setState(() => _currentPage = 10),
+          ),
+          const SizedBox(width: 6),
+
+          // Right Chevron Box
+          _buildPageBox(
+            child: const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF64748B)),
+            onTap: () {
+              if (_currentPage < 10) {
+                setState(() => _currentPage++);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageBox({required Widget child, bool isSelected = false, required VoidCallback onTap}) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6366F1) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              )
+            else
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+          ],
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
 }
 
+class CardPalette {
+  final Color bg;
+  final Color border;
+  final Color accent;
+  final List<Color> gradient;
+  final Color tagBg;
+  final Color tagText;
+
+  const CardPalette({
+    required this.bg,
+    required this.border,
+    required this.accent,
+    required this.gradient,
+    required this.tagBg,
+    required this.tagText,
+  });
+}
