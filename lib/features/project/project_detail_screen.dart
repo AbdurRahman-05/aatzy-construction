@@ -7,7 +7,6 @@ import 'package:confetti/confetti.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants.dart';
 import '../../core/full_screen_image_viewer.dart';
-import '../chat/chat_detail_screen.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -1599,111 +1598,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 },
               ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAssignedProviderCard(Map<String, dynamic> acceptedQuote, bool isSmallScreen) {
-    final provider = acceptedQuote['provider'] ?? {};
-    final providerName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
-    final ownerName = provider['ownerName'] ?? 'Contractor';
-    final phone = provider['phone']?.toString() ?? '';
-    final rating = (provider['avgRating'] ?? provider['rating'] ?? 5.0) as num;
-    final providerId = acceptedQuote['providerId'];
-    final profileImage = provider['profileImage']?.toString();
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDBEAFE)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: const Color(0xFFDBEAFE),
-            backgroundImage: profileImage != null && profileImage.isNotEmpty
-                ? MemoryImage(base64Decode(profileImage.split(',').last))
-                : null,
-            child: profileImage == null || profileImage.isEmpty
-                ? Text(
-                    providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        providerName,
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 3),
-                    const Icon(Icons.verified_rounded, color: Color(0xFF2563EB), size: 13),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Owner: $ownerName ${phone.isNotEmpty ? '• 📞 $phone' : ''} • ⭐ ${rating.toStringAsFixed(1)}',
-                  style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (providerId != null)
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => context.push('/provider-profile/$providerId'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: const Text('Profile', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatDetailScreen(
-                          partnerId: providerId,
-                          partnerName: providerName,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1D4ED8),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.chat_bubble_outline_rounded, size: 14, color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
         ],
       ),
     );

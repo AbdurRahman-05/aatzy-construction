@@ -74,6 +74,8 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
     },
   ];
 
+  static const int _itemsPerPage = 5;
+
   @override
   void initState() {
     super.initState();
@@ -180,7 +182,15 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
         backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF1E293B), size: 28),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/services');
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -245,6 +255,14 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
       return name.contains(q) || cat.contains(q) || address.contains(q) || bio.contains(q);
     }).toList();
 
+    final totalPages = (filteredProviders.length / _itemsPerPage).ceil();
+    final safeCurrentPage = totalPages > 0 ? _currentPage.clamp(1, totalPages) : 1;
+    final startIndex = (safeCurrentPage - 1) * _itemsPerPage;
+    final endIndex = (startIndex + _itemsPerPage).clamp(0, filteredProviders.length);
+    final displayedProviders = (startIndex < filteredProviders.length)
+        ? filteredProviders.sublist(startIndex, endIndex)
+        : <dynamic>[];
+
     return Column(
       children: [
         // Top Search Bar & Filter Action Button
@@ -269,7 +287,10 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                     ],
                   ),
                   child: TextField(
-                    onChanged: (v) => setState(() => _searchQuery = v),
+                    onChanged: (v) => setState(() {
+                      _searchQuery = v;
+                      _currentPage = 1;
+                    }),
                     style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
                     decoration: InputDecoration(
                       hintText: 'Search contractors, trades, or locations...',
@@ -278,7 +299,10 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.clear_rounded, size: 16, color: Color(0xFF94A3B8)),
-                              onPressed: () => setState(() => _searchQuery = ''),
+                              onPressed: () => setState(() {
+                                _searchQuery = '';
+                                _currentPage = 1;
+                              }),
                             )
                           : null,
                       border: InputBorder.none,
@@ -338,6 +362,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                   onTap: () {
                     setState(() {
                       _activeCategoryFilter = name;
+                      _currentPage = 1;
                     });
                     _fetchProviders();
                   },
@@ -410,6 +435,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                               setState(() {
                                 _activeCategoryFilter = 'All';
                                 _searchQuery = '';
+                                _currentPage = 1;
                               });
                               _fetchProviders();
                             },
@@ -427,15 +453,15 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                 )
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-                  itemCount: filteredProviders.length + 1,
+                  itemCount: displayedProviders.length + (totalPages > 1 ? 1 : 0),
                   itemBuilder: (context, index) {
                     // Pagination Bar as the last item in the list
-                    if (index == filteredProviders.length) {
-                      return _buildPaginationBar();
+                    if (index == displayedProviders.length) {
+                      return _buildPaginationBar(totalPages);
                     }
 
-                    final provider = filteredProviders[index];
-                    return _buildProviderCard(provider, index);
+                    final provider = displayedProviders[index];
+                    return _buildProviderCard(provider, startIndex + index);
                   },
                 ),
         ),
@@ -903,16 +929,39 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
     );
   }
 
-  // Bottom Pagination Controls Matching Reference
-  Widget _buildPaginationBar() {
+  // Dynamic Bottom Pagination Controls
+  Widget _buildPaginationBar(int totalPages) {
+    if (totalPages <= 1) return const SizedBox.shrink();
+
+    // Generate dynamic page list matching total available pages
+    final List<dynamic> pageItems = [];
+    if (totalPages <= 5) {
+      for (int i = 1; i <= totalPages; i++) {
+        pageItems.add(i);
+      }
+    } else {
+      if (_currentPage <= 3) {
+        pageItems.addAll([1, 2, 3, '...', totalPages]);
+      } else if (_currentPage >= totalPages - 2) {
+        pageItems.addAll([1, '...', totalPages - 2, totalPages - 1, totalPages]);
+      } else {
+        pageItems.addAll([1, '...', _currentPage - 1, _currentPage, _currentPage + 1, '...', totalPages]);
+      }
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Left Chevron Box
           _buildPageBox(
-            child: const Icon(Icons.chevron_left_rounded, size: 16, color: Color(0xFF64748B)),
+            child: Icon(
+              Icons.chevron_left_rounded,
+              size: 18,
+              color: _currentPage > 1 ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+            ),
+            isEnabled: _currentPage > 1,
             onTap: () {
               if (_currentPage > 1) {
                 setState(() => _currentPage--);
@@ -921,62 +970,45 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
           ),
           const SizedBox(width: 6),
 
-          // Active Page 1
-          _buildPageBox(
-            child: const Text(
-              '1',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
-            ),
-            isSelected: _currentPage == 1,
-            onTap: () => setState(() => _currentPage = 1),
-          ),
-          const SizedBox(width: 6),
+          // Dynamic Page Numbers
+          ...pageItems.map((item) {
+            if (item is int) {
+              final isSelected = _currentPage == item;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: _buildPageBox(
+                  child: Text(
+                    '$item',
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontSize: 12.5,
+                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                    ),
+                  ),
+                  isSelected: isSelected,
+                  onTap: () => setState(() => _currentPage = item),
+                ),
+              );
+            } else {
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Text('...', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
+              );
+            }
+          }),
 
-          // Page 2
-          _buildPageBox(
-            child: const Text(
-              '2',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF475569)),
-            ),
-            isSelected: _currentPage == 2,
-            onTap: () => setState(() => _currentPage = 2),
-          ),
-          const SizedBox(width: 6),
-
-          // Page 3
-          _buildPageBox(
-            child: const Text(
-              '3',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF475569)),
-            ),
-            isSelected: _currentPage == 3,
-            onTap: () => setState(() => _currentPage = 3),
-          ),
-          const SizedBox(width: 6),
-
-          // Ellipsis
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Text('...', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(width: 6),
-
-          // Page 10
-          _buildPageBox(
-            child: const Text(
-              '10',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF475569)),
-            ),
-            isSelected: _currentPage == 10,
-            onTap: () => setState(() => _currentPage = 10),
-          ),
           const SizedBox(width: 6),
 
           // Right Chevron Box
           _buildPageBox(
-            child: const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF64748B)),
+            child: Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: _currentPage < totalPages ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+            ),
+            isEnabled: _currentPage < totalPages,
             onTap: () {
-              if (_currentPage < 10) {
+              if (_currentPage < totalPages) {
                 setState(() => _currentPage++);
               }
             },
@@ -986,34 +1018,45 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
     );
   }
 
-  Widget _buildPageBox({required Widget child, bool isSelected = false, required VoidCallback onTap}) {
+  Widget _buildPageBox({
+    required Widget child,
+    bool isSelected = false,
+    bool isEnabled = true,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      onTap: isEnabled ? onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: 32,
-        height: 32,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6366F1) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected
+              ? const Color(0xFF6366F1)
+              : (isEnabled ? Colors.white : const Color(0xFFF8FAFC)),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? const Color(0xFF6366F1)
+                : (isEnabled ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9)),
+            width: 1.2,
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              )
-            else
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
-              ),
-          ],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
         ),
         child: Center(child: child),
       ),
