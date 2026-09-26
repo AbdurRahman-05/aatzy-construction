@@ -60,14 +60,14 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      // Register new user (Consumer)
+      // Register new user (Consumer) - directly active and approved
       user = await prisma.user.create({
         data: {
           email,
           name: name || email.split('@')[0],
           password: `google_oauth_placeholder_${Math.random().toString(36).substring(7)}`,
           role: 'CONSUMER',
-          isApproved: false,
+          isApproved: true,
         },
       });
 
@@ -80,8 +80,8 @@ export async function POST(request: Request) {
 
     if (!user.isApproved) {
       return NextResponse.json({ 
-        error: 'Approval Pending', 
-        message: 'Your account is currently under review by an admin. Please wait for approval before logging in.'
+        error: 'Account Deactivated', 
+        message: 'Your account has been deactivated by an admin. Please contact support.'
       }, { status: 403 });
     }
 

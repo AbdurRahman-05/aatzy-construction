@@ -21,8 +21,8 @@ export async function POST(request: Request) {
 
     if (!user.isApproved) {
       return NextResponse.json({ 
-        error: 'Approval Pending', 
-        message: 'Your account is currently under review by an admin. Please wait for approval before logging in.'
+        error: 'Account Deactivated', 
+        message: 'Your account has been deactivated by an admin. Please contact support.'
       }, { status: 403 });
     }
 

@@ -299,7 +299,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else if (response.statusCode == 403) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Approval Pending: ${data['message']}')),
+          SnackBar(content: Text(data['message'] ?? data['error'] ?? 'Your account is deactivated.')),
         );
       } else {
         if (!mounted) return;

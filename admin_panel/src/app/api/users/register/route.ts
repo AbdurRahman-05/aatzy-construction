@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
 
-    // Default to false (Admin approval required)
+    // Consumers are active and approved immediately upon registration
     const user = await prisma.user.create({
       data: {
         name,
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
         password, // In a real app, hash the password using bcrypt
         phone,
         role: role || 'CONSUMER',
-        isApproved: false, 
+        isApproved: true, 
       },
     });
 
@@ -44,8 +44,14 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ 
-      message: 'Registration successful! Please wait for admin approval.',
-      user: { id: user.id, email: user.email, isApproved: user.isApproved }
+      message: 'Registration successful!',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isApproved: user.isApproved,
+      }
     }, { status: 201 });
     
   } catch (error) {
