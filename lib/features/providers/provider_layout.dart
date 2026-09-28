@@ -9,13 +9,45 @@ import '../home/profile_screen.dart';
 import '../../core/wallpaper_background.dart';
 
 class ProviderTabNotifier extends Notifier<int> {
+  final List<int> _history = [0];
+
   @override
   int build() {
+    _history.clear();
+    _history.add(0);
     return 0;
+  }
+
+  @override
+  set state(int value) {
+    if (super.state != value) {
+      if (value == 0) {
+        _history.clear();
+        _history.add(0);
+      } else {
+        _history.remove(value);
+        _history.add(value);
+      }
+      super.state = value;
+    }
   }
 
   void setTab(int idx) {
     state = idx;
+  }
+
+  bool handleBack() {
+    if (_history.length > 1) {
+      _history.removeLast();
+      super.state = _history.last;
+      return true;
+    } else if (super.state != 0) {
+      super.state = 0;
+      _history.clear();
+      _history.add(0);
+      return true;
+    }
+    return false;
   }
 }
 
@@ -37,13 +69,19 @@ class ProviderLayout extends ConsumerWidget {
       ProfileScreen(),
     ];
 
-    return WallpaperBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: IndexedStack(
-          index: currentIndex,
-          children: screens,
-        ),
+    return PopScope(
+      canPop: currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        ref.read(providerTabProvider.notifier).handleBack();
+      },
+      child: WallpaperBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: IndexedStack(
+            index: currentIndex,
+            children: screens,
+          ),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -154,8 +192,9 @@ class ProviderLayout extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavItem(
     BuildContext context,

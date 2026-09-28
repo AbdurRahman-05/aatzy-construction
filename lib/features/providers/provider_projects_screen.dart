@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/utils/project_progress_helper.dart';
 import '../auth/auth_provider.dart';
 
 class ProviderProjectsScreen extends ConsumerStatefulWidget {
@@ -81,10 +82,6 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
     final location = project['location'] ?? 'N/A';
     final projectId = project['id']?.toString() ?? '';
     final clientName = project['user']?['name'] ?? 'Client';
-    
-    final tasks = project['tasks'] as List? ?? [];
-    final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
-    final totalCount = tasks.length;
 
     final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
@@ -95,22 +92,8 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
     final Color cardColor = isCancelled ? const Color(0xFFEF4444) : (isCompleted ? const Color(0xFF10B981) : colors[colorIndex]);
     final IconData icon = [Icons.business_center_rounded, Icons.apartment_rounded, Icons.construction_rounded][colorIndex];
 
-    double progress = 0.0;
-    if (totalCount > 0) {
-      progress = completedCount / totalCount;
-    } else {
-      if (currentStage == 'Design & Planning') {
-        progress = 0.15;
-      } else if (currentStage == 'Tracking' || currentStage == 'Execution') {
-        progress = 0.5;
-      } else if (currentStage == 'Finished Pending Approval') {
-        progress = 0.9;
-      } else if (currentStage == 'Completed' || currentStage == 'Finished') {
-        progress = 1.0;
-      } else {
-        progress = 0.25;
-      }
-    }
+    final progressResult = ProjectProgressHelper.calculateFromProject(project);
+    final double progress = progressResult.progressValue;
 
     String dateStr = 'Active';
     if (isCompleted || isCancelled || isPendingApproval) {
@@ -169,7 +152,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
-                        '${(progress * 100).toInt()}%',
+                        '${(progress * 100).round()}%',
                         style: TextStyle(color: Colors.white, fontSize: isSmallScreen ? 16 : 18, fontWeight: FontWeight.w900),
                       ),
                     ),
@@ -641,54 +624,30 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                         ),
                         const SizedBox(height: 12),
 
-                        // Search and Filter Bar
+                        // Search Bar
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 42,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey.shade200),
-                                  ),
-                                  child: TextField(
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _searchQuery = val;
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: isSmallScreen ? 'Search jobs...' : 'Search jobs by title, client, or site...',
-                                      hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13),
-                                      prefixIcon: const Icon(Icons.search, size: 18),
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    ),
-                                  ),
-                                ),
+                          child: Container(
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: TextField(
+                              onChanged: (val) {
+                                setState(() {
+                                  _searchQuery = val;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: isSmallScreen ? 'Search jobs...' : 'Search jobs by title, client, or site...',
+                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13),
+                                prefixIcon: const Icon(Icons.search, size: 18),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                height: 42,
-                                padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 10 : 14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFCCFBF1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.filter_list, size: 16, color: Color(0xFF0F766E)),
-                                    if (!isSmallScreen) ...[
-                                      const SizedBox(width: 6),
-                                      const Text('Filter', style: TextStyle(color: Color(0xFF0F766E), fontWeight: FontWeight.bold, fontSize: 13)),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),

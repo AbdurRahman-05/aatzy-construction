@@ -10,6 +10,7 @@ import '../auth/auth_provider.dart';
 import '../providers/provider_profile_screen.dart';
 import 'main_layout.dart';
 import 'widgets/user_tutorial_dialog.dart';
+import '../../core/utils/project_progress_helper.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -1591,8 +1592,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final Color cardColor = isCancelled ? Colors.red : (isCompleted ? colors[colorIndex] : Colors.green);
     final IconData icon = [Icons.home_rounded, Icons.business_rounded, Icons.storefront_rounded][colorIndex];
 
-    final progressText = isCompleted ? '100% Done' : (isCancelled ? '15% Done' : '50% Done');
-    final progressValue = isCompleted ? 1.0 : (isCancelled ? 0.15 : 0.5);
+    final progressResult = ProjectProgressHelper.calculateFromProject(project);
+    final progressText = progressResult.progressText;
+    final progressValue = progressResult.progressValue;
 
     return GestureDetector(
       onTap: () => context.push('/project-detail/${project['id']}'),

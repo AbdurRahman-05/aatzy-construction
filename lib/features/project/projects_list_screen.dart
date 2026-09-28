@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/wallpaper_background.dart';
 import '../../core/providers/projects_provider.dart';
+import '../../core/utils/project_progress_helper.dart';
 import '../auth/auth_provider.dart';
 
 class ProjectsListScreen extends ConsumerStatefulWidget {
@@ -58,11 +59,6 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     final budget = project['budget']?.toString() ?? '10,000';
     final location = project['location'] ?? 'N/A';
     final projectId = project['id']?.toString() ?? '';
-    final quoteCount = project['_count']?['quotes'] as int? ?? 0;
-    
-    final tasks = project['tasks'] as List? ?? [];
-    final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
-    final totalCount = tasks.length;
 
     final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
@@ -72,22 +68,8 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     final Color cardColor = isCancelled ? const Color(0xFFEF4444) : (isCompleted ? colors[colorIndex] : const Color(0xFF10B981));
     final IconData icon = [Icons.home_rounded, Icons.business_rounded, Icons.storefront_rounded][colorIndex];
 
-    double progress = 0.0;
-    if (totalCount > 0) {
-      progress = completedCount / totalCount;
-    } else {
-      if (currentStage == 'Design & Planning') {
-        progress = quoteCount > 0 ? 0.25 : 0.05;
-      } else if (currentStage == 'Tracking' || currentStage == 'Execution') {
-        progress = 0.5;
-      } else if (currentStage == 'Finished Pending Approval') {
-        progress = 0.9;
-      } else if (currentStage == 'Completed' || currentStage == 'Finished') {
-        progress = 1.0;
-      } else {
-        progress = 0.15;
-      }
-    }
+    final progressResult = ProjectProgressHelper.calculateFromProject(project);
+    final double progress = progressResult.progressValue;
 
     String dateStr = 'Upcoming';
     if (isCompleted || isCancelled) {
@@ -145,7 +127,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      '${(progress * 100).toInt()}%',
+                      '${(progress * 100).round()}%',
                       style: TextStyle(color: Colors.white, fontSize: isSmallScreen ? 18 : 20, fontWeight: FontWeight.w900),
                     ),
                   ),
@@ -565,54 +547,30 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         ),
                         const SizedBox(height: 12),
 
-                        // Search and Filter Bar
+                        // Search Bar
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 42,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.grey.shade200),
-                                  ),
-                                  child: TextField(
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _searchQuery = val;
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: isSmallScreen ? 'Search projects...' : 'Search projects by title or location...',
-                                      hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13),
-                                      prefixIcon: const Icon(Icons.search, size: 18),
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    ),
-                                  ),
-                                ),
+                          child: Container(
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: TextField(
+                              onChanged: (val) {
+                                setState(() {
+                                  _searchQuery = val;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: isSmallScreen ? 'Search projects...' : 'Search projects by title or location...',
+                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13),
+                                prefixIcon: const Icon(Icons.search, size: 18),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                height: 42,
-                                padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 10 : 14),
-                                decoration: BoxDecoration(
-                                  color: Colors.indigo.shade50,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.filter_list, size: 16, color: Colors.indigo.shade900),
-                                    if (!isSmallScreen) ...[
-                                      const SizedBox(width: 6),
-                                      Text('Filter', style: TextStyle(color: Colors.indigo.shade900, fontWeight: FontWeight.bold, fontSize: 13)),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),

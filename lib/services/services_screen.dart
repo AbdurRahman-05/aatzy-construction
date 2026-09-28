@@ -124,16 +124,6 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   padding: EdgeInsets.fromLTRB(horizontalPadding, 10, horizontalPadding, 8),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: const Icon(Icons.menu_rounded, size: 20, color: Color(0xFF1E293B)),
-                      ),
-                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,31 +188,6 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                 ),
                             ],
                           ),
-                        )
-                      else
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                              ),
-                              child: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF1E293B)),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                              ),
-                              child: const Icon(Icons.tune_rounded, size: 18, color: Color(0xFF1E293B)),
-                            ),
-                          ],
                         ),
                     ],
                   ),

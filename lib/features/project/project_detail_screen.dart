@@ -7,6 +7,7 @@ import 'package:confetti/confetti.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants.dart';
 import '../../core/full_screen_image_viewer.dart';
+import '../../core/utils/project_progress_helper.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -448,23 +449,13 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     }
     final double remainingBudget = budget - totalQuotedTasks;
 
-    final completedCount = tasksList.where((t) => t['status'] == 'Completed').length;
-    final totalCount = tasksList.length;
-
-    double progressValue = 0.40;
-    if (totalCount > 0) {
-      progressValue = completedCount / totalCount;
-    } else {
-      if (currentStage == 'Design & Planning') {
-        progressValue = 0.40;
-      } else if (currentStage == 'Execution' || currentStage == 'Tracking') {
-        progressValue = 0.65;
-      } else if (isCompleted) {
-        progressValue = 1.0;
-      } else if (isCancelled) {
-        progressValue = 0.40;
-      }
-    }
+    final progressResult = ProjectProgressHelper.calculate(
+      stage: currentStage,
+      tasks: tasksList,
+      quotesCount: quotesList.length,
+      hasAcceptedQuote: acceptedQuote != null,
+    );
+    final double progressValue = progressResult.progressValue;
 
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
@@ -985,8 +976,18 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     required List<dynamic> updates,
     Map<String, dynamic>? acceptedQuote,
   }) {
-    final int percentInt = (progressValue * 100).toInt();
+    final int percentInt = (progressValue * 100).round();
     final gaugeSize = isSmallScreen ? 66.0 : 76.0;
+
+    final stageLower = currentStage.toLowerCase().trim();
+    final bool isPlanningOnly = stageLower == 'planning';
+    final bool isDesignOrHigher = !isPlanningOnly && !isCancelled;
+    final bool isExecutionOrHigher = stageLower.contains('execut') ||
+        stageLower.contains('track') ||
+        stageLower == 'on hold' ||
+        stageLower.contains('pending approval') ||
+        isCompleted;
+    final bool isHandoverOrHigher = stageLower.contains('pending approval') || isCompleted;
 
     final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
     final totalCount = tasks.length;
@@ -1125,12 +1126,12 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                     Row(
                       children: [
                         _buildStepItem('Planning', Icons.calendar_today_rounded, true, isSmallScreen),
-                        _buildStepConnector(true),
-                        _buildStepItem('Design', Icons.edit_note_rounded, true, isSmallScreen),
-                        _buildStepConnector(currentStage.toLowerCase().contains('execut') || currentStage.toLowerCase().contains('track') || isCompleted),
-                        _buildStepItem('Execution', Icons.engineering_rounded, currentStage.toLowerCase().contains('execut') || currentStage.toLowerCase().contains('track') || isCompleted, isSmallScreen),
-                        _buildStepConnector(isCompleted),
-                        _buildStepItem('Handover', Icons.vpn_key_rounded, isCompleted, isSmallScreen),
+                        _buildStepConnector(isDesignOrHigher),
+                        _buildStepItem('Design', Icons.edit_note_rounded, isDesignOrHigher, isSmallScreen),
+                        _buildStepConnector(isExecutionOrHigher),
+                        _buildStepItem('Execution', Icons.engineering_rounded, isExecutionOrHigher, isSmallScreen),
+                        _buildStepConnector(isHandoverOrHigher),
+                        _buildStepItem('Handover', Icons.vpn_key_rounded, isHandoverOrHigher, isSmallScreen),
                       ],
                     ),
                   ],
@@ -2320,7 +2321,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 onSelected: (val) => setState(() => _costViewMode = val),
                 itemBuilder: (context) => const [
                   PopupMenuItem(value: 'Summary', child: Text('Summary', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold))),
-                  PopupMenuItem(value: 'Detailed', child: Text('Detailed', style: TextStyle(fontSize: 13))),
                 ],
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

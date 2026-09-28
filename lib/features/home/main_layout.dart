@@ -9,11 +9,44 @@ import '../project/projects_list_screen.dart';
 import '../../core/wallpaper_background.dart';
 
 class MainTabNotifier extends Notifier<int> {
-  @override
-  int build() => 0;
+  final List<int> _history = [0];
 
   @override
-  set state(int value) => super.state = value;
+  int build() {
+    _history.clear();
+    _history.add(0);
+    return 0;
+  }
+
+  @override
+  set state(int value) {
+    if (super.state != value) {
+      if (value == 0) {
+        _history.clear();
+        _history.add(0);
+      } else {
+        _history.remove(value);
+        _history.add(value);
+      }
+      super.state = value;
+    }
+  }
+
+  void setTab(int index) => state = index;
+
+  bool handleBack() {
+    if (_history.length > 1) {
+      _history.removeLast();
+      super.state = _history.last;
+      return true;
+    } else if (super.state != 0) {
+      super.state = 0;
+      _history.clear();
+      _history.add(0);
+      return true;
+    }
+    return false;
+  }
 }
 
 final mainTabProvider = NotifierProvider<MainTabNotifier, int>(MainTabNotifier.new);
@@ -37,13 +70,19 @@ class MainLayout extends ConsumerWidget {
     final currentIndex = ref.watch(mainTabProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return WallpaperBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: IndexedStack(
-          index: currentIndex,
-          children: screens,
-        ),
+    return PopScope(
+      canPop: currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        ref.read(mainTabProvider.notifier).handleBack();
+      },
+      child: WallpaperBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: IndexedStack(
+            index: currentIndex,
+            children: screens,
+          ),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -140,8 +179,9 @@ class MainLayout extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavItem(
     BuildContext context,

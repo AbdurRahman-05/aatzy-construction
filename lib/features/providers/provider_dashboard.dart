@@ -156,12 +156,8 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
       appBar: _isLoading ? null : AppBar(
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Color(0xFF0F172A), size: 24),
-          onPressed: () {},
-        ),
-        titleSpacing: 0,
+        automaticallyImplyLeading: false,
+        titleSpacing: 16,
         title: Row(
           children: [
             Container(

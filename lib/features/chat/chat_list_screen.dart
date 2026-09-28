@@ -65,39 +65,26 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Messages',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : const Color(0xFF1E1E2D),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'You have ${_conversations.length} active chats',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isDark ? Colors.white70 : Colors.grey.shade600,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.indigo.shade50,
-                        shape: BoxShape.circle,
+                    Text(
+                      'Messages',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : const Color(0xFF1E1E2D),
+                        letterSpacing: -0.5,
                       ),
-                      child: Icon(Icons.edit_square, color: Colors.indigo.shade700, size: 20),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'You have ${_conversations.length} active chats',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.white70 : Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),

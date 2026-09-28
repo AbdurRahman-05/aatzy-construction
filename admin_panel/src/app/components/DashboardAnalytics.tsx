@@ -268,18 +268,23 @@ export default function DashboardAnalytics({ projects, acceptedQuotes, providers
                     const isQuoteAccepted = !!acceptedQuote;
                     const costVal = isQuoteAccepted ? acceptedQuote.estimatedCost : project.budget;
 
-                    // Progress calculations
+                    // Progress calculations based on live stages
                     const totalCount = project.tasks.length;
                     const completedCount = project.tasks.filter(t => t.status === 'Completed').length;
-                    let progress = 0.0;
-                    if (totalCount > 0) {
-                      progress = completedCount / totalCount;
-                    } else {
-                      if (project.currentStage === 'Design & Planning') {
-                        progress = project.quotes.length > 0 ? 0.25 : 0.05;
-                      } else {
-                        progress = 0.5;
-                      }
+                    const stage = (project.currentStage || 'Planning').toLowerCase();
+                    let progress = 0.25;
+                    if (stage === 'completed' || stage === 'finished') {
+                      progress = 1.0;
+                    } else if (stage.includes('pending approval')) {
+                      progress = 0.95;
+                    } else if (stage.includes('track') || stage.includes('execut') || stage === 'on hold') {
+                      progress = totalCount > 0 ? 0.50 + 0.40 * (completedCount / totalCount) : 0.50;
+                    } else if (stage.includes('design')) {
+                      progress = totalCount > 0 ? 0.25 + 0.20 * (completedCount / totalCount) : (project.quotes.length > 0 ? 0.35 : 0.25);
+                    } else if (stage === 'planning') {
+                      progress = 0.15;
+                    } else if (stage === 'cancelled') {
+                      progress = 0.15;
                     }
 
                     return (
