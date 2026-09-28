@@ -129,7 +129,7 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
       } catch (e) {
         debugPrint('Error fetching db notifications: $e');
       }
-      if (auth.role == 'provider') {
+      if (auth.role?.toUpperCase() == 'PROVIDER') {
         // Provider Side Notifications
         final statsRes = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats'));
         if (statsRes.statusCode == 200) {

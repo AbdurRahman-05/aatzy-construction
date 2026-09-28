@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/push_notification_service.dart';
 
 class AuthState {
   final String? id;
@@ -69,6 +70,7 @@ class AuthNotifier extends Notifier<AuthState> {
           gstNumber: gstNumber,
           isInitialized: true,
         );
+        PushNotificationService().syncFCMToken(userId: id, role: role);
       } else {
         state = AuthState(isInitialized: true);
       }
@@ -115,6 +117,10 @@ class AuthNotifier extends Notifier<AuthState> {
       }
     } catch (e) {
       debugPrint('Error persisting auth: $e');
+    }
+
+    if (newState.id != null && newState.role != null) {
+      PushNotificationService().syncFCMToken(userId: newState.id, role: newState.role);
     }
   }
 

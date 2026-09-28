@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "542404651419",
+    "project_id": "buildzy-construction",
+    "storage_bucket": "buildzy-construction.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:542404651419:android:326af503d63bc76c91d93e",
+        "android_client_info": {
+          "package_name": "com.constructionapp.construction_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByjfMkBQLhsxa7Bcsay1Ahawsp1n6KMCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

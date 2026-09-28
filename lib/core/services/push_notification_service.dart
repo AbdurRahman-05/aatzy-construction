@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants.dart';
 import '../router.dart';
 
 class PushNotificationService {
@@ -18,7 +23,7 @@ class PushNotificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    // 1. Android & iOS Initialization Settings
+    // 1. Android & iOS Local Notifications Initialization Settings
     const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -78,16 +83,134 @@ class PushNotificationService {
       await androidImpl.createNotificationChannel(generalChannel);
     }
 
+    // 3. Setup Firebase Cloud Messaging (FCM) on native devices
+    if (!kIsWeb) {
+      try {
+        final messaging = FirebaseMessaging.instance;
+
+        // Request FCM Push permissions
+        final settings = await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+        debugPrint('[FCM] Permission status: ${settings.authorizationStatus}');
+
+        // Foreground notification options for iOS
+        await messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
+        // Listen for foreground FCM messages and display them as native alerts
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          debugPrint('[FCM] Foreground notification received: ${message.notification?.title}');
+          final notification = message.notification;
+          if (notification != null) {
+            showNotification(
+              id: message.hashCode,
+              title: notification.title ?? 'Buildzy Alert',
+              body: notification.body ?? '',
+              payload: message.data['route'] ?? '/notifications',
+              channelId: message.data['channelId'] ?? 'buildzy_leads_v2',
+            );
+          }
+        });
+
+        // Listen for notification taps when the app was in the background
+        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+          debugPrint('[FCM] App opened via notification: ${message.data}');
+          _handleMessageRoute(message.data['route']);
+        });
+
+        // Check if the app was launched by tapping a notification from a terminated/killed state
+        final initialMessage = await messaging.getInitialMessage();
+        if (initialMessage != null) {
+          debugPrint('[FCM] Cold-start from notification: ${initialMessage.data}');
+          Future.delayed(const Duration(milliseconds: 800), () {
+            _handleMessageRoute(initialMessage.data['route']);
+          });
+        }
+
+        // Listen for FCM token refresh
+        messaging.onTokenRefresh.listen((newToken) {
+          debugPrint('[FCM] Device token refreshed: $newToken');
+          _sendTokenToBackend(newToken);
+        });
+
+        // Sync token immediately if user is already logged in
+        syncFCMToken();
+      } catch (e) {
+        debugPrint('[FCM] Setup error in PushNotificationService: $e');
+      }
+    }
+
     _isInitialized = true;
   }
 
-  void _onNotificationTap(NotificationResponse response) {
-    final payload = response.payload;
-    if (payload != null && payload.isNotEmpty) {
+  void _handleMessageRoute(dynamic route) {
+    if (route != null && route is String && route.isNotEmpty) {
       final context = rootNavigatorKey.currentContext;
       if (context != null) {
-        context.push(payload);
+        context.push(route);
       }
+    }
+  }
+
+  void _onNotificationTap(NotificationResponse response) {
+    _handleMessageRoute(response.payload);
+  }
+
+  /// Retrieves the current FCM token and registers it with the Neon PostgreSQL backend
+  Future<void> syncFCMToken({String? userId, String? role}) async {
+    if (kIsWeb) return;
+
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('fcm_device_token', token);
+      debugPrint('[FCM] Device Token: $token');
+
+      final targetId = userId ?? prefs.getString('auth_id');
+      final targetRole = role ?? prefs.getString('auth_role');
+
+      if (targetId != null && targetRole != null) {
+        await _sendTokenToBackend(token, userId: targetId, role: targetRole);
+      }
+    } catch (e) {
+      debugPrint('[FCM] Error fetching/syncing FCM token: $e');
+    }
+  }
+
+  Future<void> _sendTokenToBackend(String token, {String? userId, String? role}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final targetId = userId ?? prefs.getString('auth_id');
+      final targetRole = role ?? prefs.getString('auth_role');
+
+      if (targetId == null || targetRole == null) return;
+
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/users/fcm-token'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'id': targetId,
+          'role': targetRole,
+          'fcmToken': token,
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        debugPrint('[FCM] Device token registered with backend for $targetRole ($targetId)');
+      } else {
+        debugPrint('[FCM] Failed to register token with backend: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('[FCM] Error registering token with backend: $e');
     }
   }
 
@@ -164,7 +287,7 @@ class PushNotificationService {
       title: '🏗️ Buildzy Push Notification Working!',
       body: 'You are now set up to receive instant alerts for quotes, client leads, and material orders.',
       payload: '/notifications',
-      channelId: 'buildzy_leads',
+      channelId: 'buildzy_leads_v2',
       channelName: 'Leads & Proposals',
     );
   }

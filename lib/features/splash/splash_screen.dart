@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../auth/auth_provider.dart';
 import '../../core/providers/app_prefetch.dart';
 import '../../core/services/location_service.dart';
+import '../../core/services/push_notification_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -138,6 +139,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     if (auth.id != null) {
       LocationService().detectAndSaveLocation();
+      PushNotificationService().syncFCMToken(userId: auth.id, role: auth.role);
       if (auth.role == 'PROVIDER') {
         context.go('/provider-home');
       } else {

@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import { sendFCMNotification, sendMulticastFCM } from '@/lib/fcm';
 
 export function locationsMatch(projLoc: string, provAddr: string | null): boolean {
   if (!provAddr) return true; // If provider hasn't set location, include by default
@@ -34,7 +35,7 @@ export interface CreateNotificationParams {
 
 export async function createNotification(params: CreateNotificationParams) {
   try {
-    return await prisma.notification.create({
+    const record = await prisma.notification.create({
       data: {
         recipientId: params.recipientId,
         role: params.role,
@@ -45,6 +46,39 @@ export async function createNotification(params: CreateNotificationParams) {
         route: params.route,
       },
     });
+
+    // Send instant FCM push notification to phone if recipient has device fcmToken
+    (async () => {
+      try {
+        let fcmToken: string | null = null;
+        if (params.role === 'PROVIDER') {
+          const prov = await prisma.provider.findUnique({
+            where: { id: params.recipientId },
+            select: { fcmToken: true },
+          });
+          fcmToken = prov?.fcmToken ?? null;
+        } else {
+          const usr = await prisma.user.findUnique({
+            where: { id: params.recipientId },
+            select: { fcmToken: true },
+          });
+          fcmToken = usr?.fcmToken ?? null;
+        }
+
+        if (fcmToken) {
+          await sendFCMNotification({
+            token: fcmToken,
+            title: params.title,
+            body: params.body,
+            route: params.route,
+          });
+        }
+      } catch (fcmErr) {
+        console.error('FCM device push error:', fcmErr);
+      }
+    })();
+
+    return record;
   } catch (error) {
     console.error('Failed to create notification:', error);
     return null;
@@ -73,6 +107,7 @@ export async function notifyCityProvidersForNewProject(project: {
         address: true,
         category: true,
         businessName: true,
+        fcmToken: true,
       },
     });
 
@@ -102,24 +137,42 @@ export async function notifyCityProvidersForNewProject(project: {
       return;
     }
 
-    // Batch create notifications for all matching providers in the city
+    const title = `🏗️ New Project in ${project.location}: ${project.title}`;
+    const body = `Client is looking for ${project.type} in ${project.location} (Budget: ₹${project.budget.toLocaleString()}). Tap to submit a quote.`;
+    const route = `/provider-lead/${project.id}`;
+
+    // 1. Batch create database notifications
     await prisma.$transaction(
       matchingProviders.map(provider =>
         prisma.notification.create({
           data: {
             recipientId: provider.id,
             role: 'PROVIDER',
-            title: `🏗️ New Project in ${project.location}: ${project.title}`,
-            body: `Client is looking for ${project.type} in ${project.location} (Budget: ₹${project.budget.toLocaleString()}). Tap to submit a quote.`,
+            title,
+            body,
             type: 'NEW_LEAD',
             entityId: project.id,
-            route: `/provider-lead/${project.id}`,
+            route,
           },
         })
       )
     );
 
-    console.log(`Successfully notified ${matchingProviders.length} providers in ${project.location} for project "${project.title}"`);
+    // 2. Send Multicast FCM Push Notifications to all matching providers' devices
+    const fcmTokens = matchingProviders
+      .map(p => p.fcmToken)
+      .filter((t): t is string => !!t && t.trim().length > 0);
+
+    if (fcmTokens.length > 0) {
+      await sendMulticastFCM({
+        tokens: fcmTokens,
+        title,
+        body,
+        route,
+      });
+    }
+
+    console.log(`Successfully notified ${matchingProviders.length} providers in ${project.location} (${fcmTokens.length} closed-phone push notifications dispatched)`);
   } catch (error) {
     console.error('Error notifying city providers for new project:', error);
   }
