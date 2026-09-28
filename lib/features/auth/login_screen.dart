@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../core/google_sign_in_helper.dart';
+import '../../core/services/location_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   final String? initialRole;
@@ -118,6 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (isProvider) {
           if (data['exists'] == true) {
             ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+            LocationService().detectAndSaveLocation();
             context.go('/provider-home');
           } else {
             // New provider sign-up via Google: navigate to stepper
@@ -129,6 +131,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         } else {
           ref.read(authProvider.notifier).login(data['user'], 'CONSUMER');
+          LocationService().detectAndSaveLocation();
           context.go('/');
         }
       } else {
@@ -230,9 +233,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               navigator.pop(); // Close dialog
                               if (isProviderLogin) {
                                 ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+                                LocationService().detectAndSaveLocation();
                                 goRouter.go('/provider-home');
                               } else {
                                 ref.read(authProvider.notifier).login(data['user'], 'CONSUMER');
+                                LocationService().detectAndSaveLocation();
                                 goRouter.go('/');
                               }
                             } else {
@@ -295,6 +300,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
         if (!mounted) return;
         ref.read(authProvider.notifier).login(data['user'], 'CONSUMER');
+        LocationService().detectAndSaveLocation();
         context.go('/');
       } else if (response.statusCode == 403) {
         if (!mounted) return;
@@ -348,6 +354,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
         if (!mounted) return;
         ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+        LocationService().detectAndSaveLocation();
         context.go('/provider-home');
       } else if (response.statusCode == 403) {
         if (!mounted) return;

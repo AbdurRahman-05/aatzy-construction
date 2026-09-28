@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/services/location_service.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
   const CreateProjectScreen({super.key});
@@ -104,6 +105,18 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     {'name': 'Window Treatments', 'icon': Icons.curtains_rounded, 'color': Color(0xFF9333EA), 'bg': Color(0xFFFAF5FF)},
     {'name': 'Windows & Doors', 'icon': Icons.door_sliding_rounded, 'color': Color(0xFF64748B), 'bg': Color(0xFFF8FAFC)},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    LocationService().getSavedLocation().then((loc) {
+      if (mounted && loc.isNotEmpty) {
+        setState(() {
+          _locationController.text = loc;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {

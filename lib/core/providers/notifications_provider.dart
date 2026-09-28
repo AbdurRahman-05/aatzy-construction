@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import '../constants.dart';
 import '../services/push_notification_service.dart';
 import '../../features/auth/auth_provider.dart';
@@ -43,10 +44,23 @@ class NotificationModel {
 }
 
 class NotificationsNotifier extends Notifier<List<NotificationModel>> {
+  Timer? _pollingTimer;
+
   @override
   List<NotificationModel> build() {
-    // Initial empty, fetch immediately
+    // Initial fetch immediately
     Future.microtask(() => fetchNotifications());
+
+    // Auto-poll notifications every 20s while app is active
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      fetchNotifications();
+    });
+
+    ref.onDispose(() {
+      _pollingTimer?.cancel();
+    });
+
     return [];
   }
 
@@ -57,6 +71,64 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
     List<NotificationModel> list = [];
 
     try {
+      // 1. Fetch persistent database notifications from backend
+      try {
+        final dbNotifRes = await http.get(
+          Uri.parse('$apiBaseUrl/notifications?recipientId=${auth.id}&role=${auth.role ?? ''}'),
+        ).timeout(const Duration(seconds: 5));
+
+        if (dbNotifRes.statusCode == 200) {
+          final dbList = jsonDecode(dbNotifRes.body) as List? ?? [];
+          for (var item in dbList) {
+            final type = item['type'] as String? ?? 'GENERAL';
+            IconData icon = Icons.notifications_active_rounded;
+            Color color = const Color(0xFF0F766E);
+
+            if (type == 'NEW_LEAD') {
+              icon = Icons.apartment_rounded;
+              color = const Color(0xFF0F766E);
+            } else if (type == 'QUOTE_ACCEPTED') {
+              icon = Icons.handshake_rounded;
+              color = const Color(0xFF4F46E5);
+            } else if (type == 'TASK_CREATED') {
+              icon = Icons.assignment_outlined;
+              color = const Color(0xFF2563EB);
+            } else if (type == 'TASK_COMPLETED') {
+              icon = Icons.check_circle_rounded;
+              color = const Color(0xFF10B981);
+            } else if (type == 'STAGE_COMPLETED') {
+              icon = Icons.emoji_events_rounded;
+              color = const Color(0xFFF59E0B);
+            }
+
+            final createdAt = DateTime.tryParse(item['createdAt'] ?? '');
+            String timeStr = 'Recent';
+            if (createdAt != null) {
+              final diff = DateTime.now().difference(createdAt);
+              if (diff.inMinutes < 60) {
+                timeStr = '${diff.inMinutes.clamp(1, 59)}m ago';
+              } else if (diff.inHours < 24) {
+                timeStr = '${diff.inHours}h ago';
+              } else {
+                timeStr = '${diff.inDays}d ago';
+              }
+            }
+
+            list.add(NotificationModel(
+              id: item['id'],
+              title: item['title'] ?? 'Notification',
+              body: item['body'] ?? '',
+              time: timeStr,
+              icon: icon,
+              color: color,
+              isUnread: item['isRead'] != true,
+              route: item['route'],
+            ));
+          }
+        }
+      } catch (e) {
+        debugPrint('Error fetching db notifications: $e');
+      }
       if (auth.role == 'provider') {
         // Provider Side Notifications
         final statsRes = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats'));
@@ -234,10 +306,16 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
         ));
       }
 
-      state = list;
+      // Deduplicate by ID
+      final Map<String, NotificationModel> uniqueMap = {};
+      for (final n in list) {
+        uniqueMap[n.id] = n;
+      }
+      final finalList = uniqueMap.values.toList();
+      state = finalList;
 
       // Trigger native push notifications for freshly received unread alerts
-      for (final n in list.where((x) => x.isUnread)) {
+      for (final n in finalList.where((x) => x.isUnread)) {
         PushNotificationService().showNotification(
           id: n.id.hashCode,
           title: n.title,
@@ -254,11 +332,38 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
   }
 
   void markAllAsRead() {
+    final auth = ref.read(authProvider);
     state = state.map((n) => n.copyWith(isUnread: false)).toList();
+    if (auth.id != null) {
+      () async {
+        try {
+          await http.patch(
+            Uri.parse('$apiBaseUrl/notifications'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'recipientId': auth.id, 'all': true}),
+          );
+        } catch (e) {
+          debugPrint('Error marking all notifications read: $e');
+        }
+      }();
+    }
   }
 
   void markAsRead(String id) {
     state = state.map((n) => n.id == id ? n.copyWith(isUnread: false) : n).toList();
+    if (!id.startsWith('lead_') && !id.startsWith('job_') && !id.startsWith('task_') && !id.startsWith('mat_') && !id.startsWith('welcome_') && !id.startsWith('usr_')) {
+      () async {
+        try {
+          await http.patch(
+            Uri.parse('$apiBaseUrl/notifications'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'id': id}),
+          );
+        } catch (e) {
+          debugPrint('Error marking notification read: $e');
+        }
+      }();
+    }
   }
 }
 

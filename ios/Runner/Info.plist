@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Buildzy uses your location to discover nearby construction services, suppliers, and projects in your city.</string>
 </dict>
 </plist>

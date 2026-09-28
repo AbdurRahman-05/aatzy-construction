@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/auth_provider.dart';
 import '../../core/providers/app_prefetch.dart';
+import '../../core/services/location_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -136,6 +137,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _navigationTriggered = true;
 
     if (auth.id != null) {
+      LocationService().detectAndSaveLocation();
       if (auth.role == 'PROVIDER') {
         context.go('/provider-home');
       } else {

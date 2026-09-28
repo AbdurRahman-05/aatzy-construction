@@ -325,8 +325,6 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     required num reviewCount,
     required bool isSmallScreen,
   }) {
-    final auth = ref.read(authProvider);
-
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
@@ -475,50 +473,25 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           ),
           const SizedBox(width: 6),
 
-          // Right: Verified Badge + View Profile Button
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 12),
-                  SizedBox(width: 3),
-                  Text(
-                    'Verified',
-                    style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () {
-                  if (auth.id != null) {
-                    context.push('/provider-profile/${auth.id}');
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF063E46),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Text(
-                        'View Profile',
-                        style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(width: 3),
-                      Icon(Icons.arrow_forward_rounded, size: 10, color: Colors.white),
-                    ],
-                  ),
+          // Right: Verified Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 13),
+                SizedBox(width: 3.5),
+                Text(
+                  'Verified',
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

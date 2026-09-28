@@ -223,3 +223,20 @@ model Ad {
   gradient  String   @default("0xFF064354,0xFF0B7C8E")
   createdAt DateTime @default(now())
 }
+
+model Notification {
+  id          String   @id @default(uuid())
+  recipientId String
+  role        String   // "CONSUMER" | "PROVIDER"
+  title       String
+  body        String
+  type        String   // "NEW_LEAD" | "QUOTE_ACCEPTED" | "TASK_CREATED" | "TASK_COMPLETED" | "STAGE_COMPLETED"
+  entityId    String?
+  route       String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([recipientId, isRead])
+  @@index([createdAt])
+}
+

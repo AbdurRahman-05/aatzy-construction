@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { notifyConsumerTaskCreated, notifyTaskProgressAndMilestones } from '@/lib/notifications';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -41,6 +42,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       },
     });
 
+    // Notify consumer about newly scheduled task
+    notifyConsumerTaskCreated({
+      projectId,
+      taskTitle: newTask.title,
+      stage: newTask.stage,
+      duration: newTask.duration,
+    }).catch(err => console.error('Error notifying task creation:', err));
+
     return NextResponse.json(newTask, { status: 201 });
   } catch (error) {
     console.error('Create project task error:', error);
@@ -50,6 +59,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id: projectId } = await context.params;
     const body = await request.json();
     const {
       taskId,
@@ -82,6 +92,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         quotedCost: quotedCost !== undefined ? (quotedCost === null ? 0.0 : parseFloat(quotedCost)) : undefined,
       },
     });
+
+    // Trigger notification if status changed to 'In Progress' or 'Completed'
+    if (status) {
+      notifyTaskProgressAndMilestones({
+        projectId,
+        taskId: updatedTask.id,
+        taskTitle: updatedTask.title,
+        stage: updatedTask.stage,
+        newStatus: status,
+      }).catch(err => console.error('Error notifying task progress/milestone:', err));
+    }
 
     return NextResponse.json(updatedTask);
   } catch (error) {

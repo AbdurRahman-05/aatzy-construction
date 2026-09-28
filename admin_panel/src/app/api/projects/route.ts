@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { notifyCityProvidersForNewProject } from '@/lib/notifications';
 
 export async function GET() {
   try {
@@ -34,6 +35,15 @@ export async function POST(request: Request) {
         currentStage
       }
     });
+
+    // Notify all verified service providers in the city with matching categories
+    notifyCityProvidersForNewProject({
+      id: project.id,
+      title: project.title,
+      type: project.type,
+      location: project.location,
+      budget: project.budget,
+    }).catch(err => console.error('Error in background city provider notification:', err));
     
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
@@ -41,3 +51,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
 }
+
