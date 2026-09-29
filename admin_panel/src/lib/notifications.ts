@@ -336,11 +336,11 @@ export async function notifyChatMessage(params: {
     if (receiverUser) {
       // Receiver is a consumer → sender is a provider
       receiverRole = 'CONSUMER';
-      chatRoute = `/chat/${params.senderId}`;
+      chatRoute = `/chat/${params.senderId}?name=${encodeURIComponent(senderName)}`;
     } else {
       // Receiver is a provider → sender is a consumer
       receiverRole = 'PROVIDER';
-      chatRoute = `/provider-chat/${params.senderId}`;
+      chatRoute = `/provider-chat/${params.senderId}?name=${encodeURIComponent(senderName)}`;
     }
 
     const preview =

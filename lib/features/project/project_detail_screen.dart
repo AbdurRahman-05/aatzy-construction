@@ -955,9 +955,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 );
               },
               child: const Icon(Icons.copy_rounded, size: 15, color: Color(0xFF64748B)),
-            )
-          else
-            const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFCBD5E1)),
+            ),
         ],
       ),
     );

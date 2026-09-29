@@ -32,6 +32,7 @@ import '../features/b2b/presentation/supplier_product_management_screen.dart';
 import '../features/b2b/presentation/lead_management_screen.dart';
 import '../features/b2b/presentation/materials_screen.dart';
 import '../features/splash/splash_screen.dart';
+import '../features/chat/chat_detail_screen.dart';
 
 import 'package:flutter/material.dart';
 
@@ -197,6 +198,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/supplier-leads',
         builder: (context, state) => const LeadManagementScreen(),
+      ),
+      // Chat routes — used by notification deep-links
+      GoRoute(
+        path: '/chat/:partnerId',
+        builder: (context, state) => ChatDetailScreen(
+          partnerId: state.pathParameters['partnerId']!,
+          partnerName: state.uri.queryParameters['name'] ?? 'Provider',
+        ),
+      ),
+      GoRoute(
+        path: '/provider-chat/:partnerId',
+        builder: (context, state) => ChatDetailScreen(
+          partnerId: state.pathParameters['partnerId']!,
+          partnerName: state.uri.queryParameters['name'] ?? 'Consumer',
+        ),
       ),
     ],
   );
