@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
 import '../constants.dart';
-import '../services/push_notification_service.dart';
 import '../../features/auth/auth_provider.dart';
 import 'projects_provider.dart';
 
@@ -396,18 +395,9 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
       final finalList = uniqueMap.values.toList();
       state = finalList;
 
-      // Trigger native push notifications for freshly received unread alerts
-      for (final n in finalList.where((x) => x.isUnread)) {
-        PushNotificationService().showNotification(
-          id: n.id.hashCode,
-          title: n.title,
-          body: n.body,
-          payload: n.route ?? '/notifications',
-          channelId: n.route?.contains('lead') == true ? 'buildzy_leads_v2' : (n.route?.contains('materials') == true ? 'buildzy_orders_v2' : 'buildzy_general_v2'),
-          channelName: n.route?.contains('lead') == true ? 'Leads & Proposals' : 'General Updates',
-          uniqueKey: n.id,
-        );
-      }
+      // NOTE: Native push notifications are handled exclusively by FCM's
+      // onMessage listener in PushNotificationService. We intentionally do NOT
+      // call showNotification() here to avoid duplicate native popups.
     } catch (e) {
       debugPrint('Error fetching notifications: $e');
     }

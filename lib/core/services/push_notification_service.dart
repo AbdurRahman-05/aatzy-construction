@@ -108,15 +108,37 @@ class PushNotificationService {
         FirebaseMessaging.onMessage.listen((RemoteMessage message) {
           debugPrint('[FCM] Foreground notification received: ${message.notification?.title}');
           final notification = message.notification;
-          if (notification != null) {
-            showNotification(
-              id: message.hashCode,
-              title: notification.title ?? 'Buildzy Alert',
-              body: notification.body ?? '',
-              payload: message.data['route'] ?? '/notifications',
-              channelId: message.data['channelId'] ?? 'buildzy_leads_v2',
-            );
+          if (notification == null) return;
+
+          final route = message.data['route'] ?? '/notifications';
+          final targetPath = route.split('?').first;
+
+          // Suppress chat notifications if user is already viewing that exact conversation.
+          // Uses NavigatorState (no BuildContext) to avoid use_build_context_synchronously lint.
+          if (targetPath.isNotEmpty &&
+              (targetPath.startsWith('/chat/') || targetPath.startsWith('/provider-chat/'))) {
+            final navState = rootNavigatorKey.currentState;
+            if (navState != null) {
+              String? currentRouteName;
+              navState.popUntil((r) {
+                currentRouteName = r.settings.name;
+                return true; // peek only, don't pop
+              });
+              final currentPath = (currentRouteName ?? '').split('?').first;
+              if (currentPath == targetPath) {
+                debugPrint('[FCM] Suppressed — user is already in this chat conversation.');
+                return;
+              }
+            }
           }
+
+          showNotification(
+            id: message.hashCode,
+            title: notification.title ?? 'Buildzy Alert',
+            body: notification.body ?? '',
+            payload: route,
+            channelId: message.data['channelId'] ?? 'buildzy_leads_v2',
+          );
         });
 
         // Listen for notification taps when the app was in the background
