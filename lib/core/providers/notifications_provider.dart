@@ -176,6 +176,9 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
             } else if (type == 'STAGE_COMPLETED') {
               icon = Icons.emoji_events_rounded;
               color = const Color(0xFFF59E0B);
+            } else if (type == 'CHAT_MESSAGE') {
+              icon = Icons.chat_bubble_rounded;
+              color = const Color(0xFF06B6D4);
             }
 
             final createdAt = DateTime.tryParse(item['createdAt'] ?? '');

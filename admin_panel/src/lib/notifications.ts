@@ -28,7 +28,7 @@ export interface CreateNotificationParams {
   role: 'CONSUMER' | 'PROVIDER';
   title: string;
   body: string;
-  type: 'NEW_LEAD' | 'QUOTE_ACCEPTED' | 'TASK_CREATED' | 'TASK_COMPLETED' | 'STAGE_COMPLETED';
+  type: 'NEW_LEAD' | 'QUOTE_ACCEPTED' | 'TASK_CREATED' | 'TASK_COMPLETED' | 'STAGE_COMPLETED' | 'CHAT_MESSAGE';
   entityId?: string;
   route?: string;
 }
@@ -294,5 +294,68 @@ export async function notifyTaskProgressAndMilestones(params: {
     }
   } catch (error) {
     console.error('Error handling task progress notification:', error);
+  }
+}
+
+/**
+ * When a chat message is sent, notify the receiver with the sender's name and message preview.
+ * Works for both Consumer→Provider and Provider→Consumer directions.
+ */
+export async function notifyChatMessage(params: {
+  senderId: string;
+  receiverId: string;
+  text: string;
+}) {
+  try {
+    let senderName = 'Someone';
+    let receiverRole: 'CONSUMER' | 'PROVIDER' = 'CONSUMER';
+    let chatRoute = '';
+
+    // Resolve sender name
+    const senderUser = await prisma.user.findUnique({
+      where: { id: params.senderId },
+      select: { name: true },
+    });
+    const senderProvider = await prisma.provider.findUnique({
+      where: { id: params.senderId },
+      select: { businessName: true, ownerName: true },
+    });
+
+    if (senderUser) {
+      senderName = senderUser.name || 'Consumer';
+    } else if (senderProvider) {
+      senderName = senderProvider.businessName || senderProvider.ownerName || 'Provider';
+    }
+
+    // Determine receiver role by checking if receiverId is a User or Provider
+    const receiverUser = await prisma.user.findUnique({
+      where: { id: params.receiverId },
+      select: { id: true },
+    });
+
+    if (receiverUser) {
+      // Receiver is a consumer → sender is a provider
+      receiverRole = 'CONSUMER';
+      chatRoute = `/chat/${params.senderId}`;
+    } else {
+      // Receiver is a provider → sender is a consumer
+      receiverRole = 'PROVIDER';
+      chatRoute = `/provider-chat/${params.senderId}`;
+    }
+
+    const preview =
+      params.text.length > 60 ? params.text.substring(0, 57) + '…' : params.text;
+
+    await createNotification({
+      recipientId: params.receiverId,
+      role: receiverRole,
+      title: `💬 New message from ${senderName}`,
+      body: preview,
+      type: 'CHAT_MESSAGE',
+      entityId: params.senderId,
+      route: chatRoute,
+    });
+  } catch (error) {
+    console.error('Error sending chat message notification:', error);
   }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { notifyChatMessage } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +17,11 @@ export async function POST(request: Request) {
         text,
       },
     });
+
+    // Fire-and-forget: notify the receiver about the new message
+    notifyChatMessage({ senderId, receiverId, text }).catch((err) =>
+      console.error('Chat notification error:', err)
+    );
 
     return NextResponse.json({ message });
   } catch (error) {
