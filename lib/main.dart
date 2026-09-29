@@ -13,11 +13,51 @@ import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   debugPrint('[FCM Background] Handling message: ${message.messageId}');
+
+  // If the message is a data payload or received on OEM devices that suppress automatic display,
+  // explicitly present the heads-up notification via FlutterLocalNotificationsPlugin
+  try {
+    final title = message.notification?.title ?? message.data['title'] ?? 'Buildzy Alert';
+    final body = message.notification?.body ?? message.data['body'] ?? '';
+    final route = message.data['route'] ?? '/notifications';
+
+    if (message.notification == null && title.isNotEmpty) {
+      final localNotif = FlutterLocalNotificationsPlugin();
+      const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
+      await localNotif.initialize(settings: const InitializationSettings(android: androidSettings));
+
+      const customSound = RawResourceAndroidNotificationSound('construction_chime');
+      final androidDetails = AndroidNotificationDetails(
+        'buildzy_leads_v2',
+        'Leads & Proposals',
+        channelDescription: 'Instant alerts for customer project inquiries, quote acceptances, and bids.',
+        importance: Importance.max,
+        priority: Priority.high,
+        showWhen: true,
+        color: const Color(0xFF0F766E),
+        icon: '@mipmap/launcher_icon',
+        enableVibration: true,
+        playSound: true,
+        sound: customSound,
+      );
+
+      await localNotif.show(
+        id: message.hashCode,
+        title: title,
+        body: body,
+        notificationDetails: NotificationDetails(android: androidDetails),
+        payload: route,
+      );
+    }
+  } catch (e) {
+    debugPrint('[FCM Background] Error in background notification handler: $e');
+  }
 }
 
 void main() async {

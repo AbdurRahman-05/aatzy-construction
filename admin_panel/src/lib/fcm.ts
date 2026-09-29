@@ -72,6 +72,8 @@ export async function sendFCMNotification(params: {
         body: params.body,
       },
       data: {
+        title: params.title,
+        body: params.body,
         route: params.route || '/notifications',
         click_action: 'FLUTTER_NOTIFICATION_CLICK',
       },
@@ -82,6 +84,7 @@ export async function sendFCMNotification(params: {
           sound: 'default',
           priority: 'max',
           defaultVibrateTimings: true,
+          visibility: 'public',
         },
       },
     };
@@ -112,6 +115,8 @@ export async function sendMulticastFCM(params: {
         body: params.body,
       },
       data: {
+        title: params.title,
+        body: params.body,
         route: params.route || '/notifications',
         click_action: 'FLUTTER_NOTIFICATION_CLICK',
       },
@@ -122,6 +127,7 @@ export async function sendMulticastFCM(params: {
           sound: 'default',
           priority: 'max',
           defaultVibrateTimings: true,
+          visibility: 'public',
         },
       },
     };
