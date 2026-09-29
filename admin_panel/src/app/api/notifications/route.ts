@@ -4,12 +4,12 @@ import prisma from '@/lib/prisma';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const recipientId = searchParams.get('recipientId');
+    const recipientId = searchParams.get('recipientId') || searchParams.get('userId');
     const role = searchParams.get('role');
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
 
     if (!recipientId) {
-      return NextResponse.json({ error: 'recipientId is required' }, { status: 400 });
+      return NextResponse.json({ error: 'recipientId or userId is required' }, { status: 400 });
     }
 
     const where: any = {

@@ -39,13 +39,49 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     }
   }
 
-  List<dynamic> _filterProjectsByStage(List<String> stages, List<dynamic> projects) {
+  static bool _isPendingStage(String? stage) {
+    if (stage == null || stage.trim().isEmpty) return true;
+    final s = stage.trim().toLowerCase();
+    if (s == 'design & planning') return false;
+    return s == 'planning & approvals' ||
+        s == 'planning' ||
+        s == 'pending' ||
+        s == 'pending approval' ||
+        s == 'finished pending approval' ||
+        s == 'new lead' ||
+        s == 'lead' ||
+        s == 'draft' ||
+        s.contains('pending') ||
+        (s.contains('planning') && !s.contains('design'));
+  }
+
+  static bool _isFinishedStage(String? stage) {
+    if (stage == null) return false;
+    final s = stage.trim().toLowerCase();
+    return s == 'completed' || s == 'finished';
+  }
+
+  static bool _isCancelledStage(String? stage) {
+    if (stage == null) return false;
+    final s = stage.trim().toLowerCase();
+    return s == 'cancelled';
+  }
+
+  static bool _isOngoingStage(String? stage) {
+    if (stage == null) return false;
+    if (_isFinishedStage(stage) || _isCancelledStage(stage) || _isPendingStage(stage)) {
+      return false;
+    }
+    return true;
+  }
+
+  List<dynamic> _filterProjects(bool Function(String?) stageMatcher, List<dynamic> projects) {
     return projects.where((project) {
-      final stage = (project['currentStage'] as String? ?? 'Design & Planning').toLowerCase();
+      final stage = project['currentStage'] as String?;
       final title = (project['title'] as String? ?? '').toLowerCase();
       final location = (project['location'] as String? ?? '').toLowerCase();
       
-      final matchesStage = stages.any((s) => s.toLowerCase() == stage);
+      final matchesStage = stageMatcher(stage);
       final matchesSearch = title.contains(_searchQuery.toLowerCase()) || 
                             location.contains(_searchQuery.toLowerCase());
       
@@ -55,23 +91,28 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
   Widget _buildProjectCard(BuildContext context, dynamic project, {required bool isSmallScreen, bool isGrid = false}) {
     final title = project['title'] ?? 'N/A';
-    final currentStage = project['currentStage'] ?? 'Design & Planning';
+    final currentStage = project['currentStage'] as String? ?? 'Planning & Approvals';
     final budget = project['budget']?.toString() ?? '10,000';
     final location = project['location'] ?? 'N/A';
     final projectId = project['id']?.toString() ?? '';
 
-    final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
-    final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
+    final isCompleted = _isFinishedStage(currentStage);
+    final isCancelled = _isCancelledStage(currentStage);
+    final isPending = _isPendingStage(currentStage);
     
     final int colorIndex = projectId.hashCode.abs() % 3;
     final List<Color> colors = [const Color(0xFF10B981), const Color(0xFF3B82F6), const Color(0xFF8B5CF6)];
-    final Color cardColor = isCancelled ? const Color(0xFFEF4444) : (isCompleted ? colors[colorIndex] : const Color(0xFF10B981));
+    final Color cardColor = isCancelled 
+        ? const Color(0xFFEF4444) 
+        : (isPending 
+            ? const Color(0xFFF59E0B) 
+            : (isCompleted ? colors[colorIndex] : const Color(0xFF10B981)));
     final IconData icon = [Icons.home_rounded, Icons.business_rounded, Icons.storefront_rounded][colorIndex];
 
     final progressResult = ProjectProgressHelper.calculateFromProject(project);
     final double progress = progressResult.progressValue;
 
-    String dateStr = 'Upcoming';
+    String dateStr = project['timeline']?.toString() ?? 'Upcoming';
     if (isCompleted || isCancelled) {
       final updated = project['updatedAt'] ?? project['updated_at'];
       if (updated != null) {
@@ -79,6 +120,8 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
       } else {
         dateStr = isCompleted ? 'Finished' : 'Cancelled';
       }
+    } else if (isPending) {
+      dateStr = project['timeline']?.toString() ?? 'Planning Phase';
     }
 
     final leftBarWidth = isSmallScreen ? 74.0 : 86.0;
@@ -189,23 +232,50 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
-                            color: isCancelled ? Colors.red.shade50 : (isCompleted ? Colors.green.shade50 : Colors.indigo.shade50),
+                            color: isCancelled 
+                                ? Colors.red.shade50 
+                                : (isCompleted 
+                                    ? Colors.green.shade50 
+                                    : (isPending ? Colors.orange.shade50 : Colors.indigo.shade50)),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isCancelled ? Colors.red.shade200 : (isCompleted ? Colors.green.shade200 : Colors.indigo.shade200), width: 0.8),
+                            border: Border.all(
+                              color: isCancelled 
+                                  ? Colors.red.shade200 
+                                  : (isCompleted 
+                                      ? Colors.green.shade200 
+                                      : (isPending ? Colors.orange.shade200 : Colors.indigo.shade200)), 
+                              width: 0.8,
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isCancelled ? Icons.cancel_rounded : (isCompleted ? Icons.check_circle_rounded : Icons.sync_rounded), 
-                                color: isCancelled ? Colors.red : (isCompleted ? Colors.green.shade700 : Colors.indigo),
+                                isCancelled 
+                                    ? Icons.cancel_rounded 
+                                    : (isCompleted 
+                                        ? Icons.check_circle_rounded 
+                                        : (isPending ? Icons.access_time_rounded : Icons.sync_rounded)), 
+                                color: isCancelled 
+                                    ? Colors.red 
+                                    : (isCompleted 
+                                        ? Colors.green.shade700 
+                                        : (isPending ? Colors.orange.shade800 : Colors.indigo)),
                                 size: 10,
                               ),
                               const SizedBox(width: 3),
                               Text(
-                                isCancelled ? 'Cancelled' : (isCompleted ? 'Finished' : 'Ongoing'),
+                                isCancelled 
+                                    ? 'Cancelled' 
+                                    : (isCompleted 
+                                        ? 'Finished' 
+                                        : (isPending ? 'Pending' : 'Ongoing')),
                                 style: TextStyle(
-                                  color: isCancelled ? Colors.red : (isCompleted ? Colors.green.shade700 : Colors.indigo),
+                                  color: isCancelled 
+                                      ? Colors.red 
+                                      : (isCompleted 
+                                          ? Colors.green.shade700 
+                                          : (isPending ? Colors.orange.shade800 : Colors.indigo)),
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -278,8 +348,15 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     );
   }
 
-  Widget _buildProjectsTab(String title, List<String> stages, List<dynamic> projects, double screenWidth) {
-    final filtered = _filterProjectsByStage(stages, projects);
+  Widget _buildProjectsTab({
+    required String title,
+    required bool Function(String?) stageMatcher,
+    required List<dynamic> projects,
+    required double screenWidth,
+    required Color themeColor,
+    required IconData bannerIcon,
+  }) {
+    final filtered = _filterProjects(stageMatcher, projects);
 
     double totalValue = 0.0;
     for (var p in filtered) {
@@ -336,13 +413,13 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                       vertical: isSmall ? 8 : 10,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50.withValues(alpha: 0.6),
+                      color: themeColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green.shade200, width: 1),
+                      border: Border.all(color: themeColor.withValues(alpha: 0.25), width: 1),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, color: Colors.green, size: isSmall ? 16 : 18),
+                        Icon(bannerIcon, color: themeColor, size: isSmall ? 16 : 18),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -358,12 +435,12 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade100,
+                            color: themeColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${filtered.length}',
-                            style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: themeColor, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
                         const Spacer(),
@@ -377,7 +454,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                             alignment: Alignment.centerRight,
                             child: Text(
                               '₹${totalValue.toStringAsFixed(0)}',
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: isSmall ? 13 : 14, color: Colors.green.shade800),
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: isSmall ? 13 : 14, color: themeColor),
                             ),
                           ),
                         ),
@@ -455,10 +532,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     final projects = projectsData?.projects ?? const [];
     final isLoading = projectsAsync != null ? (projectsAsync.isLoading && projectsData == null) : false;
 
-    final ongoingCount = projects.where((p) => !['completed', 'finished', 'cancelled', 'finished pending approval'].contains((p['currentStage'] as String? ?? '').toLowerCase())).length;
-    final pendingCount = projects.where((p) => (p['currentStage'] as String? ?? '').toLowerCase() == 'finished pending approval').length;
-    final finishedCount = projects.where((p) => ['completed', 'finished'].contains((p['currentStage'] as String? ?? '').toLowerCase())).length;
-    final cancelledCount = projects.where((p) => (p['currentStage'] as String? ?? '').toLowerCase() == 'cancelled').length;
+    final ongoingCount = projects.where((p) => _isOngoingStage(p['currentStage'] as String?)).length;
+    final pendingCount = projects.where((p) => _isPendingStage(p['currentStage'] as String?)).length;
+    final finishedCount = projects.where((p) => _isFinishedStage(p['currentStage'] as String?)).length;
+    final cancelledCount = projects.where((p) => _isCancelledStage(p['currentStage'] as String?)).length;
 
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
@@ -580,10 +657,38 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                           child: TabBarView(
                             controller: _tabController,
                             children: [
-                              _buildProjectsTab('Ongoing Projects', ['Design & Planning', 'Tracking', 'Execution', 'On Hold'], projects, screenWidth),
-                              _buildProjectsTab('Pending Approval', ['Finished Pending Approval'], projects, screenWidth),
-                              _buildProjectsTab('Finished Projects', ['Completed', 'Finished'], projects, screenWidth),
-                              _buildProjectsTab('Cancelled Projects', ['Cancelled'], projects, screenWidth),
+                              _buildProjectsTab(
+                                title: 'Ongoing Projects',
+                                stageMatcher: _isOngoingStage,
+                                projects: projects,
+                                screenWidth: screenWidth,
+                                themeColor: Colors.indigo,
+                                bannerIcon: Icons.sync_rounded,
+                              ),
+                              _buildProjectsTab(
+                                title: 'Pending Projects',
+                                stageMatcher: _isPendingStage,
+                                projects: projects,
+                                screenWidth: screenWidth,
+                                themeColor: Colors.orange.shade800,
+                                bannerIcon: Icons.access_time_rounded,
+                              ),
+                              _buildProjectsTab(
+                                title: 'Finished Projects',
+                                stageMatcher: _isFinishedStage,
+                                projects: projects,
+                                screenWidth: screenWidth,
+                                themeColor: Colors.green.shade700,
+                                bannerIcon: Icons.check_circle_rounded,
+                              ),
+                              _buildProjectsTab(
+                                title: 'Cancelled Projects',
+                                stageMatcher: _isCancelledStage,
+                                projects: projects,
+                                screenWidth: screenWidth,
+                                themeColor: Colors.red.shade700,
+                                bannerIcon: Icons.cancel_rounded,
+                              ),
                             ],
                           ),
                         ),

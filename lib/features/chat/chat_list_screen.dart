@@ -53,7 +53,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       final roleParam = (auth.role ?? 'CONSUMER').toUpperCase();
       final response = await http.get(
         Uri.parse('$apiBaseUrl/chat/list?userId=${auth.id}&role=$roleParam'),
-      );
+      ).timeout(const Duration(seconds: 20));
 
       if (response.statusCode == 200) {
         if (mounted) {

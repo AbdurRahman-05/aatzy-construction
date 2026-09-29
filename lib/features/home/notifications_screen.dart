@@ -338,7 +338,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Notification deleted'),
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 10),
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
               label: 'Undo',
@@ -515,7 +515,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: const Text('Notification deleted'),
-                                  duration: const Duration(seconds: 3),
+                                  duration: const Duration(seconds: 10),
                                   behavior: SnackBarBehavior.floating,
                                   action: SnackBarAction(
                                     label: 'Undo',
@@ -659,7 +659,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Text('Notification deleted'),
-                            duration: const Duration(seconds: 3),
+                            duration: const Duration(seconds: 10),
                             behavior: SnackBarBehavior.floating,
                             action: SnackBarAction(
                               label: 'Undo',

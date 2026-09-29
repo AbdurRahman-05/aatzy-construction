@@ -532,8 +532,14 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final ongoingCount = _projects.where((p) => !['completed', 'finished', 'cancelled', 'finished pending approval'].contains((p['currentStage'] as String? ?? '').toLowerCase())).length;
-    final pendingCount = _projects.where((p) => (p['currentStage'] as String? ?? '').toLowerCase() == 'finished pending approval').length;
+    final pendingCount = _projects.where((p) {
+      final s = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+      return s == 'finished pending approval' || s == 'pending approval' || s == 'planning & approvals' || s == 'planning' || s == 'pending';
+    }).length;
+    final ongoingCount = _projects.where((p) {
+      final s = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+      return !['completed', 'finished', 'cancelled', 'finished pending approval', 'pending approval', 'planning & approvals', 'planning', 'pending'].contains(s);
+    }).length;
     final finishedCount = _projects.where((p) => ['completed', 'finished'].contains((p['currentStage'] as String? ?? '').toLowerCase())).length;
     final cancelledCount = _projects.where((p) => (p['currentStage'] as String? ?? '').toLowerCase() == 'cancelled').length;
 
@@ -657,8 +663,8 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                           child: TabBarView(
                             controller: _tabController,
                             children: [
-                              _buildProjectsTab('Ongoing Jobs', ['Design & Planning', 'Tracking', 'Execution', 'On Hold'], screenWidth),
-                              _buildProjectsTab('Pending Client Approval', ['Finished Pending Approval'], screenWidth),
+                              _buildProjectsTab('Ongoing Jobs', ['Design & Planning', 'Tracking', 'Execution', 'On Hold', 'In Progress'], screenWidth),
+                              _buildProjectsTab('Pending Approval', ['Finished Pending Approval', 'Pending Approval', 'Planning & Approvals', 'Planning', 'Pending'], screenWidth),
                               _buildProjectsTab('Finished Jobs', ['Completed', 'Finished'], screenWidth),
                               _buildProjectsTab('Cancelled Jobs', ['Cancelled'], screenWidth),
                             ],

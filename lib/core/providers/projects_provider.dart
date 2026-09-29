@@ -23,10 +23,21 @@ final userProjectsProvider = FutureProvider.family<UserProjectsData, String>((re
 
 Future<UserProjectsData> fetchUserProjects(String userId) async {
   try {
-    final responses = await Future.wait([
-      http.get(Uri.parse('$apiBaseUrl/users/$userId/projects')).timeout(const Duration(seconds: 12)),
-      http.get(Uri.parse('$apiBaseUrl/buyer/inquiries?buyerId=$userId')).timeout(const Duration(seconds: 12)),
-    ]);
+    final projReq = http.get(Uri.parse('$apiBaseUrl/users/$userId/projects'))
+        .timeout(const Duration(seconds: 25))
+        .catchError((e) {
+          debugPrint('fetchUserProjects projects error: $e');
+          return http.Response('[]', 500);
+        });
+
+    final inqReq = http.get(Uri.parse('$apiBaseUrl/buyer/inquiries?buyerId=$userId'))
+        .timeout(const Duration(seconds: 25))
+        .catchError((e) {
+          debugPrint('fetchUserProjects inquiries error: $e');
+          return http.Response('{"inquiries":[]}', 500);
+        });
+
+    final responses = await Future.wait([projReq, inqReq]);
 
     List<dynamic> projects = [];
     List<dynamic> materialOrders = [];

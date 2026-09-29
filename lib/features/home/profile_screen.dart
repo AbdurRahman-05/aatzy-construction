@@ -51,7 +51,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         });
       }
       try {
-        final userRes = await http.get(Uri.parse('$apiBaseUrl/users/${auth.id}')).timeout(const Duration(seconds: 4));
+        final userRes = await http.get(Uri.parse('$apiBaseUrl/users/${auth.id}')).timeout(const Duration(seconds: 25));
         if (mounted && userRes.statusCode == 200) {
           final data = jsonDecode(userRes.body);
           if (data['profileImage'] != null) {

@@ -25,12 +25,20 @@ final providerDashboardProvider = FutureProvider.family<ProviderDashboardData, S
 
 Future<ProviderDashboardData> fetchProviderDashboard(String providerId) async {
   try {
-    final responses = await Future.wait([
-      http.get(Uri.parse('$apiBaseUrl/providers/$providerId/stats')).timeout(const Duration(seconds: 4)),
-      http.get(Uri.parse('$apiBaseUrl/providers/$providerId/projects')).timeout(const Duration(seconds: 4)),
-      http.get(Uri.parse('$apiBaseUrl/supplier/leads?supplierId=$providerId')).timeout(const Duration(seconds: 4)),
-      http.get(Uri.parse('$apiBaseUrl/providers/$providerId/profile')).timeout(const Duration(seconds: 4)),
-    ]);
+    final statsReq = http.get(Uri.parse('$apiBaseUrl/providers/$providerId/stats'))
+        .timeout(const Duration(seconds: 25))
+        .catchError((e) => http.Response('{}', 500));
+    final projReq = http.get(Uri.parse('$apiBaseUrl/providers/$providerId/projects'))
+        .timeout(const Duration(seconds: 25))
+        .catchError((e) => http.Response('[]', 500));
+    final leadsReq = http.get(Uri.parse('$apiBaseUrl/supplier/leads?supplierId=$providerId'))
+        .timeout(const Duration(seconds: 25))
+        .catchError((e) => http.Response('{"leads":[]}', 500));
+    final profReq = http.get(Uri.parse('$apiBaseUrl/providers/$providerId/profile'))
+        .timeout(const Duration(seconds: 25))
+        .catchError((e) => http.Response('{}', 500));
+
+    final responses = await Future.wait([statsReq, projReq, leadsReq, profReq]);
 
     Map<String, dynamic> stats = {};
     List<dynamic> activeJobs = [];

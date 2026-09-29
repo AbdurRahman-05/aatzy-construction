@@ -55,7 +55,10 @@ class ProjectProgressHelper {
         stageLower == 'on hold' ||
         isQuoteAccepted;
     final isDesign = stageLower.contains('design');
-    final isPlanning = stageLower == 'planning';
+    final isPlanning = stageLower == 'planning' ||
+        stageLower.contains('planning') ||
+        stageLower.contains('lead') ||
+        stageLower == 'pending';
 
     double progress;
 

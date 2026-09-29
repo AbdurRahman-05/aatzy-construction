@@ -10,7 +10,7 @@ final adsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
 
 Future<List<Map<String, dynamic>>> fetchAds() async {
   try {
-    final response = await http.get(Uri.parse('$apiBaseUrl/ads')).timeout(const Duration(seconds: 4));
+    final response = await http.get(Uri.parse('$apiBaseUrl/ads')).timeout(const Duration(seconds: 20));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final List<dynamic> fetched = data['ads'] ?? [];

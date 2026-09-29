@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers/projects_provider.dart';
 import '../../core/providers/social_feed_provider.dart';
@@ -121,7 +122,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       _buildMyActivity(isSmallScreen, screenWidth),
                       const SizedBox(height: 28),
                       _buildBuilderInspirations(isSmallScreen, screenWidth),
-                      const SizedBox(height: 80),
+                      const SizedBox(height: 36),
+                      _buildBrandWatermarkFooter(isSmallScreen),
+                      const SizedBox(height: 60),
                     ],
                   ),
                 ),
@@ -1974,6 +1977,63 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBrandWatermarkFooter(bool isSmallScreen) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        vertical: isSmallScreen ? 18 : 28,
+        horizontal: 4,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: 'Start building\nyour dream ',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isSmallScreen ? 34 : 42,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFFCBD5E1),
+                    letterSpacing: -1.2,
+                    height: 1.12,
+                  ),
+                ),
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 2),
+                    child: Icon(
+                      Icons.favorite_rounded,
+                      color: const Color(0xFFEF4444),
+                      size: isSmallScreen ? 30 : 38,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(top: 24, bottom: 18),
+            height: 1.0,
+            width: double.infinity,
+            color: const Color(0xFFE2E8F0),
+          ),
+          Text(
+            'buildzy',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: isSmallScreen ? 22 : 26,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFFCBD5E1),
+              letterSpacing: -0.8,
+            ),
+          ),
+        ],
       ),
     );
   }

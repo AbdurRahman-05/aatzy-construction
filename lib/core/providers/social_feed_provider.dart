@@ -10,7 +10,7 @@ final socialFeedProvider = FutureProvider<List<dynamic>>((ref) async {
 
 Future<List<dynamic>> fetchSocialFeed() async {
   try {
-    final response = await http.get(Uri.parse('$apiBaseUrl/social/feed')).timeout(const Duration(seconds: 12));
+    final response = await http.get(Uri.parse('$apiBaseUrl/social/feed')).timeout(const Duration(seconds: 25));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data['images'] ?? [];

@@ -19,6 +19,10 @@ class LocationService {
   /// Detect live device location via GPS, reverse geocode to city and state, and cache locally.
   Future<String?> detectAndSaveLocation({bool forceRefresh = false}) async {
     try {
+      if (kIsWeb) {
+        return await getSavedLocation();
+      }
+
       // 1. Check if location services are enabled
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {

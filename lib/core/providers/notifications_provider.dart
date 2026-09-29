@@ -152,7 +152,7 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
       try {
         final dbNotifRes = await http.get(
           Uri.parse('$apiBaseUrl/notifications?recipientId=${auth.id}&role=${auth.role ?? ''}'),
-        ).timeout(const Duration(seconds: 5));
+        ).timeout(const Duration(seconds: 25));
 
         if (dbNotifRes.statusCode == 200) {
           final dbList = jsonDecode(dbNotifRes.body) as List? ?? [];

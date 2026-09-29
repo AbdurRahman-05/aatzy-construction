@@ -249,7 +249,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
       try {
         final res = await http
             .get(Uri.parse('$apiBaseUrl/providers/$id/projects'))
-            .timeout(const Duration(seconds: 5));
+            .timeout(const Duration(seconds: 20));
         if (res.statusCode == 200) {
           final list = jsonDecode(res.body);
           if (list is List) {
