@@ -477,7 +477,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               final Color bgColor = cat['bg'] as Color? ?? const Color(0xFFEFF6FF);
 
               return GestureDetector(
-                onTap: () => context.push('/providers/${cat['name']}'),
+                onTap: () => context.push('/providers/${Uri.encodeComponent(cat['name'])}'),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,

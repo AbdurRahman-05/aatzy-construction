@@ -10,6 +10,7 @@ class AuthState {
   final String? businessName;
   final String? role; // 'CONSUMER' or 'PROVIDER'
   final String? gstNumber;
+  final String? profileImage;
   final bool isInitialized;
 
   AuthState({
@@ -19,6 +20,7 @@ class AuthState {
     this.businessName,
     this.role,
     this.gstNumber,
+    this.profileImage,
     this.isInitialized = false,
   });
 
@@ -29,6 +31,7 @@ class AuthState {
     String? businessName,
     String? role,
     String? gstNumber,
+    String? profileImage,
     bool? isInitialized,
   }) {
     return AuthState(
@@ -38,6 +41,7 @@ class AuthState {
       businessName: businessName ?? this.businessName,
       role: role ?? this.role,
       gstNumber: gstNumber ?? this.gstNumber,
+      profileImage: profileImage ?? this.profileImage,
       isInitialized: isInitialized ?? this.isInitialized,
     );
   }
@@ -59,6 +63,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final businessName = prefs.getString('auth_businessName');
       final role = prefs.getString('auth_role');
       final gstNumber = prefs.getString('auth_gstNumber');
+      final profileImage = prefs.getString('auth_profileImage');
 
       if (id != null && role != null) {
         state = AuthState(
@@ -68,6 +73,7 @@ class AuthNotifier extends Notifier<AuthState> {
           businessName: businessName,
           role: role,
           gstNumber: gstNumber,
+          profileImage: profileImage,
           isInitialized: true,
         );
         PushNotificationService().syncFCMToken(userId: id, role: role);
@@ -81,6 +87,9 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> login(Map<String, dynamic> data, String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedProfileImage = prefs.getString('auth_profileImage');
+
     final AuthState newState;
     if (role == 'PROVIDER') {
       newState = AuthState(
@@ -90,6 +99,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: data['email']?.toString(),
         role: 'PROVIDER',
         gstNumber: data['gstNumber']?.toString(),
+        profileImage: data['profileImage']?.toString() ?? savedProfileImage,
         isInitialized: true,
       );
     } else {
@@ -98,18 +108,19 @@ class AuthNotifier extends Notifier<AuthState> {
         name: data['name']?.toString(),
         email: data['email']?.toString(),
         role: 'CONSUMER',
+        profileImage: data['profileImage']?.toString() ?? savedProfileImage,
         isInitialized: true,
       );
     }
     state = newState;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
       if (newState.id != null) await prefs.setString('auth_id', newState.id!);
       if (newState.name != null) await prefs.setString('auth_name', newState.name!);
       if (newState.email != null) await prefs.setString('auth_email', newState.email!);
       if (newState.businessName != null) await prefs.setString('auth_businessName', newState.businessName!);
       if (newState.role != null) await prefs.setString('auth_role', newState.role!);
+      if (newState.profileImage != null) await prefs.setString('auth_profileImage', newState.profileImage!);
       if (newState.gstNumber != null) {
         await prefs.setString('auth_gstNumber', newState.gstNumber!);
       } else {
@@ -124,6 +135,20 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  Future<void> updateProfileImage(String? image) async {
+    state = state.copyWith(profileImage: image);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (image != null && image.isNotEmpty) {
+        await prefs.setString('auth_profileImage', image);
+      } else {
+        await prefs.remove('auth_profileImage');
+      }
+    } catch (e) {
+      debugPrint('Error persisting profile image: $e');
+    }
+  }
+
   Future<void> logout() async {
     state = AuthState(isInitialized: true);
     try {
@@ -134,6 +159,7 @@ class AuthNotifier extends Notifier<AuthState> {
       await prefs.remove('auth_businessName');
       await prefs.remove('auth_role');
       await prefs.remove('auth_gstNumber');
+      await prefs.remove('auth_profileImage');
     } catch (e) {
       debugPrint('Error clearing persisted auth: $e');
     }

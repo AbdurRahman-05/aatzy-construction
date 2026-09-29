@@ -524,7 +524,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'accent': const Color(0xFF6F42C1),
         'bg': const Color(0xFFF5F3FF),
         'tags': ['3D Design', 'Vastu', 'Approvals'],
-        'route': '/providers/Design & Planning',
+        'route': '/providers/Design%20%26%20Planning',
         'buttonText': 'Find Architects',
       },
       {
@@ -536,7 +536,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'accent': const Color(0xFF0284C7),
         'bg': const Color(0xFFF0F9FF),
         'tags': ['Turnkey', 'Renovation', 'Civil Work'],
-        'route': '/providers/Builder/General Contractor',
+        'route': '/providers/Builder%2FGeneral%20Contractor',
         'buttonText': 'Find Builders',
       },
       {
@@ -548,7 +548,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'accent': const Color(0xFF059669),
         'bg': const Color(0xFFECFDF5),
         'tags': ['Plots', 'DTCP/RERA', 'Villas'],
-        'route': '/providers/Commercial Builder',
+        'route': '/providers/Commercial%20Builder',
         'buttonText': 'Find Promoters',
       },
       {
@@ -560,7 +560,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'accent': const Color(0xFFEA580C),
         'bg': const Color(0xFFFFF7ED),
         'tags': ['Modular Kitchen', 'Woodwork', 'Decor'],
-        'route': '/providers/Interiors & Finishing',
+        'route': '/providers/Interiors%20%26%20Finishing',
         'buttonText': 'Find Designers',
       },
     ];

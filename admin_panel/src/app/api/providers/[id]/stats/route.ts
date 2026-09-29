@@ -84,6 +84,25 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       }
     });
 
+    // Fetch all quotes submitted by this provider (both accepted and pending)
+    const allQuotes = await prisma.quote.findMany({
+      where: { providerId: id },
+      include: {
+        project: {
+          select: {
+            id: true,
+            title: true,
+            location: true,
+            budget: true,
+            currentStage: true,
+            createdAt: true,
+            user: { select: { name: true } },
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
     const activeJobs = acceptedQuotes.filter(q => {
       const stage = (q.project?.currentStage || '').toLowerCase().trim();
       return !['completed', 'finished', 'cancelled'].includes(stage);
@@ -95,15 +114,31 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       budget: q.project.budget,
       timeline: q.project.timeline,
       currentStage: q.project.currentStage,
-      quoteId: q.id
+      quoteId: q.id,
+      quoteAmount: q.estimatedCost,
+      createdAt: q.createdAt,
     }));
 
+    const totalQuotedRevenue = acceptedQuotes.reduce((sum, q) => sum + (q.estimatedCost || 0), 0);
     const projectsCount = activeJobs.length;
 
     return NextResponse.json({
       activeLeads: activeLeadsCount,
       projects: projectsCount,
       activeJobs,
+      totalQuotes: allQuotes.length,
+      acceptedQuotesCount: acceptedQuotes.length,
+      totalRevenue: totalQuotedRevenue,
+      allQuotes: allQuotes.map(q => ({
+        id: q.id,
+        projectId: q.projectId,
+        projectTitle: q.project?.title,
+        estimatedCost: q.estimatedCost,
+        timeline: q.timeline,
+        notes: q.notes,
+        isAccepted: q.isAccepted,
+        createdAt: q.createdAt,
+      })),
       recentLeads: recentLeads.map(l => ({
         id: l.id,
         title: l.title,

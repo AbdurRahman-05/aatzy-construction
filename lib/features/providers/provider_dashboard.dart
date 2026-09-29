@@ -122,7 +122,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final avgRating = (_profileData?['avgRating'] ?? 4.8) as num;
     final reviewCount = (_profileData?['reviewCount'] ?? 120) as num;
 
-    // Calculate financials
+    // Calculate financials accurately from account data (tasks, accepted quote amounts, or pipeline)
     double totalRevenue = 0.0;
     double totalMaterialExpenses = 0.0;
     double totalLaborExpenses = 0.0;
@@ -135,11 +135,30 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         projRevenue += (t['quotedCost'] as num? ?? 0.0).toDouble();
         projMaterials += (t['taskCost'] as num? ?? 0.0).toDouble();
       }
+
+      // Fallback: If tasks don't specify quoted cost, use accepted quote amount or project budget
+      if (projRevenue == 0.0) {
+        projRevenue = (project['quoteAmount'] as num? ?? project['budget'] as num? ?? 0.0).toDouble();
+      }
+      // If tasks haven't logged materials, standard construction material estimate is 68%
+      if (projMaterials == 0.0 && projRevenue > 0) {
+        projMaterials = projRevenue * 0.68;
+      }
       final projLabor = projRevenue * 0.12; // 12% labor cost estimate
 
       totalRevenue += projRevenue;
       totalMaterialExpenses += projMaterials;
       totalLaborExpenses += projLabor;
+    }
+
+    // If no projects accepted yet, check if provider has submitted proposals to reflect in pipeline
+    if (totalRevenue == 0.0 && _stats != null) {
+      final quotesRev = (_stats?['totalRevenue'] as num? ?? 0.0).toDouble();
+      if (quotesRev > 0) {
+        totalRevenue = quotesRev;
+        totalMaterialExpenses = totalRevenue * 0.68;
+        totalLaborExpenses = totalRevenue * 0.12;
+      }
     }
 
     final totalExpenses = totalMaterialExpenses + totalLaborExpenses;
@@ -1374,11 +1393,37 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
   Widget _buildFinanceChart() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
     final monthlyProfits = List<double>.filled(12, 0.0);
     final monthlyRevenues = List<double>.filled(12, 0.0);
 
+    // Compute years available across account data
+    final availableYears = <int>{DateTime.now().year};
     for (final project in _projects) {
-      final createdAtStr = project['createdAt'] as String?;
+      final dtStr = (project['quoteCreatedAt'] ?? project['createdAt']) as String?;
+      if (dtStr != null) {
+        final dt = DateTime.tryParse(dtStr);
+        if (dt != null) availableYears.add(dt.year);
+      }
+    }
+    final allQuotes = (_stats?['allQuotes'] as List? ?? []);
+    for (final q in allQuotes) {
+      final dtStr = q['createdAt'] as String?;
+      if (dtStr != null) {
+        final dt = DateTime.tryParse(dtStr);
+        if (dt != null) availableYears.add(dt.year);
+      }
+    }
+    final sortedYears = availableYears.toList()..sort();
+    if (!sortedYears.contains(_selectedYear)) {
+      _selectedYear = sortedYears.last;
+    }
+
+    int activeMonthsCount = 0;
+
+    // 1. Process accepted projects
+    for (final project in _projects) {
+      final createdAtStr = (project['quoteCreatedAt'] ?? project['createdAt']) as String?;
       if (createdAtStr == null) continue;
       final dt = DateTime.tryParse(createdAtStr);
       if (dt == null || dt.year != _selectedYear) continue;
@@ -1390,11 +1435,38 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         revenue += (t['quotedCost'] as num? ?? 0.0).toDouble();
         materialCost += (t['taskCost'] as num? ?? 0.0).toDouble();
       }
+
+      // Fallback: If tasks don't specify quoted cost, use accepted quote amount or budget
+      if (revenue == 0.0) {
+        revenue = (project['quoteAmount'] as num? ?? project['budget'] as num? ?? 0.0).toDouble();
+      }
+      if (materialCost == 0.0 && revenue > 0) {
+        materialCost = revenue * 0.68;
+      }
       final laborCost = revenue * 0.12;
       final profit = revenue - (materialCost + laborCost);
 
-      monthlyProfits[dt.month - 1] += profit;
-      monthlyRevenues[dt.month - 1] += revenue;
+      final monthIdx = dt.month - 1;
+      monthlyProfits[monthIdx] += profit;
+      monthlyRevenues[monthIdx] += revenue;
+      if (revenue > 0) activeMonthsCount++;
+    }
+
+    // 2. If no accepted projects for selected year, check provider's submitted proposals/quotes
+    if (activeMonthsCount == 0 && allQuotes.isNotEmpty) {
+      for (final q in allQuotes) {
+        final dtStr = q['createdAt'] as String?;
+        if (dtStr == null) continue;
+        final dt = DateTime.tryParse(dtStr);
+        if (dt == null || dt.year != _selectedYear) continue;
+
+        final estCost = (q['estimatedCost'] as num? ?? 0.0).toDouble();
+        if (estCost <= 0) continue;
+        final monthIdx = dt.month - 1;
+        monthlyRevenues[monthIdx] += estCost;
+        monthlyProfits[monthIdx] += estCost * 0.20; // 20% estimated profit margin
+        activeMonthsCount++;
+      }
     }
 
     double maxVal = 1000.0;
@@ -1402,9 +1474,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       if (monthlyProfits[i] > maxVal) maxVal = monthlyProfits[i];
       if (monthlyRevenues[i] > maxVal) maxVal = monthlyRevenues[i];
     }
-    maxVal = (maxVal * 1.15).clamp(100.0, double.infinity);
+    maxVal = (maxVal * 1.18).clamp(1000.0, double.infinity);
 
     final List<String> monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final bool hasData = activeMonthsCount > 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -1420,9 +1493,23 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Monthly Profit & Revenue',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Monthly Profit & Revenue',
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hasData ? 'Based on actual project quotes & tasks' : 'No recorded activity for $_selectedYear',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: isDark ? Colors.white54 : Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -1436,7 +1523,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       value: _selectedYear,
                       isDense: true,
                       style: TextStyle(fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87, fontSize: 12.5),
-                      items: [2025, 2026, 2027].map((y) {
+                      items: sortedYears.map((y) {
                         return DropdownMenuItem<int>(
                           value: y,
                           child: Text('$y'),
@@ -1464,9 +1551,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       getTooltipColor: (_) => Colors.blueGrey.shade800,
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final month = monthNames[group.x.toInt()];
-                        final String type = rodIndex == 0 ? 'Revenue' : 'Profit';
+                        final String type = rodIndex == 0 ? 'Quoted Revenue' : 'Est. Net Profit';
+                        final formattedVal = NumberFormat.currency(
+                          locale: 'en_IN',
+                          symbol: '₹',
+                          decimalDigits: 0,
+                        ).format(rod.toY);
                         return BarTooltipItem(
-                          '$month\n$type: ₹${rod.toY.toStringAsFixed(0)}',
+                          '$month\n$type: $formattedVal',
                           const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                         );
                       },
@@ -1503,13 +1595,13 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         BarChartRodData(
                           toY: monthlyRevenues[index],
                           color: Colors.blue.shade400,
-                          width: 5,
+                          width: isSmallScreen ? 4 : 5,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         BarChartRodData(
                           toY: monthlyProfits[index],
                           color: Colors.green.shade400,
-                          width: 5,
+                          width: isSmallScreen ? 4 : 5,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ],
@@ -1594,6 +1686,13 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               for (final t in tasks) {
                 revenue += (t['quotedCost'] as num? ?? 0.0).toDouble();
                 materials += (t['taskCost'] as num? ?? 0.0).toDouble();
+              }
+              // Fallback to accepted quote amount or budget if task costs not itemized
+              if (revenue == 0.0) {
+                revenue = (proj['quoteAmount'] as num? ?? proj['budget'] as num? ?? 0.0).toDouble();
+              }
+              if (materials == 0.0 && revenue > 0) {
+                materials = revenue * 0.68;
               }
               final labor = revenue * 0.12;
               final expenses = materials + labor;

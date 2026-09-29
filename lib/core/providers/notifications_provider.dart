@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
 import '../constants.dart';
@@ -46,6 +47,78 @@ class NotificationModel {
 class NotificationsNotifier extends Notifier<List<NotificationModel>> {
   Timer? _pollingTimer;
 
+  String _getDismissedKey(String userId) => 'buildzy_dismissed_notifs_$userId';
+  String _getReadKey(String userId) => 'buildzy_read_notifs_$userId';
+
+  Future<Set<String>> _getDismissedIds(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList(_getDismissedKey(userId)) ?? [];
+      return list.toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> _saveDismissedId(String userId, String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = prefs.getStringList(_getDismissedKey(userId)) ?? [];
+      if (!current.contains(id)) {
+        current.add(id);
+        await prefs.setStringList(_getDismissedKey(userId), current);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _removeDismissedId(String userId, String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = prefs.getStringList(_getDismissedKey(userId)) ?? [];
+      current.remove(id);
+      await prefs.setStringList(_getDismissedKey(userId), current);
+    } catch (_) {}
+  }
+
+  Future<void> _saveAllDismissedIds(String userId, List<String> ids) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = (prefs.getStringList(_getDismissedKey(userId)) ?? []).toSet();
+      current.addAll(ids);
+      await prefs.setStringList(_getDismissedKey(userId), current.toList());
+    } catch (_) {}
+  }
+
+  Future<Set<String>> _getReadIds(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList(_getReadKey(userId)) ?? [];
+      return list.toSet();
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> _saveReadId(String userId, String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = prefs.getStringList(_getReadKey(userId)) ?? [];
+      if (!current.contains(id)) {
+        current.add(id);
+        await prefs.setStringList(_getReadKey(userId), current);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveAllReadIds(String userId, List<String> ids) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final current = (prefs.getStringList(_getReadKey(userId)) ?? []).toSet();
+      current.addAll(ids);
+      await prefs.setStringList(_getReadKey(userId), current.toList());
+    } catch (_) {}
+  }
+
   @override
   List<NotificationModel> build() {
     // Initial fetch immediately
@@ -67,6 +140,10 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
   Future<void> fetchNotifications() async {
     final auth = ref.read(authProvider);
     if (auth.id == null || auth.id!.isEmpty) return;
+    final userId = auth.id!;
+
+    final dismissedIds = await _getDismissedIds(userId);
+    final readIds = await _getReadIds(userId);
 
     List<NotificationModel> list = [];
 
@@ -306,10 +383,12 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
         ));
       }
 
-      // Deduplicate by ID
+      // Deduplicate by ID and apply local read & dismissed overrides
       final Map<String, NotificationModel> uniqueMap = {};
       for (final n in list) {
-        uniqueMap[n.id] = n;
+        if (dismissedIds.contains(n.id)) continue;
+        final isUnread = readIds.contains(n.id) ? false : n.isUnread;
+        uniqueMap[n.id] = n.copyWith(isUnread: isUnread);
       }
       final finalList = uniqueMap.values.toList();
       state = finalList;
@@ -333,8 +412,10 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
 
   void markAllAsRead() {
     final auth = ref.read(authProvider);
+    final allIds = state.map((n) => n.id).toList();
     state = state.map((n) => n.copyWith(isUnread: false)).toList();
     if (auth.id != null) {
+      _saveAllReadIds(auth.id!, allIds);
       () async {
         try {
           await http.patch(
@@ -350,7 +431,11 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
   }
 
   void markAsRead(String id) {
+    final auth = ref.read(authProvider);
     state = state.map((n) => n.id == id ? n.copyWith(isUnread: false) : n).toList();
+    if (auth.id != null) {
+      _saveReadId(auth.id!, id);
+    }
     if (!id.startsWith('lead_') && !id.startsWith('job_') && !id.startsWith('task_') && !id.startsWith('mat_') && !id.startsWith('welcome_') && !id.startsWith('usr_')) {
       () async {
         try {
@@ -364,6 +449,54 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
         }
       }();
     }
+  }
+
+  void deleteNotification(String id) {
+    final auth = ref.read(authProvider);
+    state = state.where((n) => n.id != id).toList();
+    if (auth.id != null) {
+      _saveDismissedId(auth.id!, id);
+    }
+    if (!id.startsWith('lead_') && !id.startsWith('job_') && !id.startsWith('task_') && !id.startsWith('mat_') && !id.startsWith('welcome_') && !id.startsWith('usr_')) {
+      () async {
+        try {
+          await http.delete(
+            Uri.parse('$apiBaseUrl/notifications?id=$id'),
+          );
+        } catch (e) {
+          debugPrint('Error deleting notification: $e');
+        }
+      }();
+    }
+  }
+
+  void clearAllNotifications() {
+    final auth = ref.read(authProvider);
+    final allIds = state.map((n) => n.id).toList();
+    state = [];
+    if (auth.id != null) {
+      _saveAllDismissedIds(auth.id!, allIds);
+      () async {
+        try {
+          await http.delete(
+            Uri.parse('$apiBaseUrl/notifications?recipientId=${auth.id}&all=true'),
+          );
+        } catch (e) {
+          debugPrint('Error clearing all notifications: $e');
+        }
+      }();
+    }
+  }
+
+  void undoDelete(NotificationModel item, int index) {
+    final auth = ref.read(authProvider);
+    if (auth.id != null) {
+      _removeDismissedId(auth.id!, item.id);
+    }
+    final next = List<NotificationModel>.from(state);
+    final insertIdx = index.clamp(0, next.length);
+    next.insert(insertIdx, item);
+    state = next;
   }
 }
 

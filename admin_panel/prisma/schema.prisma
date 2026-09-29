@@ -13,9 +13,10 @@ model User {
   name       String
   email      String    @unique
   password   String
-  phone      String    @default("")
-  fcmToken   String?
-  role       Role      @default(CONSUMER)
+  phone        String    @default("")
+  profileImage String?
+  fcmToken     String?
+  role         Role      @default(CONSUMER)
   isApproved Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt

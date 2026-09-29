@@ -1747,10 +1747,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
             itemCount: _recommendedServices.length,
             itemBuilder: (context, index) {
               final service = _recommendedServices[index];
+              final categoryTitle = service['title'] as String;
               return Container(
                 width: 140,
                 margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
@@ -1763,48 +1763,56 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: service['bg'] as Color,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(service['icon'] as IconData, size: 20, color: service['color'] as Color),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      service['title'] as String,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF0F172A)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Expanded(
-                      child: Text(
-                        service['desc'] as String,
-                        style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), height: 1.25),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: GestureDetector(
-                        onTap: () => context.push('/providers/${service['title']}'),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            shape: BoxShape.circle,
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(18),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () => context.push('/providers/${Uri.encodeComponent(categoryTitle)}'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: service['bg'] as Color,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(service['icon'] as IconData, size: 20, color: service['color'] as Color),
                           ),
-                          child: const Icon(Icons.arrow_forward_rounded, size: 12, color: Color(0xFF2563EB)),
-                        ),
+                          const SizedBox(height: 8),
+                          Text(
+                            categoryTitle,
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: Color(0xFF0F172A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Expanded(
+                            child: Text(
+                              service['desc'] as String,
+                              style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), height: 1.25),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEFF6FF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.arrow_forward_rounded, size: 12, color: Color(0xFF2563EB)),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               );
             },

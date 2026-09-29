@@ -22,7 +22,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     const projects = acceptedQuotes.map(q => ({
       ...q.project,
-      quoteId: q.id
+      quoteId: q.id,
+      quoteAmount: q.estimatedCost,
+      quoteTimeline: q.timeline,
+      quoteNotes: q.notes,
+      quoteCreatedAt: q.createdAt,
+      quoteUpdatedAt: q.updatedAt,
     }));
 
     return NextResponse.json(projects);

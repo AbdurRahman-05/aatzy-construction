@@ -99,7 +99,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'providers/:category',
-            builder: (context, state) => ProviderListingScreen(category: state.pathParameters['category']!),
+            builder: (context, state) => ProviderListingScreen(
+              category: Uri.decodeComponent(state.pathParameters['category'] ?? 'All'),
+            ),
           ),
           GoRoute(
             path: 'provider-profile/:id',

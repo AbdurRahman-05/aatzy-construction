@@ -35,9 +35,22 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
   final List<String> _categories = const [
     'Land & Legal', 'Finance & Approvals', 'Survey & Analysis', 'Design & Planning',
     'Construction', 'Engineering (MEP)', 'Materials & Supply', 'Utilities',
-    'Borewell',
-    'Interiors & Finishing', 'Project Management', 'Inspection & Compliance',
-    'Smart & Security', 'Logistics & Equipment', 'Insurance'
+    'Borewell', 'Interiors & Finishing', 'Project Management', 'Inspection & Compliance',
+    'Smart & Security', 'Logistics & Equipment', 'Insurance',
+    'Blacksmith', 'Bricklayer/Stonemason', 'Builder/General Contractor', 'Cabinet Maker',
+    'Carpenter', 'Cement / Concrete', 'Commercial Builder', 'Construction (Other)',
+    'Construction Project Management', 'Counter Top', 'Demolition Contractor', 'Drainage',
+    'Drywall', 'Electrical Contractor', 'Electrician - Commercial', 'Elevator',
+    'Energy Services', 'Environmental Services', 'Fences', 'Fireplace & Oven Builder',
+    'Flooring', 'Garage Doors', 'Glass', 'Ground Work',
+    'Handyman', 'Heating Engineer', 'HVAC - Heating & Air',
+    'Interior Design - Commercial', 'Interior Design - Residential',
+    'Kitchen Construction', 'Metal Work', 'Painter', 'Pest Control',
+    'Plasterer', 'Plumbing', 'Pools, Spas & Saunas', 'Power Generator',
+    'Power Washing', 'Protective Coatings/Sealants', 'Renovations/Remodeling',
+    'Restoration', 'Roofing & Gutters', 'Septic Systems', 'Shutters & Awnings',
+    'Solar', 'Tile Worker', 'Waterproofing-Weatherproofing', 'Window Treatments',
+    'Windows & Doors',
   ];
   final Set<String> _selectedCategories = {};
 

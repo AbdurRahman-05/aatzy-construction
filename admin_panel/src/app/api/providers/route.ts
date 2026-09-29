@@ -4,9 +4,17 @@ import prisma from '@/lib/prisma';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
+    const rawCategory = searchParams.get('category');
+    let category = '';
+    if (rawCategory) {
+      try {
+        category = decodeURIComponent(rawCategory).trim();
+      } catch {
+        category = rawCategory.trim();
+      }
+    }
 
-    if (!category || category.trim().toLowerCase() === 'all') {
+    if (!category || category.toLowerCase() === 'all') {
       // If no category or "All" specified, return all active providers
       const allProviders = await prisma.provider.findMany({
         where: {

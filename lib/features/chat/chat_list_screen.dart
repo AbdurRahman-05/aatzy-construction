@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../auth/auth_provider.dart';
+import '../home/main_layout.dart';
+import '../providers/provider_layout.dart';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
 import 'chat_detail_screen.dart';
@@ -17,6 +20,8 @@ class ChatListScreen extends ConsumerStatefulWidget {
 class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   List<dynamic> _conversations = [];
   bool _isLoading = true;
+  String _searchQuery = '';
+  Timer? _pollTimer;
 
   @override
   void initState() {
@@ -24,15 +29,30 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchConversations();
     });
+    // Silently poll conversations every 4 seconds for live incoming/outgoing chats
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (mounted) _fetchConversations(silent: true);
+    });
   }
 
-  Future<void> _fetchConversations() async {
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchConversations({bool silent = false}) async {
     final auth = ref.read(authProvider);
     if (auth.id == null) return;
 
+    if (!silent && _conversations.isEmpty) {
+      setState(() => _isLoading = true);
+    }
+
     try {
+      final roleParam = (auth.role ?? 'CONSUMER').toUpperCase();
       final response = await http.get(
-        Uri.parse('$apiBaseUrl/chat/list?userId=${auth.id}&role=${auth.role}'),
+        Uri.parse('$apiBaseUrl/chat/list?userId=${auth.id}&role=$roleParam'),
       );
 
       if (response.statusCode == 200) {
@@ -53,7 +73,26 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Instantly refresh when the user navigates to the Chat tab
+    ref.listen<int>(mainTabProvider, (prev, next) {
+      if (next == 3) {
+        _fetchConversations(silent: true);
+      }
+    });
+    ref.listen<int>(providerTabProvider, (prev, next) {
+      if (next == 3) {
+        _fetchConversations(silent: true);
+      }
+    });
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final displayedConversations = _conversations.where((conv) {
+      if (_searchQuery.isEmpty) return true;
+      final partnerName = (conv['partnerName'] ?? '').toString().toLowerCase();
+      final lastMsg = (conv['lastMessage'] ?? '').toString().toLowerCase();
+      return partnerName.contains(_searchQuery) || lastMsg.contains(_searchQuery);
+    }).toList();
 
     return WallpaperBackground(
       child: Scaffold(
@@ -100,6 +139,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                     border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
                   ),
                   child: TextField(
+                    onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
                     decoration: InputDecoration(
                       hintText: 'Search messages...',
                       hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade500),
@@ -132,7 +172,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : RefreshIndicator(
                           onRefresh: _fetchConversations,
-                          child: _conversations.isEmpty
+                          child: displayedConversations.isEmpty
                               ? Center(
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -140,12 +180,14 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                       Icon(Icons.chat_bubble_outline_rounded, size: 72, color: Colors.grey.withValues(alpha: 0.4)),
                                       const SizedBox(height: 16),
                                       Text(
-                                        'No messages yet',
+                                        _searchQuery.isNotEmpty ? 'No matching chats found' : 'No messages yet',
                                         style: TextStyle(fontSize: 18, color: isDark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.bold),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'Your conversations will appear here.',
+                                        _searchQuery.isNotEmpty
+                                            ? 'Try searching with another keyword.'
+                                            : 'Your conversations will appear here.',
                                         style: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
                                       ),
                                     ],
@@ -153,13 +195,13 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                 )
                               : ListView.separated(
                                   padding: const EdgeInsets.fromLTRB(0, 24, 0, 90),
-                                  itemCount: _conversations.length,
+                                  itemCount: displayedConversations.length,
                                   separatorBuilder: (context, index) => Padding(
                                     padding: const EdgeInsets.only(left: 88, right: 24),
                                     child: Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey.shade100),
                                   ),
                                   itemBuilder: (context, index) {
-                                    final conv = _conversations[index];
+                                    final conv = displayedConversations[index];
                                     final partnerId = conv['partnerId'];
                                     final partnerName = conv['partnerName'];
                                     final partnerImage = conv['partnerImage'] as String? ?? '';
@@ -183,7 +225,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                             ),
                                           ),
                                         );
-                                        _fetchConversations();
+                                        _fetchConversations(silent: true);
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),

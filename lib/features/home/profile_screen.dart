@@ -10,6 +10,8 @@ import '../../core/wallpaper_background.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'package:image_picker/image_picker.dart';
 import '../b2b/presentation/widgets/custom_image.dart';
+import 'main_layout.dart';
+import '../providers/provider_layout.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -42,7 +44,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (auth.id == null) return;
 
     if (auth.role != 'PROVIDER') {
-      // Fetch consumer profile details if any
+      // Sync consumer profile photo from auth state
+      if (auth.profileImage != null && auth.profileImage!.isNotEmpty) {
+        setState(() {
+          _profileImage = auth.profileImage;
+        });
+      }
+      try {
+        final userRes = await http.get(Uri.parse('$apiBaseUrl/users/${auth.id}')).timeout(const Duration(seconds: 4));
+        if (mounted && userRes.statusCode == 200) {
+          final data = jsonDecode(userRes.body);
+          if (data['profileImage'] != null) {
+            setState(() {
+              _profileImage = data['profileImage'];
+            });
+            ref.read(authProvider.notifier).updateProfileImage(data['profileImage']);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error fetching consumer profile: $e');
+      }
       return;
     }
 
@@ -65,6 +86,242 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     // Phase 2: Fetch other tabs/details in the background asynchronously
     _fetchBackgroundDetails(auth.id!);
+  }
+
+  Future<void> _pickConsumerProfileImage() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) {
+        final auth = ref.read(authProvider);
+        final hasImage = (_profileImage != null && _profileImage!.isNotEmpty) ||
+            (auth.profileImage != null && auth.profileImage!.isNotEmpty);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 4.5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Profile Photo',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Select a picture for your customer profile',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 18),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDFA),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.photo_library_rounded, color: Color(0xFF0D9488), size: 22),
+                  ),
+                  title: const Text('Choose from Gallery', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  subtitle: const Text('Pick an image from your photo album', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _handleImagePick(ImageSource.gallery);
+                  },
+                ),
+                const SizedBox(height: 6),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF2563EB), size: 22),
+                  ),
+                  title: const Text('Take a Photo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  subtitle: const Text('Use your device camera', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _handleImagePick(ImageSource.camera);
+                  },
+                ),
+                if (hasImage) ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: Divider(),
+                  ),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626), size: 22),
+                    ),
+                    title: const Text('Remove Photo', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.w700, fontSize: 15)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _removeProfilePhoto();
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _handleImagePick(ImageSource source) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 75,
+      );
+
+      if (image == null) return;
+
+      final bytes = await image.readAsBytes();
+      final base64Image = base64Encode(bytes);
+      final dataUrl = 'data:image/jpeg;base64,$base64Image';
+
+      setState(() {
+        _profileImage = dataUrl;
+      });
+
+      // Update in Riverpod AuthNotifier & SharedPreferences
+      ref.read(authProvider.notifier).updateProfileImage(dataUrl);
+
+      final auth = ref.read(authProvider);
+      if (auth.id != null) {
+        http.patch(
+          Uri.parse('$apiBaseUrl/users/${auth.id}'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'profileImage': dataUrl}),
+        ).then((res) {
+          if (res.statusCode == 200) {
+            debugPrint('User profile picture saved to backend');
+          }
+        }).catchError((err) {
+          debugPrint('Failed to save profile picture to backend: $err');
+        });
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture updated successfully!'),
+            backgroundColor: Color(0xFF0F766E),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update picture: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeProfilePhoto() async {
+    setState(() {
+      _profileImage = null;
+    });
+
+    ref.read(authProvider.notifier).updateProfileImage(null);
+
+    final auth = ref.read(authProvider);
+    if (auth.id != null) {
+      http.patch(
+        Uri.parse('$apiBaseUrl/users/${auth.id}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'profileImage': null}),
+      ).catchError((err) {
+        debugPrint('Failed to remove profile photo on backend: $err');
+        return http.Response('', 500);
+      });
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile picture removed'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Widget _buildAvatarWidget(String? imageSource, String name, double size) {
+    final initialLetter = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+
+    if (imageSource != null && imageSource.trim().isNotEmpty) {
+      final trimmed = imageSource.trim();
+      if (trimmed.startsWith('data:image')) {
+        try {
+          final commaIdx = trimmed.indexOf(',');
+          final base64Str = commaIdx != -1 ? trimmed.substring(commaIdx + 1) : trimmed;
+          final bytes = base64Decode(base64Str);
+          return ClipOval(
+            child: Image.memory(
+              bytes,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => _buildAvatarInitial(initialLetter, size),
+            ),
+          );
+        } catch (e) {
+          return _buildAvatarInitial(initialLetter, size);
+        }
+      } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return ClipOval(
+          child: Image.network(
+            trimmed,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _buildAvatarInitial(initialLetter, size),
+          ),
+        );
+      }
+    }
+    return _buildAvatarInitial(initialLetter, size);
+  }
+
+  Widget _buildAvatarInitial(String letter, double size) {
+    return Center(
+      child: Text(
+        letter,
+        style: TextStyle(
+          fontSize: size * 0.44,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF0D9488),
+        ),
+      ),
+    );
   }
 
   Future<void> _fetchBackgroundDetails(String providerId) async {
@@ -1468,6 +1725,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  void _handleBackNavigation(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    final auth = ref.read(authProvider);
+    if (auth.role == 'PROVIDER') {
+      final handled = ref.read(providerTabProvider.notifier).handleBack();
+      if (!handled) {
+        ref.read(providerTabProvider.notifier).state = 0;
+      }
+    } else {
+      final handled = ref.read(mainTabProvider.notifier).handleBack();
+      if (!handled) {
+        ref.read(mainTabProvider.notifier).state = 0;
+      }
+    }
+  }
+
   Widget _buildConsumerProfile(BuildContext context, AuthState auth, bool isDark) {
     final name = auth.name ?? 'test';
     final email = auth.email ?? 'test@gmail.com';
@@ -1475,16 +1751,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final formattedId = 'CUST-${userId.length > 5 ? userId.substring(userId.length - 5).toUpperCase() : userId.padLeft(5, '0').toUpperCase()}';
 
     final userProjectsAsync = auth.id != null ? ref.watch(userProjectsProvider(auth.id!)) : null;
-    final projects = userProjectsAsync?.value?.projects ?? [];
-    final orders = userProjectsAsync?.value?.materialOrders ?? [];
+    final userProjectsData = userProjectsAsync?.value;
+    final projects = userProjectsData?.projects ?? [];
+    final orders = userProjectsData?.materialOrders ?? [];
+    final inquiries = userProjectsData?.inquiries ?? [];
+
     int calculatedQuotes = 0;
     for (var p in projects) {
       calculatedQuotes += (p['_count']?['quotes'] as int? ?? (p['quotes'] as List?)?.length ?? 0);
     }
-    final int projectsCount = projects.isNotEmpty ? projects.length : 3;
-    final int quotesCount = calculatedQuotes > 0 ? calculatedQuotes : 7;
-    final int ordersCount = orders.isNotEmpty ? orders.length : 2;
-    const int inquiriesCount = 5;
+    final int projectsCount = projects.length;
+    final int quotesCount = calculatedQuotes;
+    final int ordersCount = orders.length;
+    final int inquiriesCount = inquiries.length;
 
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
@@ -1507,27 +1786,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          if (context.canPop()) {
-                            context.pop();
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _handleBackNavigation(context),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
                           ),
-                          child: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
                         ),
                       ),
                       Column(
@@ -1552,23 +1831,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ],
                       ),
-                      GestureDetector(
-                        onTap: () => context.push('/settings'),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => context.push('/settings'),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.settings_outlined, size: 20, color: Color(0xFF1E293B)),
                           ),
-                          child: const Icon(Icons.hexagon_outlined, size: 20, color: Color(0xFF1E293B)),
                         ),
                       ),
                     ],
@@ -1618,57 +1901,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           padding: EdgeInsets.all(isSmallScreen ? 14.0 : 18.0),
                           child: Row(
                             children: [
-                              // Left: Avatar + Details
+                              // Avatar + Details (QR code removed per request)
                               Expanded(
                                 child: Row(
                                   children: [
-                                    // Circular Avatar with camera icon badge
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          width: isSmallScreen ? 62 : 72,
-                                          height: isSmallScreen ? 62 : 72,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.white,
-                                            border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2.5),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.12),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 4),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              name.isNotEmpty ? name[0].toUpperCase() : 'T',
-                                              style: TextStyle(
-                                                fontSize: isSmallScreen ? 26 : 32,
-                                                fontWeight: FontWeight.w900,
-                                                color: const Color(0xFF0D9488),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          right: 0,
-                                          bottom: 0,
-                                          child: Container(
-                                            padding: const EdgeInsets.all(5),
+                                    // Interactive Avatar (tap to pick/take/remove photo)
+                                    GestureDetector(
+                                      onTap: _pickConsumerProfileImage,
+                                      child: Stack(
+                                        children: [
+                                          Container(
+                                            width: isSmallScreen ? 64 : 74,
+                                            height: isSmallScreen ? 64 : 74,
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF0F766E),
                                               shape: BoxShape.circle,
-                                              border: Border.all(color: Colors.white, width: 1.5),
+                                              color: Colors.white,
+                                              border: Border.all(
+                                                color: Colors.white.withValues(alpha: 0.85),
+                                                width: 2.5,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.14),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
                                             ),
-                                            child: const Icon(Icons.camera_alt_rounded, size: 11, color: Colors.white),
+                                            child: _buildAvatarWidget(
+                                              _profileImage ?? auth.profileImage,
+                                              name,
+                                              isSmallScreen ? 64 : 74,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                          Positioned(
+                                            right: 0,
+                                            bottom: 0,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(5.5),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF0F766E),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: Colors.white, width: 2),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withValues(alpha: 0.25),
+                                                    blurRadius: 4,
+                                                  ),
+                                                ],
+                                              ),
+                                              child: const Icon(Icons.camera_alt_rounded, size: 12, color: Colors.white),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 14),
 
-                                    // User Name, Email, and Customer Role
+                                    // User Name, Email, and Customer & Account ID Badges
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1676,7 +1966,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           Text(
                                             name,
                                             style: TextStyle(
-                                              fontSize: isSmallScreen ? 17 : 20,
+                                              fontSize: isSmallScreen ? 18 : 21,
                                               fontWeight: FontWeight.w900,
                                               color: Colors.white,
                                               letterSpacing: -0.3,
@@ -1688,37 +1978,67 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           Text(
                                             email,
                                             style: TextStyle(
-                                              fontSize: isSmallScreen ? 11 : 12.5,
-                                              color: Colors.white.withValues(alpha: 0.85),
+                                              fontSize: isSmallScreen ? 11.5 : 13,
+                                              color: Colors.white.withValues(alpha: 0.9),
                                               fontWeight: FontWeight.w500,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withValues(alpha: 0.18),
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: const [
-                                                Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  'CUSTOMER',
-                                                  style: TextStyle(
-                                                    fontSize: 9.5,
-                                                    fontWeight: FontWeight.w800,
-                                                    color: Colors.white,
-                                                    letterSpacing: 0.8,
-                                                  ),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 4,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withValues(alpha: 0.2),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
                                                 ),
-                                              ],
-                                            ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: const [
+                                                    Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      'CUSTOMER',
+                                                      style: TextStyle(
+                                                        fontSize: 9.5,
+                                                        fontWeight: FontWeight.w800,
+                                                        color: Colors.white,
+                                                        letterSpacing: 0.8,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withValues(alpha: 0.2),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(Icons.badge_outlined, size: 12, color: Colors.white),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      formattedId,
+                                                      style: const TextStyle(
+                                                        fontSize: 9.5,
+                                                        fontWeight: FontWeight.w800,
+                                                        color: Colors.white,
+                                                        letterSpacing: 0.4,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
@@ -1729,58 +2049,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                               const SizedBox(width: 8),
 
-                              // Right: Clean Cutout White Card with QR Code & Account ID
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isSmallScreen ? 8 : 12,
-                                  vertical: isSmallScreen ? 8 : 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.08),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF0FDFA),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.qr_code_2_rounded,
-                                        size: 26,
-                                        color: Color(0xFF0D9488),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Account ID',
-                                      style: TextStyle(
-                                        fontSize: 8.5,
-                                        color: Colors.grey.shade500,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 1),
-                                    Text(
-                                      formattedId,
-                                      style: const TextStyle(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF0F766E),
-                                        letterSpacing: 0.2,
-                                      ),
-                                    ),
-                                  ],
+                              // Quick Camera Edit Icon Button
+                              GestureDetector(
+                                onTap: _pickConsumerProfileImage,
+                                child: Container(
+                                  padding: const EdgeInsets.all(9),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                                  ),
+                                  child: const Icon(
+                                    Icons.photo_camera_back_outlined,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1819,6 +2102,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: const Color(0xFF0D9488),
                         bg: const Color(0xFFF0FDFA),
                         isSmallScreen: isSmallScreen,
+                        onTap: () => context.push('/dashboard'),
                       ),
                       _buildAccountStatItem(
                         icon: Icons.assignment_outlined,
@@ -1827,6 +2111,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: const Color(0xFF2563EB),
                         bg: const Color(0xFFEFF6FF),
                         isSmallScreen: isSmallScreen,
+                        onTap: () => context.push('/dashboard'),
                       ),
                       _buildAccountStatItem(
                         icon: Icons.inventory_2_outlined,
@@ -1835,6 +2120,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: const Color(0xFFEA580C),
                         bg: const Color(0xFFFFF7ED),
                         isSmallScreen: isSmallScreen,
+                        onTap: () => context.push('/b2b-materials'),
                       ),
                       _buildAccountStatItem(
                         icon: Icons.chat_bubble_outline_rounded,
@@ -1843,6 +2129,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: const Color(0xFF9333EA),
                         bg: const Color(0xFFFAF5FF),
                         isSmallScreen: isSmallScreen,
+                        onTap: () => context.push('/b2b-my-inquiries'),
                       ),
                     ],
                   ),
@@ -1988,52 +2275,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required Color color,
     required Color bg,
     required bool isSmallScreen,
+    VoidCallback? onTap,
   }) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+            child: Column(
               children: [
-                Container(
-                  padding: EdgeInsets.all(isSmallScreen ? 5 : 6),
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: isSmallScreen ? 14 : 16, color: color),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(isSmallScreen ? 5 : 6),
+                      decoration: BoxDecoration(
+                        color: bg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, size: isSmallScreen ? 14 : 16, color: color),
+                    ),
+                    const SizedBox(width: 4),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        count,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 15 : 18,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(height: 6),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    count,
+                    label,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: isSmallScreen ? 15 : 18,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF0F172A),
+                      fontSize: isSmallScreen ? 9.5 : 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF64748B),
+                      height: 1.2,
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 9.5 : 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF64748B),
-                  height: 1.2,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

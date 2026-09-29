@@ -7,8 +7,8 @@ export async function GET(request: Request) {
     const userId = searchParams.get('userId');
     const role = searchParams.get('role'); // 'PROVIDER' or 'CONSUMER'
 
-    if (!userId || !role) {
-      return NextResponse.json({ error: 'Missing userId or role' }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
     // Get all messages involving this user
@@ -42,29 +42,73 @@ export async function GET(request: Request) {
 
     // Populate partner details (e.g. name, profileImage)
     const result = [];
+    const normalizedRole = role ? role.toUpperCase() : '';
+
     for (const conv of conversations) {
-      let partnerName = 'Unknown User';
+      let partnerName = '';
       let partnerImage = '';
 
-      if (role === 'CONSUMER') {
-        // Partner is a PROVIDER
+      if (normalizedRole === 'CONSUMER') {
+        // Consumer partner is usually a Provider
         const provider = await prisma.provider.findUnique({
           where: { id: conv.partnerId },
-          select: { businessName: true, profileImage: true },
+          select: { businessName: true, ownerName: true, profileImage: true },
         });
         if (provider) {
-          partnerName = provider.businessName;
+          partnerName = provider.businessName || provider.ownerName || 'Provider';
           partnerImage = provider.profileImage || '';
+        } else {
+          const user = await prisma.user.findUnique({
+            where: { id: conv.partnerId },
+            select: { name: true, profileImage: true },
+          });
+          if (user) {
+            partnerName = user.name;
+            partnerImage = user.profileImage || '';
+          }
         }
-      } else {
-        // Partner is a CONSUMER (User)
+      } else if (normalizedRole === 'PROVIDER') {
+        // Provider partner is usually a Consumer (User)
         const user = await prisma.user.findUnique({
           where: { id: conv.partnerId },
-          select: { name: true },
+          select: { name: true, profileImage: true },
         });
         if (user) {
           partnerName = user.name;
+          partnerImage = user.profileImage || '';
+        } else {
+          const provider = await prisma.provider.findUnique({
+            where: { id: conv.partnerId },
+            select: { businessName: true, ownerName: true, profileImage: true },
+          });
+          if (provider) {
+            partnerName = provider.businessName || provider.ownerName || 'Provider';
+            partnerImage = provider.profileImage || '';
+          }
         }
+      } else {
+        // Unknown or unspecified role: search provider then user
+        const provider = await prisma.provider.findUnique({
+          where: { id: conv.partnerId },
+          select: { businessName: true, ownerName: true, profileImage: true },
+        });
+        if (provider) {
+          partnerName = provider.businessName || provider.ownerName || 'Provider';
+          partnerImage = provider.profileImage || '';
+        } else {
+          const user = await prisma.user.findUnique({
+            where: { id: conv.partnerId },
+            select: { name: true, profileImage: true },
+          });
+          if (user) {
+            partnerName = user.name;
+            partnerImage = user.profileImage || '';
+          }
+        }
+      }
+
+      if (!partnerName || partnerName.trim().length === 0) {
+        partnerName = 'Contact';
       }
 
       result.push({

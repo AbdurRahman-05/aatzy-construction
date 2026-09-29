@@ -69,6 +69,15 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const recipientId = searchParams.get('recipientId');
+    const all = searchParams.get('all') === 'true';
+
+    if (all && recipientId) {
+      await prisma.notification.deleteMany({
+        where: { recipientId },
+      });
+      return NextResponse.json({ message: 'All notifications deleted' });
+    }
 
     if (!id) {
       return NextResponse.json({ error: 'Notification id is required' }, { status: 400 });
