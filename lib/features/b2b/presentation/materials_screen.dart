@@ -986,34 +986,20 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     }
 
     if (lead.status == 'Closed') {
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _showCloseDealDialog(lead),
-              icon: const Icon(Icons.local_shipping_outlined, size: 18),
-              label: const Text('Update Status'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-            ),
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
+            );
+          },
+          icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
+          label: const Text('Call Buyer'),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 10),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
-                );
-              },
-              icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
-              label: const Text('Call Buyer'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-            ),
-          ),
-        ],
+        ),
       );
     }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
@@ -991,6 +992,72 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     );
   }
 
+  Future<void> _showDeleteConfirmationDialog() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete Project', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to permanently delete this cancelled project? This will delete all tasks, logs, and associated records. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Delete Permanently', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isLoading = true);
+      try {
+        final response = await http.delete(Uri.parse('$apiBaseUrl/projects/${widget.projectId}'));
+        if (response.statusCode == 200) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Project deleted successfully'), backgroundColor: Colors.green),
+          );
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            context.go('/provider-home');
+          }
+        } else {
+          final data = jsonDecode(response.body);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['error'] ?? 'Failed to delete project'), backgroundColor: Colors.red),
+          );
+          setState(() => _isLoading = false);
+        }
+      } catch (e) {
+        debugPrint('Error deleting project: $e');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error deleting project. Connection failed.'), backgroundColor: Colors.red),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _showAddTaskDialog() {
     final titleController = TextEditingController();
     final durationController = TextEditingController(text: '5');
@@ -1125,6 +1192,12 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
     final totalCount = tasks.length;
 
+    final currentStage = _project?['currentStage'] ?? 'Tracking';
+    final stageLower = currentStage.toString().toLowerCase().trim();
+    final bool isCompleted = stageLower == 'completed' || stageLower == 'finished';
+    final bool isCancelled = stageLower == 'cancelled';
+    final bool isReadOnly = isCompleted || isCancelled;
+
     double totalQuoted = 0.0;
     double totalSpent = 0.0;
     for (final t in tasks) {
@@ -1143,8 +1216,24 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go('/provider-home');
+              }
+            },
+          ),
           title: Text(title),
           actions: [
+            if (isCancelled)
+              IconButton(
+                icon: const Icon(Icons.delete_forever, color: Colors.red),
+                tooltip: 'Delete Cancelled Project',
+                onPressed: _showDeleteConfirmationDialog,
+              ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _fetchProjectDetails,
@@ -1160,6 +1249,53 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Completed or Cancelled View-Only Banner
+                        if (isCompleted) ...[
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 20),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Project Completed (View-Only Mode) — All milestones and tasks finalized.',
+                                    style: TextStyle(color: Color(0xFF065F46), fontWeight: FontWeight.w700, fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else if (isCancelled) ...[
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFECACA)),
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.cancel_rounded, color: Color(0xFFDC2626), size: 20),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Project Cancelled — Work has stopped. You can permanently delete this project below.',
+                                    style: TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w700, fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
                         // Client details card
                         Card(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -1229,14 +1365,36 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
-                                  child: Row(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Icon(Icons.cancel, color: Colors.red, size: 28),
-                                      const SizedBox(width: 12),
-                                      const Expanded(
-                                        child: Text(
-                                          'Project has been Cancelled.',
-                                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
+                                      Row(
+                                        children: const [
+                                          Icon(Icons.cancel, color: Colors.red, size: 28),
+                                          SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'Project has been Cancelled.',
+                                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      const Text(
+                                        'This project was cancelled. You can permanently delete this project and all its records.',
+                                        style: TextStyle(fontSize: 12, color: Colors.redAccent),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      ElevatedButton.icon(
+                                        onPressed: _showDeleteConfirmationDialog,
+                                        icon: const Icon(Icons.delete_forever, size: 18),
+                                        label: const Text('Delete Project Data'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red.shade700,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                         ),
                                       ),
                                     ],
@@ -1399,21 +1557,23 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                       style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                                       textAlign: TextAlign.center,
                                     ),
-                                    const SizedBox(height: 24),
-                                    ElevatedButton.icon(
-                                      onPressed: _generateTemplateTasks,
-                                      icon: const Icon(Icons.auto_awesome),
-                                      label: const Text('Generate Smart Plan Template'),
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    if (!isReadOnly) ...[
+                                      const SizedBox(height: 24),
+                                      ElevatedButton.icon(
+                                        onPressed: _generateTemplateTasks,
+                                        icon: const Icon(Icons.auto_awesome),
+                                        label: const Text('Generate Smart Plan Template'),
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    TextButton(
-                                      onPressed: _showAddTaskDialog,
-                                      child: const Text('Create Custom Step'),
-                                    ),
+                                      const SizedBox(height: 8),
+                                      TextButton(
+                                        onPressed: _showAddTaskDialog,
+                                        child: const Text('Create Custom Step'),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -1426,14 +1586,15 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                   'Pending Project Steps',
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                ElevatedButton.icon(
-                                  onPressed: _showAddTaskDialog,
-                                  icon: const Icon(Icons.add_task, size: 16),
-                                  label: const Text('Add Step'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                if (!isReadOnly)
+                                  ElevatedButton.icon(
+                                    onPressed: _showAddTaskDialog,
+                                    icon: const Icon(Icons.add_task, size: 16),
+                                    label: const Text('Add Step'),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -1490,20 +1651,22 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                             Text('Est. Duration: $tDuration days'),
                                           ],
                                         ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.play_arrow, color: Colors.blue),
-                                              tooltip: 'Start Task',
-                                              onPressed: () => _startTask(taskId),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                              onPressed: () => _deleteTask(taskId),
-                                            ),
-                                          ],
-                                        ),
+                                        trailing: isReadOnly
+                                            ? null
+                                            : Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(Icons.play_arrow, color: Colors.blue),
+                                                    tooltip: 'Start Task',
+                                                    onPressed: () => _startTask(taskId),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                                    onPressed: () => _deleteTask(taskId),
+                                                  ),
+                                                ],
+                                              ),
                                       ),
                                     );
                                   },
@@ -1577,15 +1740,17 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                           Text('Duration: $tDuration days in progress'),
                                         ],
                                       ),
-                                      trailing: ElevatedButton.icon(
-                                        icon: const Icon(Icons.check, size: 16),
-                                        label: const Text('Complete'),
-                                        onPressed: () => _showTaskStatusSheet(task),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.green,
-                                          foregroundColor: Colors.white,
-                                        ),
-                                      ),
+                                      trailing: isReadOnly
+                                          ? null
+                                          : ElevatedButton.icon(
+                                              icon: const Icon(Icons.check, size: 16),
+                                              label: const Text('Complete'),
+                                              onPressed: () => _showTaskStatusSheet(task),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.green,
+                                                foregroundColor: Colors.white,
+                                              ),
+                                            ),
                                     ),
                                   );
                                 },
@@ -1711,11 +1876,14 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                             const SizedBox(height: 12),
                                             GestureDetector(
                                               onTap: () {
+                                                final rawPhoto = task['photoUrl'] as String;
+                                                final isNet = rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://');
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) => FullScreenImageViewer(
-                                                      base64Image: task['photoUrl'] as String,
+                                                      base64Image: isNet ? null : rawPhoto,
+                                                      imageUrl: isNet ? rawPhoto : null,
                                                       title: task['title'] ?? 'Task Photo',
                                                     ),
                                                   ),
@@ -1723,11 +1891,43 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                               },
                                               child: ClipRRect(
                                                 borderRadius: BorderRadius.circular(8),
-                                                child: Image.memory(
-                                                  base64Decode((task['photoUrl'] as String).split(',').last),
-                                                  height: 120,
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
+                                                child: Builder(
+                                                  builder: (context) {
+                                                    final rawPhoto = (task['photoUrl'] as String).trim();
+                                                    if (rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://')) {
+                                                      return Image.network(
+                                                        rawPhoto,
+                                                        height: 120,
+                                                        width: double.infinity,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context, error, stackTrace) => Container(
+                                                          height: 120,
+                                                          color: Colors.grey.shade200,
+                                                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                                        ),
+                                                      );
+                                                    }
+                                                    try {
+                                                      final cleanB64 = (rawPhoto.contains(',') ? rawPhoto.split(',').last : rawPhoto).replaceAll(RegExp(r'\\s+'), '');
+                                                      return Image.memory(
+                                                        base64Decode(cleanB64),
+                                                        height: 120,
+                                                        width: double.infinity,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context, error, stackTrace) => Container(
+                                                          height: 120,
+                                                          color: Colors.grey.shade200,
+                                                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                                        ),
+                                                      );
+                                                    } catch (_) {
+                                                      return Container(
+                                                        height: 120,
+                                                        color: Colors.grey.shade200,
+                                                        child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                                      );
+                                                    }
+                                                  },
                                                 ),
                                               ),
                                             ),
@@ -2065,14 +2265,15 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 'Labor & Wage Management',
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                               ),
-                              ElevatedButton.icon(
-                                onPressed: _showAddWorkerDialog,
-                                icon: const Icon(Icons.person_add, size: 16),
-                                label: const Text('Add Worker'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              if (!isReadOnly)
+                                ElevatedButton.icon(
+                                  onPressed: _showAddWorkerDialog,
+                                  icon: const Icon(Icons.person_add, size: 16),
+                                  label: const Text('Add Worker'),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -2166,51 +2367,54 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                               Checkbox(
                                                 value: worker.isPresentToday,
                                                 activeColor: Theme.of(context).primaryColor,
-                                                onChanged: (val) {
-                                                  if (val != null) {
-                                                    setState(() {
-                                                      worker.isPresentToday = val;
-                                                      if (val) {
-                                                        worker.daysPresent += 1;
-                                                      } else {
-                                                        worker.daysPresent = (worker.daysPresent - 1).clamp(0, 999);
-                                                      }
-                                                    });
-                                                  }
-                                                },
+                                                onChanged: isReadOnly
+                                                    ? null
+                                                    : (val) {
+                                                        if (val != null) {
+                                                          setState(() {
+                                                            worker.isPresentToday = val;
+                                                            if (val) {
+                                                              worker.daysPresent += 1;
+                                                            } else {
+                                                              worker.daysPresent = (worker.daysPresent - 1).clamp(0, 999);
+                                                            }
+                                                          });
+                                                        }
+                                                      },
                                               ),
                                               const Text('Present Today', style: TextStyle(fontSize: 12)),
                                             ],
                                           ),
-                                          Row(
-                                            children: [
-                                              TextButton.icon(
-                                                onPressed: () => _showEditWorkerDialog(worker),
-                                                icon: const Icon(Icons.edit, size: 14),
-                                                label: const Text('Edit', style: TextStyle(fontSize: 12)),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Colors.blue,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                          if (!isReadOnly)
+                                            Row(
+                                              children: [
+                                                TextButton.icon(
+                                                  onPressed: () => _showEditWorkerDialog(worker),
+                                                  icon: const Icon(Icons.edit, size: 14),
+                                                  label: const Text('Edit', style: TextStyle(fontSize: 12)),
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor: Colors.blue,
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  ),
                                                 ),
-                                              ),
-                                              IconButton(
-                                                onPressed: () => _deleteWorker(worker),
-                                                icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                                padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              TextButton.icon(
-                                                onPressed: () => _showPayWagesDialog(worker),
-                                                icon: const Icon(Icons.payment, size: 14),
-                                                label: const Text('Pay Wages', style: TextStyle(fontSize: 12)),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Theme.of(context).primaryColor,
-                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                IconButton(
+                                                  onPressed: () => _deleteWorker(worker),
+                                                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: const BoxConstraints(),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
+                                                const SizedBox(width: 4),
+                                                TextButton.icon(
+                                                  onPressed: () => _showPayWagesDialog(worker),
+                                                  icon: const Icon(Icons.payment, size: 14),
+                                                  label: const Text('Pay Wages', style: TextStyle(fontSize: 12)),
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor: Theme.of(context).primaryColor,
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                         ],
                                       ),
                                     ],
@@ -2230,14 +2434,15 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                   'Daily Progress Logs',
                                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                                ElevatedButton.icon(
-                                  onPressed: _showAddUpdateDialog,
-                                  icon: const Icon(Icons.add, size: 18),
-                                  label: const Text('Add Log'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                if (!isReadOnly)
+                                  ElevatedButton.icon(
+                                    onPressed: _showAddUpdateDialog,
+                                    icon: const Icon(Icons.add, size: 18),
+                                    label: const Text('Add Log'),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 16),

@@ -12,6 +12,7 @@ import '../../core/providers/notifications_provider.dart';
 import '../auth/auth_provider.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'provider_layout.dart';
+import '../home/profile_screen.dart';
 
 class ProviderDashboard extends ConsumerStatefulWidget {
   const ProviderDashboard({super.key});
@@ -1844,15 +1845,15 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   }
 }
 
-class MaterialSourcingCarouselWidget extends StatefulWidget {
+class MaterialSourcingCarouselWidget extends ConsumerStatefulWidget {
   final bool isSmallScreen;
   const MaterialSourcingCarouselWidget({super.key, required this.isSmallScreen});
 
   @override
-  State<MaterialSourcingCarouselWidget> createState() => _MaterialSourcingCarouselWidgetState();
+  ConsumerState<MaterialSourcingCarouselWidget> createState() => _MaterialSourcingCarouselWidgetState();
 }
 
-class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouselWidget> {
+class _MaterialSourcingCarouselWidgetState extends ConsumerState<MaterialSourcingCarouselWidget> {
   int _carouselIndex = 0;
   final PageController _carouselPageController = PageController();
   Timer? _carouselTimer;
@@ -1879,13 +1880,28 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
     {
       'tag': 'VERIFIED BUILDER',
       'title': 'Showcase Your Projects',
-      'desc': 'Upload photos of completed sites to get inquiries from premium clients.',
-      'btn': 'Post Showcase',
-      'route': '/services',
+      'desc': 'Upload photos of completed sites and manage your contractor profile.',
+      'btn': 'View Profile',
+      'route': 'profile',
       'colors': [Color(0xFF0F766E), Color(0xFF14B8A6)],
-      'icon': Icons.architecture_rounded,
+      'icon': Icons.person_rounded,
     },
   ];
+
+  void _onSlideTap(String route) {
+    if (route == 'profile' || route == '/profile') {
+      try {
+        ref.read(providerTabProvider.notifier).setTab(4);
+      } catch (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
+      }
+    } else {
+      context.push(route);
+    }
+  }
 
   @override
   void initState() {
@@ -1929,8 +1945,10 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
               final slide = slides[index];
               final colors = slide['colors'] as List<Color>;
 
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2),
+              return GestureDetector(
+                onTap: () => _onSlideTap(slide['route'] as String),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
                 padding: EdgeInsets.symmetric(horizontal: widget.isSmallScreen ? 12 : 16, vertical: 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
@@ -1995,7 +2013,7 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
                           ),
                           const SizedBox(height: 6),
                           GestureDetector(
-                            onTap: () => context.push(slide['route'] as String),
+                            onTap: () => _onSlideTap(slide['route'] as String),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
                               decoration: BoxDecoration(
@@ -2076,8 +2094,9 @@ class _MaterialSourcingCarouselWidgetState extends State<MaterialSourcingCarouse
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            );
+          },
           ),
         ),
         const SizedBox(height: 8),

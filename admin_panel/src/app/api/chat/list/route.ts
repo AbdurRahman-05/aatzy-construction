@@ -124,3 +124,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const partnerId = searchParams.get('partnerId');
+
+    if (!userId || !partnerId) {
+      return NextResponse.json({ error: 'Missing userId or partnerId' }, { status: 400 });
+    }
+
+    await prisma.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: partnerId },
+          { senderId: partnerId, receiverId: userId },
+        ],
+      },
+    });
+
+    return NextResponse.json({ success: true, message: 'Conversation deleted successfully' });
+  } catch (error) {
+    console.error('Delete conversation error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

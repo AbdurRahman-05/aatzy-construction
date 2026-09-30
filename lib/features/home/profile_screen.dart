@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/auth_provider.dart';
 import '../../core/constants.dart';
 import '../../core/providers/projects_provider.dart';
@@ -29,6 +30,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int _supplierLeadsCount = 0;
   int _serviceLeadsCount = 0;
   bool _isLoading = false;
+  bool _isFetching = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -39,53 +41,87 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
   }
 
-  Future<void> _fetchProfileData() async {
-    final auth = ref.read(authProvider);
-    if (auth.id == null) return;
-
-    if (auth.role != 'PROVIDER') {
-      // Sync consumer profile photo from auth state
-      if (auth.profileImage != null && auth.profileImage!.isNotEmpty) {
-        setState(() {
-          _profileImage = auth.profileImage;
-        });
-      }
-      try {
-        final userRes = await http.get(Uri.parse('$apiBaseUrl/users/${auth.id}')).timeout(const Duration(seconds: 25));
-        if (mounted && userRes.statusCode == 200) {
-          final data = jsonDecode(userRes.body);
-          if (data['profileImage'] != null) {
-            setState(() {
-              _profileImage = data['profileImage'];
-            });
-            ref.read(authProvider.notifier).updateProfileImage(data['profileImage']);
-          }
-        }
-      } catch (e) {
-        debugPrint('Error fetching consumer profile: $e');
-      }
-      return;
+  ImageProvider? _resolveImageProvider(String? imgStr) {
+    if (imgStr == null || imgStr.trim().isEmpty) return null;
+    final trimmed = imgStr.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return NetworkImage(trimmed);
     }
+    final bytes = Base64ImageCache.decode(trimmed);
+    if (bytes.isNotEmpty) {
+      return MemoryImage(bytes);
+    }
+    return null;
+  }
 
-    // Phase 1: Fetch primary profile data to render the screen ASAP
-    setState(() => _isLoading = true);
+  Future<void> _fetchProfileData() async {
+    if (_isFetching) return;
+    _isFetching = true;
 
     try {
-      final profileRes = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/profile'));
-      if (mounted && profileRes.statusCode == 200) {
-        setState(() {
-          _providerData = jsonDecode(profileRes.body)['provider'];
-          _profileImage = _providerData?['profileImage'];
-          _isLoading = false; // Render the UI immediately!
-        });
-      }
-    } catch (e) {
-      debugPrint('Error fetching primary profile data: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
+      final auth = ref.read(authProvider);
+      final prefs = await SharedPreferences.getInstance();
+      final effectiveId = auth.id ?? prefs.getString('auth_id');
+      final effectiveRole = auth.role ?? prefs.getString('auth_role');
 
-    // Phase 2: Fetch other tabs/details in the background asynchronously
-    _fetchBackgroundDetails(auth.id!);
+      if (effectiveId == null) {
+        return;
+      }
+
+      if (effectiveRole != 'PROVIDER') {
+        // Sync consumer profile photo from auth state
+        final savedConsumerImage = auth.profileImage ?? prefs.getString('auth_profileImage');
+        if (savedConsumerImage != null && savedConsumerImage.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              _profileImage = savedConsumerImage;
+            });
+          }
+        }
+        try {
+          final userRes = await http.get(Uri.parse('$apiBaseUrl/users/$effectiveId')).timeout(const Duration(seconds: 25));
+          if (mounted && userRes.statusCode == 200) {
+            final data = jsonDecode(userRes.body);
+            if (data['profileImage'] != null) {
+              setState(() {
+                _profileImage = data['profileImage'];
+              });
+              ref.read(authProvider.notifier).updateProfileImage(data['profileImage']);
+            }
+          }
+        } catch (e) {
+          debugPrint('Error fetching consumer profile: $e');
+        }
+        return;
+      }
+
+      // Phase 1: Fetch primary profile data to render the screen ASAP
+      if (_providerData == null && mounted) {
+        setState(() => _isLoading = true);
+      }
+
+      try {
+        final profileRes = await http.get(Uri.parse('$apiBaseUrl/providers/$effectiveId/profile'));
+        if (mounted && profileRes.statusCode == 200) {
+          final decoded = jsonDecode(profileRes.body);
+          setState(() {
+            _providerData = decoded['provider'];
+            _profileImage = _providerData?['profileImage'] ?? auth.profileImage ?? prefs.getString('auth_profileImage');
+            _isLoading = false; // Render the UI immediately!
+          });
+        } else {
+          if (mounted) setState(() => _isLoading = false);
+        }
+      } catch (e) {
+        debugPrint('Error fetching primary profile data: $e');
+        if (mounted) setState(() => _isLoading = false);
+      }
+
+      // Phase 2: Fetch other tabs/details in the background asynchronously
+      _fetchBackgroundDetails(effectiveId);
+    } finally {
+      _isFetching = false;
+    }
   }
 
   Future<void> _pickConsumerProfileImage() async {
@@ -391,15 +427,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authProvider, (previous, next) {
+      if (next.id != null && (previous?.id != next.id || _providerData == null)) {
+        _fetchProfileData();
+      }
+    });
+
     final auth = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
+
+    if (_providerData == null && !_isFetching && auth.id != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _providerData == null && !_isFetching) {
+          _fetchProfileData();
+        }
+      });
+    }
 
     if (auth.role != 'PROVIDER') {
       return _buildConsumerProfile(context, auth, isDark);
     }
 
-    final name = auth.businessName ?? auth.name ?? 'Guest Provider';
+    final name = _providerData?['businessName'] ?? auth.businessName ?? auth.name ?? 'Guest Provider';
 
     return WallpaperBackground(
       child: Scaffold(
@@ -494,15 +544,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildProviderHeader(Color primaryColor, bool isDark) {
-    if (_providerData == null) return const SizedBox();
-
-    final name = _providerData!['businessName'] ?? 'Unknown Business';
-    final owner = _providerData!['ownerName'] ?? 'N/A';
-    final experience = _providerData!['experience'] ?? 0;
-    final rating = _providerData!['avgRating'] ?? 0.0;
-    final categories = (_providerData!['category'] as String? ?? 'General').split(',');
-    final bio = _providerData!['bio'] ?? 'No bio provided.';
-    final reviewsCount = (_providerData!['reviews'] as List?)?.length ?? 0;
+    final auth = ref.watch(authProvider);
+    final name = _providerData?['businessName'] ?? auth.businessName ?? auth.name ?? 'Provider Business';
+    final owner = _providerData?['ownerName'] ?? auth.name ?? 'Provider';
+    final experience = _providerData?['experience'] ?? 0;
+    final rating = (_providerData?['avgRating'] as num?)?.toDouble() ?? 0.0;
+    final categoryRaw = _providerData?['category'] as String?;
+    final categories = (categoryRaw != null && categoryRaw.isNotEmpty)
+        ? categoryRaw.split(',')
+        : ['General Construction'];
+    final bio = (_providerData?['bio'] as String?) ?? '';
+    final reviewsCount = (_providerData?['reviews'] as List?)?.length ?? 0;
+    final gst = _providerData?['gstNumber'] as String? ?? auth.gstNumber ?? '';
+    final displayImage = _profileImage ?? auth.profileImage;
+    final avatarImageProvider = _resolveImageProvider(displayImage);
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -567,12 +622,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               child: CircleAvatar(
                                 radius: 36,
                                 backgroundColor: Colors.blue.shade100,
-                                backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
-                                    ? MemoryImage(Base64ImageCache.decode(_profileImage!))
-                                    : null,
-                                child: _profileImage == null || _profileImage!.isEmpty
+                                backgroundImage: avatarImageProvider,
+                                child: avatarImageProvider == null
                                     ? Text(
-                                        name[0].toUpperCase(),
+                                        name.isNotEmpty ? name[0].toUpperCase() : 'P',
                                         style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
                                       )
                                     : null,
@@ -624,14 +677,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            if ((_providerData!['gstNumber'] as String? ?? ref.read(authProvider).gstNumber ?? '').isNotEmpty) ...[
+                            if (gst.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Row(
                                 children: [
                                   Icon(Icons.verified_user_rounded, color: primaryColor, size: 14),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'GST: ${_providerData!['gstNumber'] as String? ?? ref.read(authProvider).gstNumber ?? ''}',
+                                    'GST: $gst',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
@@ -1366,8 +1419,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildReviewsTab(bool isDark) {
-    if (_providerData == null) return const SizedBox();
-    final reviews = _providerData!['reviews'] as List? ?? [];
+    final reviews = (_providerData?['reviews'] as List?) ?? [];
     
     if (reviews.isEmpty) {
       return const SingleChildScrollView(
@@ -1473,17 +1525,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildInfoTab(bool isDark) {
-    if (_providerData == null) return const SizedBox();
+    final auth = ref.watch(authProvider);
+    final email = _providerData?['email'] ?? auth.email;
+    final phone = _providerData?['phone'];
+    final address = _providerData?['address'];
+    final ownerName = _providerData?['ownerName'] ?? auth.name ?? 'Provider';
+    final experience = _providerData?['experience'] ?? 0;
     
-    final email = _providerData!['email'];
-    final phone = _providerData!['phone'];
-    final address = _providerData!['address'];
-    final ownerName = _providerData!['ownerName'] ?? 'N/A';
-    final experience = _providerData!['experience'] ?? 0;
-    
-    final businessType = _providerData!['businessType'] ?? '';
-    final gst = _providerData!['gstNumber'] ?? '';
-    final website = _providerData!['website'] ?? '';
+    final businessType = _providerData?['businessType'] ?? '';
+    final gst = _providerData?['gstNumber'] ?? auth.gstNumber ?? '';
+    final website = _providerData?['website'] ?? '';
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -1600,27 +1651,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Colors.blue.shade100,
-                      backgroundImage: _profileImage != null && _profileImage!.isNotEmpty
-                          ? MemoryImage(Base64ImageCache.decode(_profileImage!))
-                          : null,
-                      child: _profileImage == null || _profileImage!.isEmpty
-                          ? Text(
-                              (_providerData?['businessName'] ?? 'P')[0].toUpperCase(),
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _providerData?['businessName'] ?? 'Provider',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final postAvatarImage = _resolveImageProvider(_profileImage ?? ref.read(authProvider).profileImage);
+                        final bName = _providerData?['businessName'] ?? ref.read(authProvider).businessName ?? 'Provider';
+                        return Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: Colors.blue.shade100,
+                              backgroundImage: postAvatarImage,
+                              child: postAvatarImage == null
+                                  ? Text(
+                                      bName.isNotEmpty ? bName[0].toUpperCase() : 'P',
+                                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                bName,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 20),

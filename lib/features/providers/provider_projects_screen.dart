@@ -59,6 +59,65 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
     }
   }
 
+  Future<void> _confirmDeleteCancelledProject(String projectId, String title) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete Project', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to permanently delete "$title"? All associated tasks, quotes, and tracking records will be removed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Delete Permanently', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        final response = await http.delete(Uri.parse('$apiBaseUrl/projects/$projectId'));
+        if (response.statusCode == 200) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Project deleted successfully'), backgroundColor: Colors.green),
+          );
+          _fetchProjects();
+        } else {
+          final data = jsonDecode(response.body);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['error'] ?? 'Failed to delete project'), backgroundColor: Colors.red),
+          );
+        }
+      } catch (e) {
+        debugPrint('Error deleting project: $e');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Connection failed. Could not delete project.'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   List<dynamic> _filterProjectsByStage(List<String> stages) {
     return _projects.where((project) {
       final stage = (project['currentStage'] as String? ?? 'Design & Planning').toLowerCase();
@@ -222,59 +281,79 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: isCancelled
-                                  ? Colors.red.shade50
-                                  : (isCompleted
-                                      ? Colors.green.shade50
-                                      : (isPendingApproval ? Colors.amber.shade50 : const Color(0xFFEEF2FF))),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isCancelled
-                                    ? Colors.red.shade200
-                                    : (isCompleted
-                                        ? Colors.green.shade200
-                                        : (isPendingApproval ? Colors.amber.shade300 : const Color(0xFFC7D2FE))),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isCancelled
-                                      ? Icons.cancel_rounded
-                                      : (isCompleted
-                                          ? Icons.check_circle_rounded
-                                          : (isPendingApproval ? Icons.rate_review_rounded : Icons.sync_rounded)),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
                                   color: isCancelled
-                                      ? Colors.red
+                                      ? Colors.red.shade50
                                       : (isCompleted
-                                          ? Colors.green.shade700
-                                          : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
-                                  size: 10,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  isCancelled
-                                      ? 'Cancelled'
-                                      : (isCompleted
-                                          ? 'Finished'
-                                          : (isPendingApproval ? 'Pending' : 'Ongoing')),
-                                  style: TextStyle(
+                                          ? Colors.green.shade50
+                                          : (isPendingApproval ? Colors.amber.shade50 : const Color(0xFFEEF2FF))),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
                                     color: isCancelled
-                                        ? Colors.red
+                                        ? Colors.red.shade200
                                         : (isCompleted
-                                            ? Colors.green.shade700
-                                            : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.bold,
+                                            ? Colors.green.shade200
+                                            : (isPendingApproval ? Colors.amber.shade300 : const Color(0xFFC7D2FE))),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isCancelled
+                                          ? Icons.cancel_rounded
+                                          : (isCompleted
+                                              ? Icons.check_circle_rounded
+                                              : (isPendingApproval ? Icons.rate_review_rounded : Icons.sync_rounded)),
+                                      color: isCancelled
+                                          ? Colors.red
+                                          : (isCompleted
+                                              ? Colors.green.shade700
+                                              : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
+                                      size: 10,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      isCancelled
+                                          ? 'Cancelled'
+                                          : (isCompleted
+                                              ? 'Finished'
+                                              : (isPendingApproval ? 'Pending' : 'Ongoing')),
+                                      style: TextStyle(
+                                        color: isCancelled
+                                            ? Colors.red
+                                            : (isCompleted
+                                                ? Colors.green.shade700
+                                                : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
+                                        fontSize: 8.5,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isCancelled) ...[
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  onTap: () => _confirmDeleteCancelledProject(projectId, title),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade50,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.red.shade300, width: 0.8),
+                                    ),
+                                    child: const Icon(Icons.delete_outline, size: 12, color: Colors.red),
                                   ),
                                 ),
                               ],
-                            ),
+                            ],
                           ),
                         ],
                       ),

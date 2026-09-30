@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,43 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   int _filterIndex = 0; // 0: All, 1: Unread
+  Timer? _snackBarTimer;
+
+  @override
+  void dispose() {
+    _snackBarTimer?.cancel();
+    super.dispose();
+  }
+
+  void _showDeleteUndoSnackBar(NotificationModel n, int index) {
+    _snackBarTimer?.cancel();
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Notification deleted'),
+        duration: const Duration(seconds: 10),
+        behavior: SnackBarBehavior.floating,
+        dismissDirection: DismissDirection.horizontal,
+        action: SnackBarAction(
+          label: 'Undo',
+          textColor: const Color(0xFF2DD4BF),
+          onPressed: () {
+            _snackBarTimer?.cancel();
+            ref.read(notificationsProvider.notifier).undoDelete(n, index);
+          },
+        ),
+      ),
+    );
+
+    // Guaranteed auto-dismiss after exactly 10 seconds even if swipe pointer paused Flutter's internal timer
+    _snackBarTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted) {
+        messenger.hideCurrentSnackBar();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +69,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         appBar: AppBar(
           backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
           elevation: 0,
+          titleSpacing: 0,
           leading: IconButton(
             icon: Icon(
               Icons.chevron_left_rounded,
@@ -40,17 +79,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             onPressed: () => context.pop(),
           ),
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Notifications',
-                style: TextStyle(
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
+              Flexible(
+                child: Text(
+                  'Notifications',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (unreadCount > 0) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
@@ -71,26 +114,47 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
           actions: [
             if (unreadCount > 0)
-              TextButton.icon(
-                onPressed: () {
-                  ref.read(notificationsProvider.notifier).markAllAsRead();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('All notifications marked as read'),
-                      duration: Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                    ),
+              Builder(
+                builder: (context) {
+                  final isWide = MediaQuery.of(context).size.width >= 420;
+                  if (isWide) {
+                    return TextButton.icon(
+                      onPressed: () {
+                        ref.read(notificationsProvider.notifier).markAllAsRead();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('All notifications marked as read'),
+                            duration: Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.done_all_rounded, size: 16, color: Color(0xFF0F766E)),
+                      label: const Text(
+                        'Mark all read',
+                        style: TextStyle(
+                          color: Color(0xFF0F766E),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    );
+                  }
+                  return IconButton(
+                    tooltip: 'Mark all as read',
+                    icon: const Icon(Icons.done_all_rounded, size: 22, color: Color(0xFF0F766E)),
+                    onPressed: () {
+                      ref.read(notificationsProvider.notifier).markAllAsRead();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('All notifications marked as read'),
+                          duration: Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
                   );
                 },
-                icon: const Icon(Icons.done_all_rounded, size: 16, color: Color(0xFF0F766E)),
-                label: const Text(
-                  'Mark all read',
-                  style: TextStyle(
-                    color: Color(0xFF0F766E),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
-                  ),
-                ),
               ),
             if (notifications.isNotEmpty)
               PopupMenuButton<String>(
@@ -137,20 +201,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.9),
-              child: Row(
-                children: [
-                  _buildFilterChip(
-                    label: 'All (${notifications.length})',
-                    isSelected: _filterIndex == 0,
-                    onTap: () => setState(() => _filterIndex = 0),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildFilterChip(
-                    label: 'Unread ($unreadCount)',
-                    isSelected: _filterIndex == 1,
-                    onTap: () => setState(() => _filterIndex = 1),
-                  ),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildFilterChip(
+                      label: 'All (${notifications.length})',
+                      isSelected: _filterIndex == 0,
+                      onTap: () => setState(() => _filterIndex = 0),
+                    ),
+                    const SizedBox(width: 10),
+                    _buildFilterChip(
+                      label: 'Unread ($unreadCount)',
+                      isSelected: _filterIndex == 1,
+                      onTap: () => setState(() => _filterIndex = 1),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -334,21 +402,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ),
       onDismissed: (direction) {
         ref.read(notificationsProvider.notifier).deleteNotification(n.id);
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Notification deleted'),
-            duration: const Duration(seconds: 10),
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'Undo',
-              textColor: const Color(0xFF2DD4BF),
-              onPressed: () {
-                ref.read(notificationsProvider.notifier).undoDelete(n, index);
-              },
-            ),
-          ),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _showDeleteUndoSnackBar(n, index);
+        });
       },
       child: _buildNotificationCard(context, n, index, isDark),
     );
@@ -371,7 +428,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -395,14 +452,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: n.color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(n.icon, color: n.color, size: 22),
+              child: Icon(n.icon, color: n.color, size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,102 +501,97 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        n.time,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade500,
-                          fontWeight: FontWeight.w600,
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      runSpacing: 6,
+                      spacing: 8,
+                      children: [
+                        Text(
+                          n.time,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          if (n.isUnread)
-                            InkWell(
-                              onTap: () {
-                                ref.read(notificationsProvider.notifier).markAsRead(n.id);
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.check_rounded, size: 14, color: n.color),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      'Mark read',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: n.color,
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (n.isUnread)
+                              InkWell(
+                                onTap: () {
+                                  ref.read(notificationsProvider.notifier).markAsRead(n.id);
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.check_rounded, size: 13, color: n.color),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Mark read',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: n.color,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          const SizedBox(width: 8),
-                          if (n.route != null && n.route!.isNotEmpty)
-                            InkWell(
-                              onTap: () {
-                                ref.read(notificationsProvider.notifier).markAsRead(n.id);
-                                context.push(n.route!);
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      'View',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: n.color,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Icon(Icons.arrow_forward_rounded, size: 12, color: n.color),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          const SizedBox(width: 6),
-                          InkWell(
-                            onTap: () {
-                              ref.read(notificationsProvider.notifier).deleteNotification(n.id);
-                              ScaffoldMessenger.of(context).clearSnackBars();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Notification deleted'),
-                                  duration: const Duration(seconds: 10),
-                                  behavior: SnackBarBehavior.floating,
-                                  action: SnackBarAction(
-                                    label: 'Undo',
-                                    textColor: const Color(0xFF2DD4BF),
-                                    onPressed: () {
-                                      ref.read(notificationsProvider.notifier).undoDelete(n, index);
-                                    },
+                                    ],
                                   ),
                                 ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: Icon(
-                                Icons.delete_outline_rounded,
-                                size: 16,
-                                color: Colors.grey.shade400,
+                              ),
+                            if (n.route != null && n.route!.isNotEmpty)
+                              InkWell(
+                                onTap: () {
+                                  ref.read(notificationsProvider.notifier).markAsRead(n.id);
+                                  context.push(n.route!);
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'View',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: n.color,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Icon(Icons.arrow_forward_rounded, size: 12, color: n.color),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            InkWell(
+                              onTap: () {
+                                ref.read(notificationsProvider.notifier).deleteNotification(n.id);
+                                _showDeleteUndoSnackBar(n, index);
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.delete_outline_rounded,
+                                  size: 16,
+                                  color: Colors.grey.shade400,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -572,12 +624,22 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               ref.read(notificationsProvider.notifier).clearAllNotifications();
-              ScaffoldMessenger.of(context).showSnackBar(
+              _snackBarTimer?.cancel();
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.clearSnackBars();
+              messenger.showSnackBar(
                 const SnackBar(
                   content: Text('All notifications cleared'),
+                  duration: Duration(seconds: 10),
                   behavior: SnackBarBehavior.floating,
+                  dismissDirection: DismissDirection.horizontal,
                 ),
               );
+              _snackBarTimer = Timer(const Duration(seconds: 10), () {
+                if (mounted) {
+                  messenger.hideCurrentSnackBar();
+                }
+              });
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
@@ -656,20 +718,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       onPressed: () {
                         Navigator.pop(ctx);
                         ref.read(notificationsProvider.notifier).deleteNotification(n.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Notification deleted'),
-                            duration: const Duration(seconds: 10),
-                            behavior: SnackBarBehavior.floating,
-                            action: SnackBarAction(
-                              label: 'Undo',
-                              textColor: const Color(0xFF2DD4BF),
-                              onPressed: () {
-                                ref.read(notificationsProvider.notifier).undoDelete(n, index);
-                              },
-                            ),
-                          ),
-                        );
+                        _showDeleteUndoSnackBar(n, index);
                       },
                       icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
                       label: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),

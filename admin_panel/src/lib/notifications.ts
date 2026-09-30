@@ -72,6 +72,8 @@ export async function createNotification(params: CreateNotificationParams) {
             title: params.title,
             body: params.body,
             route: params.route,
+            recipientId: params.recipientId,
+            role: params.role,
             // Pass senderId so the Flutter FCM listener can suppress the notification
             // when the user is already viewing that specific chat conversation.
             senderId: params.senderId ?? params.entityId,

@@ -23,6 +23,20 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If the message is a data payload or received on OEM devices that suppress automatic display,
   // explicitly present the heads-up notification via FlutterLocalNotificationsPlugin
   try {
+    // Verify user is actually logged in before showing background notification
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getString('auth_id');
+    if (currentUserId == null || currentUserId.isEmpty) {
+      debugPrint('[FCM Background] Suppressed — user is logged out.');
+      return;
+    }
+
+    final targetRecipient = message.data['recipientId'];
+    if (targetRecipient != null && targetRecipient.isNotEmpty && targetRecipient != currentUserId) {
+      debugPrint('[FCM Background] Suppressed — intended for $targetRecipient but active user is $currentUserId');
+      return;
+    }
+
     final title = message.notification?.title ?? message.data['title'] ?? 'Buildzy Alert';
     final body = message.notification?.body ?? message.data['body'] ?? '';
     final route = message.data['route'] ?? '/notifications';

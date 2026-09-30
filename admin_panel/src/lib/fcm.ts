@@ -61,6 +61,8 @@ export async function sendFCMNotification(params: {
   route?: string;
   channelId?: string;
   senderId?: string; // Used for chat suppression on the Flutter side
+  recipientId?: string; // Used to ensure the notification is delivered only to the active logged-in user
+  role?: string;
 }) {
   if (!params.token) return;
   if (!initFirebaseAdmin()) return;
@@ -78,6 +80,8 @@ export async function sendFCMNotification(params: {
         route: params.route || '/notifications',
         click_action: 'FLUTTER_NOTIFICATION_CLICK',
         ...(params.senderId ? { senderId: params.senderId, entityId: params.senderId } : {}),
+        ...(params.recipientId ? { recipientId: params.recipientId } : {}),
+        ...(params.role ? { role: params.role } : {}),
       },
       android: {
         priority: 'high',

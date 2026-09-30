@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
@@ -133,9 +134,31 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
     final userName = user['name'] ?? 'Client';
 
     return WallpaperBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text('Lead Details')),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/provider-home');
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/provider-home');
+                }
+              },
+            ),
+            title: const Text('Lead Details'),
+          ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -348,6 +371,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                     )
             ],
           ),
+        ),
         ),
       ),
     ),

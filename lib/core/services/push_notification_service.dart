@@ -3,12 +3,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
 import '../router.dart';
 import 'active_chat_manager.dart';
+import '../../features/home/main_layout.dart';
+import '../../features/providers/provider_layout.dart';
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._internal();
@@ -106,10 +109,25 @@ class PushNotificationService {
         );
 
         // Listen for foreground FCM messages and display them as native alerts
-        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
           debugPrint('[FCM] Foreground notification received: ${message.notification?.title}');
           final notification = message.notification;
           if (notification == null) return;
+
+          // ── Verify user is actually logged in ─────────────────────────────
+          final prefs = await SharedPreferences.getInstance();
+          final currentUserId = prefs.getString('auth_id');
+          if (currentUserId == null || currentUserId.isEmpty) {
+            debugPrint('[FCM] Suppressed — user is logged out, discarding notification.');
+            return;
+          }
+
+          // ── Verify notification is meant for this logged-in account ────────
+          final targetRecipient = message.data['recipientId'];
+          if (targetRecipient != null && targetRecipient.isNotEmpty && targetRecipient != currentUserId) {
+            debugPrint('[FCM] Suppressed — notification intended for $targetRecipient, but current user is $currentUserId');
+            return;
+          }
 
           // ── Instagram-style chat suppression ──────────────────────────────
           // The backend stores the senderId as 'entityId' in the notification
@@ -134,8 +152,19 @@ class PushNotificationService {
         });
 
         // Listen for notification taps when the app was in the background
-        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
           debugPrint('[FCM] App opened via notification: ${message.data}');
+          final prefs = await SharedPreferences.getInstance();
+          final currentUserId = prefs.getString('auth_id');
+          if (currentUserId == null || currentUserId.isEmpty) {
+            debugPrint('[FCM] Notification tap ignored — user is logged out.');
+            return;
+          }
+          final targetRecipient = message.data['recipientId'];
+          if (targetRecipient != null && targetRecipient.isNotEmpty && targetRecipient != currentUserId) {
+            debugPrint('[FCM] Notification tap ignored — belongs to another account ($targetRecipient vs $currentUserId).');
+            return;
+          }
           _handleMessageRoute(message.data['route']);
         });
 
@@ -143,18 +172,30 @@ class PushNotificationService {
         final initialMessage = await messaging.getInitialMessage();
         if (initialMessage != null) {
           debugPrint('[FCM] Cold-start from notification: ${initialMessage.data}');
-          Future.delayed(const Duration(milliseconds: 800), () {
-            _handleMessageRoute(initialMessage.data['route']);
-          });
+          final prefs = await SharedPreferences.getInstance();
+          final currentUserId = prefs.getString('auth_id');
+          if (currentUserId != null && currentUserId.isNotEmpty) {
+            final targetRecipient = initialMessage.data['recipientId'];
+            if (targetRecipient == null || targetRecipient.isEmpty || targetRecipient == currentUserId) {
+              Future.delayed(const Duration(milliseconds: 800), () {
+                _handleMessageRoute(initialMessage.data['route']);
+              });
+            }
+          }
         }
 
         // Listen for FCM token refresh
-        messaging.onTokenRefresh.listen((newToken) {
+        messaging.onTokenRefresh.listen((newToken) async {
           debugPrint('[FCM] Device token refreshed: $newToken');
-          _sendTokenToBackend(newToken);
+          final prefs = await SharedPreferences.getInstance();
+          final currentUserId = prefs.getString('auth_id');
+          if (currentUserId != null && currentUserId.isNotEmpty) {
+            await prefs.setString('fcm_device_token', newToken);
+            _sendTokenToBackend(newToken);
+          }
         });
 
-        // Sync token immediately if user is already logged in
+        // Sync token immediately only if user is already logged in
         syncFCMToken();
       } catch (e) {
         debugPrint('[FCM] Setup error in PushNotificationService: $e');
@@ -164,12 +205,43 @@ class PushNotificationService {
     _isInitialized = true;
   }
 
+  DateTime? _lastRouteHandledTime;
+  String? _lastRouteHandled;
+
   void _handleMessageRoute(dynamic route) {
     if (route != null && route is String && route.isNotEmpty) {
+      final now = DateTime.now();
+      if (_lastRouteHandled == route &&
+          _lastRouteHandledTime != null &&
+          now.difference(_lastRouteHandledTime!) < const Duration(milliseconds: 1500)) {
+        debugPrint('[FCM] Ignoring duplicate notification route tap: $route');
+        return;
+      }
+      _lastRouteHandled = route;
+      _lastRouteHandledTime = now;
+
       final context = rootNavigatorKey.currentContext;
       if (context != null) {
-        // Use go() not push() — this replaces the stack so a notification tap
-        // never stacks a second chat screen on top of one already open.
+        try {
+          final currentLoc = GoRouter.of(context).routeInformationProvider.value.uri.toString();
+          if (currentLoc == route) {
+            debugPrint('[FCM] Already on route $route, skipping duplicate navigation');
+            return;
+          }
+        } catch (_) {}
+
+        // Pre-set layout tab to Messages page (index 3) so returning from chat lands on Messages list
+        if (route.startsWith('/chat/') || route.startsWith('/provider-chat/')) {
+          try {
+            ProviderScope.containerOf(context, listen: false)
+                .read(mainTabProvider.notifier)
+                .setTab(3);
+            ProviderScope.containerOf(context, listen: false)
+                .read(providerTabProvider.notifier)
+                .setTab(3);
+          } catch (_) {}
+        }
+
         context.go(route);
       }
     }
@@ -184,21 +256,79 @@ class PushNotificationService {
     if (kIsWeb) return;
 
     try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token == null || token.isEmpty) return;
-
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('fcm_device_token', token);
-      debugPrint('[FCM] Device Token: $token');
-
       final targetId = userId ?? prefs.getString('auth_id');
       final targetRole = role ?? prefs.getString('auth_role');
 
-      if (targetId != null && targetRole != null) {
+      // CRITICAL: Do NOT register or persist FCM token if user is logged out!
+      if (targetId == null || targetId.isEmpty) {
+        debugPrint('[FCM] syncFCMToken skipped: no user currently logged in.');
+        return;
+      }
+
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+
+      await prefs.setString('fcm_device_token', token);
+      debugPrint('[FCM] Device Token: $token');
+
+      if (targetRole != null) {
         await _sendTokenToBackend(token, userId: targetId, role: targetRole);
       }
     } catch (e) {
       debugPrint('[FCM] Error fetching/syncing FCM token: $e');
+    }
+  }
+
+  /// Unregisters and detaches the FCM token from the backend database and local device on logout.
+  Future<void> unregisterFCMToken({String? userId, String? role}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final targetId = userId ?? prefs.getString('auth_id');
+      final targetRole = role ?? prefs.getString('auth_role');
+      final savedToken = prefs.getString('fcm_device_token');
+
+      // 1. Tell backend to set fcmToken = null for this user/provider and this device
+      if (targetId != null || savedToken != null) {
+        try {
+          await http.post(
+            Uri.parse('$apiBaseUrl/users/fcm-token'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'id': targetId,
+              'role': targetRole,
+              'action': 'clear',
+              'fcmToken': savedToken,
+            }),
+          ).timeout(const Duration(seconds: 4));
+          debugPrint('[FCM] Successfully cleared FCM token in backend for $targetRole ($targetId)');
+        } catch (e) {
+          debugPrint('[FCM] Network error clearing token from backend: $e');
+        }
+      }
+
+      // 2. Clear saved token from SharedPreferences
+      await prefs.remove('fcm_device_token');
+
+      // 3. Delete token from Firebase so the old token is invalidated on FCM servers
+      if (!kIsWeb) {
+        try {
+          await FirebaseMessaging.instance.deleteToken();
+          debugPrint('[FCM] Firebase device token deleted');
+        } catch (e) {
+          debugPrint('[FCM] Error deleting Firebase token: $e');
+        }
+      }
+
+      // 4. Cancel all local notifications lingering in the notification drawer
+      try {
+        await _notificationsPlugin.cancelAll();
+      } catch (_) {}
+
+      // 5. Clear session deduplication keys
+      _shownNotificationKeys.clear();
+    } catch (e) {
+      debugPrint('[FCM] Error unregistering token on logout: $e');
     }
   }
 
@@ -208,7 +338,7 @@ class PushNotificationService {
       final targetId = userId ?? prefs.getString('auth_id');
       final targetRole = role ?? prefs.getString('auth_role');
 
-      if (targetId == null || targetRole == null) return;
+      if (targetId == null || targetRole == null || targetId.isEmpty) return;
 
       final response = await http.post(
         Uri.parse('$apiBaseUrl/users/fcm-token'),

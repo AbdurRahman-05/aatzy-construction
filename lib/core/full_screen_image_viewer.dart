@@ -16,10 +16,18 @@ class FullScreenImageViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget imageWidget;
-    if (imageUrl != null && imageUrl!.startsWith('http')) {
+    final candidate = (imageUrl ?? base64Image ?? '').trim();
+
+    if (candidate.startsWith('http://') || candidate.startsWith('https://')) {
       imageWidget = Image.network(
-        imageUrl!,
+        candidate,
         fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white70),
+          );
+        },
         errorBuilder: (context, error, stackTrace) {
           return const Center(
             child: Text(
@@ -29,9 +37,11 @@ class FullScreenImageViewer extends StatelessWidget {
           );
         },
       );
-    } else if (base64Image != null) {
+    } else if (candidate.isNotEmpty) {
       try {
-        final bytes = base64Decode(base64Image!.split(',').last);
+        final rawBase64 = candidate.contains(',') ? candidate.split(',').last : candidate;
+        final cleanBase64 = rawBase64.replaceAll(RegExp(r'\s+'), '');
+        final bytes = base64Decode(cleanBase64);
         imageWidget = Image.memory(
           bytes,
           fit: BoxFit.contain,
@@ -77,10 +87,7 @@ class FullScreenImageViewer extends StatelessWidget {
           child: InteractiveViewer(
             minScale: 0.5,
             maxScale: 4.0,
-            child: Hero(
-              tag: imageUrl ?? base64Image ?? title,
-              child: imageWidget,
-            ),
+            child: imageWidget,
           ),
         ),
       ),

@@ -490,6 +490,8 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                         onTap: () {
                                           if (context.canPop()) {
                                             context.pop();
+                                          } else {
+                                            context.go('/');
                                           }
                                         },
                                         child: Container(
@@ -1457,31 +1459,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                         ],
                                       ),
 
-                                      // Photo proof thumbnail if present
+                                      // Photo proof preview if present - visible directly in the card like provider side
                                       if (hasPhoto) ...[
-                                        const SizedBox(height: 6),
-                                        GestureDetector(
-                                          onTap: () => _showCompletionPhotoDialog(task),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFECFDF5),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: const Color(0xFFA7F3D0)),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: const [
-                                                Icon(Icons.camera_alt_rounded, size: 12, color: Color(0xFF059669)),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  'Proof Photo Attached (Tap to view)',
-                                                  style: TextStyle(fontSize: 10, color: Color(0xFF059669), fontWeight: FontWeight.w700),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
+                                        const SizedBox(height: 10),
+                                        _buildTaskProofPreview(task, tTitle),
                                       ],
                                     ],
                                   ),
@@ -1602,60 +1583,154 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     );
   }
 
-  void _showCompletionPhotoDialog(Map<String, dynamic> task) {
-    final title = task['title'] ?? 'Task Proof';
-    final photoUrl = task['photoUrl'] as String?;
+  Widget _buildTaskProofPreview(Map<String, dynamic> task, String title) {
+    final photoUrl = (task['photoUrl'] as String?)?.trim() ?? '';
+    if (photoUrl.isEmpty) return const SizedBox.shrink();
 
-    if (photoUrl == null || photoUrl.isEmpty) return;
+    final isNetworkUrl = photoUrl.startsWith('http://') || photoUrl.startsWith('https://');
 
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Proof of Completion attached by contractor (Tap to zoom):',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FullScreenImageViewer(
-                      base64Image: photoUrl,
-                      title: title,
-                    ),
-                  ),
-                );
-              },
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Image.memory(
-                  base64Decode(photoUrl.split(',').last),
-                  width: double.infinity,
-                  height: 220,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Center(
-                    child: Text('Failed to load image', style: TextStyle(color: Colors.red)),
-                  ),
-                ),
+    Widget imageWidget;
+    if (isNetworkUrl) {
+      imageWidget = Image.network(
+        photoUrl,
+        height: 130,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 130,
+            color: const Color(0xFFF1F5F9),
+            child: const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF10B981)),
               ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
+      );
+    } else {
+      try {
+        final rawB64 = photoUrl.contains(',') ? photoUrl.split(',').last : photoUrl;
+        final cleanB64 = rawB64.replaceAll(RegExp(r'\s+'), '');
+        final bytes = base64Decode(cleanB64);
+        imageWidget = Image.memory(
+          bytes,
+          height: 130,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
+        );
+      } catch (e) {
+        debugPrint('Error decoding task completion photo: $e');
+        imageWidget = _buildImageErrorPlaceholder();
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullScreenImageViewer(
+              base64Image: isNetworkUrl ? null : photoUrl,
+              imageUrl: isNetworkUrl ? photoUrl : null,
+              title: '$title Proof',
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(top: 2),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold)),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Stack(
+            children: [
+              imageWidget,
+              // Top-left completion badge
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.verified_rounded, size: 12, color: Color(0xFF34D399)),
+                      SizedBox(width: 4),
+                      Text(
+                        'Completed Work Proof',
+                        style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Bottom-right tap to zoom badge
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.fullscreen_rounded, size: 13, color: Colors.white),
+                      SizedBox(width: 3),
+                      Text(
+                        'Tap to zoom',
+                        style: TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageErrorPlaceholder() {
+    return Container(
+      height: 110,
+      width: double.infinity,
+      color: const Color(0xFFF8FAFC),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.broken_image_rounded, size: 28, color: Color(0xFF94A3B8)),
+            SizedBox(height: 4),
+            Text(
+              'Proof photo could not be loaded',
+              style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
       ),
     );
   }

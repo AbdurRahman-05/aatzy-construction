@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/auth_provider.dart';
 import '../home/main_layout.dart';
 import '../providers/provider_layout.dart';
@@ -22,6 +24,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   bool _isLoading = true;
   String _searchQuery = '';
   Timer? _pollTimer;
+  String _lastRawResponse = '';
+  final Map<String, Uint8List> _avatarBytesCache = {};
 
   @override
   void initState() {
@@ -43,36 +47,146 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   Future<void> _fetchConversations({bool silent = false}) async {
     final auth = ref.read(authProvider);
-    if (auth.id == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveId = auth.id ?? prefs.getString('auth_id');
+    final effectiveRole = (auth.role ?? prefs.getString('auth_role') ?? 'CONSUMER').toUpperCase();
+
+    if (effectiveId == null || effectiveId.isEmpty) {
+      if (mounted && _isLoading) setState(() => _isLoading = false);
+      return;
+    }
 
     if (!silent && _conversations.isEmpty) {
       setState(() => _isLoading = true);
     }
 
     try {
-      final roleParam = (auth.role ?? 'CONSUMER').toUpperCase();
       final response = await http.get(
-        Uri.parse('$apiBaseUrl/chat/list?userId=${auth.id}&role=$roleParam'),
-      ).timeout(const Duration(seconds: 20));
+        Uri.parse('$apiBaseUrl/chat/list?userId=$effectiveId&role=$effectiveRole'),
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         if (mounted) {
+          final raw = response.body;
+          // Anti-flicker: if payload is 100% identical, do NOT call setState()!
+          if (silent && raw == _lastRawResponse && _conversations.isNotEmpty) {
+            return;
+          }
+          _lastRawResponse = raw;
+
+          final newConvs = jsonDecode(raw)['conversations'] ?? [];
           setState(() {
-            _conversations = jsonDecode(response.body)['conversations'] ?? [];
+            _conversations = List<dynamic>.from(newConvs);
             _isLoading = false;
           });
         }
       } else {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted && !silent) setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint('Error fetching conversations: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && !silent) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _confirmDeleteConversation(String partnerId, String partnerName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Delete Chat?',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to remove $partnerName and delete all messages with them? This cannot be undone.',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: isDark ? Colors.white60 : Colors.grey.shade700),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final auth = ref.read(authProvider);
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final effectiveId = auth.id ?? prefs.getString('auth_id');
+
+    // Optimistically remove from list immediately for zero latency & zero flicker
+    setState(() {
+      _conversations.removeWhere((c) => c['partnerId'] == partnerId);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Chat with $partnerName deleted'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    if (effectiveId != null && effectiveId.isNotEmpty) {
+      try {
+        await http.delete(
+          Uri.parse('$apiBaseUrl/chat/messages?userId=$effectiveId&partnerId=$partnerId'),
+        );
+      } catch (e) {
+        debugPrint('Error deleting conversation: $e');
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Refresh when auth state becomes ready (e.g. cold start)
+    ref.listen(authProvider, (prev, next) {
+      if (next.id != null && prev?.id != next.id) {
+        _fetchConversations();
+      }
+    });
+
     // Instantly refresh when the user navigates to the Chat tab
     ref.listen<int>(mainTabProvider, (prev, next) {
       if (next == 3) {
@@ -223,6 +337,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                             : '/chat/$partnerId?name=${Uri.encodeComponent(partnerName)}';
                                         context.push(route);
                                       },
+                                      onLongPress: () => _confirmDeleteConversation(partnerId, partnerName),
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                                         child: Row(
@@ -245,18 +360,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                                       ),
                                                     ],
                                                   ),
-                                                  child: partnerImage.isNotEmpty
-                                                      ? ClipOval(child: Image.memory(base64Decode(partnerImage.split(',').last), fit: BoxFit.cover))
-                                                      : Center(
-                                                          child: Text(
-                                                            partnerName.isNotEmpty ? partnerName[0].toUpperCase() : '?',
-                                                            style: TextStyle(
-                                                              fontWeight: FontWeight.w900,
-                                                              fontSize: 22,
-                                                              color: Colors.indigo.shade700,
-                                                            ),
-                                                          ),
-                                                        ),
+                                                  child: _buildPartnerAvatar(partnerId, partnerImage, partnerName),
                                                 ),
                                                 Positioned(
                                                   right: 2,
@@ -290,7 +394,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                                             fontSize: 16,
                                                             color: isDark ? Colors.white : const Color(0xFF1E1E2D),
                                                             letterSpacing: -0.3,
-                                                          ),
+                                                         ),
                                                           maxLines: 1,
                                                           overflow: TextOverflow.ellipsis,
                                                         ),
@@ -335,6 +439,42 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                                 ],
                                               ),
                                             ),
+                                            const SizedBox(width: 4),
+                                            PopupMenuButton<String>(
+                                              icon: Icon(
+                                                Icons.more_vert_rounded,
+                                                size: 20,
+                                                color: isDark ? Colors.white38 : Colors.grey.shade400,
+                                              ),
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                              onSelected: (val) {
+                                                if (val == 'delete') {
+                                                  _confirmDeleteConversation(partnerId, partnerName);
+                                                }
+                                              },
+                                              itemBuilder: (context) => [
+                                                PopupMenuItem(
+                                                  value: 'delete',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 18),
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        'Delete Chat',
+                                                        style: TextStyle(
+                                                          color: Colors.red.shade400,
+                                                          fontWeight: FontWeight.w600,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -346,6 +486,46 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPartnerAvatar(String? partnerId, String partnerImage, String partnerName) {
+    if (partnerImage.isNotEmpty) {
+      try {
+        final cacheKey = partnerId ?? partnerName;
+        Uint8List? bytes = _avatarBytesCache[cacheKey];
+        if (bytes == null) {
+          final cleanB64 = partnerImage.contains(',') ? partnerImage.split(',').last : partnerImage;
+          bytes = base64Decode(cleanB64.trim());
+          _avatarBytesCache[cacheKey] = bytes;
+        }
+        return ClipOval(
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            width: 56,
+            height: 56,
+            gaplessPlayback: true,
+            errorBuilder: (context, error, stackTrace) => _fallbackAvatar(partnerName),
+          ),
+        );
+      } catch (_) {
+        return _fallbackAvatar(partnerName);
+      }
+    }
+    return _fallbackAvatar(partnerName);
+  }
+
+  Widget _fallbackAvatar(String partnerName) {
+    return Center(
+      child: Text(
+        partnerName.isNotEmpty ? partnerName[0].toUpperCase() : '?',
+        style: TextStyle(
+          fontWeight: FontWeight.w900,
+          fontSize: 22,
+          color: Colors.indigo.shade700,
         ),
       ),
     );

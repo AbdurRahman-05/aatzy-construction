@@ -155,6 +155,9 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    final oldId = state.id;
+    final oldRole = state.role;
+
     state = AuthState(isInitialized: true);
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -167,6 +170,16 @@ class AuthNotifier extends Notifier<AuthState> {
       await prefs.remove('auth_profileImage');
     } catch (e) {
       debugPrint('Error clearing persisted auth: $e');
+    }
+
+    // Explicitly unregister and clear device FCM token in database and local device
+    try {
+      await PushNotificationService().unregisterFCMToken(
+        userId: oldId,
+        role: oldRole,
+      );
+    } catch (e) {
+      debugPrint('Error unregistering FCM token on logout: $e');
     }
   }
 }

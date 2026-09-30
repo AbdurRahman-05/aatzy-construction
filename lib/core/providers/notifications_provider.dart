@@ -120,6 +120,15 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
 
   @override
   List<NotificationModel> build() {
+    // Listen to auth changes: clear notifications on logout, reload on new user login
+    ref.listen(authProvider, (previous, next) {
+      if (next.id == null || next.id!.isEmpty) {
+        state = [];
+      } else if (previous?.id != next.id) {
+        fetchNotifications();
+      }
+    });
+
     // Initial fetch immediately
     Future.microtask(() => fetchNotifications());
 
@@ -138,7 +147,10 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
 
   Future<void> fetchNotifications() async {
     final auth = ref.read(authProvider);
-    if (auth.id == null || auth.id!.isEmpty) return;
+    if (auth.id == null || auth.id!.isEmpty) {
+      if (state.isNotEmpty) state = [];
+      return;
+    }
     final userId = auth.id!;
 
     final dismissedIds = await _getDismissedIds(userId);
