@@ -168,7 +168,9 @@ class PushNotificationService {
     if (route != null && route is String && route.isNotEmpty) {
       final context = rootNavigatorKey.currentContext;
       if (context != null) {
-        context.push(route);
+        // Use go() not push() — this replaces the stack so a notification tap
+        // never stacks a second chat screen on top of one already open.
+        context.go(route);
       }
     }
   }

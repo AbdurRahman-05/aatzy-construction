@@ -24,6 +24,9 @@ class AuthState {
     this.isInitialized = false,
   });
 
+  // Sentinel used so copyWith can distinguish "not passed" from "explicitly null"
+  static const _sentinel = Object();
+
   AuthState copyWith({
     String? id,
     String? name,
@@ -31,7 +34,7 @@ class AuthState {
     String? businessName,
     String? role,
     String? gstNumber,
-    String? profileImage,
+    Object? profileImage = _sentinel,
     bool? isInitialized,
   }) {
     return AuthState(
@@ -41,7 +44,9 @@ class AuthState {
       businessName: businessName ?? this.businessName,
       role: role ?? this.role,
       gstNumber: gstNumber ?? this.gstNumber,
-      profileImage: profileImage ?? this.profileImage,
+      profileImage: identical(profileImage, _sentinel)
+          ? this.profileImage
+          : profileImage as String?,
       isInitialized: isInitialized ?? this.isInitialized,
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../auth/auth_provider.dart';
@@ -8,7 +9,6 @@ import '../home/main_layout.dart';
 import '../providers/provider_layout.dart';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
-import 'chat_detail_screen.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -215,17 +215,13 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                     final isUnread = unreadCount > 0;
 
                                     return InkWell(
-                                      onTap: () async {
-                                        await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ChatDetailScreen(
-                                              partnerId: partnerId,
-                                              partnerName: partnerName,
-                                            ),
-                                          ),
-                                        );
-                                        _fetchConversations(silent: true);
+                                      onTap: () {
+                                        final auth = ref.read(authProvider);
+                                        final isProvider = (auth.role ?? '').toUpperCase() == 'PROVIDER';
+                                        final route = isProvider
+                                            ? '/provider-chat/$partnerId?name=${Uri.encodeComponent(partnerName)}'
+                                            : '/chat/$partnerId?name=${Uri.encodeComponent(partnerName)}';
+                                        context.push(route);
                                       },
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),

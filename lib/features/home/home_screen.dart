@@ -109,7 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(auth.name ?? 'Guest', isSmallScreen),
+                      _buildHeader(auth.name ?? 'Guest', auth.profileImage, isSmallScreen),
                       const SizedBox(height: 20),
                       _buildConstructionOverview(isSmallScreen, screenWidth),
                       const SizedBox(height: 28),
@@ -136,7 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildHeader(String name, bool isSmallScreen) {
+  Widget _buildHeader(String name, String? profileImage, bool isSmallScreen) {
     final todayStr = DateFormat('EEEE, MMM d').format(DateTime.now());
     
     final notifications = ref.watch(notificationsProvider);
@@ -147,13 +147,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         Row(
           children: [
-            CircleAvatar(
-              radius: isSmallScreen ? 20 : 24,
-              backgroundColor: _slateDark,
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : 'T',
-                style: TextStyle(color: Colors.white, fontSize: isSmallScreen ? 17 : 20, fontWeight: FontWeight.bold),
-              ),
+            // Profile avatar — shows photo if available, else initials
+            GestureDetector(
+              onTap: () => ref.read(mainTabProvider.notifier).state = 4, // go to Profile tab
+              child: _buildProfileAvatar(name, profileImage, isSmallScreen ? 20.0 : 24.0),
             ),
             SizedBox(width: isSmallScreen ? 10 : 16),
             Expanded(
@@ -252,6 +249,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  /// Renders the home-screen avatar: real photo when available, initials fallback otherwise.
+  Widget _buildProfileAvatar(String name, String? profileImage, double radius) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+    final size = radius * 2;
+
+    if (profileImage != null && profileImage.trim().isNotEmpty) {
+      final src = profileImage.trim();
+
+      if (src.startsWith('data:image')) {
+        try {
+          final commaIdx = src.indexOf(',');
+          final b64 = commaIdx != -1 ? src.substring(commaIdx + 1) : src;
+          return ClipOval(
+            child: Image.memory(
+              base64Decode(b64),
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stack) => _initialsCircle(initial, size),
+            ),
+          );
+        } catch (_) {
+          return _initialsCircle(initial, size);
+        }
+      }
+
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        return ClipOval(
+          child: Image.network(
+            src,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stack) => _initialsCircle(initial, size),
+          ),
+        );
+      }
+    }
+
+    return _initialsCircle(initial, size);
+  }
+
+  Widget _initialsCircle(String initial, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: _slateDark, shape: BoxShape.circle),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: size * 0.42,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
