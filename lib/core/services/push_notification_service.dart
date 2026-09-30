@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
 import '../router.dart';
+import 'active_chat_manager.dart';
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._internal();
@@ -110,28 +111,19 @@ class PushNotificationService {
           final notification = message.notification;
           if (notification == null) return;
 
-          final route = message.data['route'] ?? '/notifications';
-          final targetPath = route.split('?').first;
-
-          // Suppress chat notifications if user is already viewing that exact conversation.
-          // Uses NavigatorState (no BuildContext) to avoid use_build_context_synchronously lint.
-          if (targetPath.isNotEmpty &&
-              (targetPath.startsWith('/chat/') || targetPath.startsWith('/provider-chat/'))) {
-            final navState = rootNavigatorKey.currentState;
-            if (navState != null) {
-              String? currentRouteName;
-              navState.popUntil((r) {
-                currentRouteName = r.settings.name;
-                return true; // peek only, don't pop
-              });
-              final currentPath = (currentRouteName ?? '').split('?').first;
-              if (currentPath == targetPath) {
-                debugPrint('[FCM] Suppressed — user is already in this chat conversation.');
-                return;
-              }
-            }
+          // ── Instagram-style chat suppression ──────────────────────────────
+          // The backend stores the senderId as 'entityId' in the notification
+          // and also passes it in message.data. If the user is currently inside
+          // THAT specific conversation, we skip the native pop-up entirely.
+          // Notifications from OTHER senders still fire normally.
+          final senderId = message.data['senderId'] ?? message.data['entityId'] ?? '';
+          if (senderId.isNotEmpty && ActiveChatManager.instance.isSuppressed(senderId)) {
+            debugPrint('[FCM] Suppressed — user is already chatting with sender: $senderId');
+            return;
           }
+          // ─────────────────────────────────────────────────────────────────
 
+          final route = message.data['route'] ?? '/notifications';
           showNotification(
             id: message.hashCode,
             title: notification.title ?? 'Buildzy Alert',

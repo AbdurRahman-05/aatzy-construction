@@ -60,6 +60,7 @@ export async function sendFCMNotification(params: {
   body: string;
   route?: string;
   channelId?: string;
+  senderId?: string; // Used for chat suppression on the Flutter side
 }) {
   if (!params.token) return;
   if (!initFirebaseAdmin()) return;
@@ -76,6 +77,7 @@ export async function sendFCMNotification(params: {
         body: params.body,
         route: params.route || '/notifications',
         click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        ...(params.senderId ? { senderId: params.senderId, entityId: params.senderId } : {}),
       },
       android: {
         priority: 'high',

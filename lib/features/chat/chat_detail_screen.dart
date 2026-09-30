@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../auth/auth_provider.dart';
 import '../../core/constants.dart';
+import '../../core/services/active_chat_manager.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String partnerId;
@@ -32,6 +33,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // Tell FCM service this conversation is now active → suppress its notifications
+    ActiveChatManager.instance.setActiveChat(widget.partnerId);
     if (widget.initialMessage != null) {
       _controller.text = widget.initialMessage!;
     }
@@ -46,6 +49,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   @override
   void dispose() {
+    // Clear active chat so notifications resume for this conversation
+    ActiveChatManager.instance.clearActiveChat();
     _refreshTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();

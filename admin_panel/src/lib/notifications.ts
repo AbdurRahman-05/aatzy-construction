@@ -31,6 +31,7 @@ export interface CreateNotificationParams {
   type: 'NEW_LEAD' | 'QUOTE_ACCEPTED' | 'TASK_CREATED' | 'TASK_COMPLETED' | 'STAGE_COMPLETED' | 'CHAT_MESSAGE';
   entityId?: string;
   route?: string;
+  senderId?: string; // Optional: used for chat notification suppression on device
 }
 
 export async function createNotification(params: CreateNotificationParams) {
@@ -71,6 +72,9 @@ export async function createNotification(params: CreateNotificationParams) {
             title: params.title,
             body: params.body,
             route: params.route,
+            // Pass senderId so the Flutter FCM listener can suppress the notification
+            // when the user is already viewing that specific chat conversation.
+            senderId: params.senderId ?? params.entityId,
           });
         }
       } catch (fcmErr) {
