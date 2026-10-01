@@ -639,20 +639,22 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       final builderName = provider['businessName'] ?? provider['ownerName'] ?? 'Verified Builder';
       final location = provider['city'] ?? post['location'] ?? 'Chennai, Tamil Nadu';
       final title = post['title'] ?? post['caption'] ?? 'Modern Architectural Inspiration';
-      final category = provider['category'] ?? post['category'] ?? 'Residential';
+      final rawCategory = (provider['category'] ?? post['category'] ?? 'Residential').toString();
+      final category = rawCategory.contains(',') ? rawCategory.split(',').first.trim() : rawCategory;
       final imageData = post['imageData'] as String?;
       final imageUrl = post['imageUrl'] as String?;
       final providerId = provider['id']?.toString() ?? '';
 
       Color tagColor = const Color(0xFF10B981);
       Color tagBg = const Color(0xFFECFDF5);
-      if (category.toString().toLowerCase().contains('interior')) {
+      final lowerCat = rawCategory.toLowerCase();
+      if (lowerCat.contains('interior')) {
         tagColor = const Color(0xFFF59E0B);
         tagBg = const Color(0xFFFFFBEB);
-      } else if (category.toString().toLowerCase().contains('commercial')) {
+      } else if (lowerCat.contains('commercial')) {
         tagColor = const Color(0xFF3B82F6);
         tagBg = const Color(0xFFEFF6FF);
-      } else if (category.toString().toLowerCase().contains('infrastructure')) {
+      } else if (lowerCat.contains('infrastructure')) {
         tagColor = const Color(0xFF8B5CF6);
         tagBg = const Color(0xFFFAF5FF);
       }
@@ -663,6 +665,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
         'builder': builderName,
         'providerId': providerId,
         'category': category,
+        'rawCategory': rawCategory,
         'location': location,
         'area': post['area'] ?? '2,400 sq.ft',
         'year': post['year'] ?? '2025',
@@ -683,8 +686,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
 
     final filteredProjects = combinedPortfolio.where((p) {
       if (_selectedPortfolioFilter == 'All Projects') return true;
-      return (p['category'] as String).toLowerCase().contains(_selectedPortfolioFilter.toLowerCase()) ||
-          _selectedPortfolioFilter.toLowerCase().contains((p['category'] as String).toLowerCase());
+      final String cat = (p['rawCategory'] as String? ?? p['category'] as String).toLowerCase();
+      final String filter = _selectedPortfolioFilter.toLowerCase();
+      return cat.contains(filter) || filter.contains((p['category'] as String).toLowerCase());
     }).toList();
 
     return SingleChildScrollView(
@@ -943,21 +947,29 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: project['tagBg'] as Color? ?? const Color(0xFFECFDF5),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    project['category'] as String? ?? 'Residential',
-                                    style: TextStyle(
-                                      color: project['tagColor'] as Color? ?? const Color(0xFF10B981),
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: project['tagBg'] as Color? ?? const Color(0xFFECFDF5),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        project['category'] as String? ?? 'Residential',
+                                        style: TextStyle(
+                                          color: project['tagColor'] as Color? ?? const Color(0xFF10B981),
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 GestureDetector(
                                   onTap: () {
                                     setState(() {
@@ -1253,18 +1265,22 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: project['tagBg'] as Color? ?? const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    project['category'] as String? ?? 'Residential',
-                    style: TextStyle(
-                      color: project['tagColor'] as Color? ?? const Color(0xFF10B981),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: project['tagBg'] as Color? ?? const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      project['category'] as String? ?? 'Residential',
+                      style: TextStyle(
+                        color: project['tagColor'] as Color? ?? const Color(0xFF10B981),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

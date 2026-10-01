@@ -1,6 +1,119 @@
 import prisma from '@/lib/prisma';
 import { sendFCMNotification, sendMulticastFCM } from '@/lib/fcm';
 
+export const CITY_AREAS: Record<string, string[]> = {
+  madurai: [
+    'madurai', 'mattuthavani', 'matuthavani', 'anna nagar', 'simmakkal', 'goripalayam',
+    'koodal nagar', 'sellur', 'villapuram', 'thirunagar', 'tirunagar', 'othakadai',
+    'otthakadai', 'avaniyapuram', 'thiruparankundram', 'teppakulam', 'arapalayam',
+    'ss colony', 's.s. colony', 'ponmeni', 'kalavasal', 'chinthamani', 'melur',
+    'vadipatti', 'usilampatti', 'thirumangalam', 'sholavandan', 'alagar kovil',
+    'tallakulam', 'narayanapuram', 'bibikulam', 'iyer bungalow', 'pasumalai'
+  ],
+  dindigul: [
+    'dindigul', 'palani', 'kodaikanal', 'natham', 'oddanchatram', 'nilakottai',
+    'vedasandur', 'chinnalapatti', 'batlagundu', 'begambur', 'guziliamparai',
+    'semanampatti', 'sirumalai', 'reddiarchatram', 'ayyampalayam', 'dindugal'
+  ],
+  chennai: [
+    'chennai', 'madras', 'adyar', 'velachery', 'guindy', 'tambaram', 'chromepet',
+    'mylapore', 'porur', 'vadapalani', 'sholinganallur', 'thiruvanmiyur', 'omr', 'ecr',
+    'perambur', 'ambattur', 'avadi', 'royapettah', 'triplicane', 'egmore', 'nungambakkam',
+    'alwarpet', 'saidapet', 'kilpauk', 'kodambakkam', 'medavakkam', 'royapuram',
+    't nagar', 't. nagar', 'besant nagar', 'pallavaram', 'kolathur', 'madipakkam',
+    'perungudi', 'thuraipakkam', 'navalur', 'siruseri'
+  ],
+  coimbatore: [
+    'coimbatore', 'kovai', 'gandhipuram', 'rs puram', 'r.s. puram', 'peelamedu',
+    'saravanampatti', 'saibaba colony', 'singanallur', 'pollachi', 'mettupalayam',
+    'sulur', 'kuniyamuthur', 'thudiyalur', 'kovaipudur', 'race course', 'ganapathy',
+    'ondipudur', 'kinathukadavu'
+  ],
+  tiruchirappalli: [
+    'tiruchirappalli', 'tiruchirapalli', 'trichy', 'thillai nagar', 'srirangam',
+    'ponmalai', 'golden rock', 'k k nagar', 'kk nagar', 'tiruverumbur', 'bhel',
+    'manapparai', 'lalgudi', 'woraiyur', 'cantonment'
+  ],
+  salem: [
+    'salem', 'attur', 'mettur', 'yercaud', 'omalur', 'sankari', 'hasthampatti',
+    'shevapet', 'suramangalam', 'ammapet', 'edappadi'
+  ],
+  tirunelveli: [
+    'tirunelveli', 'nellai', 'palayamkottai', 'tenkasi', 'ambasamudram',
+    'sankarankovil', 'vallioor', 'vannarpettai', 'thachanallur'
+  ],
+  erode: [
+    'erode', 'bhavani', 'perundurai', 'gobichettipalayam', 'sathyamangalam',
+    'anthiyur', 'chithode', 'thindal'
+  ],
+  tiruppur: [
+    'tiruppur', 'tirupur', 'avinashi', 'palladam', 'dharapuram', 'kangeyam',
+    'udumalaipettai', 'udumalpet'
+  ],
+  vellore: [
+    'vellore', 'katpadi', 'gudiyatham', 'arcot', 'ranipet', 'walajapet',
+    'tirupattur', 'ambur', 'vaniyambadi'
+  ],
+  thanjavur: [
+    'thanjavur', 'tanjore', 'kumbakonam', 'papanasam', 'pattukkottai', 'orathanadu'
+  ],
+  theni: [
+    'theni', 'periyakulam', 'bodinayakanur', 'bodi', 'cumbum', 'uthamapalayam',
+    'andipatti', 'chinnamanur'
+  ],
+  virudhunagar: [
+    'virudhunagar', 'sivakasi', 'rajapalayam', 'srivilliputhur', 'aruppukkottai',
+    'sattur', 'kariyapatti'
+  ],
+  sivaganga: [
+    'sivaganga', 'karaikudi', 'devakottai', 'manamadurai', 'thiruppuvanam', 'singampunari'
+  ],
+  ramanathapuram: [
+    'ramanathapuram', 'ramnad', 'rameswaram', 'paramakudi', 'kilakarai', 'mudukulathur'
+  ],
+  kanyakumari: [
+    'kanyakumari', 'nagercoil', 'thuckalay', 'marthandam', 'colachel', 'kuzhithurai'
+  ],
+  namakkal: ['namakkal', 'tiruchengode', 'rasipuram', 'paramathi velur'],
+  karur: ['karur', 'kulithalai', 'aravakkurichi', 'velur'],
+  cuddalore: ['cuddalore', 'chidambaram', 'panruti', 'vriddhachalam', 'neveli', 'neyveli'],
+  villupuram: ['villupuram', 'tindivanam', 'gingee', 'kallakurichi'],
+  kanchipuram: ['kanchipuram', 'kancheepuram', 'sriperumbudur', 'chengalpattu', 'walajabad'],
+  tiruvallur: ['tiruvallur', 'thiruvallur', 'ponneri', 'gummidipoondi', 'tiruttani'],
+  tiruvannamalai: ['tiruvannamalai', 'arani', 'polur', 'chengampattu', 'vandavasi'],
+  pudukkottai: ['pudukkottai', 'aranthangi', 'viralimalai'],
+  krishnagiri: ['krishnagiri', 'hosur', 'denkanikottai'],
+  dharmapuri: ['dharmapuri', 'harur', 'palacode'],
+  nilgiris: ['nilgiris', 'ooty', 'udhagamandalam', 'coonoor', 'kotagiri', 'gudalur'],
+  bengaluru: ['bengaluru', 'bangalore', 'whitefield', 'koramangala', 'indiranagar', 'electronic city', 'hsr layout']
+};
+
+export function extractCity(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const cleaned = text.toLowerCase().replace(/[\.,\-\/]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return null;
+
+  // 1. Direct match with city names as whole words
+  for (const city of Object.keys(CITY_AREAS)) {
+    const cityRegex = new RegExp(`\\b${city}\\b`, 'i');
+    if (cityRegex.test(cleaned)) {
+      return city;
+    }
+  }
+
+  // 2. Check area names
+  for (const [city, areas] of Object.entries(CITY_AREAS)) {
+    for (const area of areas) {
+      const areaRegex = new RegExp(`\\b${area}\\b`, 'i');
+      if (areaRegex.test(cleaned)) {
+        return city;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function locationsMatch(projLoc: string, provAddr: string | null): boolean {
   if (!provAddr) return true; // If provider hasn't set location, include by default
   const cleanedProj = (projLoc || '').toLowerCase().trim();
@@ -8,11 +121,32 @@ export function locationsMatch(projLoc: string, provAddr: string | null): boolea
 
   if (cleanedProj === '' || cleanedProv === '') return true;
 
-  // 1. Direct contains check
+  // 1. Statewide or All India providers match all
+  if (cleanedProv === 'all india' || cleanedProv === 'tamil nadu' || cleanedProv === 'all tamil nadu') {
+    return true;
+  }
+
+  // 2. City-level resolution (maps areas like Mattuthavani -> Madurai, Palani -> Dindigul)
+  const projCity = extractCity(cleanedProj);
+  const provCity = extractCity(cleanedProv);
+
+  if (projCity && provCity) {
+    return projCity === provCity;
+  }
+
+  // If one side has a detected city and the other contains that city name
+  if (projCity && cleanedProv.includes(projCity)) return true;
+  if (provCity && cleanedProj.includes(provCity)) return true;
+
+  // 3. Direct contains check
   if (cleanedProv.includes(cleanedProj) || cleanedProj.includes(cleanedProv)) return true;
 
-  // 2. Token word match (ignoring common address descriptors)
-  const stopWords = new Set(['and', 'the', 'for', 'our', 'new', 'old', 'street', 'road', 'avenue', 'lane', 'drive', 'court', 'plaza', 'way', 'near', 'opp', 'opposite', 'india']);
+  // 4. Token word match (ignoring common address descriptors and state names)
+  const stopWords = new Set([
+    'and', 'the', 'for', 'our', 'new', 'old', 'street', 'road', 'avenue', 'lane',
+    'drive', 'court', 'plaza', 'way', 'near', 'opp', 'opposite', 'india', 'tamil', 'nadu',
+    'state', 'city', 'district', 'area', 'nagar', 'colony'
+  ]);
   const projWords = cleanedProj.split(/[\s,.-]+/).filter(w => w.length > 2 && !stopWords.has(w));
   const provWords = cleanedProv.split(/[\s,.-]+/).filter(w => w.length > 2 && !stopWords.has(w));
 
@@ -21,6 +155,43 @@ export function locationsMatch(projLoc: string, provAddr: string | null): boolea
   }
 
   return false;
+}
+
+/**
+ * Standardize any location string to ensure City and State are explicitly present.
+ * e.g., "Madurai" -> "Madurai, Tamil Nadu"
+ * e.g., "Mattuthavani" -> "Mattuthavani, Madurai, Tamil Nadu"
+ */
+export function formatCityLocation(loc: string | null | undefined): string {
+  if (!loc || !loc.trim()) return 'Madurai, Tamil Nadu';
+  const trimmed = loc.trim();
+  const city = extractCity(trimmed);
+  if (!city) {
+    if (!trimmed.toLowerCase().includes('tamil nadu') && !trimmed.toLowerCase().includes('karnataka')) {
+      return `${trimmed}, Tamil Nadu`;
+    }
+    return trimmed;
+  }
+
+  // Capitalize detected city name
+  const capitalizedCity = city.charAt(0).toUpperCase() + city.slice(1);
+  const locLower = trimmed.toLowerCase();
+
+  // If location is already just the city name or city, state
+  if (locLower === city || locLower === `${city}, tamil nadu` || locLower === `${city} tamil nadu`) {
+    return `${capitalizedCity}, Tamil Nadu`;
+  }
+
+  // If the location has an area prefix that doesn't explicitly have the city name (e.g. "Mattuthavani")
+  if (!locLower.includes(city)) {
+    return `${trimmed}, ${capitalizedCity}, Tamil Nadu`;
+  }
+
+  if (!locLower.includes('tamil nadu')) {
+    return `${trimmed}, Tamil Nadu`;
+  }
+
+  return trimmed;
 }
 
 export interface CreateNotificationParams {

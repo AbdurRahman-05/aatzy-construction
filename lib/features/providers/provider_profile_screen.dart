@@ -538,6 +538,76 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     );
   }
 
+  Widget _buildPortfolioImageWidget(
+    dynamic rawImage, {
+    BoxFit fit = BoxFit.cover,
+    double? width,
+    double? height,
+  }) {
+    if (rawImage == null) {
+      return Container(
+        width: width,
+        height: height,
+        color: Colors.grey.shade200,
+        child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 24)),
+      );
+    }
+
+    final str = rawImage.toString().trim();
+    if (str.isEmpty) {
+      return Container(
+        width: width,
+        height: height,
+        color: Colors.grey.shade200,
+        child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 24)),
+      );
+    }
+
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      return Image.network(
+        str,
+        width: width,
+        height: height,
+        fit: fit,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) => Container(
+          width: width,
+          height: height,
+          color: Colors.grey.shade200,
+          child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey, size: 24)),
+        ),
+      );
+    }
+
+    try {
+      final bytes = Base64ImageCache.decode(str);
+      if (bytes.isNotEmpty) {
+        return Image.memory(
+          bytes,
+          width: width,
+          height: height,
+          fit: fit,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: width,
+            height: height,
+            color: Colors.grey.shade200,
+            child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey, size: 24)),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error decoding portfolio image: $e');
+    }
+
+    return Container(
+      width: width,
+      height: height,
+      color: Colors.grey.shade200,
+      child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 24)),
+    );
+  }
+
   Widget _buildPortfolioTab(bool isDark) {
     if (_portfolio.isEmpty) {
       return Center(
@@ -575,7 +645,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       itemCount: _portfolio.length,
       itemBuilder: (context, index) {
         final img = _portfolio[index];
-        final bytes = Base64ImageCache.decode(img['imageData']);
+        final rawImg = img['imageData'] ?? img['imageUrl'] ?? img['image'];
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
@@ -583,10 +653,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.memory(
-                  bytes,
-                  fit: BoxFit.cover,
-                ),
+                _buildPortfolioImageWidget(rawImg),
                 const Positioned(
                   top: 6,
                   right: 6,
@@ -1018,7 +1085,6 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
 
   void _showPostDetailModal(BuildContext context, dynamic img) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bytes = Base64ImageCache.decode(img['imageData']);
     
     showDialog(
       context: context,
@@ -1070,11 +1136,14 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
               // Post Image - Clickable for FullScreen zoom
               GestureDetector(
                 onTap: () {
+                  final rawImage = img['imageData'] ?? img['imageUrl'] ?? img['image'];
+                  final str = rawImage?.toString() ?? '';
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => FullScreenImageViewer(
-                        base64Image: img['imageData'],
+                        base64Image: str.startsWith('http') ? null : str,
+                        imageUrl: str.startsWith('http') ? str : null,
                         title: img['title'] ?? 'Showcase Detail',
                       ),
                     ),
@@ -1082,10 +1151,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                 },
                 child: AspectRatio(
                   aspectRatio: 1.1,
-                  child: Image.memory(
-                    bytes,
-                    fit: BoxFit.cover,
-                  ),
+                  child: _buildPortfolioImageWidget(img['imageData'] ?? img['imageUrl'] ?? img['image']),
                 ),
               ),
               // Post Info

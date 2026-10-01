@@ -23,7 +23,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
 
   // Controllers
   final _titleController = TextEditingController(text: 'My Dream Residence');
-  final _locationController = TextEditingController(text: 'Bangalore, Karnataka');
+  final _locationController = TextEditingController(text: 'Madurai, Tamil Nadu');
   final _plotSizeController = TextEditingController(text: '1200');
   final _budgetController = TextEditingController(text: '4500000');
   final _timelineController = TextEditingController(text: '9 Months');
@@ -276,7 +276,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           'userId': auth.id,
           'title': projectTitle,
           'type': '$_selectedPropertyType - ${_selectedServices.join(', ')}',
-          'location': _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : 'Bangalore',
+          'location': LocationService.resolveToCityState(
+            _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : 'Madurai, Tamil Nadu',
+          ),
           'plotSize': double.tryParse(_plotSizeController.text.trim()) ?? 1200.0,
           'budget': double.tryParse(_budgetController.text.trim()) ?? 4500000.0,
           'timeline': _timelineController.text.trim().isNotEmpty ? _timelineController.text.trim() : '9 Months',
@@ -761,62 +763,110 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: bottomInset + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-                ),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: bottomInset + 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Edit Site Location', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Edit Project City Location', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                      IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: locCtrl,
+                    decoration: InputDecoration(
+                      labelText: 'Project City Location',
+                      hintText: 'e.g. Madurai, Tamil Nadu',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.location_city_rounded, color: Color(0xFF0D9488)),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.gps_fixed_rounded, color: Color(0xFF0D9488)),
+                        tooltip: 'Detect live City GPS',
+                        onPressed: () async {
+                          final loc = await LocationService().detectAndSaveLocation(forceRefresh: true);
+                          if (loc != null && loc.isNotEmpty) {
+                            setModalState(() => locCtrl.text = loc);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Select City:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const SizedBox(height: 6),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        'Madurai', 'Dindigul', 'Chennai', 'Coimbatore', 'Tiruchirappalli', 'Salem', 'Tirunelveli', 'Theni'
+                      ].map((cityName) {
+                        final isSel = locCtrl.text.toLowerCase().contains(cityName.toLowerCase());
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: FilterChip(
+                            label: Text(cityName),
+                            selected: isSel,
+                            selectedColor: const Color(0xFF0D9488),
+                            labelStyle: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
+                              color: isSel ? Colors.white : const Color(0xFF334155),
+                            ),
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            onSelected: (selected) {
+                              setModalState(() {
+                                locCtrl.text = '$cityName, Tamil Nadu';
+                              });
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (locCtrl.text.trim().isNotEmpty) {
+                          final resolved = LocationService.resolveToCityState(locCtrl.text.trim());
+                          setState(() => _locationController.text = resolved);
+                        }
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D9488),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Save City Location', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: locCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Location / City / Address',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.location_on_rounded, color: Color(0xFFEF4444)),
-                ),
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (locCtrl.text.trim().isNotEmpty) {
-                      setState(() => _locationController.text = locCtrl.text.trim());
-                    }
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D9488),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Save Location', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -1560,10 +1610,54 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         ),
         const SizedBox(height: 18),
 
-        // 3. Site Location
-        const Text(
-          'SITE LOCATION / CITY',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+        // 3. Site Location / City
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'PROJECT CITY LOCATION',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+            ),
+            InkWell(
+              onTap: () async {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                        SizedBox(width: 10),
+                        Text('Detecting your city GPS...'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                final loc = await LocationService().detectAndSaveLocation(forceRefresh: true);
+                if (mounted && loc != null && loc.isNotEmpty) {
+                  setState(() => _locationController.text = loc);
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('City resolved: $loc'), backgroundColor: const Color(0xFF0D9488)),
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.my_location_rounded, size: 14, color: Color(0xFF0D9488)),
+                    SizedBox(width: 4),
+                    Text(
+                      'Live GPS City',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF0D9488)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Container(
@@ -1580,26 +1674,95 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF1E293B)),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
-                    hintText: 'City, Locality or Area (e.g. Whitefield, Bangalore)',
-                    prefixIcon: Icon(Icons.location_on_rounded, color: Color(0xFFEF4444), size: 20),
+                    hintText: 'e.g. Madurai, Tamil Nadu',
+                    prefixIcon: Icon(Icons.location_city_rounded, color: Color(0xFF0D9488), size: 20),
                     contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                   ),
+                  onChanged: (val) => setState(() {}),
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.my_location_rounded, color: Color(0xFF0D9488), size: 20),
-                tooltip: 'Detect saved location',
-                onPressed: () {
-                  LocationService().getSavedLocation().then((loc) {
-                    if (mounted && loc.isNotEmpty) {
-                      setState(() => _locationController.text = loc);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Location updated to: $loc'), backgroundColor: const Color(0xFF0D9488)),
-                      );
-                    }
-                  });
+                icon: const Icon(Icons.gps_fixed_rounded, color: Color(0xFF0D9488), size: 20),
+                tooltip: 'Detect live City GPS',
+                onPressed: () async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                          SizedBox(width: 10),
+                          Text('Detecting your city GPS...'),
+                        ],
+                      ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  final loc = await LocationService().detectAndSaveLocation(forceRefresh: true);
+                  if (mounted && loc != null && loc.isNotEmpty) {
+                    setState(() => _locationController.text = loc);
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('City resolved: $loc'), backgroundColor: const Color(0xFF0D9488)),
+                    );
+                  }
                 },
               ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              const Text(
+                'Select City: ',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+              ),
+              ...[
+                'Madurai',
+                'Dindigul',
+                'Chennai',
+                'Coimbatore',
+                'Tiruchirappalli',
+                'Salem',
+                'Tirunelveli',
+                'Theni',
+                'Virudhunagar',
+                'Erode',
+              ].map((cityName) {
+                final isSelected = _locationController.text.toLowerCase().contains(cityName.toLowerCase());
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: FilterChip(
+                    label: Text(cityName),
+                    labelStyle: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                    ),
+                    selected: isSelected,
+                    selectedColor: const Color(0xFF0D9488),
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    checkmarkColor: Colors.white,
+                    showCheckmark: isSelected,
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                        color: isSelected ? const Color(0xFF0D9488) : const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    onSelected: (selected) {
+                      setState(() {
+                        _locationController.text = '$cityName, Tamil Nadu';
+                      });
+                    },
+                  ),
+                );
+              }),
             ],
           ),
         ),

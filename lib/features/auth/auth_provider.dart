@@ -141,6 +141,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> updateProfileImage(String? image) async {
+    if (state.profileImage == image) return;
     state = state.copyWith(profileImage: image);
     try {
       final prefs = await SharedPreferences.getInstance();

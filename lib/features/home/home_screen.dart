@@ -12,6 +12,7 @@ import '../providers/provider_profile_screen.dart';
 import 'main_layout.dart';
 import 'widgets/user_tutorial_dialog.dart';
 import '../../core/utils/project_progress_helper.dart';
+import '../../core/constants.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -260,24 +261,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (profileImage != null && profileImage.trim().isNotEmpty) {
       final src = profileImage.trim();
 
-      if (src.startsWith('data:image')) {
-        try {
-          final commaIdx = src.indexOf(',');
-          final b64 = commaIdx != -1 ? src.substring(commaIdx + 1) : src;
-          return ClipOval(
-            child: Image.memory(
-              base64Decode(b64),
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stack) => _initialsCircle(initial, size),
-            ),
-          );
-        } catch (_) {
-          return _initialsCircle(initial, size);
-        }
-      }
-
       if (src.startsWith('http://') || src.startsWith('https://')) {
         return ClipOval(
           child: Image.network(
@@ -285,6 +268,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             width: size,
             height: size,
             fit: BoxFit.cover,
+            gaplessPlayback: true,
+            errorBuilder: (context, error, stack) => _initialsCircle(initial, size),
+          ),
+        );
+      }
+
+      // Base64 image (supports data:image/... and raw base64)
+      final bytes = Base64ImageCache.decode(src);
+      if (bytes.isNotEmpty) {
+        return ClipOval(
+          child: Image.memory(
+            bytes,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
             errorBuilder: (context, error, stack) => _initialsCircle(initial, size),
           ),
         );
@@ -1933,10 +1932,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 final location = provider['city'] ?? 'Location';
                 final title = post['title'] ?? 'Showcase';
                 
-                final category = provider['category'] ?? 'Construction';
+                final rawCategory = (provider['category'] ?? 'Construction').toString();
+                final category = rawCategory.contains(',') ? rawCategory.split(',').first.trim() : rawCategory;
                 Color tagColor = Colors.green;
-                if (category.toLowerCase().contains('interior')) tagColor = Colors.orange;
-                if (category.toLowerCase().contains('commercial')) tagColor = Colors.blue;
+                final lowerCat = rawCategory.toLowerCase();
+                if (lowerCat.contains('interior')) tagColor = Colors.orange;
+                if (lowerCat.contains('commercial')) tagColor = Colors.blue;
 
                 return _buildInspirationCard(
                   title, 
@@ -1982,24 +1983,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     height: 100,
                     width: double.infinity,
                     color: Colors.grey.shade300,
-                    child: imageData != null
-                        ? Image.memory(
-                            base64Decode(imageData.contains(',') ? imageData.split(',').last : imageData), 
-                            fit: BoxFit.cover, 
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.grey)
-                          )
-                        : Center(child: Icon(Icons.image_outlined, color: Colors.grey.shade500, size: 36)),
+                    child: Builder(
+                      builder: (context) {
+                        if (imageData == null || imageData.trim().isEmpty) {
+                          return Center(child: Icon(Icons.image_outlined, color: Colors.grey.shade500, size: 36));
+                        }
+                        final trimmed = imageData.trim();
+                        if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+                          return Image.network(
+                            trimmed,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.grey),
+                          );
+                        }
+                        try {
+                          final clean = trimmed.contains(',') ? trimmed.split(',').last : trimmed;
+                          return Image.memory(
+                            base64Decode(clean),
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.grey),
+                          );
+                        } catch (_) {
+                          return const Center(child: Icon(Icons.image, color: Colors.grey));
+                        }
+                      },
+                    ),
                   ),
                   Positioned(
                     top: 8,
                     left: 8,
                     child: Container(
+                      constraints: const BoxConstraints(maxWidth: 160),
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: tagColor,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(category, style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        category,
+                        style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   )
                 ],

@@ -146,6 +146,15 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
                                     children: [
                                       const SizedBox(height: 4),
                                       Text('Client: ${lead['userName'] ?? 'Unknown'}'),
+                                      if (lead['type'] != null && lead['type'].toString().isNotEmpty) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Category: ${lead['type']}',
+                                          style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 12),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
@@ -154,11 +163,24 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
                                           Expanded(
                                             child: Text(
                                               lead['location'] ?? 'N/A',
-                                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                              style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
+                                          if (lead['budget'] != null)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF0FDF4),
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: const Color(0xFFBBF7D0)),
+                                              ),
+                                              child: Text(
+                                                '₹${(lead['budget'] as num).toInt().toString()}',
+                                                style: const TextStyle(color: Color(0xFF16A34A), fontSize: 12, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ],

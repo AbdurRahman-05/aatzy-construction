@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
 
@@ -84,11 +85,58 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
     super.dispose();
   }
 
+  Widget _buildPortfolioImage(dynamic imageData) {
+    if (imageData == null) {
+      return Container(
+        color: Colors.grey.shade300,
+        child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+      );
+    }
+    final str = imageData.toString().trim();
+    if (str.isEmpty) {
+      return Container(
+        color: Colors.grey.shade300,
+        child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+      );
+    }
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      return Image.network(
+        str,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: Colors.grey.shade300,
+          child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey)),
+        ),
+      );
+    }
+    try {
+      final bytes = Base64ImageCache.decode(str);
+      if (bytes.isNotEmpty) {
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Colors.grey.shade300,
+            child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey)),
+          ),
+        );
+      }
+    } catch (_) {}
+    return Container(
+      color: Colors.grey.shade300,
+      child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+    );
+  }
+
   Future<void> _fetchProfileData() async {
     final auth = ref.read(authProvider);
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveId = auth.id ?? prefs.getString('auth_id');
+    if (effectiveId == null) return;
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/profile'));
-      if (response.statusCode == 200) {
+      final response = await http.get(Uri.parse('$apiBaseUrl/providers/$effectiveId/profile'));
+      if (response.statusCode == 200 && mounted) {
         final data = jsonDecode(response.body)['provider'];
         final categoryStr = data['category'] as String? ?? '';
         setState(() {
@@ -114,11 +162,14 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
 
   Future<void> _fetchPortfolio() async {
     final auth = ref.read(authProvider);
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveId = auth.id ?? prefs.getString('auth_id');
+    if (effectiveId == null) return;
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/portfolio'));
-      if (response.statusCode == 200) {
+      final response = await http.get(Uri.parse('$apiBaseUrl/providers/$effectiveId/portfolio'));
+      if (response.statusCode == 200 && mounted) {
         setState(() {
-          _portfolioImages = jsonDecode(response.body)['images'];
+          _portfolioImages = jsonDecode(response.body)['images'] ?? [];
         });
       }
     } catch (e) {
@@ -215,9 +266,18 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                 
                 setState(() => _isLoading = true);
                 final auth = ref.read(authProvider);
+                final prefs = await SharedPreferences.getInstance();
+                final effectiveId = auth.id ?? prefs.getString('auth_id');
+                if (effectiveId == null) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Session not found. Please log in again.')));
+                    setState(() => _isLoading = false);
+                  }
+                  return;
+                }
                 try {
                   final response = await http.post(
-                    Uri.parse('$apiBaseUrl/providers/${auth.id}/portfolio'),
+                    Uri.parse('$apiBaseUrl/providers/$effectiveId/portfolio'),
                     headers: {'Content-Type': 'application/json'},
                     body: jsonEncode({
                       'title': titleController.text.trim(),
@@ -226,15 +286,23 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                     }),
                   );
                   if (response.statusCode == 201) {
+                    try {
+                      final newItem = jsonDecode(response.body);
+                      setState(() {
+                        _portfolioImages.insert(0, newItem);
+                      });
+                    } catch (_) {}
                     _fetchPortfolio();
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo added to portfolio!')));
                     }
+                  } else {
+                    debugPrint('Add portfolio failed: ${response.statusCode}');
                   }
                 } catch (e) {
                   debugPrint('Add portfolio error: $e');
                 } finally {
-                  setState(() => _isLoading = false);
+                  if (mounted) setState(() => _isLoading = false);
                 }
               },
               child: const Text('ADD PHOTO'),
@@ -261,9 +329,18 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
     if (confirm == true) {
       setState(() => _isLoading = true);
       final auth = ref.read(authProvider);
+      final prefs = await SharedPreferences.getInstance();
+      final effectiveId = auth.id ?? prefs.getString('auth_id');
+      if (effectiveId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
       try {
-        final response = await http.delete(Uri.parse('$apiBaseUrl/providers/${auth.id}/portfolio?imageId=$imageId'));
+        final response = await http.delete(Uri.parse('$apiBaseUrl/providers/$effectiveId/portfolio?imageId=$imageId'));
         if (response.statusCode == 200) {
+          setState(() {
+            _portfolioImages.removeWhere((item) => item['id'] == imageId);
+          });
           _fetchPortfolio();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo removed.')));
@@ -272,7 +349,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
       } catch (e) {
         debugPrint('Delete portfolio error: $e');
       } finally {
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -282,10 +359,16 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
 
     setState(() => _isLoading = true);
     final auth = ref.read(authProvider);
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveId = auth.id ?? prefs.getString('auth_id');
+    if (effectiveId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
 
     try {
       final response = await http.patch(
-        Uri.parse('$apiBaseUrl/providers/${auth.id}/profile'),
+        Uri.parse('$apiBaseUrl/providers/$effectiveId/profile'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'businessName': _businessNameController.text.trim(),
@@ -498,13 +581,10 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                         final img = _portfolioImages[index];
                         return Stack(
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
+                            Positioned.fill(
+                              child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                image: DecorationImage(
-                                  image: MemoryImage(base64Decode(img['imageData'].split(',').last)),
-                                  fit: BoxFit.cover,
-                                ),
+                                child: _buildPortfolioImage(img['imageData']),
                               ),
                             ),
                             Positioned(
@@ -513,12 +593,12 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                               right: 0,
                               child: Container(
                                 padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   color: Colors.black54,
-                                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
                                 ),
                                 child: Text(
-                                  img['title'],
+                                  img['title'] ?? '',
                                   style: const TextStyle(color: Colors.white, fontSize: 10),
                                   textAlign: TextAlign.center,
                                   maxLines: 1,

@@ -13,6 +13,8 @@ import 'package:image_picker/image_picker.dart';
 import '../b2b/presentation/widgets/custom_image.dart';
 import 'main_layout.dart';
 import '../providers/provider_layout.dart';
+import '../../core/full_screen_image_viewer.dart';
+import '../../core/providers/social_feed_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -31,6 +33,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int _serviceLeadsCount = 0;
   bool _isLoading = false;
   bool _isFetching = false;
+  bool _hasFetchedConsumer = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -69,10 +72,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
 
       if (effectiveRole != 'PROVIDER') {
+        _hasFetchedConsumer = true;
         // Sync consumer profile photo from auth state
         final savedConsumerImage = auth.profileImage ?? prefs.getString('auth_profileImage');
         if (savedConsumerImage != null && savedConsumerImage.isNotEmpty) {
-          if (mounted) {
+          if (mounted && _profileImage != savedConsumerImage) {
             setState(() {
               _profileImage = savedConsumerImage;
             });
@@ -82,11 +86,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           final userRes = await http.get(Uri.parse('$apiBaseUrl/users/$effectiveId')).timeout(const Duration(seconds: 25));
           if (mounted && userRes.statusCode == 200) {
             final data = jsonDecode(userRes.body);
-            if (data['profileImage'] != null) {
-              setState(() {
-                _profileImage = data['profileImage'];
-              });
-              ref.read(authProvider.notifier).updateProfileImage(data['profileImage']);
+            final newImg = data['profileImage'] as String?;
+            if (newImg != null && newImg.isNotEmpty && newImg != auth.profileImage) {
+              if (mounted) {
+                setState(() {
+                  _profileImage = newImg;
+                });
+              }
+              ref.read(authProvider.notifier).updateProfileImage(newImg);
             }
           }
         } catch (e) {
@@ -360,6 +367,76 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildPortfolioImageWidget(
+    dynamic rawImage, {
+    BoxFit fit = BoxFit.cover,
+    double? width,
+    double? height,
+  }) {
+    if (rawImage == null) {
+      return Container(
+        width: width,
+        height: height,
+        color: Colors.grey.shade200,
+        child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 28)),
+      );
+    }
+
+    final str = rawImage.toString().trim();
+    if (str.isEmpty) {
+      return Container(
+        width: width,
+        height: height,
+        color: Colors.grey.shade200,
+        child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 28)),
+      );
+    }
+
+    if (str.startsWith('http://') || str.startsWith('https://')) {
+      return Image.network(
+        str,
+        width: width,
+        height: height,
+        fit: fit,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) => Container(
+          width: width,
+          height: height,
+          color: Colors.grey.shade200,
+          child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey, size: 28)),
+        ),
+      );
+    }
+
+    try {
+      final bytes = Base64ImageCache.decode(str);
+      if (bytes.isNotEmpty) {
+        return Image.memory(
+          bytes,
+          width: width,
+          height: height,
+          fit: fit,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: width,
+            height: height,
+            color: Colors.grey.shade200,
+            child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey, size: 28)),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error decoding portfolio image: $e');
+    }
+
+    return Container(
+      width: width,
+      height: height,
+      color: Colors.grey.shade200,
+      child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 28)),
+    );
+  }
+
   Future<void> _fetchBackgroundDetails(String providerId) async {
     // 1. Fetch portfolio
     try {
@@ -428,7 +505,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(authProvider, (previous, next) {
-      if (next.id != null && (previous?.id != next.id || _providerData == null)) {
+      final userChanged = previous?.id != next.id;
+      if (userChanged) {
+        _hasFetchedConsumer = false;
+        _providerData = null;
+      }
+      final shouldFetchProvider = next.role == 'PROVIDER' && _providerData == null;
+      final shouldFetchConsumer = next.role != 'PROVIDER' && !_hasFetchedConsumer;
+      if (next.id != null && (userChanged || shouldFetchProvider || shouldFetchConsumer)) {
         _fetchProfileData();
       }
     });
@@ -437,12 +521,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
 
-    if (_providerData == null && !_isFetching && auth.id != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _providerData == null && !_isFetching) {
-          _fetchProfileData();
-        }
-      });
+    if (auth.role == 'PROVIDER') {
+      if (_providerData == null && !_isFetching && auth.id != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _providerData == null && !_isFetching) {
+            _fetchProfileData();
+          }
+        });
+      }
+    } else {
+      if (!_hasFetchedConsumer && !_isFetching && auth.id != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && !_hasFetchedConsumer && !_isFetching) {
+            _fetchProfileData();
+          }
+        });
+      }
     }
 
     if (auth.role != 'PROVIDER') {
@@ -996,7 +1090,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
         }
         final img = _portfolio[index - 1];
-        final bytes = Base64ImageCache.decode(img['imageData']);
+        final rawImg = img['imageData'] ?? img['imageUrl'] ?? img['image'];
         return Card(
           elevation: 2,
           shadowColor: Colors.black26,
@@ -1010,8 +1104,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Expanded(
                   flex: 3,
-                  child: Image.memory(
-                    bytes,
+                  child: _buildPortfolioImageWidget(
+                    rawImg,
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),
@@ -1278,9 +1372,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 
                 setState(() => _isLoading = true);
                 final auth = ref.read(authProvider);
+                final prefs = await SharedPreferences.getInstance();
+                final effectiveId = auth.id ?? prefs.getString('auth_id');
+                if (effectiveId == null) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Provider session not found. Please log in again.')));
+                    setState(() => _isLoading = false);
+                  }
+                  return;
+                }
                 try {
                   final response = await http.post(
-                    Uri.parse('$apiBaseUrl/providers/${auth.id}/portfolio'),
+                    Uri.parse('$apiBaseUrl/providers/$effectiveId/portfolio'),
                     headers: {'Content-Type': 'application/json'},
                     body: jsonEncode({
                       'title': titleController.text.trim(),
@@ -1289,15 +1392,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     }),
                   );
                   if (response.statusCode == 201) {
-                    _fetchProfileData();
+                    try {
+                      final createdItem = jsonDecode(response.body);
+                      setState(() {
+                        _portfolio.insert(0, createdItem);
+                      });
+                    } catch (_) {}
+                    ref.invalidate(socialFeedProvider);
+                    _fetchBackgroundDetails(effectiveId);
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Photo added to portfolio!')));
+                    }
+                  } else {
+                    debugPrint('Add portfolio failed with status: ${response.statusCode}, body: ${response.body}');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save portfolio photo (${response.statusCode})')));
                     }
                   }
                 } catch (e) {
                   debugPrint('Add portfolio error: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+                  }
                 } finally {
-                  setState(() => _isLoading = false);
+                  if (mounted) setState(() => _isLoading = false);
                 }
               },
               child: const Text('ADD PHOTO'),
@@ -1633,7 +1751,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _showPostDetailModal(BuildContext context, dynamic img) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bytes = Base64ImageCache.decode(img['imageData']);
+    final dynamic rawImg = img['imageData'] ?? img['imageUrl'] ?? img['image'];
     
     showDialog(
       context: context,
@@ -1691,11 +1809,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               // Post Image
-              AspectRatio(
-                aspectRatio: 1.1,
-                child: Image.memory(
-                  bytes,
-                  fit: BoxFit.cover,
+              GestureDetector(
+                onTap: () {
+                  if (rawImg != null) {
+                    final str = rawImg.toString();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FullScreenImageViewer(
+                          base64Image: str.startsWith('http') ? null : str,
+                          imageUrl: str.startsWith('http') ? str : null,
+                          title: img['title'] ?? 'Showcase Detail',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: AspectRatio(
+                  aspectRatio: 1.1,
+                  child: _buildPortfolioImageWidget(rawImg, fit: BoxFit.cover),
                 ),
               ),
               // Post Info

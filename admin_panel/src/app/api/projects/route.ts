@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { notifyCityProvidersForNewProject } from '@/lib/notifications';
+import { notifyCityProvidersForNewProject, formatCityLocation } from '@/lib/notifications';
 
 export async function GET() {
   try {
@@ -23,12 +23,15 @@ export async function POST(request: Request) {
     // Validate request body
     const { userId, title, type, location, plotSize, budget, timeline, currentStage } = body;
     
+    // Normalize location to ensure city is clearly preserved (e.g. Madurai, Tamil Nadu)
+    const formattedLocation = formatCityLocation(location);
+
     const project = await prisma.project.create({
       data: {
         userId,
         title,
         type,
-        location,
+        location: formattedLocation,
         plotSize: parseFloat(plotSize),
         budget: parseFloat(budget),
         timeline,

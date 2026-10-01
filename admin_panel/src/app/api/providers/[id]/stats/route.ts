@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { locationsMatch } from '@/lib/notifications';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -13,30 +14,6 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     if (!provider) {
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
-
-
-    // Helper to match locations case-insensitively
-    const locationsMatch = (projLoc: string, provAddr: string | null): boolean => {
-      if (!provAddr) return true; // If provider hasn't set location, show all leads in category
-      const cleanedProj = projLoc.toLowerCase().trim();
-      const cleanedProv = provAddr.toLowerCase().trim();
-
-      if (cleanedProj === '' || cleanedProv === '') return true;
-
-      // 1. Direct contains check
-      if (cleanedProv.includes(cleanedProj) || cleanedProj.includes(cleanedProv)) return true;
-
-      // 2. Token word match (ignoring common address descriptors)
-      const stopWords = new Set(['and', 'the', 'for', 'our', 'new', 'old', 'street', 'road', 'avenue', 'lane', 'drive', 'court', 'plaza', 'way', 'near', 'opp', 'opposite']);
-      const projWords = cleanedProj.split(/[\s,.-]+/).filter(w => w.length > 2 && !stopWords.has(w));
-      const provWords = cleanedProv.split(/[\s,.-]+/).filter(w => w.length > 2 && !stopWords.has(w));
-
-      for (const word of projWords) {
-        if (provWords.includes(word)) return true;
-      }
-
-      return false;
-    };
 
     // Fetch all active projects that don't have any accepted quotes
     const allProjects = await prisma.project.findMany({
@@ -55,10 +32,26 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     // Filter projects where project type/services matches provider.category
     const categoryProjects = allProjects.filter(project => {
-      if (!project.type || !provider.category) return false;
-      const projectServices = project.type.split(',').map(s => s.trim().toLowerCase());
-      const providerServices = provider.category.split(',').map(s => s.trim().toLowerCase());
-      return projectServices.some(service => providerServices.includes(service));
+      // If no category restriction on provider, show all
+      if (!provider.category || provider.category.trim() === '' || provider.category.toLowerCase() === 'all') {
+        return true;
+      }
+      if (!project.type || project.type.trim() === '') return true;
+
+      const projectTypeLower = project.type.toLowerCase();
+      const providerCategories = provider.category
+        .split(',')
+        .map(c => c.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (providerCategories.length === 0) return true;
+
+      // Check if any provider category matches project type or services
+      return providerCategories.some(cat => {
+        if (projectTypeLower.includes(cat)) return true;
+        const tokens = projectTypeLower.split(/[,-/]/).map(t => t.trim()).filter(Boolean);
+        return tokens.some(t => t === cat || t.includes(cat) || cat.includes(t));
+      });
     });
 
     // Filter projects based on locations compatibility
@@ -142,6 +135,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       recentLeads: recentLeads.map(l => ({
         id: l.id,
         title: l.title,
+        type: l.type,
+        budget: l.budget,
+        timeline: l.timeline,
         userName: l.user.name,
         location: l.location,
         createdAt: l.createdAt
@@ -149,6 +145,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       allLeads: matchedProjects.map(l => ({
         id: l.id,
         title: l.title,
+        type: l.type,
+        budget: l.budget,
+        timeline: l.timeline,
         userName: l.user.name,
         location: l.location,
         createdAt: l.createdAt
