@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import '../../core/constants.dart';
 import '../../core/full_screen_image_viewer.dart';
 import '../../core/utils/project_progress_helper.dart';
+import '../../core/providers/projects_provider.dart';
+import '../auth/auth_provider.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -73,6 +75,25 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProjectDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _fetchProjectDetails();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _fetchProjectDetails();
+  }
+
+  void _invalidateProjectsList() {
+    final auth = ref.read(authProvider);
+    if (auth.id != null) {
+      ref.invalidate(userProjectsProvider(auth.id!));
+    }
   }
 
   Future<void> _fetchProjectDetails() async {
@@ -193,6 +214,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
       );
 
       if (response.statusCode == 200) {
+        _invalidateProjectsList();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Project updated to stage: $stage'), backgroundColor: Colors.green),
@@ -463,37 +485,43 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     final isTabletOrLaptop = screenWidth >= 700;
     final horizontalPadding = isTabletOrLaptop ? 24.0 : (isSmallScreen ? 12.0 : 16.0);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 900),
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _project == null
-                        ? const Center(child: Text('Project details not found.'))
-                        : RefreshIndicator(
-                            onRefresh: _fetchProjectDetails,
-                            child: ListView(
-                              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12),
-                              children: [
-                                // Top Custom App Bar
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () {
-                                          if (context.canPop()) {
-                                            context.pop();
-                                          } else {
-                                            context.go('/');
-                                          }
-                                        },
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        _invalidateProjectsList();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _project == null
+                          ? const Center(child: Text('Project details not found.'))
+                          : RefreshIndicator(
+                              onRefresh: _fetchProjectDetails,
+                              child: ListView(
+                                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12),
+                                children: [
+                                  // Top Custom App Bar
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 14),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            _invalidateProjectsList();
+                                            if (context.canPop()) {
+                                              context.pop();
+                                            } else {
+                                              context.go('/');
+                                            }
+                                          },
                                         child: Container(
                                           padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
@@ -709,7 +737,8 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   // ==========================================
@@ -2272,7 +2301,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
               ),
               GestureDetector(
-                onTap: () => context.push('/compare-quotes/${widget.projectId}'),
+                onTap: () async {
+                  await context.push('/compare-quotes/${widget.projectId}');
+                  if (mounted) _fetchProjectDetails();
+                },
                 child: Row(
                   children: const [
                     Text('View All Quotes', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB), fontWeight: FontWeight.w700)),
@@ -2327,9 +2359,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                     GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         if (hasQuotes) {
-                          context.push('/compare-quotes/${widget.projectId}');
+                          await context.push('/compare-quotes/${widget.projectId}');
+                          if (mounted) _fetchProjectDetails();
                         } else {
                           context.push('/providers/All');
                         }

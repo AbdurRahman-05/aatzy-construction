@@ -36,12 +36,26 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     final auth = ref.read(authProvider);
     if (auth.id != null) {
       ref.invalidate(userProjectsProvider(auth.id!));
+      await ref.read(userProjectsProvider(auth.id!).future);
     }
   }
 
-  static bool _isPendingStage(String? stage) {
+  static bool _isPendingStage(String? stage, [dynamic project]) {
+    if (project is Map) {
+      final quotes = project['quotes'];
+      if (quotes is List && quotes.any((q) => q is Map && q['isAccepted'] == true)) {
+        return false;
+      }
+    }
     if (stage == null || stage.trim().isEmpty) return true;
     final s = stage.trim().toLowerCase();
+    if (s == 'tracking' ||
+        s.contains('track') ||
+        s.contains('execut') ||
+        s == 'in progress' ||
+        s == 'ongoing') {
+      return false;
+    }
     if (s == 'design & planning') return false;
     return s == 'planning & approvals' ||
         s == 'planning' ||
@@ -67,21 +81,28 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     return s == 'cancelled';
   }
 
-  static bool _isOngoingStage(String? stage) {
+  static bool _isOngoingStage(String? stage, [dynamic project]) {
+    if (project is Map) {
+      final quotes = project['quotes'];
+      if (quotes is List && quotes.any((q) => q is Map && q['isAccepted'] == true)) {
+        if (_isFinishedStage(stage) || _isCancelledStage(stage)) return false;
+        return true;
+      }
+    }
     if (stage == null) return false;
-    if (_isFinishedStage(stage) || _isCancelledStage(stage) || _isPendingStage(stage)) {
+    if (_isFinishedStage(stage) || _isCancelledStage(stage) || _isPendingStage(stage, project)) {
       return false;
     }
     return true;
   }
 
-  List<dynamic> _filterProjects(bool Function(String?) stageMatcher, List<dynamic> projects) {
+  List<dynamic> _filterProjects(bool Function(String?, dynamic) stageMatcher, List<dynamic> projects) {
     return projects.where((project) {
       final stage = project['currentStage'] as String?;
       final title = (project['title'] as String? ?? '').toLowerCase();
       final location = (project['location'] as String? ?? '').toLowerCase();
       
-      final matchesStage = stageMatcher(stage);
+      final matchesStage = stageMatcher(stage, project);
       final matchesSearch = title.contains(_searchQuery.toLowerCase()) || 
                             location.contains(_searchQuery.toLowerCase());
       
@@ -98,7 +119,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
     final isCompleted = _isFinishedStage(currentStage);
     final isCancelled = _isCancelledStage(currentStage);
-    final isPending = _isPendingStage(currentStage);
+    final isPending = _isPendingStage(currentStage, project);
     
     final int colorIndex = projectId.hashCode.abs() % 3;
     final List<Color> colors = [const Color(0xFF10B981), const Color(0xFF3B82F6), const Color(0xFF8B5CF6)];
@@ -350,7 +371,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
   Widget _buildProjectsTab({
     required String title,
-    required bool Function(String?) stageMatcher,
+    required bool Function(String?, dynamic) stageMatcher,
     required List<dynamic> projects,
     required double screenWidth,
     required Color themeColor,
@@ -532,8 +553,8 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     final projects = projectsData?.projects ?? const [];
     final isLoading = projectsAsync != null ? (projectsAsync.isLoading && projectsData == null) : false;
 
-    final ongoingCount = projects.where((p) => _isOngoingStage(p['currentStage'] as String?)).length;
-    final pendingCount = projects.where((p) => _isPendingStage(p['currentStage'] as String?)).length;
+    final ongoingCount = projects.where((p) => _isOngoingStage(p['currentStage'] as String?, p)).length;
+    final pendingCount = projects.where((p) => _isPendingStage(p['currentStage'] as String?, p)).length;
     final finishedCount = projects.where((p) => _isFinishedStage(p['currentStage'] as String?)).length;
     final cancelledCount = projects.where((p) => _isCancelledStage(p['currentStage'] as String?)).length;
 
@@ -675,7 +696,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                               ),
                               _buildProjectsTab(
                                 title: 'Finished Projects',
-                                stageMatcher: _isFinishedStage,
+                                stageMatcher: (stage, project) => _isFinishedStage(stage),
                                 projects: projects,
                                 screenWidth: screenWidth,
                                 themeColor: Colors.green.shade700,
@@ -683,7 +704,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                               ),
                               _buildProjectsTab(
                                 title: 'Cancelled Projects',
-                                stageMatcher: _isCancelledStage,
+                                stageMatcher: (stage, project) => _isCancelledStage(stage),
                                 projects: projects,
                                 screenWidth: screenWidth,
                                 themeColor: Colors.red.shade700,

@@ -88,7 +88,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'project-detail/:id',
-            builder: (context, state) => ProjectDetailScreen(projectId: state.pathParameters['id']!),
+            builder: (context, state) => ProjectDetailScreen(
+              key: ValueKey('project-detail-${state.pathParameters['id']}-${state.uri.queryParameters['refresh'] ?? ''}'),
+              projectId: state.pathParameters['id']!,
+            ),
           ),
           GoRoute(
             path: 'cost-estimation',

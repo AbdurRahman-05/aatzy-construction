@@ -22,6 +22,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       });
 
       if (quote) {
+        // Mark all other quotes for this project as not accepted
+        await prisma.quote.updateMany({
+          where: {
+            projectId: quote.projectId,
+            id: { not: id }
+          },
+          data: { isAccepted: false }
+        });
+
         // Update the project's stage to Tracking to activate the tracking flow
         await prisma.project.update({
           where: { id: quote.projectId },

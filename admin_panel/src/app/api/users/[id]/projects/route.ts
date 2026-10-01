@@ -10,6 +10,14 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       orderBy: { createdAt: 'desc' },
       include: {
         tasks: true,
+        quotes: {
+          select: {
+            id: true,
+            isAccepted: true,
+            estimatedCost: true,
+            providerId: true,
+          }
+        },
         _count: {
           select: { quotes: true }
         }

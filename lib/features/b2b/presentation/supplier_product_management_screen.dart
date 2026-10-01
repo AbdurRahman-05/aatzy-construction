@@ -20,11 +20,11 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _imageUrlController = TextEditingController();
-  final _priceController = TextEditingController(text: '450');
-  final _unitTypeController = TextEditingController(text: 'Bag');
+  final _priceController = TextEditingController();
+  final _unitTypeController = TextEditingController();
   
-  final _specKeyController = TextEditingController(text: 'Min Order Qty');
-  final _specValueController = TextEditingController(text: '100 units');
+  final _specKeyController = TextEditingController();
+  final _specValueController = TextEditingController();
 
   int _selectedCategory = 1;
   bool _submitting = false;
@@ -76,8 +76,8 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
       _nameController.text = item['name'] ?? '';
       _descController.text = item['description'] ?? '';
       _selectedCategory = item['categoryId'] ?? 1;
-      _priceController.text = (item['price_per_unit'] ?? '450').toString();
-      _unitTypeController.text = item['unit_type'] ?? 'Bag';
+      _priceController.text = (item['price_per_unit'] ?? '').toString();
+      _unitTypeController.text = item['unit_type'] ?? '';
       
       final listImgs = item['images'];
       if (listImgs is List && listImgs.isNotEmpty) {
@@ -157,11 +157,11 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
         'categoryId': _selectedCategory,
         'name': _nameController.text.trim(),
         'description': _descController.text.trim(),
-        'price_per_unit': double.tryParse(_priceController.text) ?? 450.0,
-        'unit_type': _unitTypeController.text.trim(),
-        'specifications': {
-          _specKeyController.text.trim(): _specValueController.text.trim()
-        },
+        'price_per_unit': double.tryParse(_priceController.text) ?? 0.0,
+        'unit_type': _unitTypeController.text.trim().isNotEmpty ? _unitTypeController.text.trim() : 'Unit',
+        'specifications': _specKeyController.text.trim().isNotEmpty
+            ? {_specKeyController.text.trim(): _specValueController.text.trim()}
+            : {},
         'images': [_imageUrlController.text.trim().isNotEmpty ? _imageUrlController.text.trim() : 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=400']
       };
 
@@ -280,6 +280,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         labelText: 'Price per Unit (₹)',
+                        hintText: 'e.g. 450',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) => value == null || double.tryParse(value) == null ? 'Required numeric price' : null,
@@ -290,7 +291,8 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
                     child: TextFormField(
                       controller: _unitTypeController,
                       decoration: const InputDecoration(
-                        labelText: 'Unit Type (e.g. Bag, Ton)',
+                        labelText: 'Unit Type',
+                        hintText: 'e.g. Bag, Ton, Piece',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) => value == null || value.isEmpty ? 'Required' : null,
@@ -324,7 +326,8 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
                     child: TextFormField(
                       controller: _specKeyController,
                       decoration: const InputDecoration(
-                        labelText: 'Spec Key (e.g. Grade)',
+                        labelText: 'Spec Key (Optional)',
+                        hintText: 'e.g. Grade, Min Order Qty',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -334,7 +337,8 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
                     child: TextFormField(
                       controller: _specValueController,
                       decoration: const InputDecoration(
-                        labelText: 'Spec Value (e.g. 53 Grade)',
+                        labelText: 'Spec Value (Optional)',
+                        hintText: 'e.g. 53 Grade, 100 units',
                         border: OutlineInputBorder(),
                       ),
                     ),

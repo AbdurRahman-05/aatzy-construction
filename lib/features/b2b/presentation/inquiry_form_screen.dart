@@ -27,8 +27,8 @@ class _InquiryFormScreenState extends ConsumerState<InquiryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   final _descController = TextEditingController();
-  final _qtyController = TextEditingController(text: '100');
-  final _locController = TextEditingController(text: 'Delhi NCR');
+  final _qtyController = TextEditingController();
+  final _locController = TextEditingController();
   String _selectedUnit = 'Bags';
   bool _submitting = false;
 
@@ -215,6 +215,7 @@ class _InquiryFormScreenState extends ConsumerState<InquiryFormScreen> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         labelText: 'Quantity Needed',
+                        hintText: 'e.g. 100',
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) => value == null || double.tryParse(value) == null ? 'Enter valid amount' : null,
@@ -244,6 +245,7 @@ class _InquiryFormScreenState extends ConsumerState<InquiryFormScreen> {
                 controller: _locController,
                 decoration: const InputDecoration(
                   labelText: 'Preferred Delivery Location',
+                  hintText: 'e.g. Madurai, Tamil Nadu',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Required field' : null,

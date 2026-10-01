@@ -22,19 +22,14 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   bool _isLoading = false;
 
   // Controllers
-  final _titleController = TextEditingController(text: 'My Dream Residence');
-  final _locationController = TextEditingController(text: 'Madurai, Tamil Nadu');
-  final _plotSizeController = TextEditingController(text: '1200');
-  final _budgetController = TextEditingController(text: '4500000');
-  final _timelineController = TextEditingController(text: '9 Months');
+  final _titleController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _plotSizeController = TextEditingController();
+  final _budgetController = TextEditingController();
+  final _timelineController = TextEditingController();
 
   // Step 1: Selected Services
-  final List<String> _selectedServices = [
-    'Design & Planning',
-    'Construction',
-    'Engineering (MEP)',
-    'Interiors & Finishing',
-  ];
+  final List<String> _selectedServices = [];
 
   // Step 2: Selected Residential / Property Type
   String _selectedPropertyType = 'Residential Villa';
@@ -201,7 +196,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   }
 
   String _formatBudget(String val) {
+    if (val.trim().isEmpty) return 'Not specified';
     final numVal = double.tryParse(val) ?? 0;
+    if (numVal <= 0) return 'Not specified';
     if (numVal >= 10000000) {
       return '₹ ${(numVal / 10000000).toStringAsFixed(2)} Cr';
     } else if (numVal >= 100000) {
@@ -277,11 +274,11 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           'title': projectTitle,
           'type': '$_selectedPropertyType - ${_selectedServices.join(', ')}',
           'location': LocationService.resolveToCityState(
-            _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : 'Madurai, Tamil Nadu',
+            _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : 'Tamil Nadu',
           ),
-          'plotSize': double.tryParse(_plotSizeController.text.trim()) ?? 1200.0,
-          'budget': double.tryParse(_budgetController.text.trim()) ?? 4500000.0,
-          'timeline': _timelineController.text.trim().isNotEmpty ? _timelineController.text.trim() : '9 Months',
+          'plotSize': double.tryParse(_plotSizeController.text.trim()) ?? 0.0,
+          'budget': double.tryParse(_budgetController.text.trim()) ?? 0.0,
+          'timeline': _timelineController.text.trim().isNotEmpty ? _timelineController.text.trim() : 'Flexible',
           'currentStage': 'Planning & Approvals',
         }),
       );
@@ -1808,6 +1805,8 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       textAlign: TextAlign.end,
                       style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F766E), fontSize: 13.5),
                       decoration: InputDecoration(
+                        hintText: 'e.g. 1200',
+                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: Colors.grey.shade400, fontSize: 12),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -1862,7 +1861,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       textAlign: TextAlign.end,
                       style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF059669), fontSize: 13),
                       decoration: InputDecoration(
-                        prefixText: '₹ ',
+                        prefixText: _budgetController.text.isNotEmpty ? '₹ ' : null,
+                        hintText: 'e.g. 4500000',
+                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: Colors.grey.shade400, fontSize: 12),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -1917,6 +1918,8 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       textAlign: TextAlign.end,
                       style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFD97706), fontSize: 12.5),
                       decoration: InputDecoration(
+                        hintText: 'e.g. 9 Months',
+                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: Colors.grey.shade400, fontSize: 12),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),

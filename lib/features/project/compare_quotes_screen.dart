@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/providers/projects_provider.dart';
 import '../auth/auth_provider.dart';
 import '../chat/chat_detail_screen.dart';
 
@@ -90,21 +91,44 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
       );
 
       if (response.statusCode == 200) {
+        // 1. Immediately invalidate user projects cache so all screens see the project as Ongoing
+        final auth = ref.read(authProvider);
+        if (auth.id != null) {
+          ref.invalidate(userProjectsProvider(auth.id!));
+        }
+
         if (!mounted) return;
+
+        // 2. Display success SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Accepted quote from $providerName!'),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Accepted quote from $providerName! Project is now Ongoing.'),
+                ),
+              ],
+            ),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
           ),
         );
-        _fetchProjectDetails();
+
+        // 3. Automatically navigate to the Project Overview screen
+        final targetProjectId = _activeProjectId;
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        context.go('/project-detail/$targetProjectId?refresh=$timestamp');
       } else {
         if (!mounted) return;
+        final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to accept quote. Please try again.'),
+          SnackBar(
+            content: Text(data['error'] ?? 'Failed to accept quote. Please try again.'),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -115,6 +139,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
         const SnackBar(
           content: Text('Network error. Failed to reach server.'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {

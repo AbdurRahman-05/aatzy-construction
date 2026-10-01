@@ -198,7 +198,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   void _showQuoteDialog(LeadItem lead, {bool isNewQuote = false}) {
     double selectedGstPercent = lead.gstPercent;
     final notesController = TextEditingController(text: isNewQuote ? 'Generated a revised quote for the buyer.' : 'Quote proposed to the buyer.');
-    final quotedPriceController = TextEditingController(text: lead.quotedPrice?.toString() ?? '410.00');
+    final quotedPriceController = TextEditingController(text: lead.quotedPrice?.toString() ?? '');
 
     showDialog(
       context: context,
