@@ -26,6 +26,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         businessType: true,
         gstNumber: true,
         website: true,
+        subscriptionStatus: true,
+        subscriptionPlan: true,
+        subscriptionAmount: true,
+        subscriptionStartedAt: true,
+        subscriptionExpiresAt: true,
         createdAt: true,
         reviews: {
           select: {
@@ -61,10 +66,19 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       ? parseFloat((reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1))
       : 0.0;
 
+    const expiresAt = (provider as any).subscriptionExpiresAt;
+    const now = new Date();
+    const daysLeft = expiresAt && new Date(expiresAt) > now
+      ? Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+    const isSubscriptionActive = (provider as any).subscriptionStatus === 'ACTIVE' && daysLeft > 0;
+
     return NextResponse.json({ 
       provider: {
         ...provider,
         avgRating,
+        daysLeft,
+        isSubscriptionActive,
       } 
     });
   } catch (error) {

@@ -35,6 +35,14 @@ interface ProviderData {
   profileCompletion: number;
   createdAt: string;
   portfolioImages?: PortfolioImage[];
+  subscriptionStatus?: string;
+  subscriptionPlan?: string | null;
+  subscriptionAmount?: number | null;
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
+  daysLeft?: number;
+  razorpayOrderId?: string | null;
+  razorpayPaymentId?: string | null;
 }
 
 type ViewDetailsModalProps =
@@ -230,6 +238,64 @@ export default function ViewDetailsModal(props: ViewDetailsModalProps) {
                       </div>
                     </div>
                   )}
+
+                  {/* Annual Pro Membership & Razorpay Subscription Section */}
+                  <div className="bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-2xl p-5 border border-blue-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-blue-200">
+                          ⭐
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-gray-900">Annual Pro Membership</h4>
+                          <p className="text-[11px] text-gray-500">₹5,999 / year (Razorpay Integration)</p>
+                        </div>
+                      </div>
+                      <div>
+                        {props.data.subscriptionStatus === 'ACTIVE' && (props.data.daysLeft ?? 0) > 0 ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            ACTIVE
+                          </span>
+                        ) : props.data.subscriptionExpiresAt ? (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                            EXPIRED
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                            NOT SUBSCRIBED
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs bg-white/80 p-3 rounded-xl border border-blue-50 mb-3">
+                      <div>
+                        <span className="text-gray-400 block font-semibold">Days Remaining</span>
+                        <span className="text-base font-black text-blue-700">
+                          {(props.data.daysLeft ?? 0) > 0 ? `${props.data.daysLeft} Days` : '0 Days'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block font-semibold">Expiration Date</span>
+                        <span className="text-xs font-bold text-gray-800">
+                          {props.data.subscriptionExpiresAt
+                            ? new Date(props.data.subscriptionExpiresAt).toLocaleDateString('en-IN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      {props.data.razorpayPaymentId && (
+                        <div className="col-span-2">
+                          <span className="text-gray-400 block font-semibold">Razorpay Payment ID</span>
+                          <span className="font-mono text-[11px] text-gray-700">{props.data.razorpayPaymentId}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   <DetailRow
                     label="Registered On"

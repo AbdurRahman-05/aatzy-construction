@@ -8,6 +8,7 @@ import DashboardAnalytics from '../components/DashboardAnalytics';
 import { cookies } from 'next/headers';
 import LoginForm from './LoginForm';
 import AdsManager from '../components/AdsManager';
+import SubscriptionManager from '../components/SubscriptionManager';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,6 +118,48 @@ export default async function AdminDashboard({
     }
   }));
 
+  const providersWithSubData = allProviders.map(p => {
+    const expiresAt = p.subscriptionExpiresAt;
+    const now = new Date();
+    const daysLeft = expiresAt && new Date(expiresAt) > now
+      ? Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+    const isSubActive = p.subscriptionStatus === 'ACTIVE' && daysLeft > 0;
+    const subStatus = isSubActive ? 'ACTIVE' : (expiresAt ? 'EXPIRED' : (p.subscriptionStatus || 'INACTIVE'));
+
+    return {
+      id: p.id,
+      businessName: p.businessName,
+      ownerName: p.ownerName,
+      email: p.email,
+      phone: p.phone,
+      category: p.category,
+      experience: p.experience,
+      isVerified: p.isVerified,
+      isRejected: p.isRejected,
+      address: p.address,
+      bio: p.bio,
+      aadharCard: p.aadharCard,
+      panCard: p.panCard,
+      profileCompletion: p.profileCompletion,
+      createdAt: p.createdAt.toISOString(),
+      subscriptionStatus: subStatus,
+      subscriptionPlan: p.subscriptionPlan,
+      subscriptionAmount: p.subscriptionAmount,
+      subscriptionStartedAt: p.subscriptionStartedAt?.toISOString() || null,
+      subscriptionExpiresAt: p.subscriptionExpiresAt?.toISOString() || null,
+      daysLeft,
+      razorpayOrderId: p.razorpayOrderId,
+      razorpayPaymentId: p.razorpayPaymentId,
+      portfolioImages: p.portfolioImages?.map(img => ({
+        id: img.id,
+        title: img.title,
+        description: img.description,
+        imageData: img.imageData,
+      })) || [],
+    };
+  });
+
   const providersJson = allProviders.map(p => ({
     id: p.id,
     businessName: p.businessName,
@@ -194,6 +237,15 @@ export default async function AdminDashboard({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               <span>Provider Directory</span>
+            </Link>
+            <Link 
+              href="/admin?view=subscriptions" 
+              className={`flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all ${view === 'subscriptions' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-600 hover:bg-gray-100'}`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <span>Subscriptions</span>
             </Link>
             <Link 
               href="/admin?view=ads" 
@@ -353,11 +405,12 @@ export default async function AdminDashboard({
                         <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Business</th>
                         <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Category</th>
                         <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
+                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Membership (₹5,999)</th>
                         <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {allProviders.map(provider => (
+                      {providersWithSubData.map(provider => (
                         <tr key={provider.id} className="hover:bg-gray-50 transition-colors">
                           <td className="p-6">
                             <p className="font-bold text-gray-900">{provider.businessName}</p>
@@ -367,27 +420,30 @@ export default async function AdminDashboard({
                           <td className="p-6 text-center">
                             <StatusToggle id={provider.id} initialStatus={provider.isVerified} type="provider" />
                           </td>
+                          <td className="p-6 text-center">
+                            {provider.subscriptionStatus === 'ACTIVE' && provider.daysLeft > 0 ? (
+                              <div className="inline-flex flex-col items-center">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                  {provider.daysLeft} days left
+                                </span>
+                                <span className="text-[10px] text-gray-400 mt-0.5 font-medium">Annual Pro</span>
+                              </div>
+                            ) : provider.subscriptionExpiresAt ? (
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                                Expired
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                                Unpaid
+                              </span>
+                            )}
+                          </td>
                           <td className="p-6 text-right">
                             <div className="flex items-center justify-end space-x-2">
                               <ViewDetailsModal
                                 type="provider"
-                                data={{
-                                  id: provider.id,
-                                  businessName: provider.businessName,
-                                  ownerName: provider.ownerName,
-                                  email: provider.email,
-                                  phone: provider.phone,
-                                  category: provider.category,
-                                  experience: provider.experience,
-                                  isVerified: provider.isVerified,
-                                  isRejected: provider.isRejected,
-                                  bio: provider.bio,
-                                  address: provider.address,
-                                  aadharCard: provider.aadharCard,
-                                  panCard: provider.panCard,
-                                  profileCompletion: provider.profileCompletion,
-                                  createdAt: provider.createdAt.toISOString(),
-                                }}
+                                data={provider}
                               />
                               <DeleteButton id={provider.id} type="provider" name={provider.businessName} />
                             </div>
@@ -398,6 +454,10 @@ export default async function AdminDashboard({
                   </table>
                 </div>
               </div>
+            )}
+
+            {view === 'subscriptions' && (
+              <SubscriptionManager providers={providersWithSubData} />
             )}
 
             {view === 'ads' && (

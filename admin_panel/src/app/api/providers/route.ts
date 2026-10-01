@@ -59,6 +59,14 @@ export async function GET(request: Request) {
 
         const totalProjectsCount = p.quotes.length > 0 ? p.quotes.length : (p.portfolioImages?.length || 0);
 
+        const expiresAt = (p as any).subscriptionExpiresAt;
+        const now = new Date();
+        const daysLeft = expiresAt && new Date(expiresAt) > now
+          ? Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+        const isSubActive = (p as any).subscriptionStatus === 'ACTIVE' && daysLeft > 0;
+        const subStatus = isSubActive ? 'ACTIVE' : (expiresAt ? 'EXPIRED' : ((p as any).subscriptionStatus || 'INACTIVE'));
+
         return {
           id: p.id,
           businessName: p.businessName,
@@ -74,6 +82,10 @@ export async function GET(request: Request) {
           reviewCount: p.reviews.length,
           projectsCount: totalProjectsCount,
           completedProjects: completedCount,
+          subscriptionStatus: subStatus,
+          subscriptionExpiresAt: expiresAt,
+          daysLeft,
+          isSubscriptionActive: isSubActive,
         };
       });
 
@@ -128,6 +140,14 @@ export async function GET(request: Request) {
 
       const totalProjectsCount = p.quotes.length > 0 ? p.quotes.length : (p.portfolioImages?.length || 0);
 
+      const expiresAt = (p as any).subscriptionExpiresAt;
+      const now = new Date();
+      const daysLeft = expiresAt && new Date(expiresAt) > now
+        ? Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+      const isSubActive = (p as any).subscriptionStatus === 'ACTIVE' && daysLeft > 0;
+      const subStatus = isSubActive ? 'ACTIVE' : (expiresAt ? 'EXPIRED' : ((p as any).subscriptionStatus || 'INACTIVE'));
+
       return {
         id: p.id,
         businessName: p.businessName,
@@ -143,6 +163,10 @@ export async function GET(request: Request) {
         reviewCount: p.reviews.length,
         projectsCount: totalProjectsCount,
         completedProjects: completedCount,
+        subscriptionStatus: subStatus,
+        subscriptionExpiresAt: expiresAt,
+        daysLeft,
+        isSubscriptionActive: isSubActive,
       };
     });
 

@@ -7,6 +7,9 @@ import 'provider_leads_screen.dart';
 import '../chat/chat_list_screen.dart';
 import '../home/profile_screen.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/services/subscription_service.dart';
+import '../subscription/widgets/provider_subscription_modal.dart';
+import '../auth/auth_provider.dart';
 
 class ProviderTabNotifier extends Notifier<int> {
   final List<int> _history = [0];
@@ -53,11 +56,27 @@ class ProviderTabNotifier extends Notifier<int> {
 
 final providerTabProvider = NotifierProvider<ProviderTabNotifier, int>(ProviderTabNotifier.new);
 
-class ProviderLayout extends ConsumerWidget {
+class ProviderLayout extends ConsumerStatefulWidget {
   const ProviderLayout({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProviderLayout> createState() => _ProviderLayoutState();
+}
+
+class _ProviderLayoutState extends ConsumerState<ProviderLayout> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = ref.read(authProvider);
+      if (auth.id != null) {
+        ref.read(subscriptionProvider.notifier).fetchStatus(auth.id!);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentIndex = ref.watch(providerTabProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -76,12 +95,13 @@ class ProviderLayout extends ConsumerWidget {
         ref.read(providerTabProvider.notifier).handleBack();
       },
       child: WallpaperBackground(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: IndexedStack(
-            index: currentIndex,
-            children: screens,
-          ),
+        child: ProviderSubscriptionPaywallOverlay(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: IndexedStack(
+              index: currentIndex,
+              children: screens,
+            ),
         bottomNavigationBar: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -193,7 +213,8 @@ class ProviderLayout extends ConsumerWidget {
         ),
       ),
     ),
-  );
+  ),
+);
 }
 
   Widget _buildNavItem(

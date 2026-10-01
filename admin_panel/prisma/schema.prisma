@@ -46,6 +46,15 @@ model Provider {
   businessType      String?
   gstNumber         String?
   website           String?
+  // Subscription / Membership
+  subscriptionStatus    String           @default("INACTIVE") // "ACTIVE", "EXPIRED", "INACTIVE"
+  subscriptionPlan      String           @default("YEARLY_5999")
+  subscriptionAmount    Float            @default(5999.0)
+  subscriptionStartedAt DateTime?
+  subscriptionExpiresAt DateTime?
+  razorpayOrderId       String?
+  razorpayPaymentId     String?
+  subscriptions         Subscription[]
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   portfolioImages   PortfolioImage[]
@@ -241,5 +250,25 @@ model Notification {
 
   @@index([recipientId, isRead])
   @@index([createdAt])
+}
+
+model Subscription {
+  id                String    @id @default(uuid())
+  providerId        String
+  plan              String    @default("YEARLY_5999")
+  amount            Float     @default(5999.0)
+  currency          String    @default("INR")
+  status            String    @default("SUCCESS") // "SUCCESS", "PENDING", "FAILED"
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  startedAt         DateTime  @default(now())
+  expiresAt         DateTime
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  provider          Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
 }
 

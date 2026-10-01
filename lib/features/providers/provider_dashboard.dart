@@ -13,6 +13,8 @@ import '../auth/auth_provider.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'provider_layout.dart';
 import '../home/profile_screen.dart';
+import '../subscription/widgets/provider_membership_banner.dart';
+import '../../core/services/subscription_service.dart';
 
 class ProviderDashboard extends ConsumerStatefulWidget {
   const ProviderDashboard({super.key});
@@ -51,6 +53,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     }
 
     try {
+      ref.read(subscriptionProvider.notifier).fetchStatus(auth.id!);
       final responses = await Future.wait([
         http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats')),
         http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/projects')),
@@ -292,6 +295,9 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         isSmallScreen: isSmallScreen,
                       ),
                       const SizedBox(height: 16),
+
+                      // 1.5. Annual Pro Membership Banner (Days left, Expiry, Renew CTA)
+                      ProviderMembershipBanner(isSmallScreen: isSmallScreen),
 
                       // 2. Material Sourcing Sales Carousel Banner (Self-contained, smooth, zero re-render)
                       MaterialSourcingCarouselWidget(isSmallScreen: isSmallScreen),

@@ -8,6 +8,8 @@ import '../../core/constants.dart';
 import '../../core/services/push_notification_service.dart';
 import '../../main.dart'; // import themeModeProvider
 import 'widgets/user_tutorial_dialog.dart';
+import '../../core/services/subscription_service.dart';
+import '../subscription/widgets/provider_subscription_modal.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -212,11 +214,58 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+    final subState = ref.watch(subscriptionProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         children: [
+          if (auth.role == 'PROVIDER') ...[
+            _buildSectionHeader('Membership & Billing'),
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706)),
+                ),
+                title: Text(
+                  subState.isSubscribed ? 'Annual Pro Plan (Active)' : 'Annual Pro Plan (Inactive)',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  subState.isSubscribed
+                      ? '${subState.daysLeft} Days Remaining • ₹5,999/yr'
+                      : 'Subscribe now to unlock consumer leads & chat',
+                  style: TextStyle(
+                    color: subState.isSubscribed ? const Color(0xFF0F766E) : Colors.red,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                trailing: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F766E),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  ),
+                  onPressed: () => showProviderSubscriptionModal(context),
+                  child: Text(
+                    subState.isSubscribed ? 'Manage' : 'Subscribe',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           _buildSectionHeader('Notifications'),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
