@@ -493,8 +493,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final res = await B2BApiService().get('/supplier/leads', queryParameters: {'supplierId': providerId});
       if (res.success && res.data != null && mounted) {
         final leadsList = res.data['leads'] as List?;
+        final activeLeadsCount = leadsList?.where((lead) {
+          final status = lead is Map ? (lead['status'] ?? 'New') : 'New';
+          return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
+        }).length ?? 0;
         setState(() {
-          _supplierLeadsCount = leadsList?.length ?? 0;
+          _supplierLeadsCount = activeLeadsCount;
         });
       }
     } catch (e) {
@@ -504,6 +508,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(providerTabProvider, (previous, next) {
+      if (next == 4) {
+        _fetchProfileData();
+      }
+    });
+
     ref.listen(authProvider, (previous, next) {
       final userChanged = previous?.id != next.id;
       if (userChanged) {
@@ -875,6 +885,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           label: 'Completed',
                           value: '$_completedProjectsCount',
                           color: Colors.green,
+                          onTap: () => ref.read(providerTabProvider.notifier).setTab(1),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -884,6 +895,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           label: 'B2B Products',
                           value: '${_supplierProducts.length}',
                           color: Colors.blue,
+                          onTap: () => context.push('/b2b-materials'),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -893,6 +905,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           label: 'Active Leads',
                           value: '${_serviceLeadsCount + _supplierLeadsCount}',
                           color: const Color(0xFF002E3B),
+                          onTap: () => ref.read(providerTabProvider.notifier).setTab(2),
                         ),
                       ),
                     ],
@@ -957,42 +970,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required String label,
     required String value,
     required Color color,
+    VoidCallback? onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.08),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.5) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFF0F172A).withValues(alpha: 0.08),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Icon(icon, size: 18, color: color),
+                ],
               ),
-              Icon(icon, size: 18, color: color),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        ),
       ),
     );
   }

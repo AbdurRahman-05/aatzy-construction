@@ -22,6 +22,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
           none: {
             isAccepted: true
           }
+        },
+        currentStage: {
+          notIn: ['Completed', 'Finished', 'Cancelled', 'completed', 'finished', 'cancelled']
         }
       },
       orderBy: { createdAt: 'desc' },
