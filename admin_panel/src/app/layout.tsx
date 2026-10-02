@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Buildzy Admin Panel",
-  description: "Buildzy Construction Management & Admin Hub",
+  title: "Connectzy Construction - Platform & Admin Hub",
+  description: "Smart Construction Management, Cost Estimation, Verified Contractors & Materials Hub",
   icons: {
     icon: "/favicon.ico",
   },

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import ProviderReviewModal from '../components/ProviderReviewModal';
 import StatusToggle from '../components/StatusToggle';
@@ -26,7 +25,7 @@ export default async function AdminDashboard({
   const correctPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
   if (adminSession !== correctPassword) {
-    return <LoginForm correctPassword={correctPassword} />;
+    return <LoginForm />;
   }
 
   const unapprovedProviders = await prisma.provider.findMany({

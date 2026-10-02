@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function LoginForm({ correctPassword }: { correctPassword: string }) {
+export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -50,7 +50,7 @@ export default function LoginForm({ correctPassword }: { correctPassword: string
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h2 className="text-2xl font-black text-[#1F2937] tracking-tight">Buildzy Admin Panel</h2>
+          <h2 className="text-2xl font-black text-[#1F2937] tracking-tight">Connectzy Admin Panel</h2>
           <p className="text-[#737373] text-sm mt-1 font-medium text-center">
             System administration & contractor verification hub
           </p>
