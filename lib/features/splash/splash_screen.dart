@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +7,18 @@ import '../../core/providers/app_prefetch.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/push_notification_service.dart';
 
+/// Professional animated splash / loading screen.
+///
+/// Features:
+/// - Uses the exact existing logo (`assets/logo.png`) without redesign or alteration.
+/// - Clean background matching the app's current theme (light/dark).
+/// - Logo entrance animation: Opacity 0% -> 100%, Scale 85% -> 100% (750ms, ease-out).
+/// - Subtle breathing pulse after logo settles.
+/// - Minimal, lightweight loading indicator below the logo.
+/// - Asynchronous startup: Waits for real initialization tasks (auth, services, data prefetch).
+/// - Graceful transition: If initialization is fast, it finishes the animation naturally;
+///   if slower, it continues breathing smoothly without freezing.
+/// - Smooth exit fade transition to the destination screen.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -17,129 +28,178 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _mainController;
-  late AnimationController _pulseController;
-  late AnimationController _shimmerController;
-
+  // Entrance animation controller (750ms)
+  late AnimationController _entranceController;
   late Animation<double> _logoScale;
   late Animation<double> _logoOpacity;
-  late Animation<double> _titleSlide;
-  late Animation<double> _titleOpacity;
-  late Animation<double> _progressAnimation;
+  late Animation<double> _indicatorOpacity;
 
-  String _loadingStatus = 'Initializing Buildzy Engine...';
+  // Subtle breathing / pulse animation controller (1600ms)
+  late AnimationController _pulseController;
+  late Animation<double> _logoPulse;
+
+  // Exit transition controller (280ms)
+  late AnimationController _exitController;
+  late Animation<double> _exitOpacity;
+  late Animation<double> _exitScale;
+
+  // Track natural entrance completion
+  final Completer<void> _entranceCompleter = Completer<void>();
   bool _navigationTriggered = false;
 
   @override
   void initState() {
     super.initState();
+    _setupAnimations();
+    _runStartupSequence();
+  }
 
-    // Start background pre-fetching while the splash animation plays
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      prefetchAppData(ref);
-    });
-
-    // Main sequence controller (1.1 seconds for fast snappy loading)
-    _mainController = AnimationController(
+  void _setupAnimations() {
+    // 1. Entrance animation (750ms ease-out)
+    _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 750),
     );
 
-    // Continuous subtle breathing / pulse for glow
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-
-    // Continuous shimmer loop
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat();
-
-    // Logo entrance: Scale + Opacity (0ms - 400ms)
-    _logoScale = Tween<double>(begin: 0.7, end: 1.0).animate(
+    _logoScale = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.0, 0.4, curve: Curves.easeOutBack),
+        parent: _entranceController,
+        curve: Curves.easeOutCubic,
       ),
     );
 
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.0, 0.3, curve: Curves.easeIn),
+        parent: _entranceController,
+        curve: const Interval(0.0, 0.85, curve: Curves.easeOut),
       ),
     );
 
-    // Title entrance: Slide + Opacity (200ms - 600ms)
-    _titleSlide = Tween<double>(begin: 15.0, end: 0.0).animate(
+    // Indicator fades in gently in the latter half of the entrance
+    _indicatorOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.15, 0.5, curve: Curves.easeOutCubic),
+        parent: _entranceController,
+        curve: const Interval(0.45, 1.0, curve: Curves.easeIn),
       ),
     );
 
-    _titleOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.15, 0.45, curve: Curves.easeIn),
-      ),
-    );
-
-    // Progress bar fill (150ms - 1000ms)
-    _progressAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.1, 0.95, curve: Curves.easeInOutCubic),
-      ),
-    );
-
-    _progressAnimation.addListener(() {
-      final val = _progressAnimation.value;
-      if (val < 0.35) {
-        if (_loadingStatus != 'Initializing Buildzy Engine...') {
-          setState(() => _loadingStatus = 'Initializing Buildzy Engine...');
-        }
-      } else if (val < 0.70) {
-        if (_loadingStatus != 'Loading Architectural Modules...') {
-          setState(() => _loadingStatus = 'Loading Architectural Modules...');
-        }
-      } else if (val < 0.92) {
-        if (_loadingStatus != 'Connecting Construction Network...') {
-          setState(() => _loadingStatus = 'Connecting Construction Network...');
-        }
-      } else {
-        if (_loadingStatus != 'Ready!') {
-          setState(() => _loadingStatus = 'Ready!');
-        }
-      }
-    });
-
-    _mainController.addStatusListener((status) {
+    _entranceController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _attemptNavigation();
+        if (!_entranceCompleter.isCompleted) {
+          _entranceCompleter.complete();
+        }
+        // Start subtle breathing pulse once entrance is fully completed
+        if (mounted && !_navigationTriggered) {
+          _pulseController.repeat(reverse: true);
+        }
       }
     });
 
-    _mainController.forward();
+    // 2. Subtle continuous breathing pulse (1600ms)
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+
+    _logoPulse = Tween<double>(begin: 1.0, end: 1.025).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOutSine,
+      ),
+    );
+
+    // 3. Smooth exit transition (280ms)
+    _exitController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+
+    _exitOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _exitController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _exitScale = Tween<double>(begin: 1.0, end: 1.03).animate(
+      CurvedAnimation(
+        parent: _exitController,
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
-  void _attemptNavigation() {
-    if (_navigationTriggered || !mounted) return;
+  Future<void> _runStartupSequence() async {
+    // Start entrance animation immediately
+    _entranceController.forward();
 
-    final auth = ref.read(authProvider);
-    if (!auth.isInitialized) {
-      // If auth not yet loaded, wait briefly and retry
-      Timer(const Duration(milliseconds: 200), _attemptNavigation);
-      return;
+    // Run real application initialization in parallel
+    final initFuture = _performInitialization();
+
+    // Wait for BOTH:
+    // 1. Natural completion of the logo entrance animation (~750ms)
+    // 2. Completion of actual initialization tasks
+    await Future.wait([
+      _entranceCompleter.future,
+      initFuture,
+    ]);
+
+    if (!mounted || _navigationTriggered) return;
+
+    // Smooth exit transition
+    await _exitController.forward();
+
+    if (!mounted || _navigationTriggered) return;
+
+    _navigateToDestination();
+  }
+
+  /// Real initialization tasks:
+  /// - Pre-fetch data into cache
+  /// - Wait for persisted authentication state
+  /// - Initialize background services if authenticated
+  Future<void> _performInitialization() async {
+    try {
+      // Warm up critical feeds & cached data in parallel
+      prefetchAppData(ref);
+
+      // Wait for auth provider to finish reading from local storage
+      if (!ref.read(authProvider).isInitialized) {
+        final authCompleter = Completer<void>();
+        final subscription = ref.listenManual<AuthState>(authProvider, (_, next) {
+          if (next.isInitialized && !authCompleter.isCompleted) {
+            authCompleter.complete();
+          }
+        });
+
+        try {
+          await authCompleter.future.timeout(const Duration(seconds: 4));
+        } catch (_) {
+          debugPrint('[Splash] Auth initialization wait timed out.');
+        } finally {
+          subscription.close();
+        }
+      }
+
+      // If user is authenticated, sync location and notifications
+      final auth = ref.read(authProvider);
+      if (auth.id != null) {
+        LocationService().detectAndSaveLocation();
+        if (auth.role != null) {
+          PushNotificationService().syncFCMToken(userId: auth.id, role: auth.role);
+        }
+      }
+    } catch (e) {
+      debugPrint('[Splash] Error during initialization: $e');
     }
+  }
 
+  void _navigateToDestination() {
+    if (_navigationTriggered || !mounted) return;
     _navigationTriggered = true;
 
+    final auth = ref.read(authProvider);
     if (auth.id != null) {
-      LocationService().detectAndSaveLocation();
-      PushNotificationService().syncFCMToken(userId: auth.id, role: auth.role);
       if (auth.role == 'PROVIDER') {
         context.go('/provider-home');
       } else {
@@ -152,381 +212,164 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   void dispose() {
-    _mainController.dispose();
+    _entranceController.dispose();
     _pulseController.dispose();
-    _shimmerController.dispose();
+    _exitController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Listen for auth state changes just in case
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (_mainController.isCompleted && next.isInitialized && !_navigationTriggered) {
-        _attemptNavigation();
-      }
-    });
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? const Color(0xFF121B22) : const Color(0xFFF5F5F3);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF090D14),
-      body: Stack(
-        children: [
-          // Background Blueprint Grid & Ambient Glows
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _BlueprintBackgroundPainter(
-                pulseValue: _pulseController.value,
-              ),
-            ),
-          ),
+      backgroundColor: backgroundColor,
+      body: Center(
+        child: AnimatedBuilder(
+          animation: Listenable.merge([
+            _entranceController,
+            _pulseController,
+            _exitController,
+          ]),
+          builder: (context, child) {
+            // Combine entrance scale, pulse breathing, and exit scale smoothly
+            final entranceScale = _logoScale.value;
+            final pulseScale = _entranceController.isCompleted ? _logoPulse.value : 1.0;
+            final exitScale = _exitScale.value;
+            final finalScale = entranceScale * pulseScale * exitScale;
 
-          // Central animated content
-          SafeArea(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+            // Combine entrance opacity and exit opacity
+            final finalOpacity = (_logoOpacity.value * _exitOpacity.value).clamp(0.0, 1.0);
+
+            return Opacity(
+              opacity: finalOpacity,
+              child: Transform.scale(
+                scale: finalScale,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Spacer(flex: 3),
-
-                    // Logo with Pulse Glow & Halo
-                    AnimatedBuilder(
-                      animation: Listenable.merge([
-                        _mainController,
-                        _pulseController,
-                        _shimmerController,
-                      ]),
-                      builder: (context, child) {
-                        final pulse = _pulseController.value;
-                        final shimmer = _shimmerController.value;
-
-                        return Transform.scale(
-                          scale: _logoScale.value,
-                          child: Opacity(
-                            opacity: _logoOpacity.value,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Outer Ambient Pulse Glow
-                                Container(
-                                  width: 170 + (pulse * 20),
-                                  height: 170 + (pulse * 20),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: RadialGradient(
-                                      colors: [
-                                        const Color(0xFF1F2937).withValues(alpha: 0.35 + (pulse * 0.15)),
-                                        const Color(0xFF00D2FF).withValues(alpha: 0.12 + (pulse * 0.08)),
-                                        Colors.transparent,
-                                      ],
-                                      stops: const [0.0, 0.5, 1.0],
-                                    ),
-                                  ),
-                                ),
-
-                                // Rotating Geometric Blueprint Ring
-                                Transform.rotate(
-                                  angle: shimmer * 2 * math.pi,
-                                  child: Container(
-                                    width: 154,
-                                    height: 154,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: const Color(0xFF00D2FF).withValues(alpha: 0.25),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                // Counter Rotating Dash Ring
-                                Transform.rotate(
-                                  angle: -shimmer * 2 * math.pi,
-                                  child: Container(
-                                    width: 140,
-                                    height: 140,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: const Color(0xFF1F2937).withValues(alpha: 0.45),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                // App Icon Card Container
-                                Container(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(28),
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFF1E2638),
-                                        Color(0xFF0F1522),
-                                      ],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFFFF641E).withValues(alpha: 0.3),
-                                        blurRadius: 24,
-                                        spreadRadius: 2,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                      BoxShadow(
-                                        color: const Color(0xFF00D2FF).withValues(alpha: 0.2),
-                                        blurRadius: 30,
-                                        offset: const Offset(0, -4),
-                                      ),
-                                    ],
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.15),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(28),
-                                    child: Image.asset(
-                                      'assets/logo.png',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    // Existing Logo Asset (Clean, Unaltered)
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                            blurRadius: 28,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 10),
                           ),
-                        );
-                      },
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(26),
+                        child: Image.asset(
+                          'assets/logo.png',
+                          width: 116,
+                          height: 116,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 52),
 
-                    // App Title & Tagline
-                    AnimatedBuilder(
-                      animation: _mainController,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(0, _titleSlide.value),
-                          child: Opacity(
-                            opacity: _titleOpacity.value,
-                            child: Column(
-                              children: [
-                                ShaderMask(
-                                  shaderCallback: (bounds) => const LinearGradient(
-                                    colors: [
-                                      Colors.white,
-                                      Color(0xFF9CA3AF),
-                                      Color(0xFF1F2937),
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ).createShader(bounds),
-                                  child: const Text(
-                                    'BUILDZY',
-                                    style: TextStyle(
-                                      fontSize: 34,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 4.0,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'SMART CONSTRUCTION & ARCHITECTURE',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 2.2,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                    // Minimal, Lightweight Loading Indicator
+                    Opacity(
+                      opacity: _indicatorOpacity.value * _exitOpacity.value,
+                      child: _MinimalLoadingIndicator(isDark: isDark),
                     ),
-
-                    const Spacer(flex: 3),
-
-                    // Progress Bar & Dynamic Status
-                    AnimatedBuilder(
-                      animation: Listenable.merge([_mainController, _shimmerController]),
-                      builder: (context, child) {
-                        final progress = _progressAnimation.value;
-                        final percent = (progress * 100).toInt();
-
-                        return Opacity(
-                          opacity: _titleOpacity.value,
-                          child: Column(
-                            children: [
-                              // Progress Bar Track
-                              Container(
-                                width: double.infinity,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    // Filled bar with animated gradient
-                                    FractionallySizedBox(
-                                      alignment: Alignment.centerLeft,
-                                      widthFactor: progress.clamp(0.0, 1.0),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(10),
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF00D2FF),
-                                              Color(0xFF374151),
-                                              Color(0xFF1F2937),
-                                            ],
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFF1F2937).withValues(alpha: 0.6),
-                                              blurRadius: 10,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(height: 14),
-
-                              // Status text + Percentage
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 12,
-                                          height: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00D2FF)),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            _loadingStatus,
-                                            style: TextStyle(
-                                              color: Colors.grey.shade400,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    '$percent%',
-                                    style: const TextStyle(
-                                      color: Color(0xFF00D2FF),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'monospace',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-
-                    const Spacer(flex: 1),
                   ],
                 ),
               ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-// Custom Painter for Blueprint Ambient Background
-class _BlueprintBackgroundPainter extends CustomPainter {
-  final double pulseValue;
+/// A sleek, minimal, and lightweight indeterminate loading indicator bar.
+///
+/// Designed to be clean, distraction-free, and respectful of the brand palette.
+class _MinimalLoadingIndicator extends StatefulWidget {
+  final bool isDark;
 
-  _BlueprintBackgroundPainter({required this.pulseValue});
+  const _MinimalLoadingIndicator({required this.isDark});
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()
-      ..shader = const RadialGradient(
-        center: Alignment(0.0, -0.15),
-        radius: 0.9,
-        colors: [
-          Color(0xFF141D2B),
-          Color(0xFF090D14),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+  State<_MinimalLoadingIndicator> createState() => _MinimalLoadingIndicatorState();
+}
 
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+class _MinimalLoadingIndicatorState extends State<_MinimalLoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
 
-    // Subtle grid lines
-    final gridPaint = Paint()
-      ..color = const Color(0xFF00D2FF).withValues(alpha: 0.035)
-      ..strokeWidth = 1.0;
-
-    const double step = 40.0;
-    for (double x = 0; x <= size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = 0; y <= size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    // Ambient radial glow top right (cyan)
-    final cyanGlow = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          const Color(0xFF00D2FF).withValues(alpha: 0.07 + (pulseValue * 0.04)),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(size.width * 0.85, size.height * 0.2),
-        radius: 180,
-      ));
-    canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.2), 180, cyanGlow);
-
-    // Ambient radial glow bottom left (slate)
-    final slateGlow = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          const Color(0xFF1F2937).withValues(alpha: 0.12 + (pulseValue * 0.04)),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(
-        center: Offset(size.width * 0.15, size.height * 0.75),
-        radius: 200,
-      ));
-    canvas.drawCircle(Offset(size.width * 0.15, size.height * 0.75), 200, slateGlow);
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
   }
 
   @override
-  bool shouldRepaint(covariant _BlueprintBackgroundPainter oldDelegate) {
-    return oldDelegate.pulseValue != pulseValue;
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final trackColor = widget.isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.06);
+
+    final runnerColor = widget.isDark
+        ? Colors.white.withValues(alpha: 0.65)
+        : const Color(0xFF1F2937);
+
+    return SizedBox(
+      width: 110,
+      height: 2.5,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: Stack(
+          children: [
+            // Background track
+            Positioned.fill(
+              child: Container(color: trackColor),
+            ),
+
+            // Smooth sliding runner
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final value = _controller.value;
+                // Move from left to right with a smooth sweep
+                final leftFraction = (value * 1.6) - 0.6;
+                final widthFraction = 0.4;
+
+                return Align(
+                  alignment: Alignment(leftFraction * 2 - 1, 0),
+                  child: FractionallySizedBox(
+                    widthFactor: widthFraction,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: runnerColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
