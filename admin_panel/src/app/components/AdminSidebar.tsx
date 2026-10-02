@@ -41,6 +41,16 @@ export default function AdminSidebar({
       ),
     },
     {
+      id: 'recent-actions',
+      label: 'Recent Actions',
+      href: '/admin?view=recent-actions',
+      icon: (active) => (
+        <svg className={`w-5 h-5 transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-105'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+    },
+    {
       id: 'pending',
       label: 'Pending Approvals',
       href: '/admin?view=pending',
@@ -181,7 +191,7 @@ export default function AdminSidebar({
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <span>View Public Portfolio</span>
+          <span>View Public Website</span>
         </Link>
       </div>
     </aside>

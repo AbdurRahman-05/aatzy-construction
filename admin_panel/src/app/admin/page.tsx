@@ -4,6 +4,8 @@ import StatusToggle from '../components/StatusToggle';
 import DeleteButton from '../components/DeleteButton';
 import ViewDetailsModal from '../components/ViewDetailsModal';
 import DashboardAnalytics from '../components/DashboardAnalytics';
+import RecentActionsFeed from '../components/RecentActionsFeed';
+import { getRecentActions } from '@/lib/recentActions';
 import { cookies } from 'next/headers';
 import LoginForm from './LoginForm';
 import AdsManager from '../components/AdsManager';
@@ -171,6 +173,8 @@ export default async function AdminDashboard({
     orderBy: { createdAt: 'desc' }
   });
 
+  const recentActions = await getRecentActions(60);
+
   const adsJson = allAdsRaw.map((ad: any) => ({
     id: ad.id,
     title: ad.title,
@@ -179,6 +183,8 @@ export default async function AdminDashboard({
     icon: ad.icon,
     gradient: ad.gradient,
     imageUrl: ad.imageUrl || null,
+    mediaType: ad.mediaType || (ad.videoUrl ? 'video' : 'image'),
+    videoUrl: ad.videoUrl || null,
     targetSide: ad.targetSide || 'ALL',
     actionUrl: ad.actionUrl || null,
     actionText: ad.actionText || 'Explore Now',
@@ -190,12 +196,12 @@ export default async function AdminDashboard({
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-40">
         <div className="flex items-center space-x-4">
-          <div className="bg-blue-600 p-2 rounded-lg">
+          <div className="bg-blue-600 p-2 rounded-lg shadow-sm">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">BuildConnect Admin</h1>
+          <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Connectzy Admin</h1>
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-sm font-medium text-gray-500">Administrator</span>
@@ -254,8 +260,13 @@ export default async function AdminDashboard({
                 <DashboardAnalytics 
                   projects={projectsJson} 
                   acceptedQuotes={acceptedQuotesJson} 
-                  providers={providersJson} 
+                  providers={providersJson}
+                  recentActions={recentActions}
                 />
+              )}
+
+              {view === 'recent-actions' && (
+                <RecentActionsFeed initialActions={recentActions} />
               )}
 
             {view === 'pending' && (

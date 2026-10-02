@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     if (target) {
       const normalized = target.toUpperCase();
       // An ad matches if it's targeted to ALL/BOTH or specifically to this side
-      where.targetSide = { in: ['ALL', 'BOTH', normalized] };
+      where.targetSide = { in: ['ALL', 'BOTH', 'BOTH_SIDES', normalized] };
     }
 
     const ads = await (prisma as any).ad.findMany({
@@ -40,6 +40,8 @@ export async function POST(request: Request) {
       icon,
       gradient,
       imageUrl,
+      mediaType,
+      videoUrl,
       targetSide,
       actionUrl,
       actionText,
@@ -58,6 +60,8 @@ export async function POST(request: Request) {
         icon: icon || 'star',
         gradient: gradient || '0xFF064354,0xFF0B7C8E',
         imageUrl: imageUrl || null,
+        mediaType: mediaType || (videoUrl ? 'video' : 'image'),
+        videoUrl: videoUrl || null,
         targetSide: targetSide || 'ALL',
         actionUrl: actionUrl || null,
         actionText: actionText || 'Explore Now',
@@ -66,8 +70,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ad }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create ad error:', error);
-    return NextResponse.json({ error: 'Failed to create ad' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create ad', details: error?.message || String(error) }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import RecentActionsFeed from './RecentActionsFeed';
+import { RecentAction } from '@/lib/recentActions';
 
 interface Task {
   id: string;
@@ -46,10 +48,11 @@ interface DashboardAnalyticsProps {
   projects: Project[];
   acceptedQuotes: Quote[];
   providers: Provider[];
+  recentActions?: RecentAction[];
 }
 
-export default function DashboardAnalytics({ projects, acceptedQuotes, providers }: DashboardAnalyticsProps) {
-  const [activeTab, setActiveTab] = useState<'ongoing' | 'profits'>('ongoing');
+export default function DashboardAnalytics({ projects, acceptedQuotes, providers, recentActions = [] }: DashboardAnalyticsProps) {
+  const [activeTab, setActiveTab] = useState<'recent' | 'ongoing' | 'profits'>('recent');
   
   // Ongoing projects search query
   const [searchQuery, setSearchQuery] = useState('');
@@ -169,10 +172,32 @@ export default function DashboardAnalytics({ projects, acceptedQuotes, providers
   return (
     <div className="space-y-6">
       {/* Dynamic Mini-Tabs */}
-      <div className="flex bg-gray-100 p-1.5 rounded-2xl w-fit border border-gray-200">
+      <div className="flex flex-wrap items-center bg-gray-100 p-1.5 rounded-2xl w-fit border border-gray-200 gap-1">
+        <button
+          onClick={() => setActiveTab('recent')}
+          className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${
+            activeTab === 'recent'
+              ? 'bg-white text-blue-600 shadow-md shadow-gray-200/50'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span>Recent Actions</span>
+          {recentActions.length > 0 && (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+              activeTab === 'recent' ? 'bg-blue-50 text-blue-600' : 'bg-gray-200 text-gray-700'
+            }`}>
+              {recentActions.length}
+            </span>
+          )}
+        </button>
+
         <button
           onClick={() => setActiveTab('ongoing')}
-          className={`flex items-center space-x-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${
+          className={`flex items-center space-x-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${
             activeTab === 'ongoing'
               ? 'bg-white text-blue-600 shadow-md shadow-gray-200/50'
               : 'text-gray-600 hover:text-gray-800'
@@ -183,6 +208,7 @@ export default function DashboardAnalytics({ projects, acceptedQuotes, providers
           </svg>
           <span>Ongoing Projects</span>
         </button>
+
         <button
           onClick={() => setActiveTab('profits')}
           className={`flex items-center space-x-2.5 px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 ${
@@ -197,6 +223,11 @@ export default function DashboardAnalytics({ projects, acceptedQuotes, providers
           <span>Earnings & Profits</span>
         </button>
       </div>
+
+      {/* Tab: Recent Actions Feed */}
+      {activeTab === 'recent' && (
+        <RecentActionsFeed initialActions={recentActions} />
+      )}
 
       {/* Card Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -10,6 +10,8 @@ export interface Ad {
   icon?: string;
   gradient?: string;
   imageUrl?: string | null;
+  mediaType?: string; // 'image' | 'video'
+  videoUrl?: string | null;
   targetSide?: string; // 'ALL' | 'CLIENT' | 'PROVIDER'
   actionUrl?: string | null;
   actionText?: string | null;
@@ -27,16 +29,20 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
   const [desc, setDesc] = useState('');
   const [badge, setBadge] = useState('SPECIAL PROMO');
   const [targetSide, setTargetSide] = useState<'ALL' | 'CLIENT' | 'PROVIDER'>('ALL');
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [imageUrl, setImageUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [actionUrl, setActionUrl] = useState('');
   const [actionText, setActionText] = useState('Explore Now');
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewAd, setPreviewAd] = useState<Ad | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle local file selection and convert to Base64 Data URL
+  // Handle local image file selection and convert to Base64 Data URL
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -62,6 +68,32 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
     reader.readAsDataURL(file);
   };
 
+  // Handle local video file selection and convert to Base64 Data URL
+  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      setError('Please select a valid video file (MP4, WebM, MOV).');
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) {
+      setError('Video file size should be under 25MB. For larger videos, please enter a direct streaming video URL.');
+      return;
+    }
+
+    setError('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      setVideoUrl(reader.result as string);
+    };
+    reader.onerror = () => {
+      setError('Failed to read video file.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -80,6 +112,8 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
           desc: desc.trim(),
           badge: badge.trim() || 'PROMOTION',
           imageUrl: imageUrl || null,
+          mediaType,
+          videoUrl: videoUrl.trim() || null,
           targetSide,
           actionUrl: actionUrl.trim() || null,
           actionText: actionText.trim() || 'Explore Now',
@@ -94,11 +128,14 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
         setTitle('');
         setDesc('');
         setBadge('SPECIAL PROMO');
+        setMediaType('image');
         setImageUrl('');
+        setVideoUrl('');
         setActionUrl('');
         setActionText('Explore Now');
         setIsActive(true);
         if (fileInputRef.current) fileInputRef.current.value = '';
+        if (videoFileInputRef.current) videoFileInputRef.current.value = '';
       } else {
         const errData = await response.json();
         setError(errData.error || 'Failed to create ad.');
@@ -155,10 +192,13 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
               Upload promo posters displayed in a popup when clients or service providers log in or open the app.
             </p>
           </div>
-          {imageUrl && (
+          {(imageUrl || videoUrl || title) && (
             <button
               type="button"
-              onClick={() => setShowPreviewModal(true)}
+              onClick={() => {
+                setPreviewAd(null);
+                setShowPreviewModal(true);
+              }}
               className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-xl transition"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,90 +273,213 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
             </div>
           </div>
 
-          {/* 2. Poster Image Upload & Preview */}
+          {/* 2. Media Type Selection (Image vs Video) */}
           <div>
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
-              Ad Poster Image / Banner
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="md:col-span-2 space-y-3">
-                <div className="border-2 border-dashed border-gray-200 hover:border-blue-400 rounded-2xl p-6 text-center transition bg-gray-50/50">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="ad-poster-file"
-                  />
-                  <label htmlFor="ad-poster-file" className="cursor-pointer block">
-                    <svg
-                      className="mx-auto h-10 w-10 text-gray-400 mb-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <span className="text-sm font-bold text-blue-600 hover:text-blue-700">
-                      Click to upload poster image
-                    </span>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, or WebP up to 5MB</p>
-                  </label>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400 font-semibold uppercase">Or Image URL:</span>
-                  <input
-                    type="url"
-                    value={imageUrl.startsWith('data:') ? '' : imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://example.com/poster.jpg"
-                    className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-700"
-                  />
-                </div>
-              </div>
-
-              {/* Poster Preview thumbnail */}
-              <div className="flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 bg-gray-50 min-h-[160px]">
-                {imageUrl ? (
-                  <div className="relative group w-full">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imageUrl}
-                      alt="Ad Preview"
-                      className="w-full h-40 object-cover rounded-xl shadow-sm border border-gray-200"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImageUrl('');
-                        if (fileInputRef.current) fileInputRef.current.value = '';
-                      }}
-                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition"
-                      title="Remove image"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                    <div className="text-center mt-1.5">
-                      <span className="text-[11px] font-bold text-emerald-600">✓ Poster Loaded</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-400">
-                    <span className="text-3xl block mb-1">🖼️</span>
-                    <span className="text-xs font-semibold">Poster Preview</span>
-                  </div>
-                )}
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">
+                Ad Creative Format *
+              </label>
+              <div className="inline-flex p-1 bg-gray-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setMediaType('image')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+                    mediaType === 'image'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <span>🖼️</span> Static Image
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMediaType('video')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+                    mediaType === 'video'
+                      ? 'bg-white text-purple-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <span>🎬</span> Video Ad
+                </button>
               </div>
             </div>
+
+            {/* Media Upload & Preview Area */}
+            {mediaType === 'image' ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="md:col-span-2 space-y-3">
+                  <div className="border-2 border-dashed border-gray-200 hover:border-blue-400 rounded-2xl p-6 text-center transition bg-gray-50/50">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      id="ad-poster-file"
+                    />
+                    <label htmlFor="ad-poster-file" className="cursor-pointer block">
+                      <svg
+                        className="mx-auto h-10 w-10 text-gray-400 mb-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span className="text-sm font-bold text-blue-600 hover:text-blue-700">
+                        Click to upload poster image
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, or WebP up to 5MB</p>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 font-semibold uppercase">Or Image URL:</span>
+                    <input
+                      type="url"
+                      value={imageUrl.startsWith('data:') ? '' : imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="https://example.com/poster.jpg"
+                      className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Poster Preview thumbnail */}
+                <div className="flex flex-col items-center justify-center p-3 rounded-2xl border border-gray-200 bg-gray-50 min-h-[160px]">
+                  {imageUrl ? (
+                    <div className="relative group w-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageUrl}
+                        alt="Ad Preview"
+                        className="w-full h-40 object-cover rounded-xl shadow-sm border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageUrl('');
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition"
+                        title="Remove image"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <div className="text-center mt-1.5">
+                        <span className="text-[11px] font-bold text-emerald-600">✓ Poster Loaded</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-400">
+                      <span className="text-3xl block mb-1">🖼️</span>
+                      <span className="text-xs font-semibold">Poster Preview</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="md:col-span-2 space-y-3">
+                  <div className="border-2 border-dashed border-purple-200 hover:border-purple-400 rounded-2xl p-6 text-center transition bg-purple-50/30">
+                    <input
+                      ref={videoFileInputRef}
+                      type="file"
+                      accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                      onChange={handleVideoFileChange}
+                      className="hidden"
+                      id="ad-video-file"
+                    />
+                    <label htmlFor="ad-video-file" className="cursor-pointer block">
+                      <svg
+                        className="mx-auto h-10 w-10 text-purple-400 mb-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span className="text-sm font-bold text-purple-600 hover:text-purple-700">
+                        Click to upload video file
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">MP4, WebM, or MOV (up to 25MB)</p>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400 font-semibold uppercase">Or Video URL:</span>
+                    <input
+                      type="url"
+                      value={videoUrl.startsWith('data:') ? '' : videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      placeholder="https://example.com/commercial.mp4"
+                      className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-purple-500 text-gray-700"
+                    />
+                  </div>
+
+                  {/* Optional Poster for Video */}
+                  <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                    <span className="text-xs text-gray-400 font-semibold uppercase">Poster Cover (Optional):</span>
+                    <input
+                      type="url"
+                      value={imageUrl.startsWith('data:') ? '' : imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="Thumbnail URL (https://...)"
+                      className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-purple-500 text-gray-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Video Preview Player */}
+                <div className="flex flex-col items-center justify-center p-3 rounded-2xl border border-purple-200 bg-purple-50/30 min-h-[160px]">
+                  {videoUrl ? (
+                    <div className="relative group w-full">
+                      <video
+                        src={videoUrl}
+                        controls
+                        playsInline
+                        muted
+                        className="w-full h-40 object-cover rounded-xl shadow-sm border border-purple-200 bg-black"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideoUrl('');
+                          if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+                        }}
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 shadow-md hover:bg-red-700 transition"
+                        title="Remove video"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <div className="text-center mt-1.5">
+                        <span className="text-[11px] font-bold text-purple-600">✓ Video Player Ready</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center text-purple-300">
+                      <span className="text-3xl block mb-1">🎬</span>
+                      <span className="text-xs font-semibold text-gray-400">Video Player Preview</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 3. Title & Badge */}
@@ -445,8 +608,27 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
                   }`}
                 >
                   <div>
-                    {/* Poster thumbnail if available */}
-                    {ad.imageUrl && (
+                    {/* Media thumbnail / player */}
+                    {ad.videoUrl || ad.mediaType === 'video' ? (
+                      <div className="relative mb-3 rounded-xl overflow-hidden bg-black border border-purple-200">
+                        {ad.videoUrl ? (
+                          <video
+                            src={ad.videoUrl}
+                            controls
+                            playsInline
+                            muted
+                            className="w-full h-36 object-cover"
+                          />
+                        ) : (
+                          <div className="h-32 bg-purple-950/60 flex items-center justify-center text-purple-300">
+                            <span className="text-3xl">🎬</span>
+                          </div>
+                        )}
+                        <span className="absolute top-2 left-2 px-2 py-0.5 bg-purple-800/85 text-white text-[10px] font-bold rounded-md backdrop-blur-sm flex items-center gap-1 shadow">
+                          <span>🎬</span> {ad.badge || 'VIDEO'}
+                        </span>
+                      </div>
+                    ) : ad.imageUrl ? (
                       <div className="relative mb-3 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -458,7 +640,7 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
                           {ad.badge || 'PROMO'}
                         </span>
                       </div>
-                    )}
+                    ) : null}
 
                     <div className="flex items-center justify-between gap-2 mb-2">
                       {/* Target Side Badge */}
@@ -500,13 +682,29 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
 
                   <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
                     <span>{new Date(ad.createdAt).toLocaleDateString()}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(ad.id)}
-                      className="text-red-500 hover:text-red-700 font-semibold transition cursor-pointer"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewAd(ad);
+                          setShowPreviewModal(true);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-800 font-semibold transition cursor-pointer flex items-center gap-1"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Preview
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(ad.id)}
+                        className="text-red-500 hover:text-red-700 font-semibold transition cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -516,50 +714,93 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
       </div>
 
       {/* Interactive Mobile Popup Preview Modal */}
-      {showPreviewModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-            {/* Top Close Button */}
-            <button
-              type="button"
-              onClick={() => setShowPreviewModal(false)}
-              className="absolute top-3 right-3 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+      {showPreviewModal && (() => {
+        const activePreview = previewAd || {
+          id: 'draft',
+          title: title || 'Special Announcement',
+          desc,
+          badge: badge || 'SPECIAL OFFER',
+          mediaType,
+          imageUrl,
+          videoUrl,
+          actionText: actionText || 'Explore Now',
+          createdAt: new Date().toISOString(),
+        };
+        const isVideo = activePreview.mediaType === 'video' || Boolean(activePreview.videoUrl);
 
-            {/* Poster Image */}
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt="Poster" className="w-full max-h-72 object-cover" />
-            ) : (
-              <div className="h-48 bg-gradient-to-br from-teal-700 to-emerald-900 flex items-center justify-center text-white">
-                <span className="text-4xl">📢</span>
-              </div>
-            )}
-
-            {/* Content area */}
-            <div className="p-5">
-              <div className="inline-block px-2.5 py-1 bg-amber-500 text-white text-[10px] font-black rounded-lg uppercase tracking-wider mb-2">
-                {badge || 'SPECIAL OFFER'}
-              </div>
-              <h3 className="font-extrabold text-gray-900 text-lg leading-snug">{title || 'Special Announcement'}</h3>
-              {desc && <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">{desc}</p>}
-
-              {/* Action Button */}
+        return (
+          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+              {/* Top Close Button */}
               <button
                 type="button"
-                onClick={() => setShowPreviewModal(false)}
-                className="w-full mt-4 py-3 bg-gradient-to-r from-teal-700 to-emerald-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-teal-700/20"
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  setPreviewAd(null);
+                }}
+                className="absolute top-3 right-3 z-10 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition"
               >
-                {actionText || 'Explore Now'}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
+
+              {/* Media Container (Video or Image) */}
+              {isVideo ? (
+                activePreview.videoUrl ? (
+                  <div className="relative bg-black w-full">
+                    <video
+                      src={activePreview.videoUrl}
+                      controls
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full max-h-72 object-cover bg-black"
+                    />
+                    <div className="absolute top-3 left-3 bg-purple-900/80 backdrop-blur-sm text-purple-200 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span>🎬</span> Video Preview
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-48 bg-gradient-to-br from-purple-900 to-indigo-950 flex flex-col items-center justify-center text-white p-4 text-center">
+                    <span className="text-4xl mb-1">🎬</span>
+                    <span className="text-xs text-purple-200">Video Ad (No file/URL loaded)</span>
+                  </div>
+                )
+              ) : activePreview.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={activePreview.imageUrl} alt="Poster" className="w-full max-h-72 object-cover" />
+              ) : (
+                <div className="h-48 bg-gradient-to-br from-teal-700 to-emerald-900 flex items-center justify-center text-white">
+                  <span className="text-4xl">📢</span>
+                </div>
+              )}
+
+              {/* Content area */}
+              <div className="p-5">
+                <div className="inline-block px-2.5 py-1 bg-amber-500 text-white text-[10px] font-black rounded-lg uppercase tracking-wider mb-2">
+                  {activePreview.badge || 'SPECIAL OFFER'}
+                </div>
+                <h3 className="font-extrabold text-gray-900 text-lg leading-snug">{activePreview.title || 'Special Announcement'}</h3>
+                {activePreview.desc && <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">{activePreview.desc}</p>}
+
+                {/* Action Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPreviewModal(false);
+                    setPreviewAd(null);
+                  }}
+                  className="w-full mt-4 py-3 bg-gradient-to-r from-teal-700 to-emerald-600 text-white font-bold text-sm rounded-xl shadow-lg shadow-teal-700/20"
+                >
+                  {activePreview.actionText || 'Explore Now'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

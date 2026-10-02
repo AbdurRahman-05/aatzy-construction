@@ -9,7 +9,7 @@ class AdPopupService {
   static bool _isChecking = false;
 
   /// Fetches active ads targeted to [role] ('CONSUMER' or 'PROVIDER')
-  /// and shows the ad poster popup dialog if an active ad is found.
+  /// and shows the ad poster popup dialog with all matching active ads.
   static Future<void> checkAndShowAd(
     BuildContext context, {
     required String role,
@@ -28,30 +28,37 @@ class AdPopupService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final List<dynamic> adsList = data['ads'] ?? [];
+        final List<dynamic> rawAds = data['ads'] ?? [];
 
-        if (adsList.isNotEmpty) {
-          // Look for an ad with a poster image first, or the newest active ad
-          final targetAd = adsList.firstWhere(
-            (ad) =>
-                (ad['isActive'] ?? true) &&
-                ad['imageUrl'] != null &&
-                ad['imageUrl'].toString().trim().isNotEmpty,
-            orElse: () => adsList.firstWhere(
-              (ad) => ad['isActive'] ?? true,
-              orElse: () => null,
-            ),
-          );
+        final List<Map<String, dynamic>> activeAds = [];
+        for (final item in rawAds) {
+          if (item is Map) {
+            final map = Map<String, dynamic>.from(item);
+            final isActive = map['isActive'] ?? true;
+            if (isActive) {
+              activeAds.add(map);
+            }
+          }
+        }
 
-          if (targetAd != null) {
-            final adId = targetAd['id']?.toString() ?? '';
+        if (activeAds.isNotEmpty) {
+          // Check if at least one ad in this batch has not been shown in the current session
+          final hasUnshownAd = activeAds.any((ad) {
+            final id = ad['id']?.toString() ?? '';
+            return id.isNotEmpty && !_shownAdIdsInSession.contains(id);
+          });
 
-            if (force || !_shownAdIdsInSession.contains(adId)) {
-              _shownAdIdsInSession.add(adId);
-
-              if (context.mounted) {
-                await AdPosterPopupDialog.show(context, Map<String, dynamic>.from(targetAd));
+          if (force || hasUnshownAd) {
+            // Mark all active ads as shown in this session so they aren't repeatedly spammed
+            for (final ad in activeAds) {
+              final id = ad['id']?.toString() ?? '';
+              if (id.isNotEmpty) {
+                _shownAdIdsInSession.add(id);
               }
+            }
+
+            if (context.mounted) {
+              await AdPosterPopupDialog.showList(context, activeAds);
             }
           }
         }
