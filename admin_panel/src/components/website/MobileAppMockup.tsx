@@ -4,57 +4,77 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calculator,
-  Camera,
-  Package,
-  MessageSquare,
-  FileText,
-  Building2,
-  TrendingUp,
+  Briefcase,
+  Store,
+  Users,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 
 export const screens = [
   {
+    icon: Briefcase,
+    title: 'Post Projects & Bids',
+    subtitle: 'Competitive Contractor Bids',
+    color: 'from-blue-600 to-indigo-600',
+    tag: 'PROJECT HUB',
+    img: '/assets/tutorial_1.png',
+    badge: '12 Active Bids',
+  },
+  {
     icon: Calculator,
-    title: 'Cost Estimator',
-    subtitle: 'Instant budget calculation',
-    color: 'from-blue-600 to-sky-400',
+    title: 'Instant Cost Calculator',
+    subtitle: 'Accurate Material Quantities',
+    color: 'from-emerald-600 to-teal-700',
+    tag: 'ESTIMATOR',
+    img: '/assets/tutorial_2.png',
+    badge: '₹24.3L Budget',
   },
   {
-    icon: Camera,
-    title: 'Construction Progress',
-    subtitle: 'Daily photo verification',
-    color: 'from-sky-400 to-emerald-500',
+    icon: Users,
+    title: '45+ Verified Trades',
+    subtitle: 'Architects, Contractors & MEP',
+    color: 'from-amber-500 to-orange-600',
+    tag: 'TOP EXPERTS',
+    img: '/assets/tutorial_3.png',
+    badge: 'GST Verified',
   },
   {
-    icon: Package,
-    title: 'Material Orders',
-    subtitle: 'Direct B2B purchasing',
-    color: 'from-amber-500 to-sky-400',
+    icon: Store,
+    title: 'B2B Wholesale Store',
+    subtitle: 'Factory Direct Cement & Steel',
+    color: 'from-purple-600 to-pink-600',
+    tag: 'RAW MATERIALS',
+    img: '/assets/tutorial_4.png',
+    badge: 'Wholesale Rates',
   },
   {
-    icon: MessageSquare,
-    title: 'Vendor Chat',
-    subtitle: 'Real-time messaging',
-    color: 'from-emerald-500 to-blue-600',
-  },
-  {
-    icon: FileText,
-    title: 'Invoice Screen',
-    subtitle: 'Professional PDF invoicing',
-    color: 'from-blue-600 to-sky-400',
+    icon: CheckCircle2,
+    title: 'Milestone Tracking & Chat',
+    subtitle: 'Photo Verification & Escrow',
+    color: 'from-sky-500 to-blue-700',
+    tag: 'SITE AUDITING',
+    img: '/assets/tutorial_5.png',
+    badge: 'Stage 3 Approved',
   },
 ];
 
-export function MobileAppMockup({ active: externalActive, onChange }: { active?: number, onChange?: (i: number) => void }) {
+export function MobileAppMockup({
+  active: externalActive,
+  onChange,
+}: {
+  active?: number;
+  onChange?: (i: number) => void;
+}) {
   const [internalActive, setInternalActive] = useState(0);
-  
+
   const active = externalActive !== undefined ? externalActive : internalActive;
 
   useEffect(() => {
     if (externalActive !== undefined) return;
     const interval = setInterval(() => {
       setInternalActive((prev) => (prev + 1) % screens.length);
-    }, 2800);
+    }, 3800);
     return () => clearInterval(interval);
   }, [externalActive]);
 
@@ -63,196 +83,135 @@ export function MobileAppMockup({ active: externalActive, onChange }: { active?:
     else setInternalActive(i);
   };
 
+  const currentScreen = screens[active];
+
   return (
-    <div className="relative flex h-full w-full items-center justify-center py-8">
-      {/* Background circles */}
+    <div className="relative flex h-full w-full items-center justify-center py-6 select-none">
+      {/* Background glow & animated rings */}
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-        className="absolute h-[360px] w-[360px] lg:h-[400px] lg:w-[400px] rounded-full border border-dashed border-blue-500/20"
+        transition={{ duration: 35, repeat: Infinity, ease: 'linear' }}
+        className="absolute h-[380px] w-[380px] lg:h-[440px] lg:w-[440px] rounded-full border border-dashed border-blue-500/25 pointer-events-none"
       />
       <motion.div
         animate={{ rotate: -360 }}
-        transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-        className="absolute h-[280px] w-[280px] lg:h-[320px] lg:w-[320px] rounded-full border border-dashed border-sky-400/20"
+        transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
+        className="absolute h-[300px] w-[300px] lg:h-[340px] lg:w-[340px] rounded-full border border-dashed border-indigo-400/20 pointer-events-none"
       />
 
-      {/* Phone frame */}
+      {/* Floating status badges */}
       <motion.div
-        animate={{ y: [0, -16, 0], rotate: [0, 1.5, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative h-[460px] w-[230px] lg:h-[480px] lg:w-[240px] rounded-[2.5rem] border-[8px] border-slate-900 bg-slate-900 shadow-2xl"
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute -top-3 -left-4 sm:left-4 z-30 flex items-center gap-2 rounded-2xl bg-white/95 px-3.5 py-2 shadow-xl border border-slate-200/80 backdrop-blur-md"
       >
-        {/* Notch */}
-        <div className="absolute left-1/2 top-0 z-20 h-5 w-24 lg:h-6 lg:w-28 -translate-x-1/2 rounded-b-2xl bg-slate-900" />
-
-        {/* Screen */}
-        <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-50 to-white">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={active}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.4 }}
-              className="flex h-full flex-col p-4 pt-8 sm:pt-10"
-            >
-              {/* Status bar */}
-              <div className="mb-3 flex items-center justify-between text-[8px] font-semibold text-slate-400">
-                <span>9:41</span>
-                <span>CONNECTZY</span>
-                <span>100%</span>
-              </div>
-
-              {/* App header */}
-              <div className="mb-3 flex items-center gap-2">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${screens[active].color}`}>
-                  {(() => {
-                    const Icon = screens[active].icon;
-                    return <Icon className="h-4 w-4 text-white" />;
-                  })()}
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-900">{screens[active].title}</p>
-                  <p className="text-[8px] text-slate-400">{screens[active].subtitle}</p>
-                </div>
-              </div>
-
-              {/* Screen content */}
-              <div className="flex-1 space-y-3">
-                {active === 0 && <EstimatorScreen />}
-                {active === 1 && <ProgressScreen />}
-                {active === 2 && <OrdersScreen />}
-                {active === 3 && <ChatScreen />}
-                {active === 4 && <InvoiceScreen />}
-              </div>
-
-              {/* Bottom nav */}
-              <div className="mt-3 flex justify-around rounded-2xl bg-white p-2 shadow-sm z-10 relative">
-                {screens.slice(0, 5).map((s, i) => {
-                  const Icon = s.icon;
-                  return (
-                    <button
-                      key={s.title}
-                      onClick={() => handleSetActive(i)}
-                      className={`flex flex-col items-center gap-0.5 transition-colors ${active === i ? 'text-blue-600' : 'text-slate-300'}`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-[6px] font-medium">{s.title.split(' ')[0]}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </AnimatePresence>
+        <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div>
+          <p className="text-[10px] font-extrabold text-slate-900 leading-tight">Live Milestone Photo</p>
+          <p className="text-[8px] text-slate-500 font-semibold">Stage verified by client</p>
         </div>
       </motion.div>
-    </div>
-  );
-}
 
-function EstimatorScreen() {
-  return (
-    <div className="space-y-2">
-      <div className="rounded-xl bg-blue-500/10 p-3">
-        <p className="text-[8px] text-slate-500">Total Estimate</p>
-        <p className="font-display text-xl font-extrabold text-blue-600">₹24,30,000</p>
-      </div>
-      <div className="space-y-1.5">
-        {['Foundation', 'Structure', 'Interior'].map((s) => (
-          <div key={s} className="flex items-center justify-between rounded-lg bg-white p-2 shadow-sm">
-            <span className="text-[8px] font-medium text-slate-600">{s}</span>
-            <span className="text-[8px] font-bold text-slate-900">₹6.5L</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+      <motion.div
+        animate={{ y: [0, 8, 0] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+        className="absolute -bottom-2 -right-2 sm:right-6 z-30 flex items-center gap-2.5 rounded-2xl bg-white/95 px-4 py-2.5 shadow-xl border border-slate-200/80 backdrop-blur-md"
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white font-black text-xs shadow-md shadow-amber-500/30">
+          ₹
+        </div>
+        <div>
+          <p className="text-[10px] font-extrabold text-slate-900 leading-tight">Factory Direct Rates</p>
+          <p className="text-[8px] text-emerald-600 font-bold">Ultratech Cement ₹380/bag</p>
+        </div>
+      </motion.div>
 
-function ProgressScreen() {
-  return (
-    <div className="space-y-2">
-      {[1, 2, 3].map((n) => (
-        <div key={n} className="flex gap-2 rounded-xl bg-white p-2 shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-slate-100 to-slate-200">
-            <Building2 className="h-5 w-5 text-slate-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-[8px] font-bold text-slate-900">Day {n * 5}</p>
-            <p className="text-[7px] text-slate-400">Foundation update</p>
-            <div className="mt-1 h-1 rounded-full bg-slate-100">
-              <div className="h-1 w-3/4 rounded-full bg-gradient-to-r from-blue-600 to-sky-400" />
+      {/* Smartphone frame */}
+      <motion.div
+        animate={{ y: [0, -12, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        className="relative h-[530px] w-[270px] sm:h-[560px] sm:w-[285px] rounded-[3rem] border-[9px] border-slate-900 bg-slate-950 shadow-[0_25px_60px_-15px_rgba(15,23,42,0.4)] overflow-hidden"
+      >
+        {/* Dynamic Island / Speaker Notch */}
+        <div className="absolute left-1/2 top-2 z-30 h-4 w-28 -translate-x-1/2 rounded-full bg-slate-900 flex items-center justify-center">
+          <div className="h-1.5 w-1.5 rounded-full bg-slate-800 mr-2" />
+          <div className="h-2 w-8 rounded-full bg-slate-800" />
+        </div>
+
+        {/* Screen container */}
+        <div className="relative h-full w-full overflow-hidden bg-slate-900 flex flex-col justify-between pt-7 pb-2 px-2.5">
+          {/* App Status bar */}
+          <div className="flex items-center justify-between text-[9px] font-bold text-slate-400 px-2 pt-1 mb-2">
+            <span>9:41</span>
+            <div className="flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/assets/logo.png" alt="logo" className="h-3 w-auto object-contain brightness-125" />
+              <span className="text-[8px] tracking-wider text-slate-300">CONNECTZY</span>
+            </div>
+            <div className="flex items-center gap-1 text-[8px]">
+              <span>5G</span>
+              <span>100%</span>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
-function OrdersScreen() {
-  return (
-    <div className="space-y-2">
-      {[
-        { name: 'Cement', qty: '150 bags', price: '₹52,500' },
-        { name: 'TMT Steel', qty: '12 tons', price: '₹78,000' },
-        { name: 'Bricks', qty: '5,000 units', price: '₹35,000' },
-      ].map((item) => (
-        <div key={item.name} className="flex items-center justify-between rounded-xl bg-white p-2.5 shadow-sm">
-          <div>
-            <p className="text-[9px] font-bold text-slate-900">{item.name}</p>
-            <p className="text-[7px] text-slate-400">{item.qty}</p>
+          {/* Current Feature Tag & Title */}
+          <div className="bg-slate-800/80 rounded-2xl p-2.5 border border-slate-700/60 backdrop-blur-sm mb-2 shadow-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[8px] font-black uppercase tracking-wider text-blue-400 bg-blue-950/80 px-2 py-0.5 rounded-md border border-blue-800/60">
+                {currentScreen.tag}
+              </span>
+              <span className="text-[8px] font-bold text-emerald-400 flex items-center gap-0.5">
+                <Sparkles className="w-2.5 h-2.5" />
+                {currentScreen.badge}
+              </span>
+            </div>
+            <p className="text-[11px] font-black text-white leading-tight truncate">{currentScreen.title}</p>
+            <p className="text-[9px] text-slate-400 truncate">{currentScreen.subtitle}</p>
           </div>
-          <span className="text-[9px] font-bold text-blue-600">{item.price}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
-function ChatScreen() {
-  return (
-    <div className="space-y-2">
-      <div className="ml-auto max-w-[75%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-blue-600 to-sky-400 p-2.5 text-white">
-        <p className="text-[8px]">Hi, I need a quote for 1800 sq ft house</p>
-      </div>
-      <div className="max-w-[75%] rounded-2xl rounded-tl-sm bg-white p-2.5 shadow-sm">
-        <p className="text-[8px] text-slate-600">Sure! I will send the estimate by evening.</p>
-      </div>
-      <div className="ml-auto max-w-[75%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-blue-600 to-sky-400 p-2.5 text-white">
-        <p className="text-[8px]">Perfect, thank you!</p>
-      </div>
-    </div>
-  );
-}
-
-function InvoiceScreen() {
-  return (
-    <div className="space-y-2">
-      <div className="rounded-xl bg-slate-900 p-3 text-white">
-        <div className="flex items-center justify-between">
-          <span className="text-[8px] text-slate-300">Invoice #CONNECTZY-1024</span>
-          <FileText className="h-3 w-3 text-sky-400" />
-        </div>
-        <p className="mt-1 font-display text-lg font-extrabold">₹4,20,000</p>
-      </div>
-      <div className="space-y-1.5">
-        {[
-          { label: 'Materials', value: '₹2,73,000' },
-          { label: 'Labor', value: '₹1,47,000' },
-          { label: 'GST (18%)', value: '₹75,600' },
-        ].map((row) => (
-          <div key={row.label} className="flex justify-between rounded-lg bg-white p-2 shadow-sm">
-            <span className="text-[8px] text-slate-400">{row.label}</span>
-            <span className="text-[8px] font-bold text-slate-900">{row.value}</span>
+          {/* Real App Screenshot Showcase */}
+          <div className="relative flex-1 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center shadow-inner">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                transition={{ duration: 0.35 }}
+                className="h-full w-full flex items-center justify-center p-1 bg-gradient-to-b from-slate-900 to-slate-950"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentScreen.img}
+                  alt={currentScreen.title}
+                  className="h-full w-full object-contain rounded-xl"
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
-        ))}
-      </div>
-      <div className="flex items-center gap-1 rounded-xl bg-emerald-500/10 p-2">
-        <TrendingUp className="h-3 w-3 text-emerald-500" />
-        <span className="text-[8px] font-semibold text-emerald-500">Payment received</span>
-      </div>
+
+          {/* Interactive Bottom Screen Switcher */}
+          <div className="mt-2.5 bg-slate-900/90 rounded-2xl p-1.5 border border-slate-800 flex justify-between items-center">
+            {screens.map((s, i) => {
+              const Icon = s.icon;
+              const isSelected = active === i;
+              return (
+                <button
+                  key={s.title}
+                  onClick={() => handleSetActive(i)}
+                  className={`flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition-all cursor-pointer ${
+                    isSelected ? 'bg-blue-600 text-white shadow-md shadow-blue-600/40' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title={s.title}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="text-[7px] font-extrabold mt-0.5">{i + 1}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

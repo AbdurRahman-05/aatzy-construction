@@ -4,8 +4,10 @@ import { useState, useCallback } from 'react';
 import { ToastProvider, useToast } from '@/components/website/Toast';
 import { Navbar } from '@/components/website/Navbar';
 import { Hero } from '@/components/website/Hero';
+import { CommodityTicker } from '@/components/website/CommodityTicker';
 import { Metrics } from '@/components/website/Metrics';
 import { CostEstimator } from '@/components/website/CostEstimator';
+import { ServicesDirectory } from '@/components/website/ServicesDirectory';
 import { Homeowners } from '@/components/website/Homeowners';
 import { Contractors } from '@/components/website/Contractors';
 import { PlatformFeatures } from '@/components/website/PlatformFeatures';
@@ -17,29 +19,39 @@ import { CTA } from '@/components/website/CTA';
 import { Footer } from '@/components/website/Footer';
 import { PolicyPage } from '@/components/website/Policies';
 
-const sectionIds = ['hero', 'features', 'estimator', 'homeowners', 'contractors'];
+const sectionIds = [
+  'hero',
+  'commodity-ticker',
+  'estimator',
+  'services-directory',
+  'features',
+  'how-it-works',
+  'homeowners',
+  'contractors',
+  'download'
+];
 
 const routeMessages: Record<string, string> = {
   login: 'Opening sign-in page...',
-  download: 'Redirecting to Google Play Store...',
+  download: 'Redirecting to Connectzy Mobile App Download...',
   contact: 'Opening contact page...',
   'register/homeowner': 'Starting homeowner registration...',
   'register/contractor': 'Starting contractor registration...',
   'register/supplier': 'Starting supplier registration...',
   'register/business': 'Starting business registration...',
   contractors: 'Opening contractor directory...',
-  marketplace: 'Opening material marketplace...',
-  chat: 'Opening chat...',
-  news: 'Opening material market news...',
-  vendors: 'Opening verified vendor directory...',
-  audit: 'Opening audit logs...',
-  invoices: 'Opening invoice manager...',
+  marketplace: 'Opening B2B material marketplace...',
+  chat: 'Opening milestone chat...',
+  news: 'Opening live commodity news...',
+  vendors: 'Opening 45+ trade services directory...',
+  audit: 'Opening milestone photo auditing...',
+  invoices: 'Opening quotation & GST invoicing...',
   dashboard: 'Opening provider dashboard...',
-  verification: 'Opening verification page...',
-  about: 'Opening about page...',
-  'market-news': 'Opening market prices...',
+  verification: 'Opening credential verification...',
+  about: 'Opening about Connectzy...',
+  'market-news': 'Opening daily commodity ticker...',
   partner: 'Opening partner onboarding...',
-  'b2b-network': 'Opening B2B supply network...',
+  'b2b-network': 'Opening B2B wholesale network...',
 };
 
 const policyTitles: Record<string, string> = {
@@ -100,12 +112,14 @@ function WebsiteContent() {
         {currentPage === 'home' ? (
           <>
             <Hero onNavigate={handleNavigate} />
+            <CommodityTicker onNavigate={handleNavigate} />
             <Metrics />
             <CostEstimator onNavigate={handleNavigate} />
-            <Homeowners onNavigate={handleNavigate} />
-            <Contractors onNavigate={handleNavigate} />
+            <ServicesDirectory onNavigate={handleNavigate} />
             <PlatformFeatures onNavigate={handleNavigate} />
             <HowItWorks />
+            <Homeowners onNavigate={handleNavigate} />
+            <Contractors onNavigate={handleNavigate} />
             <AppShowcase />
             <Testimonials onNavigate={handleNavigate} />
             <Partners />

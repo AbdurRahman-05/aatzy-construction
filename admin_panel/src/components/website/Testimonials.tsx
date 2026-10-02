@@ -8,7 +8,7 @@ import { RippleButton } from './RippleButton';
 
 const testimonials = [
   {
-    quote: 'Aatzy saved us over ₹3.5 Lakhs on our home construction.',
+    quote: 'Connectzy saved us over ₹3.5 Lakhs on our home construction.',
     detail: 'The cost estimator provided an accurate baseline before we even spoke to contractors. Being able to track daily photo logs while living in another city gave us complete confidence.',
     name: 'Ramesh K.',
     role: 'Homeowner & Property Developer',
@@ -17,7 +17,7 @@ const testimonials = [
   },
   {
     quote: 'Our material inquiries doubled within 30 days of joining.',
-    detail: 'Listing our cement and steel products on Aatzy allowed us to reach verified builders directly. The automated PDF quotation feature makes managing sales effortless.',
+    detail: 'Listing our cement and steel products on Connectzy allowed us to reach verified builders directly. The automated PDF quotation feature makes managing sales effortless.',
     name: 'Vikram Construction Supplies',
     role: 'Authorized Material Dealer',
     location: 'Chennai',

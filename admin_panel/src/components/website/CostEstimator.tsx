@@ -30,14 +30,14 @@ import { RippleButton } from './RippleButton';
 type BuildingType = 'house' | 'apartment' | 'villa' | 'office' | 'commercial' | 'warehouse' | 'renovation';
 type QualityTier = 'basic' | 'standard' | 'premium' | 'ultra';
 
-const buildingTypes: { id: BuildingType; label: string; desc: string; icon: typeof Home }[] = [
-  { id: 'house', label: 'House', desc: 'Independent residential houses & custom home builds', icon: Home },
-  { id: 'apartment', label: 'Apartment', desc: 'Multi-unit residential flats & builder floors', icon: Building2 },
-  { id: 'villa', label: 'Villa', desc: 'Premium luxury homes & gated community villas', icon: Hotel },
-  { id: 'office', label: 'Office', desc: 'Corporate office spaces & commercial interiors', icon: Briefcase },
-  { id: 'commercial', label: 'Commercial', desc: 'Retail outlets, showrooms & shopping complexes', icon: Store },
-  { id: 'warehouse', label: 'Warehouse', desc: 'Industrial storage units & logistics sheds', icon: Warehouse },
-  { id: 'renovation', label: 'Renovation', desc: 'Complete home remodeling & structural updates', icon: Hammer },
+const buildingTypes: { id: BuildingType; label: string; desc: string; icon: typeof Home; img: string }[] = [
+  { id: 'house', label: 'House', desc: 'Independent residential houses & custom builds', icon: Home, img: '/assets/images/estimator_house.jpg' },
+  { id: 'apartment', label: 'Apartment', desc: 'Multi-unit residential flats & builder floors', icon: Building2, img: '/assets/images/estimator_apartment.jpg' },
+  { id: 'villa', label: 'Villa', desc: 'Premium luxury homes & gated villas', icon: Hotel, img: '/assets/images/estimator_villa.jpg' },
+  { id: 'office', label: 'Office', desc: 'Corporate office spaces & commercial interiors', icon: Briefcase, img: '/assets/images/estimator_office.jpg' },
+  { id: 'commercial', label: 'Commercial', desc: 'Retail outlets, showrooms & shopping complexes', icon: Store, img: '/assets/images/estimator_commercial.jpg' },
+  { id: 'warehouse', label: 'Warehouse', desc: 'Industrial storage units & logistics sheds', icon: Warehouse, img: '/assets/images/estimator_warehouse.jpg' },
+  { id: 'renovation', label: 'Renovation', desc: 'Complete remodeling & structural updates', icon: Hammer, img: '/assets/images/build_plan_achieve.jpg' },
 ];
 
 const qualityTiers: { id: QualityTier; label: string; rate: number; desc: string }[] = [
@@ -83,6 +83,8 @@ export function CostEstimator({ onNavigate }: EstimatorProps) {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  const [outputTab, setOutputTab] = useState<'budget' | 'materials'>('budget');
+
   const calculation = useMemo(() => {
     const tier = qualityTiers.find((q) => q.id === quality)!;
     const baseRate = tier.rate;
@@ -98,6 +100,17 @@ export function CostEstimator({ onNavigate }: EstimatorProps) {
     const total = subtotal + gst;
     return { effectiveRate, subtotal, materialCost, laborCost, gst, total, tier };
   }, [quality, area, selectedAddOns]);
+
+  const materialQuantities = useMemo(() => {
+    return {
+      cementBags: Math.round(area * 0.4),
+      steelTons: ((area * 3.5) / 1000).toFixed(2),
+      sandCuFt: Math.round(area * 1.8),
+      bricksUnits: Math.round(area * 18),
+      tilesSqFt: Math.round(area * 1.3),
+      paintLiters: Math.round(area * 0.18),
+    };
+  }, [area]);
 
   const toggleAddOn = (id: string) => {
     setSelectedAddOns((prev) =>
@@ -129,6 +142,7 @@ export function CostEstimator({ onNavigate }: EstimatorProps) {
       gst: calculation.gst,
       total: calculation.total,
       addOns: selectedAddonLabels,
+      materials: materialQuantities,
     });
 
     const blob = new Blob([html], { type: 'text/html' });
@@ -223,25 +237,40 @@ export function CostEstimator({ onNavigate }: EstimatorProps) {
                   >
                     <h3 className="mb-1 font-display text-xl font-bold text-slate-900">Select Building Type</h3>
                     <p className="mb-5 text-sm text-slate-500">Choose the type of construction project</p>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3">
                       {buildingTypes.map((type) => (
                         <button
                           key={type.id}
                           onClick={() => handleBuildingTypeChange(type.id)}
-                          className={`group relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all duration-300 ${
+                          className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all duration-300 cursor-pointer ${
                             buildingType === type.id
-                              ? 'border-blue-600 bg-blue-50/50 shadow-lg shadow-blue-500/10'
-                              : 'border-slate-100 bg-white hover:border-blue-300'
+                              ? 'border-blue-600 ring-2 ring-blue-500/30 bg-blue-50/30 shadow-md'
+                              : 'border-slate-200 bg-white hover:border-blue-300'
                           }`}
                         >
-                          {buildingType === type.id && (
-                            <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">
-                              <Check className="h-3 w-3" />
-                            </span>
-                          )}
-                          <type.icon className={`mb-2 h-6 w-6 transition-transform group-hover:scale-110 ${buildingType === type.id ? 'text-blue-600' : 'text-slate-400'}`} />
-                          <p className="text-sm font-bold text-slate-900">{type.label}</p>
-                          <p className="mt-0.5 text-[10px] leading-tight text-slate-400">{type.desc}</p>
+                          <div className="h-24 w-full overflow-hidden bg-slate-100 relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={type.img}
+                              alt={type.label}
+                              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/30 to-transparent" />
+                            {buildingType === type.id && (
+                              <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shadow">
+                                <Check className="h-3 w-3" />
+                              </span>
+                            )}
+                            <div className="absolute bottom-2 left-2 right-2">
+                              <span className="text-white font-bold text-xs flex items-center gap-1.5 drop-shadow-sm">
+                                <type.icon className="h-3.5 w-3.5 text-sky-400" />
+                                {type.label}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="p-3">
+                            <p className="text-[10px] leading-tight text-slate-500 line-clamp-2">{type.desc}</p>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -418,43 +447,122 @@ export function CostEstimator({ onNavigate }: EstimatorProps) {
                   </span>
                 </div>
 
-                {/* Total budget */}
-                <div className="mb-6">
-                  <p className="text-xs text-slate-400">Total Estimated Budget</p>
-                  <div className="mt-1 font-display text-3xl font-extrabold sm:text-4xl">
-                    <AnimatedCounter
-                      end={calculation.total}
-                      prefix="₹ "
-                      start={true}
-                      duration={800}
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-slate-400">
-                    ₹{calculation.effectiveRate.toLocaleString('en-IN')} / sq ft · {area.toLocaleString('en-IN')} sq ft
-                  </p>
+                {/* Output tabs switcher */}
+                <div className="mb-5 flex rounded-xl bg-white/10 p-1 border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setOutputTab('budget')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer text-center ${
+                      outputTab === 'budget'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    💰 Budget Breakdown
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOutputTab('materials')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer text-center ${
+                      outputTab === 'materials'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    🧱 Raw Materials
+                  </button>
                 </div>
 
-                {/* Breakdown */}
-                <div className="space-y-2.5 rounded-2xl bg-white/5 p-4 backdrop-blur-sm">
-                  {[
-                    { label: 'Material Cost', value: calculation.materialCost },
-                    { label: 'Labor Cost', value: calculation.laborCost },
-                    { label: 'Subtotal', value: calculation.subtotal },
-                    { label: `GST (18%)`, value: calculation.gst },
-                  ].map((row) => (
-                    <div key={row.label} className="flex items-center justify-between text-sm">
-                      <span className="text-slate-400">{row.label}</span>
-                      <span className="font-semibold">₹{row.value.toLocaleString('en-IN')}</span>
+                {outputTab === 'budget' ? (
+                  <>
+                    {/* Total budget */}
+                    <div className="mb-6">
+                      <p className="text-xs text-slate-400">Total Estimated Budget</p>
+                      <div className="mt-1 font-display text-3xl font-extrabold sm:text-4xl">
+                        <AnimatedCounter
+                          end={calculation.total}
+                          prefix="₹ "
+                          start={true}
+                          duration={800}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-slate-400">
+                        ₹{calculation.effectiveRate.toLocaleString('en-IN')} / sq ft · {area.toLocaleString('en-IN')} sq ft
+                      </p>
                     </div>
-                  ))}
-                  <div className="my-2 h-px bg-white/10" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">Total</span>
-                    <span className="font-display text-lg font-extrabold text-sky-400">
-                      ₹{calculation.total.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
+
+                    {/* Breakdown */}
+                    <div className="space-y-2.5 rounded-2xl bg-white/5 p-4 backdrop-blur-sm border border-white/10">
+                      {[
+                        { label: 'Raw Materials (65%)', value: calculation.materialCost },
+                        { label: 'Contractor & Labor (35%)', value: calculation.laborCost },
+                        { label: 'Subtotal Base', value: calculation.subtotal },
+                        { label: `GST Taxes (18%)`, value: calculation.gst },
+                      ].map((row) => (
+                        <div key={row.label} className="flex items-center justify-between text-xs sm:text-sm">
+                          <span className="text-slate-400">{row.label}</span>
+                          <span className="font-semibold text-slate-100">₹{row.value.toLocaleString('en-IN')}</span>
+                        </div>
+                      ))}
+                      <div className="my-2 h-px bg-white/10" />
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-white">Estimated Grand Total</span>
+                        <span className="font-display text-lg font-black text-sky-400">
+                          ₹{calculation.total.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Material quantities summary */}
+                    <div className="mb-4">
+                      <p className="text-xs text-slate-400">Estimated Material Consumption</p>
+                      <p className="font-display text-lg font-extrabold text-amber-400 mt-1">
+                        For {area.toLocaleString('en-IN')} sq.ft Built-up
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 rounded-2xl bg-white/5 p-3.5 backdrop-blur-sm border border-white/10 text-xs">
+                      <div className="flex justify-between items-center py-1 border-b border-white/5">
+                        <span className="text-slate-300">Cement (Ultratech/ACC 50kg)</span>
+                        <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">
+                          {materialQuantities.cementBags} bags
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-b border-white/5">
+                        <span className="text-slate-300">TMT Steel (Fe-550D)</span>
+                        <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">
+                          {materialQuantities.steelTons} MT
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-b border-white/5">
+                        <span className="text-slate-300">Sand & Aggregates</span>
+                        <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">
+                          {materialQuantities.sandCuFt.toLocaleString('en-IN')} cu.ft
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-b border-white/5">
+                        <span className="text-slate-300">Red Bricks / AAC Blocks</span>
+                        <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">
+                          {materialQuantities.bricksUnits.toLocaleString('en-IN')} units
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1 border-b border-white/5">
+                        <span className="text-slate-300">Flooring Tiles</span>
+                        <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">
+                          {materialQuantities.tilesSqFt.toLocaleString('en-IN')} sq.ft
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-slate-300">Interior & Exterior Paint</span>
+                        <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded">
+                          {materialQuantities.paintLiters} Liters
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Actions */}
                 <div className="mt-6 space-y-2.5">
@@ -512,6 +620,14 @@ function buildPdfHtml(data: {
   gst: number;
   total: number;
   addOns: string[];
+  materials?: {
+    cementBags: number;
+    steelTons: string;
+    sandCuFt: number;
+    bricksUnits: number;
+    tilesSqFt: number;
+    paintLiters: number;
+  };
 }): string {
   const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -528,30 +644,30 @@ function buildPdfHtml(data: {
   .quote-info{text-align:right}
   .quote-id{font-size:14px;font-weight:700;color:#0f172a}
   .quote-date{font-size:11px;color:#64748b;margin-top:2px}
-  .title{font-size:20px;font-weight:700;margin-bottom:20px}
+  .title{font-size:18px;font-weight:700;margin-bottom:16px;color:#0f172a}
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:30px}
-  .summary-item{background:#f8fafc;border-radius:10px;padding:14px}
+  .summary-item{background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0}
   .summary-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px}
   .summary-value{font-size:15px;font-weight:700;color:#0f172a;margin-top:4px}
   table{width:100%;border-collapse:collapse;margin-bottom:24px}
-  th{background:#0f172a;color:#fff;text-align:left;padding:12px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px}
-  td{padding:12px;border-bottom:1px solid #e2e8f0;font-size:13px}
+  th{background:#0f172a;color:#fff;text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+  td{padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:12px}
   .total-row{background:#eff6ff;font-weight:700}
   .grand-total{background:#2563eb;color:#fff}
-  .grand-total td{font-size:16px;font-weight:800;border:none}
+  .grand-total td{font-size:15px;font-weight:800;border:none}
   .addons{margin-bottom:24px}
-  .addons h4{font-size:13px;margin-bottom:8px}
+  .addons h4{font-size:12px;margin-bottom:8px}
   .addon-list{display:flex;flex-wrap:wrap;gap:8px}
   .addon-tag{background:#dbeafe;color:#1e40af;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600}
-  .footer{margin-top:40px;padding-top:20px;border-top:2px solid #e2e8f0;text-align:center;font-size:11px;color:#64748b}
+  .footer{margin-top:30px;padding-top:20px;border-top:2px solid #e2e8f0;text-align:center;font-size:11px;color:#64748b}
   .footer strong{color:#0f172a}
   @media print{body{padding:20px}}
 </style></head>
 <body>
   <div class="header">
     <div>
-      <div class="brand">CONNECTZY <span>Construction</span></div>
-      <div class="tagline">Smart Building & Procurement Ecosystem</div>
+      <div class="brand">CONNECTZY <span>Construction Platform</span></div>
+      <div class="tagline">Smart Building & Direct Procurement Ecosystem</div>
     </div>
     <div class="quote-info">
       <div class="quote-id">Quote #${quoteId}</div>
@@ -567,18 +683,31 @@ function buildPdfHtml(data: {
   </div>
   ${data.addOns.length ? `<div class="addons"><h4>Selected Add-ons</h4><div class="addon-list">${data.addOns.map(a => `<span class="addon-tag">${a}</span>`).join('')}</div></div>` : ''}
   <table>
-    <tr><th>Description</th><th style="text-align:right">Amount</th></tr>
-    <tr><td>Material Cost (65%)</td><td style="text-align:right">${fmt(data.materialCost)}</td></tr>
-    <tr><td>Labor Cost (35%)</td><td style="text-align:right">${fmt(data.laborCost)}</td></tr>
-    <tr class="total-row"><td>Subtotal</td><td style="text-align:right">${fmt(data.subtotal)}</td></tr>
-    <tr><td>GST (18%)</td><td style="text-align:right">${fmt(data.gst)}</td></tr>
-    <tr class="grand-total"><td>Grand Total</td><td style="text-align:right">${fmt(data.total)}</td></tr>
+    <tr><th>Cost Head</th><th style="text-align:right">Estimated Amount</th></tr>
+    <tr><td>Raw Materials (Cement, Steel, Bricks, Tiles) ~65%</td><td style="text-align:right">${fmt(data.materialCost)}</td></tr>
+    <tr><td>Contractor & Skilled Labor ~35%</td><td style="text-align:right">${fmt(data.laborCost)}</td></tr>
+    <tr class="total-row"><td>Subtotal Estimated Budget</td><td style="text-align:right">${fmt(data.subtotal)}</td></tr>
+    <tr><td>GST (18% Statutory)</td><td style="text-align:right">${fmt(data.gst)}</td></tr>
+    <tr class="grand-total"><td>Grand Total Project Budget</td><td style="text-align:right">${fmt(data.total)}</td></tr>
   </table>
-  <p style="font-size:12px;color:#64748b;margin-bottom:8px">Effective Rate: <strong>${fmt(data.rate)}/sq ft</strong></p>
+
+  ${data.materials ? `
+  <div class="title" style="margin-top:24px">Estimated Raw Material Consumption</div>
+  <table>
+    <tr><th>Material Item</th><th>Standard Benchmark Spec</th><th style="text-align:right">Estimated Quantity</th></tr>
+    <tr><td>Cement (50kg Bags)</td><td>Ultratech / ACC / Birla Super</td><td style="text-align:right"><strong>${data.materials.cementBags}</strong> Bags</td></tr>
+    <tr><td>TMT Reinforcement Steel</td><td>Fe-550D Primary Rebars</td><td style="text-align:right"><strong>${data.materials.steelTons}</strong> Metric Tonnes</td></tr>
+    <tr><td>Sand & Coarse Aggregates</td><td>M-Sand + 20mm Blue Metal</td><td style="text-align:right"><strong>${data.materials.sandCuFt.toLocaleString('en-IN')}</strong> cu.ft</td></tr>
+    <tr><td>Clay Bricks / AAC Blocks</td><td>Standard Masonry Units</td><td style="text-align:right"><strong>${data.materials.bricksUnits.toLocaleString('en-IN')}</strong> units</td></tr>
+    <tr><td>Flooring & Wall Tiles</td><td>Vitrified Tiles (2x2 / 2x4)</td><td style="text-align:right"><strong>${data.materials.tilesSqFt.toLocaleString('en-IN')}</strong> sq.ft</td></tr>
+    <tr><td>Paint & Primers</td><td>Primer + 2 Coats Acrylic Emulsion</td><td style="text-align:right"><strong>${data.materials.paintLiters}</strong> Liters</td></tr>
+  </table>` : ''}
+
+  <p style="font-size:11px;color:#64748b;margin-bottom:8px">Effective Estimated Construction Rate: <strong>${fmt(data.rate)}/sq ft</strong></p>
   <div class="footer">
     <p><strong>CONNECTZY Construction Technologies</strong></p>
     <p>support@connectzy.com · partners@connectzy.com</p>
-    <p style="margin-top:8px">This is an indicative estimate based on current market rates. Final pricing may vary based on site conditions, material availability, and contractor negotiations.</p>
+    <p style="margin-top:8px">This is an automated engineering estimate based on current regional benchmark rates. Exact contractor quotes and delivery timelines will be provided upon on-site survey and formal bidding.</p>
     <p style="margin-top:8px">© 2026 CONNECTZY Construction Technologies. All Rights Reserved.</p>
   </div>
 </body></html>`;

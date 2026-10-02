@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-  Building2,
   Mail,
   Phone,
   ShieldCheck,
@@ -19,21 +18,21 @@ interface FooterProps {
 
 const linkSections = [
   {
-    title: 'Platform',
+    title: 'Platform Features',
     links: [
-      { label: 'About Aatzy', target: 'about' },
-      { label: 'Verified Vendor Directory', target: 'vendors' },
-      { label: 'Material Marketplace', target: 'marketplace' },
-      { label: 'Live Market Prices', target: 'market-news' },
+      { label: 'Instant Cost Estimator', target: 'estimator' },
+      { label: '45+ Trade Directory', target: 'services-directory' },
+      { label: 'Platform Capabilities', target: 'features' },
+      { label: 'Daily Commodity Ticker', target: 'commodity-ticker' },
     ],
   },
   {
-    title: 'For Businesses',
+    title: 'For Users & Builders',
     links: [
-      { label: 'Partner Onboarding', target: 'partner' },
-      { label: 'Verification Criteria', target: 'verification' },
-      { label: 'Provider Dashboard', target: 'dashboard' },
-      { label: 'B2B Supply Network', target: 'b2b-network' },
+      { label: 'How Connectzy Works', target: 'how-it-works' },
+      { label: 'Homeowner Experience', target: 'homeowners' },
+      { label: 'Contractors & Suppliers', target: 'contractors' },
+      { label: 'Mobile App Showcase', target: 'features' },
     ],
   },
 ];
@@ -136,17 +135,21 @@ export function Footer({ onNavigate }: FooterProps) {
         <div className="grid gap-10 lg:grid-cols-[2fr_1fr_1fr_1.5fr]">
           {/* Brand column */}
           <div>
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-2 shadow-lg">
-                <Building2 className="h-5 w-5 text-white" strokeWidth={2.5} />
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white p-1 shadow-lg ring-1 ring-white/20">
+                <img
+                  src="/assets/logo.png"
+                  alt="Connectzy Construction"
+                  className="h-full w-full object-contain"
+                />
               </div>
               <div>
-                <p className="font-display text-base font-extrabold tracking-tight">AATZY</p>
-                <p className="text-[10px] text-primary-400">Construction Technologies</p>
+                <p className="font-display text-base font-extrabold tracking-tight">CONNECTZY</p>
+                <p className="text-[10px] uppercase tracking-wider text-primary-300">Construction Platform</p>
               </div>
             </div>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-primary-300">
-              Smart cost estimation, verified vendor matching, real-time site monitoring, and B2B material procurement — all in one ecosystem.
+              Smart cost &amp; raw material estimation, 45+ verified trade specialties, milestone photo verification, live commodity prices, and direct wholesale sourcing.
             </p>
 
             <div className="mt-6">
@@ -189,15 +192,15 @@ export function Footer({ onNavigate }: FooterProps) {
             </h4>
             <ul className="mt-4 space-y-3">
               <li>
-                <a href="mailto:support@aatzy.com" className="group flex items-center gap-2 text-sm text-primary-300 transition-colors hover:text-white">
+                <a href="mailto:support@connectzy.com" className="group flex items-center gap-2 text-sm text-primary-300 transition-colors hover:text-white">
                   <Mail className="h-4 w-4 text-accent" />
-                  support@aatzy.com
+                  support@connectzy.com
                 </a>
               </li>
               <li>
-                <a href="mailto:partners@aatzy.com" className="group flex items-center gap-2 text-sm text-primary-300 transition-colors hover:text-white">
+                <a href="mailto:partners@connectzy.com" className="group flex items-center gap-2 text-sm text-primary-300 transition-colors hover:text-white">
                   <Mail className="h-4 w-4 text-accent" />
-                  partners@aatzy.com
+                  partners@connectzy.com
                 </a>
               </li>
               <li>
@@ -229,7 +232,7 @@ export function Footer({ onNavigate }: FooterProps) {
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-xs text-primary-400">
-            © 2026 AATZY Construction Technologies. All Rights Reserved.
+            © 2026 Connectzy Construction Technologies. All Rights Reserved.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
             {[

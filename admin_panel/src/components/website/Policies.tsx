@@ -28,12 +28,12 @@ export function PolicyPage({ title, onBack }: PolicyPageProps) {
             Last updated: {new Date().toLocaleDateString()}
           </p>
           <p className="mt-6">
-            This is the official policy document for <strong>{title}</strong> at Aatzy Construction Technologies.
+            This is the official policy document for <strong>{title}</strong> at Connectzy Construction Technologies.
           </p>
           
           <h2 className="mt-8 text-xl font-bold text-primary">1. Overview</h2>
           <p className="mt-4">
-            Aatzy is committed to providing a transparent, secure, and dependable ecosystem for property owners, builders, contractors, and building material suppliers. This policy outlines our standards, practices, and guidelines.
+            Connectzy is committed to providing a transparent, secure, and dependable ecosystem for property owners, builders, contractors, and building material suppliers. This policy outlines our standards, practices, and guidelines.
           </p>
           
           <h2 className="mt-8 text-xl font-bold text-primary">2. User Data & Confidentiality</h2>
@@ -43,7 +43,7 @@ export function PolicyPage({ title, onBack }: PolicyPageProps) {
 
           <h2 className="mt-8 text-xl font-bold text-primary">3. Verified Providers & Service Standards</h2>
           <p className="mt-4">
-            Contractors and suppliers registered on Aatzy undergo credential screening. Service milestones, photo verification, and digital invoicing are designed to ensure mutual accountability across all construction projects.
+            Contractors and suppliers registered on Connectzy undergo credential screening. Service milestones, photo verification, and digital invoicing are designed to ensure mutual accountability across all construction projects.
           </p>
         </div>
       </div>

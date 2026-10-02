@@ -46,17 +46,17 @@ export function Homeowners({ onNavigate }: HomeownersProps) {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2">
-          {/* Left — Image */}
+          {/* Left — Real Project Photo */}
           <motion.div
             initial={{ opacity: 0, x: -60 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8 }}
             className="relative"
           >
-            <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl border border-slate-200">
               <img
-                src="https://images.pexels.com/photos/17707574/pexels-photo-17707574.jpeg"
-                alt="Luxury modern villa under construction"
+                src="/assets/images/estimator_villa.jpg"
+                alt="Modern villa project built with Connectzy"
                 loading="lazy"
                 className="h-[520px] w-full object-cover transition-transform duration-700 hover:scale-105"
               />

@@ -12,60 +12,69 @@ import {
   Inbox,
   Package,
   X,
+  ArrowRight,
 } from 'lucide-react';
 import { useInView } from '../../hooks/useInView';
 
 const homeownerSteps = [
   {
     icon: ClipboardList,
-    title: 'Input Project Details',
-    desc: 'Specify your plot size, building type, desired quality grade, and location to get started.',
-    detail: 'Our intelligent intake form captures every critical parameter — plot dimensions, soil type, local labor rates, material preferences, and quality grade. This data feeds directly into our estimation engine to produce a project-specific budget baseline before you speak to any contractor.',
+    title: 'Calculate Estimate & Post Project',
+    tag: 'STEP 01',
+    desc: 'Specify your plot size, building type, desired quality grade, and location to calculate budgets and publish your project.',
+    detail: 'Our intelligent calculator computes realistic building budgets based on live engineering rates. Post your custom project specs, timeline, and material preferences to invite verified proposals without exposing your personal phone number.',
   },
   {
     icon: GitCompare,
-    title: 'Review & Compare Bids',
-    desc: 'Receive competitive bids from top-rated local contractors and material suppliers.',
-    detail: 'Your project requirements are broadcast to verified contractors in your region. Each proposal arrives in a standardized format — cost breakdown, timeline, team credentials, and past project portfolio — so you can compare apples to apples and select with confidence.',
+    title: 'Review & Compare Contractor Bids',
+    tag: 'STEP 02',
+    desc: 'Receive competitive proposals from top-rated regional builders, architects, and trade specialists.',
+    detail: 'Contractors submit itemized quotations detailing labor shares, material brands, and milestone dates. Compare bids side-by-side, inspect their past site photos and GST credentials, and select your preferred partner.',
   },
   {
     icon: Camera,
-    title: 'Monitor Daily Execution',
-    desc: 'Track stage-wise progress with photo updates, task completion logs, and material tracking.',
-    detail: 'Every construction phase is documented with timestamped photo uploads, material consumption logs, and task checklists. Whether you are on-site or across the country, you see exactly what happened each day — no surprises, no guesswork.',
+    title: 'Monitor Daily On-Site Photo Proofs',
+    tag: 'STEP 03',
+    desc: 'Track stage-wise execution with geo-tagged photos, task checklists, and material consumption logs.',
+    detail: 'Every construction milestone (Excavation, Foundation, RCC Slab, Brickwork, MEP, Plastering, Painting) is verified with timestamped photo uploads directly in the app. You inspect real progress before approving any milestone.',
   },
   {
     icon: CheckCircle2,
-    title: 'Hassle-Free Handover',
-    desc: 'Receive completed project deliverables supported by itemized payment histories and warranties.',
-    detail: 'At project completion you receive a complete handover package: itemized payment ledger, material warranties, structural certificates, and a final audit report reconciling quoted vs. actual quantities — all downloadable as a single PDF dossier.',
+    title: 'Release Stage Draws & Handover',
+    tag: 'STEP 04',
+    desc: 'Safe milestone escrow payouts guarantee work quality right through to final keys handover.',
+    detail: 'Funds are protected and released incrementally as certified phases pass client inspection. At project completion, download the complete audit trail: itemized payment ledger, material warranties, and structural certificates.',
   },
 ];
 
 const businessSteps = [
   {
     icon: Store,
-    title: 'Create Business Profile',
-    desc: 'Register your company details, business category, service coverage, and portfolio.',
-    detail: 'Set up a professional storefront in minutes. Add your company logo, service categories, geographic coverage area, portfolio photos, and team credentials — all displayed to potential clients in a clean, conversion-optimized layout.',
+    title: 'Register & Showcase Portfolio',
+    tag: 'STEP 01',
+    desc: 'Create your digital business profile, select your trade specialties, service radius, and past projects.',
+    detail: 'Set up your professional construction storefront in minutes. Select from 45+ trade categories (General Contractor, Civil Engineer, Tile Worker, Steel Supplier, etc.), upload your past job photos, and list your business certifications.',
   },
   {
     icon: BadgeCheck,
-    title: 'Verify Credentials',
-    desc: 'Upload GST, PAN, and identity documents to unlock verified status.',
-    detail: 'Our verification team reviews your GST registration, PAN, business license, and identity documents. Once approved, you receive the Connectzy Verified Provider Badge — a trust signal that significantly increases your win rate on incoming inquiries.',
+    title: 'Verify GST & Identity Credentials',
+    tag: 'STEP 02',
+    desc: 'Upload GSTIN, PAN, and contractor licenses to earn the official Connectzy Verified Trust Badge.',
+    detail: 'Our compliance team checks your documents to verify your business legitimacy. Once approved, you gain priority placement in regional homeowner searches and unlock full bidding privileges on incoming projects.',
   },
   {
     icon: Inbox,
-    title: 'Receive & Quote Leads',
-    desc: 'View incoming client inquiries and submit professional proposals.',
-    detail: 'Qualified RFQs land directly in your dashboard. Review project specs, ask clarifying questions via in-app chat, and submit branded PDF quotations with your pricing, timeline, and terms — all without leaving the platform.',
+    title: 'Receive Matched Client Leads & Quote',
+    tag: 'STEP 03',
+    desc: 'Get instant notifications for fresh project inquiries in your area and submit professional PDF proposals.',
+    detail: 'Qualified client leads land directly in your dashboard. Chat with homeowners, clarify site drawings, and submit itemized quotations with competitive pricing and milestone schedules.',
   },
   {
     icon: Package,
-    title: 'Manage Orders & Invoices',
-    desc: 'Generate GST-compliant invoices and manage delivery status from creation to handover.',
-    detail: 'Convert accepted quotes into GST-compliant invoices with one click. Track order fulfillment, update delivery status, and reconcile payments — your entire sales lifecycle managed in a single, audit-ready workflow.',
+    title: 'Upload Daily Tasks & Receive Payouts',
+    tag: 'STEP 04',
+    desc: 'Update milestone progress photos, log material usage, and receive secure milestone payments on completion.',
+    detail: 'Keep clients delighted by snapping quick photos on site as tasks complete. Milestone payouts are triggered swiftly upon client sign-off, ensuring steady cash flow for your crew and suppliers.',
   },
 ];
 
@@ -77,138 +86,145 @@ export function HowItWorks() {
   const steps = tab === 'homeowner' ? homeownerSteps : businessSteps;
 
   return (
-    <section ref={ref} className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50 py-20 sm:py-28">
+    <section id="how-it-works" ref={ref} className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50 py-20 sm:py-28 border-t border-slate-200">
       <div className="pointer-events-none absolute inset-0 bg-grid opacity-20" />
 
-      <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="mb-12 text-center"
+          className="mb-12 text-center max-w-2xl mx-auto"
         >
-          <span className="glass mb-4 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-blue-600 border border-blue-200 bg-blue-50/50">
-            HOW IT WORKS
+          <span className="glass mb-4 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-black text-blue-600 border border-blue-200 bg-blue-50/50 uppercase tracking-wider">
+            TRANSPARENT WORKFLOW
           </span>
           <h2 className="font-display text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-            A Simple 4-Step Workflow
+            How Connectzy Works
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600">
-            Whether you are building a home or running a construction business, getting started takes minutes.
+          <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed">
+            A structured, 4-step framework engineered for complete trust and on-time execution.
           </p>
         </motion.div>
 
-        {/* Tab toggle */}
+        {/* Audience Selector Tabs */}
         <div className="mb-12 flex justify-center">
-          <div className="inline-flex rounded-full bg-slate-100 p-1">
+          <div className="glass inline-flex rounded-2xl p-1.5 shadow-sm border border-slate-200 bg-slate-100/70">
             <button
               onClick={() => setTab('homeowner')}
-              className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                tab === 'homeowner' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500'
+              className={`rounded-xl px-5 sm:px-8 py-2.5 text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                tab === 'homeowner'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              For Homeowners
+              For Homeowners & Clients
             </button>
             <button
               onClick={() => setTab('business')}
-              className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                tab === 'business' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500'
+              className={`rounded-xl px-5 sm:px-8 py-2.5 text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
+                tab === 'business'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              For Businesses
+              For Contractors & Suppliers
             </button>
           </div>
         </div>
 
-        {/* Timeline */}
-        <div className="relative">
-          {/* Animated connecting line */}
-          <div className="absolute left-8 top-0 h-full w-0.5 bg-slate-200 lg:left-1/2 lg:-translate-x-1/2">
-            <motion.div
-              initial={{ height: 0 }}
-              animate={inView ? { height: '100%' } : {}}
-              transition={{ duration: 1.5, delay: 0.3 }}
-              className="w-full bg-gradient-to-b from-blue-600 to-sky-400"
-            />
-          </div>
-
-          <div className="space-y-8">
-            {steps.map((step, i) => (
+        {/* Steps Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((step, i) => {
+            const Icon = step.icon;
+            return (
               <motion.div
                 key={step.title}
-                initial={{ opacity: 0, x: tab === 'homeowner' ? (i % 2 === 0 ? -40 : 40) : (i % 2 === 0 ? 40 : -40) }}
-                animate={inView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.5, delay: i * 0.15 }}
-                className="relative pl-20 lg:pl-0"
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="group relative rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-xl hover:border-blue-400 transition-all duration-300 flex flex-col justify-between"
               >
-                {/* Step circle */}
-                <div className="absolute left-0 top-0 z-10 lg:left-1/2 lg:-translate-x-1/2">
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg ring-4 ring-slate-100">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-400">
-                      <step.icon className="h-6 w-6 text-white" strokeWidth={2} />
+                <div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-inner group-hover:scale-110 transition-transform">
+                      <Icon className="h-6 w-6" />
                     </div>
-                    <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
-                      {i + 1}
+                    <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                      {step.tag}
                     </span>
                   </div>
+
+                  <h3 className="text-base font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2.5 text-xs text-slate-600 leading-relaxed">
+                    {step.desc}
+                  </p>
                 </div>
 
-                {/* Step card */}
-                <div className={`lg:w-1/2 ${i % 2 === 0 ? 'lg:pr-12' : 'lg:ml-auto lg:pl-12'}`}>
+                <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <button
                     onClick={() => setModal(i)}
-                    className="group flex w-full flex-col items-start rounded-2xl border border-slate-100 bg-white p-5 text-left shadow-sm transition-all hover:shadow-lg hover:border-blue-200"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1 cursor-pointer"
                   >
-                    <h3 className="font-display text-lg font-bold text-slate-900">{step.title}</h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{step.desc}</p>
-                    <span className="mt-3 flex items-center gap-1 text-xs font-semibold text-blue-600 opacity-0 transition-opacity group-hover:opacity-100">
-                      View details →
-                    </span>
+                    <span>Read Details</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                  <span className="text-xs font-black text-slate-300">0{i + 1}</span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Modal detail dialog */}
+        <AnimatePresence>
+          {modal !== null && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
+              onClick={() => setModal(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="relative max-w-lg w-full rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setModal(null)}
+                  className="absolute right-4 top-4 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                <span className="text-[10px] font-black uppercase text-blue-600 tracking-wider">
+                  {steps[modal].tag}
+                </span>
+                <h3 className="font-extrabold text-xl text-slate-900 leading-tight mt-1 mb-3">
+                  {steps[modal].title}
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  {steps[modal].detail}
+                </p>
+
+                <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    onClick={() => setModal(null)}
+                    className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition cursor-pointer"
+                  >
+                    Got It
                   </button>
                 </div>
               </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Detail modal */}
-      <AnimatePresence>
-        {modal !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setModal(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="glass-card relative max-w-lg rounded-3xl p-8 bg-white border border-slate-200 shadow-2xl"
-            >
-              <button
-                onClick={() => setModal(null)}
-                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-400 shadow-lg">
-                {(() => {
-                  const Icon = steps[modal].icon;
-                  return <Icon className="h-7 w-7 text-white" />;
-                })()}
-              </div>
-              <span className="text-xs font-semibold text-blue-600">STEP {modal + 1}</span>
-              <h3 className="mt-1 font-display text-2xl font-bold text-slate-900">{steps[modal].title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{steps[modal].detail}</p>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </div>
     </section>
   );
 }
