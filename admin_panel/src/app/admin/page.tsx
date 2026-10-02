@@ -177,6 +177,11 @@ export default async function AdminDashboard({
     badge: ad.badge,
     icon: ad.icon,
     gradient: ad.gradient,
+    imageUrl: ad.imageUrl || null,
+    targetSide: ad.targetSide || 'ALL',
+    actionUrl: ad.actionUrl || null,
+    actionText: ad.actionText || 'Explore Now',
+    isActive: ad.isActive !== undefined ? Boolean(ad.isActive) : true,
     createdAt: ad.createdAt.toISOString()
   }));
 

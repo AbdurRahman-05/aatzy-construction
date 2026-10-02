@@ -10,6 +10,7 @@ import '../../core/wallpaper_background.dart';
 import '../../core/services/subscription_service.dart';
 import '../subscription/widgets/provider_subscription_modal.dart';
 import '../auth/auth_provider.dart';
+import '../../core/services/ad_popup_service.dart';
 
 class ProviderTabNotifier extends Notifier<int> {
   final List<int> _history = [0];
@@ -71,6 +72,9 @@ class _ProviderLayoutState extends ConsumerState<ProviderLayout> {
       final auth = ref.read(authProvider);
       if (auth.id != null) {
         ref.read(subscriptionProvider.notifier).fetchStatus(auth.id!);
+      }
+      if (mounted) {
+        AdPopupService.checkAndShowAd(context, role: 'PROVIDER');
       }
     });
   }

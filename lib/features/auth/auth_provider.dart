@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/push_notification_service.dart';
+import '../../core/services/ad_popup_service.dart';
 
 class AuthState {
   final String? id;
@@ -92,6 +93,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> login(Map<String, dynamic> data, String role) async {
+    AdPopupService.resetSession();
     final prefs = await SharedPreferences.getInstance();
     final savedProfileImage = prefs.getString('auth_profileImage');
 
@@ -156,6 +158,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    AdPopupService.resetSession();
     final oldId = state.id;
     final oldRole = state.role;
 

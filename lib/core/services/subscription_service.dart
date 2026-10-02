@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../constants.dart';
+import '../router.dart';
 
 class SubscriptionState {
   final bool isSubscribed;
@@ -69,9 +70,18 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
     return const SubscriptionState(isLoading: false);
   }
 
+  void resetLoading() {
+    if (state.isLoading) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
   void _initRazorpay() {
-    if (!kIsWeb) {
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS)) {
       try {
+        _razorpay?.clear();
         _razorpay = Razorpay();
         _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
         _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
@@ -177,39 +187,63 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
       final bool isSandbox = orderData['isSandbox'] == true;
       _currentPendingOrderId = orderId;
 
-      // If running on Web or Sandbox mode, present a verified mock/test checkout dialog
-      if (kIsWeb || isSandbox) {
-        if (!context.mounted) return;
-        _showWebOrSandboxCheckoutDialog(
-          context: context,
-          providerId: providerId,
-          orderId: orderId,
-          amount: amount,
-          isSandbox: isSandbox,
-        );
+      final bool isDesktop = !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.windows ||
+              defaultTargetPlatform == TargetPlatform.macOS ||
+              defaultTargetPlatform == TargetPlatform.linux);
+
+      // If running on Web, Desktop, or Sandbox mode, present a verified mock/test checkout dialog
+      if (kIsWeb || isDesktop || isSandbox) {
+        state = state.copyWith(isLoading: false);
+        final targetContext = rootNavigatorKey.currentContext ?? (context.mounted ? context : null);
+        if (targetContext != null) {
+          _showWebOrSandboxCheckoutDialog(
+            context: targetContext,
+            providerId: providerId,
+            orderId: orderId,
+            amount: amount,
+            isSandbox: isSandbox || isDesktop || kIsWeb,
+          );
+        }
         return;
       }
 
-      // Native mobile checkout using razorpay_flutter
-      if (_razorpay == null) _initRazorpay();
+      // Native mobile checkout using razorpay_flutter (Android / iOS)
+      try {
+        if (_razorpay == null) _initRazorpay();
 
-      final options = {
-        'key': keyId,
-        'amount': amount,
-        'name': 'BuildConnect',
-        'description': 'Annual Provider Membership (365 Days)',
-        'order_id': orderId,
-        'prefill': {
-          'contact': phone.isNotEmpty ? phone : '9988776655',
-          'email': email.isNotEmpty ? email : 'provider@buildconnect.com',
-        },
-        'theme': {
-          'color': '#0F766E',
-        },
-        'retry': {'enabled': true, 'max_count': 1},
-      };
+        final options = {
+          'key': keyId,
+          'amount': amount,
+          'name': 'BuildConnect',
+          'description': 'Annual Provider Membership (365 Days)',
+          'order_id': orderId,
+          'prefill': {
+            'contact': phone.isNotEmpty ? phone : '9988776655',
+            'email': email.isNotEmpty ? email : 'provider@buildconnect.com',
+          },
+          'theme': {
+            'color': '#0F766E',
+          },
+          'retry': {'enabled': true, 'max_count': 1},
+        };
 
-      _razorpay!.open(options);
+        state = state.copyWith(isLoading: false);
+        _razorpay!.open(options);
+      } catch (e) {
+        debugPrint('[Razorpay Mobile Launch Error]: $e, falling back to dialog');
+        state = state.copyWith(isLoading: false);
+        final targetContext = rootNavigatorKey.currentContext ?? (context.mounted ? context : null);
+        if (targetContext != null) {
+          _showWebOrSandboxCheckoutDialog(
+            context: targetContext,
+            providerId: providerId,
+            orderId: orderId,
+            amount: amount,
+            isSandbox: true,
+          );
+        }
+      }
     } catch (e) {
       debugPrint('[Razorpay Checkout Error]: $e');
       state = state.copyWith(isLoading: false, error: e.toString());

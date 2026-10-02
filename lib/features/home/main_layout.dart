@@ -7,6 +7,7 @@ import '../chat/chat_list_screen.dart';
 import 'profile_screen.dart';
 import '../project/projects_list_screen.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/services/ad_popup_service.dart';
 
 class MainTabNotifier extends Notifier<int> {
   final List<int> _history = [0];
@@ -54,10 +55,15 @@ final mainTabProvider = NotifierProvider<MainTabNotifier, int>(MainTabNotifier.n
 // Vivid blue accent — clearly visible on any background
 const _kNavAccent = Color(0xFF1F6FEB);
 
-class MainLayout extends ConsumerWidget {
+class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key});
 
-  final screens = const [
+  @override
+  ConsumerState<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends ConsumerState<MainLayout> {
+  static const screens = [
     HomeScreen(),
     ProjectsListScreen(),
     ServicesScreen(),
@@ -66,7 +72,17 @@ class MainLayout extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        AdPopupService.checkAndShowAd(context, role: 'CONSUMER');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentIndex = ref.watch(mainTabProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 

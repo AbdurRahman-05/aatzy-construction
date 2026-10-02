@@ -555,23 +555,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final name = _providerData?['businessName'] ?? auth.businessName ?? auth.name ?? 'Guest Provider';
 
-    return WallpaperBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: _isLoading ? null : AppBar(
-          title: Text(
-            name,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              onPressed: () => _showSettingsBottomSheet(context),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _handleBackNavigation(context);
+      },
+      child: WallpaperBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: _isLoading ? null : AppBar(
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 16,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+              onPressed: () => _handleBackNavigation(context),
+              tooltip: 'Back to Dashboard',
             ),
-          ],
-        ),
+            title: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.menu_rounded),
+                onPressed: () => _showSettingsBottomSheet(context),
+              ),
+            ],
+          ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : DefaultTabController(
@@ -643,6 +665,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ],
                 ),
               ),
+        ),
       ),
     );
   }
@@ -1938,21 +1961,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _handleBackNavigation(BuildContext context) {
-    if (context.canPop()) {
-      context.pop();
-      return;
-    }
     final auth = ref.read(authProvider);
     if (auth.role == 'PROVIDER') {
-      final handled = ref.read(providerTabProvider.notifier).handleBack();
-      if (!handled) {
-        ref.read(providerTabProvider.notifier).state = 0;
+      final tabNotifier = ref.read(providerTabProvider.notifier);
+      final handled = tabNotifier.handleBack();
+      if (handled) return;
+      if (ref.read(providerTabProvider) != 0) {
+        tabNotifier.setTab(0);
+        return;
       }
     } else {
-      final handled = ref.read(mainTabProvider.notifier).handleBack();
-      if (!handled) {
-        ref.read(mainTabProvider.notifier).state = 0;
+      final tabNotifier = ref.read(mainTabProvider.notifier);
+      final handled = tabNotifier.handleBack();
+      if (handled) return;
+      if (ref.read(mainTabProvider) != 0) {
+        tabNotifier.setTab(0);
+        return;
       }
+    }
+    if (context.canPop()) {
+      context.pop();
     }
   }
 
