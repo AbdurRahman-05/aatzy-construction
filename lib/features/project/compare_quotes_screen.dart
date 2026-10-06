@@ -8,6 +8,7 @@ import '../../core/wallpaper_background.dart';
 import '../../core/providers/projects_provider.dart';
 import '../auth/auth_provider.dart';
 import '../chat/chat_detail_screen.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class CompareQuotesScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -267,7 +268,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
           ],
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF4F46E5)))
+            ? const ShimmerCompareQuotes()
             : Column(
                 children: [
                   // Active Project Selector Bar

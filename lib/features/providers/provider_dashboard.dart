@@ -183,29 +183,20 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         automaticallyImplyLeading: false,
         titleSpacing: 16,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F766E),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Image.asset(
-                'assets/logo.png',
-                height: 18,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.apartment_rounded, color: Colors.white, size: 18),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'BuildMart Console',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-                color: Color(0xFF0F172A),
-                letterSpacing: -0.4,
+            Image.asset(
+              'assets/logo.png',
+              height: 30,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => Text(
+                'Connectzy',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                  color: isDark ? Colors.white : const Color(0xFF0F766E),
+                  letterSpacing: -0.4,
+                ),
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
 import 'widgets/custom_image.dart';
+import '../../../core/widgets/shimmer_loading.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -56,9 +57,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const ShimmerProductDetail();
     }
 
     final p = _product;

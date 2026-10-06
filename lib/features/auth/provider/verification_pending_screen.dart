@@ -147,20 +147,8 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
             children: [
               const SizedBox(height: 16),
               Center(
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
-                  ),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
                   child: Image.asset(
                     'assets/logo.png',
                     height: 50,

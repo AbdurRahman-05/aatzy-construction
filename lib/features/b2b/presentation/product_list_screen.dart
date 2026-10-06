@@ -58,7 +58,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String _selectedLocation = 'All India';
   String _selectedCategory = 'All';
   
-  bool _isLoading = false;
+  bool _isLoading = true;
   List<ProductItem> _products = [];
   String? _errorMessage;
 

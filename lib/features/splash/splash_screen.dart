@@ -544,53 +544,27 @@ class _CleanAnimatedLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Soft atmospheric halo directly behind the logo silhouette
-        Container(
-          width: logoWidth * 0.75,
-          height: logoWidth * 0.35,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(logoWidth * 0.2),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0F766E).withValues(alpha: isDark ? 0.35 : 0.16),
-                blurRadius: 45,
-                spreadRadius: 8,
-              ),
-              BoxShadow(
-                color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.18 : 0.10),
-                blurRadius: 35,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-        ),
-
-        // Pure Logo Image with Diagonal Shimmer Sweep
-        ShaderMask(
-          blendMode: BlendMode.srcATop,
-          shaderCallback: (bounds) {
-            return LinearGradient(
-              begin: Alignment(shimmerProgress - 1.2, -0.6),
-              end: Alignment(shimmerProgress, 0.6),
-              colors: [
-                Colors.white.withValues(alpha: 0.0),
-                Colors.white.withValues(alpha: isDark ? 0.55 : 0.70),
-                Colors.white.withValues(alpha: 0.0),
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ).createShader(bounds);
-          },
-          child: Image.asset(
-            'assets/logo.png',
-            width: logoWidth,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.high,
-          ),
-        ),
-      ],
+    // Pure Logo Image with Diagonal Shimmer Sweep (Zero background box or halo)
+    return ShaderMask(
+      blendMode: BlendMode.srcATop,
+      shaderCallback: (bounds) {
+        return LinearGradient(
+          begin: Alignment(shimmerProgress - 1.2, -0.6),
+          end: Alignment(shimmerProgress, 0.6),
+          colors: [
+            Colors.white.withValues(alpha: 0.0),
+            Colors.white.withValues(alpha: isDark ? 0.55 : 0.70),
+            Colors.white.withValues(alpha: 0.0),
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ).createShader(bounds);
+      },
+      child: Image.asset(
+        'assets/logo.png',
+        width: logoWidth,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+      ),
     );
   }
 }

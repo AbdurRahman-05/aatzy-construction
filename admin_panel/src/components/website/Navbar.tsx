@@ -50,14 +50,12 @@ export function Navbar({ onNavigate }: NavbarProps) {
           className="group flex items-center gap-3 text-left cursor-pointer"
           aria-label="Connectzy Construction Platform"
         >
-          <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-md shadow-slate-900/10 border border-slate-200/80 p-1.5 transition-transform duration-300 group-hover:scale-105">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/logo.png"
-              alt="Connectzy Logo"
-              className="h-full w-full object-contain"
-            />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/logo.png"
+            alt="Connectzy Logo"
+            className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+          />
           <div className="flex flex-col leading-none">
             <span className="font-display text-lg font-black tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
               CONNECTZY

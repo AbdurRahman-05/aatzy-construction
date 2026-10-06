@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/providers/social_feed_provider.dart';
 import '../core/providers/notifications_provider.dart';
 import '../features/providers/provider_profile_screen.dart';
+import '../core/widgets/shimmer_loading.dart';
 
 class ServicesScreen extends ConsumerStatefulWidget {
   const ServicesScreen({super.key});
@@ -88,6 +89,8 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     {'name': 'Windows & Doors', 'icon': Icons.door_sliding_rounded, 'color': Color(0xFF64748B), 'bg': Color(0xFFF8FAFC)},
   ];
 
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -97,7 +100,15 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   }
 
   Future<void> _fetchSocialFeed() async {
-    ref.invalidate(socialFeedProvider);
+    if (mounted) setState(() => _isLoading = true);
+    try {
+      ref.invalidate(socialFeedProvider);
+      await ref.read(socialFeedProvider.future);
+    } catch (e) {
+      debugPrint('Services fetch error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -836,10 +847,10 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           const SizedBox(height: 12),
 
           // Live Builder Inspirations List
-          if (socialAsync.isLoading && combinedPortfolio.isEmpty)
+          if (_isLoading || (socialAsync.isLoading && combinedPortfolio.isEmpty))
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 36),
-              child: Center(child: CircularProgressIndicator()),
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: ShimmerSocialFeed(itemCount: 4),
             )
           else if (filteredProjects.isEmpty)
             Container(

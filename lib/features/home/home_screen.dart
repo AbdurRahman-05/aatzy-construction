@@ -26,8 +26,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<dynamic> _projects = [];
   List<dynamic> _materialOrders = [];
   List<dynamic> _socialPosts = [];
-  bool _isLoading = false;
-  bool _isLoadingSocial = false;
+  bool _isLoading = true;
+  bool _isLoadingSocial = true;
   int _activeTabIndex = 0;
 
   final Color _slateDark = const Color(0xFF111827); // Dark button color from design
@@ -52,34 +52,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _fetchProjects() async {
-    final auth = ref.read(authProvider);
-    if (auth.id != null) {
-      ref.invalidate(userProjectsProvider(auth.id!));
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _isLoadingSocial = true;
+      });
     }
-    ref.invalidate(socialFeedProvider);
+    final auth = ref.read(authProvider);
+    try {
+      final futures = <Future<dynamic>>[];
+      if (auth.id != null) {
+        futures.add(ref.refresh(userProjectsProvider(auth.id!).future));
+      }
+      futures.add(ref.refresh(socialFeedProvider.future));
+      await Future.wait(futures);
+    } catch (e) {
+      debugPrint('HomeScreen fetch error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingSocial = false;
+        });
+      }
+    }
   }
 
   Future<void> _handleRefresh() async {
-    final auth = ref.read(authProvider);
-    final futures = <Future<dynamic>>[];
-    if (auth.id != null) {
-      futures.add(ref.refresh(userProjectsProvider(auth.id!).future));
-    }
-    futures.add(ref.refresh(socialFeedProvider.future));
-    await Future.wait(futures);
+    await _fetchProjects();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authProvider, (previous, next) {
+      if (previous?.id != next.id && next.id != null) {
+        _fetchProjects();
+      }
+    });
+
     final auth = ref.watch(authProvider);
-    if (auth.id != null) {
+    if (!auth.isInitialized) {
+      _isLoading = true;
+    } else if (auth.id != null) {
       final projectsAsync = ref.watch(userProjectsProvider(auth.id!));
       final projData = projectsAsync.asData?.value ?? projectsAsync.value;
       if (projData != null) {
         _projects = projData.projects;
         _materialOrders = projData.materialOrders;
       }
-      _isLoading = projectsAsync.isLoading && _projects.isEmpty;
+      if (projectsAsync.isLoading && _projects.isEmpty) {
+        _isLoading = true;
+      }
     }
 
     final socialAsync = ref.watch(socialFeedProvider);
@@ -87,7 +110,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (socialData != null) {
       _socialPosts = socialData;
     }
-    _isLoadingSocial = socialAsync.isLoading && _socialPosts.isEmpty;
+    if (socialAsync.isLoading && _socialPosts.isEmpty) {
+      _isLoadingSocial = true;
+    }
 
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
@@ -312,6 +337,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildConstructionOverview(bool isSmallScreen, double screenWidth) {
+    if (_isLoading) {
+      return ShimmerHomeOverview(isSmallScreen: isSmallScreen);
+    }
     int activeProjects = _projects.where((p) {
       final stage = (p['currentStage'] as String? ?? '').toLowerCase();
       return stage != 'completed' && stage != 'finished' && stage != 'cancelled';
@@ -1920,7 +1948,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        if (_isLoadingSocial)
+        if (_isLoadingSocial || _isLoading)
           const ShimmerSocialFeed(itemCount: 3)
         else if (_socialPosts.isEmpty)
           Center(child: Text('No showcases found.', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)))

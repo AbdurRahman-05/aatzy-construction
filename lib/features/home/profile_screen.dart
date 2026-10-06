@@ -15,6 +15,7 @@ import 'main_layout.dart';
 import '../providers/provider_layout.dart';
 import '../../core/full_screen_image_viewer.dart';
 import '../../core/providers/social_feed_provider.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -73,6 +74,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       if (effectiveRole != 'PROVIDER') {
         _hasFetchedConsumer = true;
+        if (mounted) setState(() => _isLoading = true);
         // Sync consumer profile photo from auth state
         final savedConsumerImage = auth.profileImage ?? prefs.getString('auth_profileImage');
         if (savedConsumerImage != null && savedConsumerImage.isNotEmpty) {
@@ -83,7 +85,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           }
         }
         try {
-          final userRes = await http.get(Uri.parse('$apiBaseUrl/users/$effectiveId')).timeout(const Duration(seconds: 25));
+          final futures = <Future<dynamic>>[];
+          futures.add(http.get(Uri.parse('$apiBaseUrl/users/$effectiveId')).timeout(const Duration(seconds: 25)));
+          futures.add(ref.refresh(userProjectsProvider(effectiveId).future));
+          final results = await Future.wait(futures);
+          final userRes = results[0] as http.Response;
           if (mounted && userRes.statusCode == 200) {
             final data = jsonDecode(userRes.body);
             final newImg = data['profileImage'] as String?;
@@ -98,6 +104,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           }
         } catch (e) {
           debugPrint('Error fetching consumer profile: $e');
+        } finally {
+          _isFetching = false;
+          if (mounted) setState(() => _isLoading = false);
         }
         return;
       }
@@ -595,7 +604,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const ShimmerUserProfile()
             : DefaultTabController(
                 length: 4,
                 child: Column(
@@ -1995,6 +2004,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final projects = userProjectsData?.projects ?? [];
     final orders = userProjectsData?.materialOrders ?? [];
     final inquiries = userProjectsData?.inquiries ?? [];
+
+    if (_isLoading || (userProjectsAsync != null && userProjectsAsync.isLoading && projects.isEmpty)) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
+        body: SafeArea(
+          child: ShimmerUserProfile(isConsumer: true),
+        ),
+      );
+    }
 
     int calculatedQuotes = 0;
     for (var p in projects) {

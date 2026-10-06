@@ -19,7 +19,7 @@ class MaterialsScreen extends ConsumerStatefulWidget {
 
 class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _errorMessage;
 
   // Consumer Side Data

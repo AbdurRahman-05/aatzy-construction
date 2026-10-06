@@ -6,6 +6,7 @@ import '../../auth/auth_provider.dart';
 import 'widgets/custom_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
+import '../../../core/widgets/shimmer_loading.dart';
 
 class InquiryModel {
   final String id;
@@ -75,7 +76,7 @@ class MyInquiriesScreen extends ConsumerStatefulWidget {
 }
 
 class _MyInquiriesScreenState extends ConsumerState<MyInquiriesScreen> {
-  bool _isLoading = false;
+  bool _isLoading = true;
   List<InquiryModel> _inquiries = [];
   String? _errorMessage;
 
@@ -186,7 +187,10 @@ class _MyInquiriesScreenState extends ConsumerState<MyInquiriesScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: ShimmerOrderList(itemCount: 4),
+            )
           : Column(
               children: [
                 if (_errorMessage != null)

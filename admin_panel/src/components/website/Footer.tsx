@@ -136,13 +136,12 @@ export function Footer({ onNavigate }: FooterProps) {
           {/* Brand column */}
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white p-1 shadow-lg ring-1 ring-white/20">
-                <img
-                  src="/assets/logo.png"
-                  alt="Connectzy Construction"
-                  className="h-full w-full object-contain"
-                />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/logo.png"
+                alt="Connectzy Construction"
+                className="h-9 w-auto object-contain brightness-150 contrast-125"
+              />
               <div>
                 <p className="font-display text-base font-extrabold tracking-tight">CONNECTZY</p>
                 <p className="text-[10px] uppercase tracking-wider text-primary-300">Construction Platform</p>

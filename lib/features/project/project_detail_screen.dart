@@ -10,6 +10,7 @@ import '../../core/full_screen_image_viewer.dart';
 import '../../core/utils/project_progress_helper.dart';
 import '../../core/providers/projects_provider.dart';
 import '../auth/auth_provider.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class ProjectDetailScreen extends ConsumerStatefulWidget {
   final String projectId;
@@ -499,7 +500,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 900),
                   child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const ShimmerProjectDetail()
                       : _project == null
                           ? const Center(child: Text('Project details not found.'))
                           : RefreshIndicator(

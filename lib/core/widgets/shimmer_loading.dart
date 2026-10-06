@@ -753,3 +753,408 @@ class ShimmerChatList extends StatelessWidget {
     );
   }
 }
+
+/// Shimmer skeleton for Consumer Project Detail screen (Milestones, stages, tasks)
+class ShimmerProjectDetail extends StatelessWidget {
+  const ShimmerProjectDetail({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final border = isDark
+        ? Border.all(color: Colors.white.withValues(alpha: 0.06))
+        : Border.all(color: const Color(0xFFE5E7EB));
+
+    return Shimmer(
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: [
+          // Top navigation bar placeholder
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              ShimmerCircle(diameter: 40),
+              ShimmerBox(width: 140, height: 20, borderRadius: 6),
+              ShimmerCircle(diameter: 40),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Hero Project Overview Card
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(24),
+              border: border,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    ShimmerBox(width: 90, height: 22, borderRadius: 6),
+                    ShimmerBox(width: 80, height: 22, borderRadius: 6),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                const ShimmerLine(width: 240, height: 22, borderRadius: 6),
+                const SizedBox(height: 8),
+                const ShimmerLine(width: 160, height: 14, borderRadius: 4),
+                const SizedBox(height: 18),
+                const ShimmerBox(height: 8, borderRadius: 4),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    ShimmerBox(width: 110, height: 24, borderRadius: 6),
+                    ShimmerBox(width: 90, height: 24, borderRadius: 6),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Horizontal Stages Tracker
+          Row(
+            children: List.generate(4, (index) {
+              return Expanded(
+                child: Container(
+                  height: 36,
+                  margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: border,
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 20),
+
+          // Task Checklist Skeletons
+          ...List.generate(4, (index) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: border,
+              ),
+              child: Row(
+                children: [
+                  const ShimmerBox(width: 24, height: 24, borderRadius: 6),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        ShimmerLine(width: 180, height: 15, borderRadius: 4),
+                        SizedBox(height: 6),
+                        ShimmerLine(width: 110, height: 11, borderRadius: 3),
+                      ],
+                    ),
+                  ),
+                  const ShimmerBox(width: 60, height: 20, borderRadius: 6),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shimmer skeleton for Compare Quotes screen
+class ShimmerCompareQuotes extends StatelessWidget {
+  const ShimmerCompareQuotes({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final border = isDark
+        ? Border.all(color: Colors.white.withValues(alpha: 0.06))
+        : Border.all(color: const Color(0xFFE5E7EB));
+
+    return Shimmer(
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Project selector bar
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(14),
+              border: border,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Quote comparison cards
+          ...List.generate(3, (index) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: border,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const ShimmerCircle(diameter: 46),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            ShimmerLine(width: 160, height: 16, borderRadius: 4),
+                            SizedBox(height: 6),
+                            ShimmerLine(width: 90, height: 12, borderRadius: 3),
+                          ],
+                        ),
+                      ),
+                      const ShimmerBox(width: 70, height: 22, borderRadius: 6),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      ShimmerLine(width: 120, height: 22, borderRadius: 6),
+                      ShimmerBox(width: 80, height: 20, borderRadius: 6),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  const ShimmerLine(width: double.infinity, height: 12, borderRadius: 4),
+                  const SizedBox(height: 6),
+                  const ShimmerLine(width: 220, height: 12, borderRadius: 4),
+                  const SizedBox(height: 18),
+                  const ShimmerBox(height: 44, borderRadius: 12),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shimmer skeleton for Consumer B2B Material Detail Screen
+class ShimmerProductDetail extends StatelessWidget {
+  const ShimmerProductDetail({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+
+    return Shimmer(
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Large product image placeholder
+              const ShimmerBox(
+                width: double.infinity,
+                height: 280,
+                borderRadius: 0,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          ShimmerBox(width: 90, height: 24, borderRadius: 6),
+                          ShimmerBox(width: 80, height: 24, borderRadius: 6),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const ShimmerLine(width: 260, height: 24, borderRadius: 6),
+                      const SizedBox(height: 10),
+                      const ShimmerLine(width: 180, height: 16, borderRadius: 4),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: const [
+                            ShimmerCircle(diameter: 42),
+                            SizedBox(width: 12),
+                            Expanded(child: ShimmerLine(height: 14, borderRadius: 4)),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      const ShimmerBox(height: 50, borderRadius: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shimmer skeleton for Consumer Home Construction Overview card
+class ShimmerHomeOverview extends StatelessWidget {
+  final bool isSmallScreen;
+
+  const ShimmerHomeOverview({super.key, this.isSmallScreen = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
+      child: Shimmer(
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                ShimmerBox(width: 160, height: 18, borderRadius: 6),
+                ShimmerBox(width: 70, height: 14, borderRadius: 6),
+              ],
+            ),
+            SizedBox(height: isSmallScreen ? 12 : 18),
+            Row(
+              children: List.generate(4, (index) => Expanded(
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
+                  padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 10 : 12, horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: Column(
+                    children: const [
+                      ShimmerBox(width: 26, height: 26, borderRadius: 8),
+                      SizedBox(height: 6),
+                      ShimmerLine(width: 28, height: 14, borderRadius: 4),
+                      SizedBox(height: 4),
+                      ShimmerLine(width: 36, height: 10, borderRadius: 3),
+                    ],
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shimmer skeleton for Consumer & Provider Profile Screen
+class ShimmerUserProfile extends StatelessWidget {
+  final bool isConsumer;
+
+  const ShimmerUserProfile({super.key, this.isConsumer = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+
+    return Shimmer(
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const SizedBox(height: 20),
+          // User Avatar
+          const Center(child: ShimmerCircle(diameter: 90)),
+          const SizedBox(height: 16),
+          const Center(child: ShimmerLine(width: 160, height: 20, borderRadius: 6)),
+          const SizedBox(height: 8),
+          const Center(child: ShimmerLine(width: 120, height: 13, borderRadius: 4)),
+          const SizedBox(height: 24),
+
+          // Consumer 4 Stat Counters
+          if (isConsumer) ...[
+            Row(
+              children: List.generate(4, (index) => Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    children: const [
+                      ShimmerBox(width: 24, height: 18, borderRadius: 4),
+                      SizedBox(height: 6),
+                      ShimmerLine(width: 38, height: 10, borderRadius: 3),
+                    ],
+                  ),
+                ),
+              )),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // Menu Tiles
+          ...List.generate(5, (index) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: const [
+                  ShimmerBox(width: 36, height: 36, borderRadius: 10),
+                  SizedBox(width: 14),
+                  Expanded(child: ShimmerLine(height: 15, borderRadius: 4)),
+                  ShimmerBox(width: 16, height: 16, borderRadius: 4),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+

@@ -17,6 +17,7 @@ class ProjectsListScreen extends ConsumerStatefulWidget {
 class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with SingleTickerProviderStateMixin {
   String _searchQuery = "";
   late TabController _tabController;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -34,10 +35,17 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
   }
 
   Future<void> _fetchProjects() async {
+    if (mounted) setState(() => _isLoading = true);
     final auth = ref.read(authProvider);
-    if (auth.id != null) {
-      ref.invalidate(userProjectsProvider(auth.id!));
-      await ref.read(userProjectsProvider(auth.id!).future);
+    try {
+      if (auth.id != null) {
+        ref.invalidate(userProjectsProvider(auth.id!));
+        await ref.read(userProjectsProvider(auth.id!).future);
+      }
+    } catch (e) {
+      debugPrint('ProjectsList fetch error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -548,11 +556,17 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authProvider, (prev, next) {
+      if (prev?.id != next.id && next.id != null) {
+        _fetchProjects();
+      }
+    });
+
     final auth = ref.watch(authProvider);
     final projectsAsync = auth.id != null ? ref.watch(userProjectsProvider(auth.id!)) : null;
     final projectsData = projectsAsync?.asData?.value ?? projectsAsync?.value;
     final projects = projectsData?.projects ?? const [];
-    final isLoading = projectsAsync != null ? (projectsAsync.isLoading && projectsData == null) : false;
+    final isLoading = _isLoading || (projectsAsync != null && projectsAsync.isLoading && projects.isEmpty);
 
     final ongoingCount = projects.where((p) => _isOngoingStage(p['currentStage'] as String?, p)).length;
     final pendingCount = projects.where((p) => _isPendingStage(p['currentStage'] as String?, p)).length;
