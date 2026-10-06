@@ -2,23 +2,23 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../auth/auth_provider.dart';
 import '../../core/providers/app_prefetch.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/push_notification_service.dart';
 
-/// Professional animated splash / loading screen.
+/// Next-Generation Animated Splash Screen for Connectzy
 ///
 /// Features:
-/// - Uses the exact existing logo (`assets/logo.png`) without redesign or alteration.
-/// - Clean background matching the app's current theme (light/dark).
-/// - Logo entrance animation: Opacity 0% -> 100%, Scale 85% -> 100% (750ms, ease-out).
-/// - Subtle breathing pulse after logo settles.
-/// - Minimal, lightweight loading indicator below the logo.
-/// - Asynchronous startup: Waits for real initialization tasks (auth, services, data prefetch).
-/// - Graceful transition: If initialization is fast, it finishes the animation naturally;
-///   if slower, it continues breathing smoothly without freezing.
-/// - Smooth exit fade transition to the destination screen.
+/// 1. Big, prominent, unconstrained logo without background box.
+/// 2. Concentric expanding acoustic pulse rings ("radar connect" aura).
+/// 3. Spring-physics entrance animation (easeOutBack).
+/// 4. Shimmer light-reflection sweep across the logo silhouette.
+/// 5. Inspiring quote reveal: "Connecting Your Dreams".
+/// 6. Continuous subtle breathing cycle keeping the UI organic and alive.
+/// 7. Sleek multi-color gradient loading runner.
+/// 8. Seamless exit transition with parallel asynchronous startup prefetching.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -28,22 +28,30 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
-  // Entrance animation controller (750ms)
+  // Master entrance animation controller (1900ms)
   late AnimationController _entranceController;
+
+  // Staggered entrance animations
   late Animation<double> _logoScale;
   late Animation<double> _logoOpacity;
+  late Animation<double> _shimmerSweep;
+  late Animation<Offset> _quoteSlide;
+  late Animation<double> _quoteOpacity;
+  late Animation<double> _waveProgress1;
+  late Animation<double> _waveProgress2;
   late Animation<double> _indicatorOpacity;
 
-  // Subtle breathing / pulse animation controller (1600ms)
+  // Continuous breathing / pulse animation controller (2000ms loop)
   late AnimationController _pulseController;
-  late Animation<double> _logoPulse;
+  late Animation<double> _breathingScale;
+  late Animation<double> _ambientGlowPulse;
 
-  // Exit transition controller (280ms)
+  // Exit transition controller (350ms)
   late AnimationController _exitController;
   late Animation<double> _exitOpacity;
   late Animation<double> _exitScale;
 
-  // Track natural entrance completion
+  // Completion trackers
   final Completer<void> _entranceCompleter = Completer<void>();
   bool _navigationTriggered = false;
 
@@ -55,31 +63,75 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   void _setupAnimations() {
-    // 1. Entrance animation (750ms ease-out)
+    // 1. Entrance Controller (1900ms total sequence)
     _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 750),
+      duration: const Duration(milliseconds: 1900),
     );
 
-    _logoScale = Tween<double>(begin: 0.85, end: 1.0).animate(
+    // Wave ring 1: Expands from 12% to 68% of the timeline
+    _waveProgress1 = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: Curves.easeOutCubic,
+        curve: const Interval(0.12, 0.68, curve: Curves.easeOutCubic),
       ),
     );
 
+    // Wave ring 2: Slightly delayed (28% to 84%)
+    _waveProgress2 = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.28, 0.84, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // Logo scale: Spring entrance with easeOutBack (0% -> 50%)
+    _logoScale = Tween<double>(begin: 0.65, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.0, 0.50, curve: Curves.easeOutBack),
+      ),
+    );
+
+    // Logo opacity: 0% -> 40%
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.0, 0.85, curve: Curves.easeOut),
+        curve: const Interval(0.0, 0.40, curve: Curves.easeOut),
       ),
     );
 
-    // Indicator fades in gently in the latter half of the entrance
+    // Shimmer sweep across the logo (42% -> 76%)
+    _shimmerSweep = Tween<double>(begin: -1.4, end: 2.2).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.42, 0.76, curve: Curves.easeInOut),
+      ),
+    );
+
+    // Quote "Connecting Your Dreams" slide & fade (50% -> 82%)
+    _quoteSlide = Tween<Offset>(
+      begin: const Offset(0, 0.35),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.50, 0.82, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _quoteOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.50, 0.78, curve: Curves.easeOut),
+      ),
+    );
+
+    // Indicator fade in (68% -> 95%)
     _indicatorOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entranceController,
-        curve: const Interval(0.45, 1.0, curve: Curves.easeIn),
+        curve: const Interval(0.68, 0.95, curve: Curves.easeIn),
       ),
     );
 
@@ -88,43 +140,49 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         if (!_entranceCompleter.isCompleted) {
           _entranceCompleter.complete();
         }
-        // Start subtle breathing pulse once entrance is fully completed
         if (mounted && !_navigationTriggered) {
           _pulseController.repeat(reverse: true);
         }
       }
     });
 
-    // 2. Subtle continuous breathing pulse (1600ms)
+    // 2. Subtle continuous breathing cycle (2000ms loop)
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 2000),
     );
 
-    _logoPulse = Tween<double>(begin: 1.0, end: 1.025).animate(
+    _breathingScale = Tween<double>(begin: 1.0, end: 1.028).animate(
       CurvedAnimation(
         parent: _pulseController,
         curve: Curves.easeInOutSine,
       ),
     );
 
-    // 3. Smooth exit transition (280ms)
+    _ambientGlowPulse = Tween<double>(begin: 0.70, end: 1.08).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOutSine,
+      ),
+    );
+
+    // 3. Smooth Exit transition (350ms)
     _exitController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 280),
+      duration: const Duration(milliseconds: 350),
     );
 
     _exitOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _exitController,
-        curve: Curves.easeInOut,
+        curve: Curves.easeInQuad,
       ),
     );
 
-    _exitScale = Tween<double>(begin: 1.0, end: 1.03).animate(
+    _exitScale = Tween<double>(begin: 1.0, end: 1.06).animate(
       CurvedAnimation(
         parent: _exitController,
-        curve: Curves.easeOut,
+        curve: Curves.easeOutCubic,
       ),
     );
   }
@@ -133,14 +191,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Start entrance animation immediately
     _entranceController.forward();
 
+    // Minimum display timer so users always enjoy the visual experience (2.4s)
+    final minDisplayFuture = Future.delayed(const Duration(milliseconds: 2400));
+
     // Run real application initialization in parallel
     final initFuture = _performInitialization();
 
-    // Wait for BOTH:
-    // 1. Natural completion of the logo entrance animation (~750ms)
-    // 2. Completion of actual initialization tasks
+    // Wait for entrance completion, data initialization, and the minimum timer
     await Future.wait([
       _entranceCompleter.future,
+      minDisplayFuture,
       initFuture,
     ]);
 
@@ -155,15 +215,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   /// Real initialization tasks:
-  /// - Pre-fetch data into cache
-  /// - Wait for persisted authentication state
-  /// - Initialize background services if authenticated
+  /// - Pre-fetch feeds and cached state into Riverpod providers
+  /// - Check persisted auth state
+  /// - Initialize background services (Location, FCM) if signed in
   Future<void> _performInitialization() async {
     try {
-      // Warm up critical feeds & cached data in parallel
       prefetchAppData(ref);
 
-      // Wait for auth provider to finish reading from local storage
       if (!ref.read(authProvider).isInitialized) {
         final authCompleter = Completer<void>();
         final subscription = ref.listenManual<AuthState>(authProvider, (_, next) {
@@ -181,7 +239,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         }
       }
 
-      // If user is authenticated, sync location and notifications
       final auth = ref.read(authProvider);
       if (auth.id != null) {
         LocationService().detectAndSaveLocation();
@@ -221,11 +278,35 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? const Color(0xFF121B22) : const Color(0xFFF5F5F3);
+    final size = MediaQuery.sizeOf(context);
+
+    // Responsive large logo width (without bounding box)
+    final logoWidth = size.width > 500
+        ? 300.0
+        : (size.width * 0.72).clamp(210.0, 290.0);
+
+    // Dark-first atmospheric palette
+    final bgGradientColors = isDark
+        ? const [
+            Color(0xFF0F1E29),
+            Color(0xFF09121A),
+            Color(0xFF050A0F),
+          ]
+        : const [
+            Color(0xFFFFFFFF),
+            Color(0xFFF6F8FB),
+            Color(0xFFECEFF4),
+          ];
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Center(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: bgGradientColors,
+          ),
+        ),
         child: AnimatedBuilder(
           animation: Listenable.merge([
             _entranceController,
@@ -233,56 +314,132 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             _exitController,
           ]),
           builder: (context, child) {
-            // Combine entrance scale, pulse breathing, and exit scale smoothly
             final entranceScale = _logoScale.value;
-            final pulseScale = _entranceController.isCompleted ? _logoPulse.value : 1.0;
+            final pulseScale = _entranceController.isCompleted ? _breathingScale.value : 1.0;
             final exitScale = _exitScale.value;
-            final finalScale = entranceScale * pulseScale * exitScale;
+            final combinedScale = entranceScale * pulseScale * exitScale;
 
-            // Combine entrance opacity and exit opacity
-            final finalOpacity = (_logoOpacity.value * _exitOpacity.value).clamp(0.0, 1.0);
+            final totalOpacity = (_logoOpacity.value * _exitOpacity.value).clamp(0.0, 1.0);
 
-            return Opacity(
-              opacity: finalOpacity,
-              child: Transform.scale(
-                scale: finalScale,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Existing Logo Asset (Clean, Unaltered)
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(26),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
-                            blurRadius: 28,
-                            spreadRadius: 0,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(26),
-                        child: Image.asset(
-                          'assets/logo.png',
-                          width: 116,
-                          height: 116,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
+            return Stack(
+              children: [
+                // 1. Ambient Glow & Radial Wave Aura centered in background
+                Center(
+                  child: Opacity(
+                    opacity: totalOpacity,
+                    child: _AuraWaves(
+                      wave1: _waveProgress1.value,
+                      wave2: _waveProgress2.value,
+                      glowPulse: _ambientGlowPulse.value,
+                      isDark: isDark,
                     ),
-
-                    const SizedBox(height: 52),
-
-                    // Minimal, Lightweight Loading Indicator
-                    Opacity(
-                      opacity: _indicatorOpacity.value * _exitOpacity.value,
-                      child: _MinimalLoadingIndicator(isDark: isDark),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+
+                // 2. Primary Foreground Content
+                Center(
+                  child: Opacity(
+                    opacity: totalOpacity,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Spacer(flex: 3),
+
+                        // Prominent Big Logo without Background Box (Spring scale + Shimmer + Subtle Glow)
+                        Transform.scale(
+                          scale: combinedScale,
+                          child: _CleanAnimatedLogo(
+                            logoWidth: logoWidth,
+                            shimmerProgress: _shimmerSweep.value,
+                            isDark: isDark,
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // Quote & Tagline: "Connecting Your Dreams"
+                        SlideTransition(
+                          position: _quoteSlide,
+                          child: Opacity(
+                            opacity: (_quoteOpacity.value * _exitOpacity.value).clamp(0.0, 1.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 1.5,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        const Color(0xFF0F766E).withValues(alpha: 0.7),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  child: Text(
+                                    '“ Connecting Your Dreams ”',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.4,
+                                      fontStyle: FontStyle.italic,
+                                      color: isDark
+                                          ? const Color(0xFFE2E8F0)
+                                          : const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 24,
+                                  height: 1.5,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        const Color(0xFF0F766E).withValues(alpha: 0.7),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(flex: 2),
+
+                        // Modern Gradient Loading Indicator
+                        Opacity(
+                          opacity: (_indicatorOpacity.value * _exitOpacity.value).clamp(0.0, 1.0),
+                          child: _GradientLoadingBar(isDark: isDark),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Bottom Branding / Version Info
+                        Opacity(
+                          opacity: (_indicatorOpacity.value * _exitOpacity.value * 0.75).clamp(0.0, 1.0),
+                          child: Text(
+                            'v1.0.0 · Verified Infrastructure Hub',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.6,
+                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -291,34 +448,179 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
-/// A sleek, minimal, and lightweight indeterminate loading indicator bar.
-///
-/// Designed to be clean, distraction-free, and respectful of the brand palette.
-class _MinimalLoadingIndicator extends StatefulWidget {
+/// Dynamic Concentric Aura Wave Rings and Ambient Radial Glow
+class _AuraWaves extends StatelessWidget {
+  final double wave1;
+  final double wave2;
+  final double glowPulse;
   final bool isDark;
 
-  const _MinimalLoadingIndicator({required this.isDark});
+  const _AuraWaves({
+    required this.wave1,
+    required this.wave2,
+    required this.glowPulse,
+    required this.isDark,
+  });
 
   @override
-  State<_MinimalLoadingIndicator> createState() => _MinimalLoadingIndicatorState();
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 440,
+      height: 440,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Soft ambient radial glow
+          Container(
+            width: 280 * glowPulse,
+            height: 280 * glowPulse,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: isDark
+                    ? [
+                        const Color(0xFF0F766E).withValues(alpha: 0.38 * glowPulse),
+                        const Color(0xFF0F766E).withValues(alpha: 0.09 * glowPulse),
+                        Colors.transparent,
+                      ]
+                    : [
+                        const Color(0xFF0F766E).withValues(alpha: 0.18 * glowPulse),
+                        const Color(0xFF0F766E).withValues(alpha: 0.04 * glowPulse),
+                        Colors.transparent,
+                      ],
+                stops: const [0.0, 0.55, 1.0],
+              ),
+            ),
+          ),
+
+          // Expanding wave ring 1
+          if (wave1 > 0.0 && wave1 < 1.0)
+            Container(
+              width: 140 + (wave1 * 220),
+              height: 140 + (wave1 * 220),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF0F766E).withValues(
+                    alpha: (1.0 - wave1) * (isDark ? 0.42 : 0.28),
+                  ),
+                  width: 1.5 * (1.0 - wave1 * 0.4),
+                ),
+              ),
+            ),
+
+          // Expanding wave ring 2
+          if (wave2 > 0.0 && wave2 < 1.0)
+            Container(
+              width: 160 + (wave2 * 250),
+              height: 160 + (wave2 * 250),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF38BDF8).withValues(
+                    alpha: (1.0 - wave2) * (isDark ? 0.32 : 0.20),
+                  ),
+                  width: 1.5 * (1.0 - wave2 * 0.4),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
-class _MinimalLoadingIndicatorState extends State<_MinimalLoadingIndicator>
+/// Clean Big Logo without Background Box + Shimmer Light Sweep
+class _CleanAnimatedLogo extends StatelessWidget {
+  final double logoWidth;
+  final double shimmerProgress;
+  final bool isDark;
+
+  const _CleanAnimatedLogo({
+    required this.logoWidth,
+    required this.shimmerProgress,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Soft atmospheric halo directly behind the logo silhouette
+        Container(
+          width: logoWidth * 0.75,
+          height: logoWidth * 0.35,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(logoWidth * 0.2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F766E).withValues(alpha: isDark ? 0.35 : 0.16),
+                blurRadius: 45,
+                spreadRadius: 8,
+              ),
+              BoxShadow(
+                color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.18 : 0.10),
+                blurRadius: 35,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+        ),
+
+        // Pure Logo Image with Diagonal Shimmer Sweep
+        ShaderMask(
+          blendMode: BlendMode.srcATop,
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              begin: Alignment(shimmerProgress - 1.2, -0.6),
+              end: Alignment(shimmerProgress, 0.6),
+              colors: [
+                Colors.white.withValues(alpha: 0.0),
+                Colors.white.withValues(alpha: isDark ? 0.55 : 0.70),
+                Colors.white.withValues(alpha: 0.0),
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ).createShader(bounds);
+          },
+          child: Image.asset(
+            'assets/logo.png',
+            width: logoWidth,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Sleek Multi-Color Gradient Loading Runner
+class _GradientLoadingBar extends StatefulWidget {
+  final bool isDark;
+
+  const _GradientLoadingBar({required this.isDark});
+
+  @override
+  State<_GradientLoadingBar> createState() => _GradientLoadingBarState();
+}
+
+class _GradientLoadingBarState extends State<_GradientLoadingBar>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late AnimationController _runnerController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _runnerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1400),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _runnerController.dispose();
     super.dispose();
   }
 
@@ -328,15 +630,11 @@ class _MinimalLoadingIndicatorState extends State<_MinimalLoadingIndicator>
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.06);
 
-    final runnerColor = widget.isDark
-        ? Colors.white.withValues(alpha: 0.65)
-        : const Color(0xFF1F2937);
-
     return SizedBox(
-      width: 110,
-      height: 2.5,
+      width: 140,
+      height: 3.5,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(3),
         child: Stack(
           children: [
             // Background track
@@ -344,14 +642,13 @@ class _MinimalLoadingIndicatorState extends State<_MinimalLoadingIndicator>
               child: Container(color: trackColor),
             ),
 
-            // Smooth sliding runner
+            // Smooth sliding multi-gradient runner
             AnimatedBuilder(
-              animation: _controller,
+              animation: _runnerController,
               builder: (context, child) {
-                final value = _controller.value;
-                // Move from left to right with a smooth sweep
-                final leftFraction = (value * 1.6) - 0.6;
-                final widthFraction = 0.4;
+                final value = _runnerController.value;
+                final leftFraction = (value * 1.7) - 0.7;
+                const widthFraction = 0.42;
 
                 return Align(
                   alignment: Alignment(leftFraction * 2 - 1, 0),
@@ -359,8 +656,21 @@ class _MinimalLoadingIndicatorState extends State<_MinimalLoadingIndicator>
                     widthFactor: widthFraction,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: runnerColor,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(3),
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF0F766E),
+                            Color(0xFF06B6D4),
+                            Color(0xFFF59E0B),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF06B6D4).withValues(alpha: 0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
                     ),
                   ),
