@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
 import 'widgets/custom_image.dart';
+import '../../../core/widgets/shimmer_loading.dart';
 
 class ProductItem {
   final String id;
@@ -194,7 +195,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const SingleChildScrollView(
+                    child: ShimmerProductGrid(itemCount: 6),
+                  )
                 : _products.isEmpty
                     ? const Center(child: Text('No approved B2B products found.'))
                     : ListView.builder(

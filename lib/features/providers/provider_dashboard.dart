@@ -15,6 +15,7 @@ import 'provider_layout.dart';
 import '../home/profile_screen.dart';
 import '../subscription/widgets/provider_membership_banner.dart';
 import '../../core/services/subscription_service.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class ProviderDashboard extends ConsumerStatefulWidget {
   const ProviderDashboard({super.key});
@@ -276,7 +277,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: ShimmerStatsGrid(),
+            )
           : RefreshIndicator(
               onRefresh: _fetchStats,
               child: SingleChildScrollView(

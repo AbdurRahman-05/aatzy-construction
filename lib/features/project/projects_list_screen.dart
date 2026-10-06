@@ -5,6 +5,7 @@ import '../../core/wallpaper_background.dart';
 import '../../core/providers/projects_provider.dart';
 import '../../core/utils/project_progress_helper.dart';
 import '../auth/auth_provider.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class ProjectsListScreen extends ConsumerStatefulWidget {
   const ProjectsListScreen({super.key});
@@ -569,7 +570,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
         backgroundColor: const Color(0xFFF9FAFB),
         body: SafeArea(
           child: isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: ShimmerProjectList(itemCount: 4),
+                )
               : Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1200),

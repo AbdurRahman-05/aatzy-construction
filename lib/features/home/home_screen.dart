@@ -13,6 +13,7 @@ import 'main_layout.dart';
 import 'widgets/user_tutorial_dialog.dart';
 import '../../core/utils/project_progress_helper.dart';
 import '../../core/constants.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -1624,12 +1625,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (activeProjectsList.isEmpty && !_isLoading) {
         return _buildActivityEmptyState('No active projects yet', 'Start a new project to track your\nconstruction progress here.', Icons.foundation, 'assets/images/construction_paused.png', 'Start New Project', () => context.push('/create-project'), isSmallScreen);
       }
-      return _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: activeProjectsList.take(3).map((p) => _buildProjectListItem(p, isSmallScreen)).toList());
+      return _isLoading
+          ? const ShimmerProjectList(itemCount: 2)
+          : Column(children: activeProjectsList.take(3).map((p) => _buildProjectListItem(p, isSmallScreen)).toList());
     } else if (_activeTabIndex == 2) {
       if (_materialOrders.isEmpty && !_isLoading) {
         return _buildActivityEmptyState('No active orders', 'Purchase materials at wholesale prices.', Icons.inventory_2, 'assets/images/no_materials_orders.png', 'Shop Materials', () => context.push('/b2b-products'), isSmallScreen);
       }
-      return _isLoading ? const Center(child: CircularProgressIndicator()) : Column(children: _materialOrders.take(3).map((o) => _buildOrderListItem(o, isSmallScreen)).toList());
+      return _isLoading
+          ? const ShimmerOrderList(itemCount: 2)
+          : Column(children: _materialOrders.take(3).map((o) => _buildOrderListItem(o, isSmallScreen)).toList());
     } else {
       return _buildActivityEmptyState('Nothing to show yet', 'No records found for this category.', Icons.inbox, 'assets/images/construction_paused.png', 'Explore', () => ref.read(mainTabProvider.notifier).state = 2, isSmallScreen);
     }
@@ -1916,7 +1921,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         const SizedBox(height: 14),
         if (_isLoadingSocial)
-          const Center(child: CircularProgressIndicator())
+          const ShimmerSocialFeed(itemCount: 3)
         else if (_socialPosts.isEmpty)
           Center(child: Text('No showcases found.', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)))
         else

@@ -8,6 +8,7 @@ import '../../auth/auth_provider.dart';
 import 'my_inquiries_screen.dart';
 import 'lead_management_screen.dart';
 import 'widgets/custom_image.dart';
+import '../../../core/widgets/shimmer_loading.dart';
 
 class MaterialsScreen extends ConsumerStatefulWidget {
   const MaterialsScreen({super.key});
@@ -483,7 +484,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: ShimmerOrderList(itemCount: 4),
+            )
           : Column(
               children: [
                 if (_errorMessage != null)

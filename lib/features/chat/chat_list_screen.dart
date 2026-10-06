@@ -11,6 +11,7 @@ import '../home/main_layout.dart';
 import '../providers/provider_layout.dart';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -283,7 +284,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                     ],
                   ),
                   child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
+                      ? const ShimmerChatList(itemCount: 6)
                       : RefreshIndicator(
                           onRefresh: _fetchConversations,
                           child: displayedConversations.isEmpty

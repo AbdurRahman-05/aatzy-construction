@@ -7,6 +7,7 @@ import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
 import '../../core/services/subscription_service.dart';
 import '../subscription/widgets/provider_subscription_modal.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class ProviderLeadsScreen extends ConsumerStatefulWidget {
   const ProviderLeadsScreen({super.key});
@@ -106,7 +107,7 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
           ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const ShimmerLeadsList(itemCount: 4)
                 : RefreshIndicator(
                     onRefresh: _fetchLeads,
                     child: _filteredLeads.isEmpty

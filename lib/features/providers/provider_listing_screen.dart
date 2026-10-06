@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
+import '../../core/widgets/shimmer_loading.dart';
 
 class ProviderListingScreen extends StatefulWidget {
   final String category;
@@ -312,10 +313,9 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
 
   Widget _buildBody(ThemeData theme) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
-        ),
+      return const SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        child: ShimmerProviderList(itemCount: 5),
       );
     }
 
