@@ -42,7 +42,7 @@ const List<Map<String, dynamic>> defaultPromoAds = [
   },
   {
     'title': 'Premium Construction Ads',
-    'desc': 'Looking to scale? Post custom ads inside your Buildzy administrator dashboard.',
+    'desc': 'Looking to scale? Post custom ads inside your Connectzy administrator dashboard.',
     'icon': Icons.campaign_rounded,
     'gradient': [Color(0xFF064354), Color(0xFF0B7C8E)],
     'badge': 'SPONSORED',

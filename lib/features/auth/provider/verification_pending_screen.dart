@@ -76,7 +76,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
   }
 
   Future<void> _sendText() async {
-    final String textMsg = 'Hi BuildConnect Support, I registered as a provider and am waiting for profile approval.';
+    final String textMsg = 'Hi Connectzy Support, I registered as a provider and am waiting for profile approval.';
     final Uri whatsappUri = Uri.parse('https://wa.me/919986232326?text=${Uri.encodeComponent(textMsg)}');
     try {
       final canLaunchWhatsapp = await canLaunchUrl(whatsappUri);

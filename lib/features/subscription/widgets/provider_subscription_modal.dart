@@ -116,7 +116,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
         context: context,
         providerId: auth.id!,
         businessName: auth.businessName ?? auth.name ?? 'Provider',
-        email: auth.email ?? 'provider@buildconnect.com',
+        email: auth.email ?? 'provider@connectzy.com',
         phone: '',
         onComplete: (success, message) {
           if (!mounted) return;

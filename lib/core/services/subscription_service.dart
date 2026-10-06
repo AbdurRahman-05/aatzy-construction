@@ -215,12 +215,12 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
         final options = {
           'key': keyId,
           'amount': amount,
-          'name': 'BuildConnect',
+          'name': 'Connectzy',
           'description': 'Annual Provider Membership (365 Days)',
           'order_id': orderId,
           'prefill': {
             'contact': phone.isNotEmpty ? phone : '9988776655',
-            'email': email.isNotEmpty ? email : 'provider@buildconnect.com',
+            'email': email.isNotEmpty ? email : 'provider@connectzy.com',
           },
           'theme': {
             'color': '#0F766E',

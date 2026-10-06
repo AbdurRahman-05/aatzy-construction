@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.constructionapp" "\0"
-            VALUE "FileDescription", "construction_app" "\0"
+            VALUE "FileDescription", "Connectzy" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "construction_app" "\0"
+            VALUE "InternalName", "Connectzy" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.constructionapp. All rights reserved." "\0"
-            VALUE "OriginalFilename", "construction_app.exe" "\0"
-            VALUE "ProductName", "construction_app" "\0"
+            VALUE "OriginalFilename", "Connectzy.exe" "\0"
+            VALUE "ProductName", "Connectzy" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

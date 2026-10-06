@@ -1,11 +1,11 @@
 {
-    "name": "Buildzy",
-    "short_name": "Buildzy",
+    "name": "Connectzy",
+    "short_name": "Connectzy",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0f172a",
     "theme_color": "#0f172a",
-    "description": "Buildzy - Modern Construction & Architecture Platform.",
+    "description": "Connectzy - Modern Construction & Architecture Platform.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

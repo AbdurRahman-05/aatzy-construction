@@ -200,7 +200,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           const SizedBox(width: 10),
                           const Text(
-                            'Buildzy',
+                            'Connectzy',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w900,

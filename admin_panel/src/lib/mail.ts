@@ -120,13 +120,13 @@ const getBaseTemplate = (title: string, bodyContent: string) => `
   <body>
     <div class="container">
       <div class="header">
-        <h1>BuildConnect</h1>
+        <h1>Connectzy</h1>
       </div>
       <div class="content">
         ${bodyContent}
       </div>
       <div class="footer">
-        <p>© ${new Date().getFullYear()} BuildConnect. All rights reserved.</p>
+        <p>© ${new Date().getFullYear()} Connectzy. All rights reserved.</p>
         <p style="margin-top: 4px;">Madurai,Tamilnadu,India</p>
       </div>
     </div>
@@ -138,10 +138,10 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, role: 
   const isProvider = role.toUpperCase() === 'PROVIDER' || role.toUpperCase() === 'SUPPLIER';
   const dashboardLink = isProvider ? 'http://localhost:3000/provider-home' : 'http://localhost:3000/';
 
-  const subject = `Welcome to BuildConnect, ${userName}!`;
+  const subject = `Welcome to Connectzy, ${userName}!`;
   const bodyContent = `
     <p>Hi ${userName},</p>
-    <p>Thank you for joining BuildConnect! Your account has been registered successfully as a <strong>${role}</strong>.</p>
+    <p>Thank you for joining Connectzy! Your account has been registered successfully as a <strong>${role}</strong>.</p>
     
     <div class="highlight-box">
       <p>
@@ -159,12 +159,12 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, role: 
 
     <p>If you have any questions or require support, reply directly to this email. We're here to help you build your dream project.</p>
     
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   try {
     const info = await transporter.sendMail({
-      from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+      from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
       to: toEmail,
       subject,
       html: getBaseTemplate(subject, bodyContent),
@@ -178,10 +178,10 @@ export async function sendWelcomeEmail(toEmail: string, userName: string, role: 
 }
 
 export async function sendProviderWelcomeEmail(provider: any) {
-  const subject = `BuildConnect Registration Received: ${provider.businessName}`;
+  const subject = `Connectzy Registration Received: ${provider.businessName}`;
   const bodyContent = `
     <p>Hi ${provider.ownerName || 'Provider'},</p>
-    <p>Thank you for registering your business with BuildConnect! Below are the registration details we received:</p>
+    <p>Thank you for registering your business with Connectzy! Below are the registration details we received:</p>
     
     <table class="detail-table">
       <tr>
@@ -223,12 +223,12 @@ export async function sendProviderWelcomeEmail(provider: any) {
     </div>
 
     <p>If any of the details above are incorrect, please contact us immediately.</p>
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   try {
     await transporter.sendMail({
-      from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+      from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
       to: provider.email,
       subject,
       html: getBaseTemplate(subject, bodyContent),
@@ -243,10 +243,10 @@ export async function sendApprovalEmail(toEmail: string, name: string, role: str
   const isProvider = role.toUpperCase() === 'PROVIDER' || role.toUpperCase() === 'SUPPLIER';
   const dashboardLink = isProvider ? 'http://localhost:3000/provider-home' : 'http://localhost:3000/';
 
-  const subject = `Your BuildConnect Account Has Been Approved! 🎉`;
+  const subject = `Your Connectzy Account Has Been Approved! 🎉`;
   const bodyContent = `
     <p>Hi ${name},</p>
-    <p>Great news! Your account has been reviewed and approved by the BuildConnect administrators.</p>
+    <p>Great news! Your account has been reviewed and approved by the Connectzy administrators.</p>
     
     <div class="highlight-box">
       <p>
@@ -263,12 +263,12 @@ export async function sendApprovalEmail(toEmail: string, name: string, role: str
     </div>
 
     <p>Happy building!</p>
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   try {
     await transporter.sendMail({
-      from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+      from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
       to: toEmail,
       subject,
       html: getBaseTemplate(subject, bodyContent),
@@ -309,7 +309,7 @@ export async function sendInquiryNotification(inquiry: any, buyer: any, provider
     </table>
 
     <p>The seller will review your request and send a quote shortly. You will be notified as soon as a quote is proposed.</p>
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   // 2. Send to Seller (Provider)
@@ -345,19 +345,19 @@ export async function sendInquiryNotification(inquiry: any, buyer: any, provider
       <a href="http://localhost:3000/provider-home" class="btn">View Lead Details</a>
     </div>
 
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   try {
     await Promise.all([
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: buyer.email,
         subject: buyerSubject,
         html: getBaseTemplate(buyerSubject, buyerBody),
       }),
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: provider.email,
         subject: sellerSubject,
         html: getBaseTemplate(sellerSubject, sellerBody),
@@ -406,7 +406,7 @@ export async function sendQuoteNotification(quote: any, project: any, buyer: any
       <a href="http://localhost:3000/" class="btn">Compare & Accept Quote</a>
     </div>
 
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   // 2. Send to Seller (Provider)
@@ -431,19 +431,19 @@ export async function sendQuoteNotification(quote: any, project: any, buyer: any
     </table>
 
     <p>We will notify you immediately once the client reviews and accepts your proposal.</p>
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   try {
     await Promise.all([
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: buyer.email,
         subject: buyerSubject,
         html: getBaseTemplate(buyerSubject, buyerBody),
       }),
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: provider.email,
         subject: sellerSubject,
         html: getBaseTemplate(sellerSubject, sellerBody),
@@ -484,7 +484,7 @@ export async function sendQuoteAcceptedNotification(quote: any, project: any, bu
       <p>The builder has been notified. The project stage-wise Gantt tasks will now unlock. You can track progress and releases live from the home dashboard.</p>
     </div>
 
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   // 2. Send to Seller (Provider)
@@ -516,19 +516,19 @@ export async function sendQuoteAcceptedNotification(quote: any, project: any, bu
       <a href="http://localhost:3000/provider-home" class="btn">Go to Active Project</a>
     </div>
 
-    <p>Best regards,<br>The BuildConnect Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   try {
     await Promise.all([
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: buyer.email,
         subject: buyerSubject,
         html: getBaseTemplate(buyerSubject, buyerBody),
       }),
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: provider.email,
         subject: sellerSubject,
         html: getBaseTemplate(sellerSubject, sellerBody),
@@ -557,13 +557,13 @@ export async function notifyInquiryStatusChange(inquiryId: string) {
 
     const { buyer, provider, status, title, quantity, unit, location, quotedPrice } = inquiry;
 
-    let buyerSubject = `BuildConnect: Status Update on your Inquiry "${title}"`;
+    let buyerSubject = `Connectzy: Status Update on your Inquiry "${title}"`;
     let buyerBody = `
       <p>Hi ${buyer.name},</p>
       <p>The status of your material inquiry <strong>${title}</strong> has been updated to <strong>${status}</strong> by the seller.</p>
     `;
 
-    let sellerSubject = `BuildConnect: Inquiry Status Synced for "${title}"`;
+    let sellerSubject = `Connectzy: Inquiry Status Synced for "${title}"`;
     let sellerBody = `
       <p>Hi ${provider.ownerName || 'Provider'},</p>
       <p>Your inquiry status change to <strong>${status}</strong> for <strong>${title}</strong> has been recorded.</p>
@@ -626,13 +626,13 @@ export async function notifyInquiryStatusChange(inquiryId: string) {
     // Send both emails in parallel
     await Promise.all([
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: buyer.email,
         subject: buyerSubject,
         html: getBaseTemplate(buyerSubject, buyerBody),
       }),
       transporter.sendMail({
-        from: `"BuildConnect" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+        from: `"Connectzy" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
         to: provider.email,
         subject: sellerSubject,
         html: getBaseTemplate(sellerSubject, sellerBody),
@@ -648,7 +648,7 @@ export async function notifyInquiryStatusChange(inquiryId: string) {
 // Action Email: Password Reset Verification Code (OTP)
 // -------------------------------------------------------------
 export async function sendPasswordResetEmail(email: string, otp: string, recipientName: string = 'User') {
-  const subject = 'Your Password Reset Code - Buildzy';
+  const subject = 'Your Password Reset Code - Connectzy';
   const body = `
     <p>Hi ${recipientName},</p>
     <p>We received a request to reset your password. Use the verification code below to complete the reset process:</p>
@@ -666,12 +666,12 @@ export async function sendPasswordResetEmail(email: string, otp: string, recipie
       <p>If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
     </div>
 
-    <p>Best regards,<br>The Buildzy Team</p>
+    <p>Best regards,<br>The Connectzy Team</p>
   `;
 
   try {
     await transporter.sendMail({
-      from: `"Buildzy Security" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
+      from: `"Connectzy Security" <${process.env.SMTP_USER || 'notification.aatzytechnologies@gmail.com'}>`,
       to: email,
       subject: subject,
       html: getBaseTemplate('Password Reset Request', body),

@@ -307,7 +307,7 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
 
         list.add(NotificationModel(
           id: 'welcome_provider',
-          title: 'Welcome to Buildzy Contractor Console',
+          title: 'Welcome to Connectzy Contractor Console',
           body: 'Your business profile is active. Browse leads and submit competitive proposals to win jobs.',
           time: 'Active',
           icon: Icons.verified_user_rounded,
@@ -388,7 +388,7 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
 
         list.add(NotificationModel(
           id: 'welcome_user',
-          title: 'Welcome to Buildzy!',
+          title: 'Welcome to Connectzy!',
           body: 'Plan, estimate, and construct your dream property with verified experts.',
           time: 'Active',
           icon: Icons.waving_hand_rounded,

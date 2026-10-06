@@ -386,7 +386,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showDocumentModal(
                     'Terms of Service',
-                    'Welcome to Buildzy!\n\n1. Acceptance of Terms\nBy using our platform, you agree to comply with our general user terms and agreements.\n\n2. Service Provider Responsibility\nAll providers registered on our platform verify that their credentials, details, and works uploaded to portfolio are true and accurate.\n\n3. Consumer Guarantee\nBuildzy acts as an aggregation platform to connect building owners with contractors, engineers, and suppliers. Real-time contracts are signed directly between both parties.',
+                    'Welcome to Connectzy!\n\n1. Acceptance of Terms\nBy using our platform, you agree to comply with our general user terms and agreements.\n\n2. Service Provider Responsibility\nAll providers registered on our platform verify that their credentials, details, and works uploaded to portfolio are true and accurate.\n\n3. Consumer Guarantee\nConnectzy acts as an aggregation platform to connect building owners with contractors, engineers, and suppliers. Real-time contracts are signed directly between both parties.',
                   ),
                 ),
                 const Divider(height: 1),
@@ -396,7 +396,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showDocumentModal(
                     'Privacy Policy',
-                    'Privacy Policy for Buildzy App:\n\nWe care deeply about your privacy. We collect data regarding your coordinates (when location is enabled), profile bio, document copies for registration, and text messages sent during quote estimations to ensure safe transactions inside our application.\n\nWe never sell your identity details to third-party marketing companies.',
+                    'Privacy Policy for Connectzy App:\n\nWe care deeply about your privacy. We collect data regarding your coordinates (when location is enabled), profile bio, document copies for registration, and text messages sent during quote estimations to ensure safe transactions inside our application.\n\nWe never sell your identity details to third-party marketing companies.',
                   ),
                 ),
               ],
@@ -405,7 +405,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 20),
           Center(
             child: Text(
-              'Buildzy v1.0.0',
+              'Connectzy v1.0.0',
               style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
             ),
           ),

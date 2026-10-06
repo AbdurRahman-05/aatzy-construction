@@ -2107,7 +2107,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: const Color(0xFFE2E8F0),
           ),
           Text(
-            'buildzy',
+            'connectzy',
             style: GoogleFonts.plusJakartaSans(
               fontSize: isSmallScreen ? 22 : 26,
               fontWeight: FontWeight.w900,

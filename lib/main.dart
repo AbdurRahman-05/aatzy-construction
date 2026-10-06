@@ -37,7 +37,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       return;
     }
 
-    final title = message.notification?.title ?? message.data['title'] ?? 'Buildzy Alert';
+    final title = message.notification?.title ?? message.data['title'] ?? 'Connectzy Alert';
     final body = message.notification?.body ?? message.data['body'] ?? '';
     final route = message.data['route'] ?? '/notifications';
 
@@ -178,7 +178,7 @@ class ConstructionApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'Buildzy',
+      title: 'Connectzy',
       scrollBehavior: const SmoothScrollBehavior(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

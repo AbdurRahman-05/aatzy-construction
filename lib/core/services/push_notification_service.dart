@@ -144,7 +144,7 @@ class PushNotificationService {
           final route = message.data['route'] ?? '/notifications';
           showNotification(
             id: message.hashCode,
-            title: notification.title ?? 'Buildzy Alert',
+            title: notification.title ?? 'Connectzy Alert',
             body: notification.body ?? '',
             payload: route,
             channelId: message.data['channelId'] ?? 'buildzy_leads_v2',
@@ -397,7 +397,7 @@ class PushNotificationService {
       styleInformation: BigTextStyleInformation(
         body,
         contentTitle: title,
-        summaryText: 'Buildzy',
+        summaryText: 'Connectzy',
       ),
       icon: '@mipmap/launcher_icon',
       enableVibration: true,
@@ -430,7 +430,7 @@ class PushNotificationService {
   Future<void> showTestNotification() async {
     await showNotification(
       id: 999,
-      title: '🏗️ Buildzy Push Notification Working!',
+      title: '🏗️ Connectzy Push Notification Working!',
       body: 'You are now set up to receive instant alerts for quotes, client leads, and material orders.',
       payload: '/notifications',
       channelId: 'buildzy_leads_v2',
