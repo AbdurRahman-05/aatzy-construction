@@ -145,17 +145,13 @@ export function Footer({ onNavigate }: FooterProps) {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.8fr_1fr_1fr_1fr_1.3fr]">
           {/* Brand column */}
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/logo.png"
                 alt="Connectzy Construction"
-                className="h-9 w-auto object-contain brightness-150 contrast-125"
+                className="h-12 sm:h-14 w-auto object-contain brightness-150 contrast-125 drop-shadow-sm transition-transform hover:scale-105"
               />
-              <div>
-                <p className="font-display text-base font-extrabold tracking-tight">CONNECTZY</p>
-                <p className="text-[10px] uppercase tracking-wider text-primary-300">Construction Platform</p>
-              </div>
             </div>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-primary-300">
               Smart cost &amp; raw material estimation, 45+ verified trade specialties, milestone photo verification, live commodity prices, and direct wholesale sourcing.
