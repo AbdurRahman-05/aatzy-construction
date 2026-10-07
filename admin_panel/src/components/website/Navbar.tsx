@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Menu, X, Download } from 'lucide-react';
 import { RippleButton } from './RippleButton';
 
@@ -121,6 +122,14 @@ export function Navbar({ onNavigate }: NavbarProps) {
               <Download className="h-4 w-4 mr-1.5" />
               Download Android App
             </RippleButton>
+
+            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-slate-500 font-medium">
+              <Link href="/privacy-policy" target="_blank" className="hover:text-blue-600 transition-colors">Privacy</Link>
+              <span>•</span>
+              <Link href="/terms-and-conditions" target="_blank" className="hover:text-blue-600 transition-colors">Terms &amp; Conditions</Link>
+              <span>•</span>
+              <Link href="/refund-policy" target="_blank" className="hover:text-blue-600 transition-colors">Refund Policy</Link>
+            </div>
           </div>
         </div>
       </div>

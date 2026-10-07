@@ -15,7 +15,10 @@ interface FooterProps {
   onNavigate: (target: string) => void;
 }
 
-const linkSections = [
+const linkSections: Array<{
+  title: string;
+  links: Array<{ label: string; target?: string; href?: string }>;
+}> = [
   {
     title: 'Platform Features',
     links: [
@@ -32,6 +35,14 @@ const linkSections = [
       { label: 'Homeowner Experience', target: 'homeowners' },
       { label: 'Contractors & Suppliers', target: 'contractors' },
       { label: 'Mobile App Showcase', target: 'features' },
+    ],
+  },
+  {
+    title: 'Legal & Policies',
+    links: [
+      { label: 'Privacy Policy', href: '/privacy-policy' },
+      { label: 'Terms & Conditions', href: '/terms-and-conditions' },
+      { label: 'Refund & Cancellation Policy', href: '/refund-policy' },
     ],
   },
 ];
@@ -131,7 +142,7 @@ export function Footer({ onNavigate }: FooterProps) {
         </div>
 
         {/* Main footer grid */}
-        <div className="grid gap-10 lg:grid-cols-[2fr_1fr_1fr_1.5fr]">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.8fr_1fr_1fr_1fr_1.3fr]">
           {/* Brand column */}
           <div>
             <div className="flex items-center gap-3">
@@ -160,13 +171,25 @@ export function Footer({ onNavigate }: FooterProps) {
               <ul className="mt-4 space-y-2.5">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <button
-                      onClick={() => onNavigate(link.target)}
-                      className="group relative text-sm text-primary-300 transition-colors hover:text-white"
-                    >
-                      {link.label}
-                      <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-accent-2 transition-all duration-300 group-hover:w-full" />
-                    </button>
+                    {link.href ? (
+                      <Link
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative inline-flex items-center text-sm text-primary-300 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                        <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-accent-2 transition-all duration-300 group-hover:w-full" />
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => link.target && onNavigate(link.target)}
+                        className="group relative text-sm text-primary-300 transition-colors hover:text-white cursor-pointer"
+                      >
+                        {link.label}
+                        <span className="absolute -bottom-0.5 left-0 h-px w-0 bg-accent-2 transition-all duration-300 group-hover:w-full" />
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -222,16 +245,18 @@ export function Footer({ onNavigate }: FooterProps) {
           <p className="text-xs text-primary-400">
             © 2026 Connectzy Construction Technologies. All Rights Reserved.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
             {[
               { name: 'Privacy Policy', href: '/privacy-policy' },
-              { name: 'Terms of Service', href: '/terms' },
+              { name: 'Terms & Conditions', href: '/terms-and-conditions' },
               { name: 'Refund & Cancellation Policy', href: '/refund-policy' }
             ].map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-primary-400 transition-colors hover:text-white"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-300 transition-colors hover:text-white hover:underline underline-offset-4"
               >
                 {item.name}
               </Link>

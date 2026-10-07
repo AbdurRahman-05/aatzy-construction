@@ -48,11 +48,11 @@ export default function RefundPolicyPage() {
             Privacy Policy
           </Link>
           <Link
-            href="/terms"
+            href="/terms-and-conditions"
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition-colors"
           >
             <FileText className="w-4 h-4" />
-            Terms of Service
+            Terms & Conditions
           </Link>
           <Link
             href="/refund-policy"
@@ -171,7 +171,7 @@ export default function RefundPolicyPage() {
           <p>© 2026 Connectzy Construction Technologies. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/privacy-policy" className="text-slate-300 hover:text-white">Privacy Policy</Link>
-            <Link href="/terms" className="text-slate-300 hover:text-white">Terms of Service</Link>
+            <Link href="/terms-and-conditions" className="text-slate-300 hover:text-white">Terms & Conditions</Link>
             <Link href="/refund-policy" className="text-slate-300 hover:text-white">Refund Policy</Link>
           </div>
         </div>

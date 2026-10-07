@@ -66,17 +66,17 @@ function WebsiteContent() {
 
   const handleNavigate = useCallback(
     (target: string) => {
-      // Handle policy pages with dedicated URL paths
-      if (target === 'privacy-policy') {
-        window.location.href = '/privacy-policy';
+      // Handle policy pages with dedicated URL paths (opens separately in a new tab)
+      if (target === 'privacy-policy' || target === 'privacy') {
+        window.open('/privacy-policy', '_blank');
         return;
       }
-      if (target === 'terms') {
-        window.location.href = '/terms';
+      if (target === 'terms' || target === 'terms-and-conditions' || target === 'terms-conditions') {
+        window.open('/terms-and-conditions', '_blank');
         return;
       }
-      if (target === 'refund-policy') {
-        window.location.href = '/refund-policy';
+      if (target === 'refund-policy' || target === 'refund') {
+        window.open('/refund-policy', '_blank');
         return;
       }
 

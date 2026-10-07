@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { ArrowLeft, FileText, ShieldCheck, RefreshCw } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | Connectzy Construction Platform',
-  description: 'Official Terms of Service and user agreement for Connectzy Construction & Project Management Platform.',
+  title: 'Terms & Conditions | Connectzy Construction Platform',
+  description: 'Official Terms & Conditions and user agreement for Connectzy Construction & Project Management Platform.',
 };
 
 export default function TermsPage() {
@@ -48,11 +48,11 @@ export default function TermsPage() {
             Privacy Policy
           </Link>
           <Link
-            href="/terms"
+            href="/terms-and-conditions"
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-blue-600 shadow-sm"
           >
             <FileText className="w-4 h-4" />
-            Terms of Service
+            Terms & Conditions
           </Link>
           <Link
             href="/refund-policy"
@@ -67,12 +67,15 @@ export default function TermsPage() {
         <article className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-10">
           <div className="border-b border-slate-100 pb-6 mb-8">
             <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full mb-3">
-              User Agreement
+              User Agreement & Terms
             </span>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Terms of Service
+              Terms & Conditions
             </h1>
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-sm font-medium text-slate-600 mt-1">
+              Terms of Service &amp; Platform Operating Agreement
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
               Last Updated: {lastUpdated} • Effective Date: {lastUpdated}
             </p>
           </div>
@@ -183,7 +186,7 @@ export default function TermsPage() {
           <p>© 2026 Connectzy Construction Technologies. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/privacy-policy" className="text-slate-300 hover:text-white">Privacy Policy</Link>
-            <Link href="/terms" className="text-slate-300 hover:text-white">Terms of Service</Link>
+            <Link href="/terms-and-conditions" className="text-slate-300 hover:text-white">Terms & Conditions</Link>
             <Link href="/refund-policy" className="text-slate-300 hover:text-white">Refund Policy</Link>
           </div>
         </div>
