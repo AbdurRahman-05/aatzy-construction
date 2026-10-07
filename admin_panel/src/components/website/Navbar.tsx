@@ -54,7 +54,7 @@ export function Navbar({ onNavigate }: NavbarProps) {
           <img
             src="/assets/logo.png"
             alt="Connectzy Logo"
-            className="h-11 sm:h-12 w-auto object-contain drop-shadow-sm"
+            className="h-12 sm:h-14 md:h-16 max-h-16 w-auto object-contain drop-shadow-sm transition-all duration-300"
           />
         </button>
 
