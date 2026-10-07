@@ -1,0 +1,12 @@
+# Android Release Keystore Configuration
+# Copy this file to 'android/key.properties' and fill in your actual keystore credentials.
+# Note: 'key.properties' and '*.keystore' are excluded from version control (.gitignore).
+#
+# To generate a keystore, run:
+# keytool -genkey -v -keystore app-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias connectzy
+#
+# Put the generated 'app-release-key.jks' inside 'android/app/' or specify full path below:
+keyAlias=connectzy
+keyPassword=your_key_password_here
+storeFile=app-release-key.jks
+storePassword=your_store_password_here

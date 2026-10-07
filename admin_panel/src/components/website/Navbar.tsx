@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Menu, X, Download, Shield, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { Menu, X, Download } from 'lucide-react';
 import { RippleButton } from './RippleButton';
 
 const navLinks = [
@@ -40,40 +39,31 @@ export function Navbar({ onNavigate }: NavbarProps) {
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
           ? 'glass shadow-[0_4px_30px_rgba(15,23,42,0.08)] py-2.5 bg-white/85 backdrop-blur-md border-b border-slate-200/60'
-          : 'bg-transparent py-4'
+          : 'bg-transparent py-3.5 sm:py-4'
       }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand */}
+        {/* Brand - Logo Only (Enlarged, crisp & prominent) */}
         <button
           onClick={() => handleLinkClick('hero')}
-          className="group flex items-center gap-3 text-left cursor-pointer"
+          className="group flex items-center cursor-pointer focus:outline-none transition-transform duration-300 hover:scale-105"
           aria-label="Connectzy Construction Platform"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/logo.png"
             alt="Connectzy Logo"
-            className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            className="h-11 sm:h-12 w-auto object-contain drop-shadow-sm"
           />
-          <div className="flex flex-col leading-none">
-            <span className="font-display text-lg font-black tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
-              CONNECTZY
-            </span>
-            <span className="text-[10px] font-bold text-blue-600 tracking-widest uppercase mt-0.5 flex items-center gap-1">
-              <span>CONSTRUCTION APP</span>
-              <Sparkles className="w-2.5 h-2.5 text-amber-500" />
-            </span>
-          </div>
         </button>
 
-        {/* Desktop nav */}
-        <div className="hidden items-center gap-1 xl:gap-1.5 lg:flex">
+        {/* Desktop nav - Neatly aligned */}
+        <div className="hidden items-center gap-1 xl:gap-2.5 lg:flex">
           {navLinks.map((link) => (
             <button
               key={link.label}
               onClick={() => handleLinkClick(link.target)}
-              className="group relative px-3 py-2 text-xs xl:text-sm font-semibold text-slate-700 transition-colors hover:text-blue-600 cursor-pointer"
+              className="group relative px-3 py-2 text-xs xl:text-sm font-semibold text-slate-700 transition-colors hover:text-blue-600 cursor-pointer whitespace-nowrap"
             >
               {link.label}
               <span className="absolute bottom-0 left-1/2 h-0.5 w-0 -translate-x-1/2 rounded-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-300 group-hover:w-full" />
@@ -81,22 +71,14 @@ export function Navbar({ onNavigate }: NavbarProps) {
           ))}
         </div>
 
-        {/* Desktop CTAs */}
-        <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            href="/admin"
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-full transition-all border border-slate-200 shadow-sm"
-          >
-            <Shield className="h-3.5 w-3.5 text-blue-600" />
-            Admin Hub
-          </Link>
-
+        {/* Desktop CTA - Download Android App only (Admin accessible via URL path directly) */}
+        <div className="hidden items-center lg:flex">
           <RippleButton
             variant="primary"
-            className="text-xs xl:text-sm shadow-md font-bold"
+            className="text-xs xl:text-sm shadow-md font-bold px-4 py-2.5"
             onClick={() => handleLinkClick('download')}
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 mr-1.5" />
             Get Android App
           </RippleButton>
         </div>
@@ -130,21 +112,13 @@ export function Navbar({ onNavigate }: NavbarProps) {
               </button>
             ))}
 
-            <Link
-              href="/admin"
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-bold text-blue-600 hover:bg-blue-50"
-            >
-              <Shield className="h-4 w-4" />
-              Admin Hub
-            </Link>
-
             <div className="my-2 h-px bg-slate-100" />
             <RippleButton
               variant="primary"
               className="mt-2 w-full justify-center text-sm font-bold"
               onClick={() => handleLinkClick('download')}
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4 mr-1.5" />
               Download Android App
             </RippleButton>
           </div>

@@ -44,5 +44,23 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Firebase secrets
+# Firebase secrets and credentials
 firebase-service-account*.json
+client_secret*.json
+
+# Android release signing keys (DO NOT COMMIT)
+key.properties
+**/key.properties
+*.keystore
+*.jks
+
+# Environment variables
+.env
+.env.*
+
+# Android bundles and binaries
+*.aab
+*.apk
+
+# Quotation / proposal documents
+Aatzy_*.md

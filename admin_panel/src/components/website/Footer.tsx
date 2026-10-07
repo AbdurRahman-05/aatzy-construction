@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import {
   Mail,
   Phone,
@@ -9,7 +8,6 @@ import {
   ArrowUp,
   Send,
   CheckCircle2,
-  Lock,
 } from 'lucide-react';
 
 interface FooterProps {
@@ -150,16 +148,6 @@ export function Footer({ onNavigate }: FooterProps) {
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-primary-300">
               Smart cost &amp; raw material estimation, 45+ verified trade specialties, milestone photo verification, live commodity prices, and direct wholesale sourcing.
             </p>
-
-            <div className="mt-6">
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-accent-2 backdrop-blur-sm transition-all hover:bg-white/15 hover:text-white"
-              >
-                <Lock className="h-3.5 w-3.5" />
-                Staff Admin Portal
-              </Link>
-            </div>
           </div>
 
           {/* Link columns */}
