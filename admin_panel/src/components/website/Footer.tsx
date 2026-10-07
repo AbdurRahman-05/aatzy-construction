@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Mail,
   Phone,
@@ -223,17 +224,17 @@ export function Footer({ onNavigate }: FooterProps) {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
             {[
-              { name: 'Privacy Policy', path: 'privacy-policy' },
-              { name: 'Terms of Service', path: 'terms' },
-              { name: 'Refund & Cancellation Policy', path: 'refund-policy' }
+              { name: 'Privacy Policy', href: '/privacy-policy' },
+              { name: 'Terms of Service', href: '/terms' },
+              { name: 'Refund & Cancellation Policy', href: '/refund-policy' }
             ].map((item) => (
-              <button
+              <Link
                 key={item.name}
-                onClick={() => onNavigate(item.path)}
+                href={item.href}
                 className="text-primary-400 transition-colors hover:text-white"
               >
                 {item.name}
-              </button>
+              </Link>
             ))}
           </div>
         </div>

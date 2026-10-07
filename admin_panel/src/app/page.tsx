@@ -66,10 +66,17 @@ function WebsiteContent() {
 
   const handleNavigate = useCallback(
     (target: string) => {
-      // Handle policy pages
-      if (['privacy-policy', 'terms', 'refund-policy'].includes(target)) {
-        setCurrentPage(target);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Handle policy pages with dedicated URL paths
+      if (target === 'privacy-policy') {
+        window.location.href = '/privacy-policy';
+        return;
+      }
+      if (target === 'terms') {
+        window.location.href = '/terms';
+        return;
+      }
+      if (target === 'refund-policy') {
+        window.location.href = '/refund-policy';
         return;
       }
 
