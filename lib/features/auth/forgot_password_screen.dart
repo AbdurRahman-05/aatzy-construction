@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants.dart';
 import '../../core/theme.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import '../../core/api_settings_dialog.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -242,11 +243,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           },
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.wifi_tethering, color: AppTheme.primaryOrange),
-            tooltip: 'Network Settings',
-            onPressed: () => showApiSettingsDialog(context),
-          ),
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.wifi_tethering, color: AppTheme.primaryOrange),
+              tooltip: 'Network Settings',
+              onPressed: () => showApiSettingsDialog(context),
+            ),
         ],
       ),
       body: Center(

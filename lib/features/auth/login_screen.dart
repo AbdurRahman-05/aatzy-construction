@@ -10,7 +10,7 @@ import '../../core/api_settings_dialog.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import '../../core/google_sign_in_helper.dart';
 import '../../core/services/location_service.dart';
 
@@ -438,11 +438,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.wifi_tethering, color: AppTheme.primaryOrange),
-            tooltip: 'Network Settings',
-            onPressed: () => showApiSettingsDialog(context),
-          ),
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.wifi_tethering, color: AppTheme.primaryOrange),
+              tooltip: 'Network Settings',
+              onPressed: () => showApiSettingsDialog(context),
+            ),
         ],
       ),
       body: Center(

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 import '../auth_provider.dart';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import '../../../core/api_settings_dialog.dart';
 
 class ProviderLoginScreen extends ConsumerStatefulWidget {
@@ -74,11 +75,12 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
       appBar: AppBar(
         title: const Text('Provider Login'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.wifi_tethering),
-            tooltip: 'Network Settings',
-            onPressed: () => showApiSettingsDialog(context),
-          ),
+          if (kDebugMode)
+            IconButton(
+              icon: const Icon(Icons.wifi_tethering),
+              tooltip: 'Network Settings',
+              onPressed: () => showApiSettingsDialog(context),
+            ),
         ],
       ),
       body: Padding(

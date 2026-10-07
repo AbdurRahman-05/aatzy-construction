@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../constants.dart';
-import '../router.dart';
 
 class SubscriptionState {
   final bool isSubscribed;
@@ -172,6 +171,8 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
         body: jsonEncode({'providerId': providerId}),
       ).timeout(const Duration(seconds: 20));
 
+      if (!context.mounted) return;
+
       if (orderRes.statusCode != 200) {
         final errData = jsonDecode(orderRes.body);
         final errMsg = errData['error'] ?? 'Failed to initiate order';
@@ -195,16 +196,13 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
       // If running on Web, Desktop, or Sandbox mode, present a verified mock/test checkout dialog
       if (kIsWeb || isDesktop || isSandbox) {
         state = state.copyWith(isLoading: false);
-        final targetContext = rootNavigatorKey.currentContext ?? (context.mounted ? context : null);
-        if (targetContext != null) {
-          _showWebOrSandboxCheckoutDialog(
-            context: targetContext,
-            providerId: providerId,
-            orderId: orderId,
-            amount: amount,
-            isSandbox: isSandbox || isDesktop || kIsWeb,
-          );
-        }
+        _showWebOrSandboxCheckoutDialog(
+          context: context,
+          providerId: providerId,
+          orderId: orderId,
+          amount: amount,
+          isSandbox: isSandbox || isDesktop || kIsWeb,
+        );
         return;
       }
 
@@ -233,16 +231,14 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
       } catch (e) {
         debugPrint('[Razorpay Mobile Launch Error]: $e, falling back to dialog');
         state = state.copyWith(isLoading: false);
-        final targetContext = rootNavigatorKey.currentContext ?? (context.mounted ? context : null);
-        if (targetContext != null) {
-          _showWebOrSandboxCheckoutDialog(
-            context: targetContext,
-            providerId: providerId,
-            orderId: orderId,
-            amount: amount,
-            isSandbox: true,
-          );
-        }
+        if (!context.mounted) return;
+        _showWebOrSandboxCheckoutDialog(
+          context: context,
+          providerId: providerId,
+          orderId: orderId,
+          amount: amount,
+          isSandbox: true,
+        );
       }
     } catch (e) {
       debugPrint('[Razorpay Checkout Error]: $e');
