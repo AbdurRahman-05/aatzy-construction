@@ -455,7 +455,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               const SizedBox(height: 16),
               _buildGlassRoleCard(
                 role: 'PROVIDER',
-                title: "I'M A SERVICE PROVIDER",
+                title: "CONNECTZY PARTNER",
                 description: 'Contractor, architect, or material supplier bidding on projects and logging work.',
                 icon: Icons.engineering_rounded,
                 activeColor: const Color(0xFF16A34A),
@@ -508,7 +508,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         child: Text(
                           _selectedRole == 'CONSUMER'
                               ? 'Login as Consumer'
-                              : 'Login as Service Provider',
+                              : 'Login as Connectzy Partner',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -544,7 +544,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             child: Text(
                               _selectedRole == 'CONSUMER'
                                   ? 'New Consumer? Register Here'
-                                  : 'New Provider? Register Here',
+                                  : 'New Partner? Register Here',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

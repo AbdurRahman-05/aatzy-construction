@@ -150,7 +150,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 24),
                   child: Image.asset(
-                    'assets/logo.png',
+                    'assets/partnerslogo.png',
                     height: 50,
                     fit: BoxFit.contain,
                   ),

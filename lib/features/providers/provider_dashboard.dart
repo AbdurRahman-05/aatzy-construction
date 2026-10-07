@@ -181,25 +181,20 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       appBar: _isLoading ? null : AppBar(
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         automaticallyImplyLeading: false,
-        titleSpacing: 16,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/logo.png',
-              height: 30,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Text(
-                'Connectzy',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 20,
-                  color: isDark ? Colors.white : const Color(0xFF0F766E),
-                  letterSpacing: -0.4,
-                ),
-              ),
+        centerTitle: true,
+        title: Image.asset(
+          'assets/partnerslogo.png',
+          height: 38,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => Text(
+            'Connectzy Partner',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
+              color: isDark ? Colors.white : const Color(0xFF0F766E),
+              letterSpacing: -0.4,
             ),
-          ],
+          ),
         ),
         actions: [
           // Notification Bell with dynamic unread counter badge

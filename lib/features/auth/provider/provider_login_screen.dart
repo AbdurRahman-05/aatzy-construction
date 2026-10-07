@@ -73,7 +73,7 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Provider Login'),
+        title: const Text('Connectzy Partner Login'),
         actions: [
           if (kDebugMode)
             IconButton(
@@ -132,13 +132,13 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
               onPressed: _isLoading ? null : _loginProvider,
               child: _isLoading 
                   ? const CircularProgressIndicator()
-                  : const Text('Login'),
+                  : const Text('Sign In as Connectzy Partner'),
             ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('New Provider?'),
+                const Text('New Partner?'),
                 TextButton(
                   onPressed: () => context.push('/provider-register'),
                   child: const Text('Register Here'),

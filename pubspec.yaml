@@ -84,6 +84,7 @@ flutter:
   assets:
     - assets/images/
     - assets/logo.png
+    - assets/partnerslogo.png
     - assets/google_logo.png
     - assets/create_project_banner.png
     - assets/tutorial_1.png

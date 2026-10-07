@@ -549,7 +549,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                   child: Text(
-                                    'Provider',
+                                    'Connectzy Partner',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
@@ -642,7 +642,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                                 )
                               : Text(
-                                  isProvider ? 'Sign In as Provider' : 'Sign In as Consumer',
+                                  isProvider ? 'Sign In as Connectzy Partner' : 'Sign In as Consumer',
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                         ),
@@ -661,7 +661,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           foregroundColor: AppTheme.primaryOrange,
                         ),
                         child: Text(
-                          isProvider ? 'New Provider? Create Account' : 'New Consumer? Create Account',
+                          isProvider ? 'New Partner? Create Account' : 'New Consumer? Create Account',
                           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                         ),
                       ),
