@@ -81,130 +81,166 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 700;
+    final horizontalPadding = isTablet ? 24.0 : 16.0;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Project Leads'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Search leads...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () => _searchController.clear(),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const ShimmerLeadsList(itemCount: 4)
-                : RefreshIndicator(
-                    onRefresh: _fetchLeads,
-                    child: _filteredLeads.isEmpty
-                        ? ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: const [
-                              Padding(
-                                padding: EdgeInsets.all(40.0),
-                                child: Center(
-                                  child: Text(
-                                    'No leads found matching your category and location.',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: Colors.grey),
-                                  ),
-                                ),
-                              ),
-                            ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16.0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Search leads...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => _searchController.clear(),
                           )
-                        : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _filteredLeads.length,
-                            itemBuilder: (context, index) {
-                              final lead = _filteredLeads[index];
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(16),
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.blue.shade50,
-                                    child: const Icon(Icons.business_center, color: Colors.blue),
-                                  ),
-                                  title: Text(
-                                    lead['title'] ?? 'N/A',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: 4),
-                                      Text('Client: ${lead['userName'] ?? 'Unknown'}'),
-                                      if (lead['type'] != null && lead['type'].toString().isNotEmpty) ...[
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'Category: ${lead['type']}',
-                                          style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 12),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.location_on, size: 14, color: Colors.red),
-                                          const SizedBox(width: 4),
-                                          Expanded(
-                                            child: Text(
-                                              lead['location'] ?? 'N/A',
-                                              style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          if (lead['budget'] != null)
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFF0FDF4),
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(color: const Color(0xFFBBF7D0)),
-                                              ),
-                                              child: Text(
-                                                '₹${(lead['budget'] as num).toInt().toString()}',
-                                                style: const TextStyle(color: Color(0xFF16A34A), fontSize: 12, fontWeight: FontWeight.bold),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: const Icon(Icons.chevron_right),
-                                  onTap: () async {
-                                    final subState = ref.read(subscriptionProvider);
-                                    if (!subState.isSubscribed) {
-                                      showProviderSubscriptionModal(context);
-                                      return;
-                                    }
-                                    await context.push('/provider-lead/${lead['id']}');
-                                    _fetchLeads(); // refresh on returning
-                                  },
-                                ),
-                              );
-                            },
-                          ),
+                        : null,
                   ),
+                ),
+              ),
+              Expanded(
+                child: _isLoading
+                    ? const ShimmerLeadsList(itemCount: 4)
+                    : RefreshIndicator(
+                        onRefresh: _fetchLeads,
+                        child: _filteredLeads.isEmpty
+                            ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: const [
+                                  Padding(
+                                    padding: EdgeInsets.all(40.0),
+                                    child: Center(
+                                      child: Text(
+                                        'No leads found matching your category and location.',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : isTablet
+                                ? GridView.builder(
+                                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 2.7,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 12,
+                                    ),
+                                    itemCount: _filteredLeads.length,
+                                    itemBuilder: (context, index) {
+                                      return _buildLeadCard(_filteredLeads[index]);
+                                    },
+                                  )
+                                : ListView.builder(
+                                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                                    itemCount: _filteredLeads.length,
+                                    itemBuilder: (context, index) {
+                                      return _buildLeadCard(_filteredLeads[index]);
+                                    },
+                                  ),
+                      ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeadCard(dynamic lead) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue.shade50,
+          child: const Icon(Icons.business_center, color: Colors.blue),
+        ),
+        title: Text(
+          lead['title'] ?? 'N/A',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text('Client: ${lead['userName'] ?? 'Unknown'}'),
+            if (lead['type'] != null && lead['type'].toString().isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Category: ${lead['type']}',
+                style: TextStyle(
+                  color: isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade700,
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.location_on, size: 14, color: Colors.red),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    lead['location'] ?? 'N/A',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (lead['budget'] != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF059669).withValues(alpha: 0.3) : const Color(0xFFBBF7D0),
+                      ),
+                    ),
+                    child: Text(
+                      '₹${(lead['budget'] as num).toInt().toString()}',
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF16A34A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () async {
+          final subState = ref.read(subscriptionProvider);
+          if (!subState.isSubscribed) {
+            showProviderSubscriptionModal(context);
+            return;
+          }
+          await context.push('/provider-lead/${lead['id']}');
+          _fetchLeads(); // refresh on returning
+        },
       ),
     );
   }

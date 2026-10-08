@@ -133,71 +133,79 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                 ? const Center(child: Text('Provider not found'))
                 : DefaultTabController(
                     length: 4,
-                    child: Column(
-                      children: [
-                        _buildProfileHeader(primaryColor, isDark),
-                        TabBar(
-                          isScrollable: true,
-                          tabAlignment: TabAlignment.center,
-                          indicatorColor: const Color(0xFF002E3B),
-                          indicatorSize: TabBarIndicatorSize.label,
-                          labelColor: const Color(0xFF002E3B),
-                          unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
-                          dividerColor: Colors.transparent,
-                          tabs: const [
-                            Tab(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.photo_library_outlined, size: 16),
-                                  SizedBox(width: 6),
-                                  Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
-                            Tab(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.storefront_outlined, size: 16),
-                                  SizedBox(width: 6),
-                                  Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
-                            Tab(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.star_outline_rounded, size: 16),
-                                  SizedBox(width: 6),
-                                  Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
-                            Tab(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.info_outline_rounded, size: 16),
-                                  SizedBox(width: 6),
-                                  Text('About', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Expanded(
-                          child: TabBarView(
-                            children: [
-                              _buildPortfolioTab(isDark),
-                              _buildSupplierProductsTab(isDark),
-                              _buildReviewsTab(isDark),
-                              _buildInfoTab(isDark),
-                            ],
+                    child: NestedScrollView(
+                      headerSliverBuilder: (context, innerBoxIsScrolled) {
+                        return [
+                          SliverToBoxAdapter(
+                            child: _buildProfileHeader(primaryColor, isDark),
                           ),
-                        ),
-                      ],
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _SliverTabBarDelegate(
+                              TabBar(
+                                isScrollable: true,
+                                tabAlignment: TabAlignment.center,
+                                indicatorColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                                indicatorSize: TabBarIndicatorSize.label,
+                                labelColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                                unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
+                                dividerColor: Colors.transparent,
+                                tabs: const [
+                                  Tab(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.photo_library_outlined, size: 16),
+                                        SizedBox(width: 6),
+                                        Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                  Tab(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.storefront_outlined, size: 16),
+                                        SizedBox(width: 6),
+                                        Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                  Tab(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.star_outline_rounded, size: 16),
+                                        SizedBox(width: 6),
+                                        Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                  Tab(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.info_outline_rounded, size: 16),
+                                        SizedBox(width: 6),
+                                        Text('About', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              isDark,
+                            ),
+                          ),
+                        ];
+                      },
+                      body: TabBarView(
+                        children: [
+                          _buildPortfolioTab(isDark),
+                          _buildSupplierProductsTab(isDark),
+                          _buildReviewsTab(isDark),
+                          _buildInfoTab(isDark),
+                        ],
+                      ),
                     ),
                   ),
       ),
@@ -246,9 +254,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
               right: 0,
               height: 4,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF002E3B), Color(0xFF002E3B)],
+                    colors: isDark
+                        ? [const Color(0xFF2DD4BF), const Color(0xFF0F9B8E)]
+                        : [const Color(0xFF002E3B), const Color(0xFF002E3B)],
                   ),
                 ),
               ),
@@ -269,7 +279,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             height: 78,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF002E3B), width: 2),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                                width: 2,
+                              ),
                               color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
                             ),
                             child: Padding(
@@ -294,8 +307,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             right: 0,
                             child: Container(
                               padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF002E3B),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF0D9488) : const Color(0xFF002E3B),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.engineering_rounded, size: 12, color: Colors.white),
@@ -438,7 +451,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           icon: Icons.star_rounded,
                           label: 'Rating ($reviewsCount)',
                           value: rating.toStringAsFixed(1),
-                          color: const Color(0xFF002E3B),
+                          color: isDark ? const Color(0xFFF59E0B) : const Color(0xFF002E3B),
                         ),
                       ),
                     ],
@@ -992,7 +1005,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   children: List.generate(5, (index) {
                     return Icon(
                       index < rating ? Icons.star : Icons.star_border,
-                      color: const Color(0xFF002E3B),
+                      color: isDark ? const Color(0xFFF59E0B) : const Color(0xFF002E3B),
                       size: 16,
                     );
                   }),
@@ -1052,7 +1065,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF002E3B), size: 20),
+          Icon(
+            icon,
+            color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1085,7 +1102,19 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
 
   void _showPostDetailModal(BuildContext context, dynamic img) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    final dynamic rawImage = img['imageData'] ?? img['imageUrl'] ?? img['image'];
+    final profileImgStr = _provider?['profileImage']?.toString() ?? '';
+    ImageProvider? avatarProvider;
+    if (profileImgStr.isNotEmpty) {
+      if (profileImgStr.startsWith('http')) {
+        avatarProvider = NetworkImage(profileImgStr);
+      } else {
+        try {
+          avatarProvider = MemoryImage(Base64ImageCache.decode(profileImgStr));
+        } catch (_) {}
+      }
+    }
+
     showDialog(
       context: context,
       builder: (ctx) {
@@ -1093,92 +1122,158 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Post Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Colors.blue.shade100,
-                      backgroundImage: _provider!['profileImage'] != null && _provider!['profileImage'].toString().isNotEmpty
-                          ? MemoryImage(Base64ImageCache.decode(_provider!['profileImage']))
-                          : null,
-                      child: _provider!['profileImage'] == null || _provider!['profileImage'].toString().isEmpty
-                          ? Text(
-                              (_provider!['businessName'] ?? 'P')[0].toUpperCase(),
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _provider!['businessName'] ?? 'Provider',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Post Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 14,
+                        backgroundColor: Colors.blue.shade100,
+                        backgroundImage: avatarProvider,
+                        child: avatarProvider == null
+                            ? Text(
+                                (_provider?['businessName'] ?? 'P')[0].toUpperCase(),
+                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                              )
+                            : null,
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-              ),
-              // Post Image - Clickable for FullScreen zoom
-              GestureDetector(
-                onTap: () {
-                  final rawImage = img['imageData'] ?? img['imageUrl'] ?? img['image'];
-                  final str = rawImage?.toString() ?? '';
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => FullScreenImageViewer(
-                        base64Image: str.startsWith('http') ? null : str,
-                        imageUrl: str.startsWith('http') ? str : null,
-                        title: img['title'] ?? 'Showcase Detail',
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _provider?['businessName'] ?? 'Provider',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: AspectRatio(
-                  aspectRatio: 1.1,
-                  child: _buildPortfolioImageWidget(img['imageData'] ?? img['imageUrl'] ?? img['image']),
+                      IconButton(
+                        icon: Icon(Icons.close_rounded, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Post Info
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      img['title'] ?? 'Showcase Detail',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
-                    ),
-                    if (img['description'] != null && img['description'].toString().trim().isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        img['description'],
-                        style: TextStyle(
-                          color: isDark ? Colors.white70 : Colors.grey.shade700,
-                          fontSize: 12.5,
-                          height: 1.4,
+                // Post Image - Clickable for FullScreen zoom
+                GestureDetector(
+                  onTap: () {
+                    final str = rawImage?.toString() ?? '';
+                    if (str.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FullScreenImageViewer(
+                            base64Image: str.startsWith('http') ? null : str,
+                            imageUrl: str.startsWith('http') ? str : null,
+                            title: img['title'] ?? 'Showcase Detail',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1.1,
+                        child: _buildPortfolioImageWidget(rawImage),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.zoom_in_rounded, color: Colors.white, size: 15),
+                            SizedBox(width: 4),
+                            Text(
+                              'Tap to zoom',
+                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                // Post Info
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        img['title'] ?? 'Showcase Detail',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15.5,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (img['description'] != null && img['description'].toString().trim().isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          img['description'].toString().trim(),
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.grey.shade700,
+                            fontSize: 13,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            final str = rawImage?.toString() ?? '';
+                            if (str.isNotEmpty) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FullScreenImageViewer(
+                                    base64Image: str.startsWith('http') ? null : str,
+                                    imageUrl: str.startsWith('http') ? str : null,
+                                    title: img['title'] ?? 'Showcase Detail',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.fullscreen_rounded, size: 20),
+                          label: const Text(
+                            'View Fullscreen',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark ? const Color(0xFF0D9488) : const Color(0xFF002E3B),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1263,7 +1358,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                       return IconButton(
                         icon: Icon(
                           starVal <= selectedRating ? Icons.star : Icons.star_border,
-                          color: const Color(0xFF002E3B),
+                          color: const Color(0xFFF59E0B),
                           size: 36,
                         ),
                         onPressed: () {
@@ -1349,6 +1444,40 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         const SnackBar(content: Text('Error connecting to backend.')),
       );
     }
+  }
+}
+
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  final bool isDark;
+
+  _SliverTabBarDelegate(this.tabBar, this.isDark);
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF121B22) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+            width: 1,
+          ),
+        ),
+      ),
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
+    return oldDelegate.isDark != isDark || oldDelegate.tabBar != tabBar;
   }
 }
 

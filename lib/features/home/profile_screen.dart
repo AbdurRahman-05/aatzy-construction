@@ -607,71 +607,79 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ? const ShimmerUserProfile()
             : DefaultTabController(
                 length: 4,
-                child: Column(
-                  children: [
-                    _buildProviderHeader(primaryColor, isDark),
-                    TabBar(
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.center,
-                      indicatorColor: const Color(0xFF002E3B),
-                      indicatorSize: TabBarIndicatorSize.label,
-                      labelColor: const Color(0xFF002E3B),
-                      unselectedLabelColor: Colors.white.withValues(alpha: 0.65),
-                      dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.photo_library_outlined, size: 16),
-                              SizedBox(width: 6),
-                              Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.storefront_outlined, size: 16),
-                              SizedBox(width: 6),
-                              Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.star_outline_rounded, size: 16),
-                              SizedBox(width: 6),
-                              Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        Tab(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.info_outline_rounded, size: 16),
-                              SizedBox(width: 6),
-                              Text('Ledger', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          _buildPortfolioTab(isDark),
-                          _buildSupplierProductsTab(isDark),
-                          _buildReviewsTab(isDark),
-                          _buildInfoTab(isDark),
-                        ],
+                child: NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) {
+                    return [
+                      SliverToBoxAdapter(
+                        child: _buildProviderHeader(primaryColor, isDark),
                       ),
-                    ),
-                  ],
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _SliverTabBarDelegate(
+                          TabBar(
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.center,
+                            indicatorColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                            indicatorSize: TabBarIndicatorSize.label,
+                            labelColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                            unselectedLabelColor: isDark ? Colors.white.withValues(alpha: 0.65) : Colors.grey.shade600,
+                            dividerColor: Colors.transparent,
+                            tabs: const [
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.photo_library_outlined, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Showcase', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.storefront_outlined, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.star_outline_rounded, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              Tab(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.info_outline_rounded, size: 16),
+                                    SizedBox(width: 6),
+                                    Text('Ledger', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          isDark,
+                        ),
+                      ),
+                    ];
+                  },
+                  body: TabBarView(
+                    children: [
+                      _buildPortfolioTab(isDark),
+                      _buildSupplierProductsTab(isDark),
+                      _buildReviewsTab(isDark),
+                      _buildInfoTab(isDark),
+                    ],
+                  ),
                 ),
               ),
         ),
@@ -727,9 +735,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               right: 0,
               height: 4,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF002E3B), Color(0xFF002E3B)],
+                    colors: isDark
+                        ? [const Color(0xFF2DD4BF), const Color(0xFF0F9B8E)]
+                        : [const Color(0xFF002E3B), const Color(0xFF002E3B)],
                   ),
                 ),
               ),
@@ -750,7 +760,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             height: 78,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF002E3B), width: 2),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                                width: 2,
+                              ),
                               color: isDark ? const Color(0xFF334155) : const Color(0xFF0F172A).withValues(alpha: 0.08),
                             ),
                             child: Padding(
@@ -773,8 +786,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             right: 0,
                             child: Container(
                               padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF002E3B),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF0D9488) : const Color(0xFF002E3B),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.engineering_rounded, size: 12, color: Colors.white),
@@ -936,7 +949,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           icon: Icons.leaderboard_rounded,
                           label: 'Active Leads',
                           value: '${_serviceLeadsCount + _supplierLeadsCount}',
-                          color: const Color(0xFF002E3B),
+                          color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF002E3B),
                           onTap: () => ref.read(providerTabProvider.notifier).setTab(2),
                         ),
                       ),
@@ -948,14 +961,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF002E3B).withValues(alpha: 0.1),
+                          color: isDark ? const Color(0xFFF59E0B).withValues(alpha: 0.15) : const Color(0xFF002E3B).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFF002E3B).withValues(alpha: 0.2)),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFFF59E0B).withValues(alpha: 0.3) : const Color(0xFF002E3B).withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star_rounded, color: Color(0xFF002E3B), size: 18),
+                            Icon(
+                              Icons.star_rounded,
+                              color: isDark ? const Color(0xFFF59E0B) : const Color(0xFF002E3B),
+                              size: 18,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               rating.toStringAsFixed(1),
@@ -963,7 +982,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             Text(
                               ' ($reviewsCount)',
-                              style: const TextStyle(color: Colors.grey, fontSize: 11),
+                              style: TextStyle(
+                                color: isDark ? Colors.white60 : Colors.grey,
+                                fontSize: 11,
+                              ),
                             ),
                           ],
                         ),
@@ -1059,11 +1081,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              const Icon(Icons.architecture_rounded, size: 44, color: Color(0xFF002E3B)),
+              Icon(
+                Icons.architecture_rounded,
+                size: 44,
+                color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+              ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'No Showcase Projects Yet',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: isDark ? const Color(0xFF94A3B8) : Colors.grey,
+                ),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
@@ -1071,7 +1101,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: const Icon(Icons.add_a_photo_rounded, size: 18),
                 label: const Text('Add Project Photo'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF002E3B),
+                  backgroundColor: isDark ? const Color(0xFF0D9488) : const Color(0xFF002E3B),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -1084,7 +1114,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
       physics: const AlwaysScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -1095,13 +1125,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       itemCount: _portfolio.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
+          final uploadAccent = isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B);
           return Card(
             elevation: 0,
             color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(
-                color: const Color(0xFF002E3B).withValues(alpha: 0.4),
+                color: uploadAccent.withValues(alpha: isDark ? 0.45 : 0.35),
                 width: 1.5,
                 style: BorderStyle.solid,
               ),
@@ -1115,18 +1146,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF002E3B).withValues(alpha: 0.1),
+                      color: uploadAccent.withValues(alpha: isDark ? 0.18 : 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.add_a_photo_rounded, color: Color(0xFF002E3B), size: 28),
+                    child: Icon(
+                      Icons.add_a_photo_rounded,
+                      color: uploadAccent,
+                      size: 28,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Upload Photo',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF002E3B),
+                      color: isDark ? Colors.white : const Color(0xFF002E3B),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1134,7 +1169,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     'Showcase new work',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.white.withValues(alpha: 0.65),
+                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -1147,9 +1182,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         return Card(
           elevation: 2,
           shadowColor: Colors.black26,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+              width: 1,
+            ),
+          ),
           clipBehavior: Clip.antiAlias,
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           child: InkWell(
             onTap: () => _showPostDetailModal(context, img),
             child: Column(
@@ -1157,23 +1198,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Expanded(
                   flex: 3,
-                  child: _buildPortfolioImageWidget(
-                    rawImg,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildPortfolioImageWidget(
+                        rawImg,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.fullscreen_rounded, color: Colors.white, size: 16),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(
                   flex: 1,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     alignment: Alignment.centerLeft,
                     child: Text(
                       img['title'] ?? 'Showcase Project',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1222,7 +1281,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 90),
       physics: const AlwaysScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -1272,7 +1331,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     'List B2B Materials',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.white.withValues(alpha: 0.65),
+                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -1291,9 +1350,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         return Card(
           elevation: 2,
           shadowColor: Colors.black26,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+              width: 1,
+            ),
+          ),
           clipBehavior: Clip.antiAlias,
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           child: InkWell(
             onTap: () => _showProductDetailsDialog(context, prod),
             child: Column(
@@ -1338,13 +1403,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   flex: 1,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     alignment: Alignment.centerLeft,
                     child: Text(
                       prod['name'] ?? 'Product Name',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1403,8 +1469,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         });
                       }
                     },
-                    icon: const Icon(Icons.add_a_photo),
-                    label: const Text('Select Photo'),
+                    icon: Icon(
+                      Icons.add_a_photo,
+                      color: Theme.of(dialogContext).brightness == Brightness.dark
+                          ? const Color(0xFF2DD4BF)
+                          : null,
+                    ),
+                    label: Text(
+                      'Select Photo',
+                      style: TextStyle(
+                        color: Theme.of(dialogContext).brightness == Brightness.dark
+                            ? const Color(0xFF2DD4BF)
+                            : null,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: Theme.of(dialogContext).brightness == Brightness.dark
+                          ? const BorderSide(color: Color(0xFF2DD4BF))
+                          : null,
+                    ),
                   ),
                 const SizedBox(height: 16),
                 TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Project Title')),
@@ -1416,6 +1499,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(dialogContext).brightness == Brightness.dark
+                    ? const Color(0xFF0D9488)
+                    : const Color(0xFF002E3B),
+                foregroundColor: Colors.white,
+              ),
               onPressed: () async {
                 if (tempBase64 == null || titleController.text.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select an image and title')));
@@ -1493,7 +1582,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: isDark ? const Color(0xFF1F2C34) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+          backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           clipBehavior: Clip.antiAlias,
           child: SingleChildScrollView(
@@ -1509,7 +1598,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Expanded(
                         child: Text(
                           prod['name'] ?? 'Product Info',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1613,7 +1706,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
       physics: const AlwaysScrollableScrollPhysics(),
       itemCount: reviews.length,
       itemBuilder: (context, idx) {
@@ -1626,12 +1719,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             : '';
 
         return Card(
-          elevation: 0.5,
-          color: isDark ? const Color(0xFF1F2C34) : const Color(0xFF0F172A).withValues(alpha: 0.05),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+          shadowColor: Colors.black12,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: BorderSide(
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+              width: 1,
+            ),
+          ),
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1640,37 +1740,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     Text(
                       reviewer,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
                     Text(
                       date,
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
                   children: List.generate(5, (index) => Icon(
-                    index < rating ? Icons.star : Icons.star_border,
-                    color: const Color(0xFF002E3B),
-                    size: 15,
+                    index < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: const Color(0xFFF59E0B),
+                    size: 16,
                   )),
                 ),
                 if (r['project'] != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(4),
+                      color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF38BDF8).withValues(alpha: 0.3) : const Color(0xFFBFDBFE),
+                      ),
                     ),
                     child: Text(
                       'Project: ${r['project']['title'] ?? ''} (${r['project']['type'] ?? ''})',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: Colors.blue.shade800,
-                        fontSize: 10.5,
+                        color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1D4ED8),
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1681,8 +1792,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Text(
                     comment,
                     style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.grey.shade800,
-                      fontSize: 12.5,
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                      fontSize: 13,
                       height: 1.4,
                     ),
                   ),
@@ -1708,37 +1819,51 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final website = _providerData?['website'] ?? '';
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         Card(
-          elevation: 0.5,
-          color: isDark ? const Color(0xFF1F2C34) : const Color(0xFF0F172A).withValues(alpha: 0.05),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 2,
+          shadowColor: Colors.black12,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+              width: 1,
+            ),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Services Provider Info',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
-                const Divider(height: 24),
-                _buildInfoRow(Icons.person_rounded, 'Owner / User', ownerName),
+                Divider(
+                  height: 24,
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+                ),
+                _buildInfoRow(Icons.person_rounded, 'Owner / User', ownerName, isDark),
                 const SizedBox(height: 16),
-                _buildInfoRow(Icons.work_history_rounded, 'Professional Experience', '$experience Years'),
+                _buildInfoRow(Icons.work_history_rounded, 'Professional Experience', '$experience Years', isDark),
                 if (address != null && address.toString().trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.location_on_rounded, 'Business Address', address),
+                  _buildInfoRow(Icons.location_on_rounded, 'Business Address', address, isDark),
                 ],
                 if (email != null && email.toString().trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.email_rounded, 'Email Address', email),
+                  _buildInfoRow(Icons.email_rounded, 'Email Address', email, isDark),
                 ],
                 if (phone != null && phone.toString().trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.phone_rounded, 'Contact Number', phone),
+                  _buildInfoRow(Icons.phone_rounded, 'Contact Number', phone, isDark),
                 ],
               ],
             ),
@@ -1746,27 +1871,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         const SizedBox(height: 16),
         Card(
-          elevation: 0.5,
-          color: isDark ? const Color(0xFF1F2C34) : const Color(0xFF0F172A).withValues(alpha: 0.05),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 2,
+          shadowColor: Colors.black12,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+              width: 1,
+            ),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Material Supplier Info',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
-                const Divider(height: 24),
-                _buildInfoRow(Icons.business_center_rounded, 'Supplier Business Type', businessType.isNotEmpty ? businessType : 'Service & Supplier'),
+                Divider(
+                  height: 24,
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+                ),
+                _buildInfoRow(Icons.business_center_rounded, 'Supplier Business Type', businessType.isNotEmpty ? businessType : 'Service & Supplier', isDark),
                 if (gst.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.verified_user_rounded, 'GST Identification Number', gst),
+                  _buildInfoRow(Icons.verified_user_rounded, 'GST Identification Number', gst, isDark),
                 ],
                 if (website.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildInfoRow(Icons.language_rounded, 'Official Business Website', website),
+                  _buildInfoRow(Icons.language_rounded, 'Official Business Website', website, isDark),
                 ],
               ],
             ),
@@ -1776,11 +1915,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String title, String val) {
+  Widget _buildInfoRow(IconData icon, String title, String val, bool isDark) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.blue),
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 18, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF2563EB)),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -1788,12 +1934,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 11.5, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 val,
-                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
             ],
           ),
@@ -1805,113 +1959,236 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showPostDetailModal(BuildContext context, dynamic img) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dynamic rawImg = img['imageData'] ?? img['imageUrl'] ?? img['image'];
-    
+    final postAvatarImage = _resolveImageProvider(_profileImage ?? ref.read(authProvider).profileImage);
+    final bName = _providerData?['businessName'] ?? ref.read(authProvider).businessName ?? 'Provider';
+    final imageId = img['id'];
+
     showDialog(
       context: context,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: isDark ? const Color(0xFF1F2C34) : const Color(0xFF0F172A).withValues(alpha: 0.04),
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Post Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Builder(
-                      builder: (context) {
-                        final postAvatarImage = _resolveImageProvider(_profileImage ?? ref.read(authProvider).profileImage);
-                        final bName = _providerData?['businessName'] ?? ref.read(authProvider).businessName ?? 'Provider';
-                        return Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 14,
-                              backgroundColor: Colors.blue.shade100,
-                              backgroundImage: postAvatarImage,
-                              child: postAvatarImage == null
-                                  ? Text(
-                                      bName.isNotEmpty ? bName[0].toUpperCase() : 'P',
-                                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                                    )
-                                  : null,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                bName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-              ),
-              // Post Image
-              GestureDetector(
-                onTap: () {
-                  if (rawImg != null) {
-                    final str = rawImg.toString();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => FullScreenImageViewer(
-                          base64Image: str.startsWith('http') ? null : str,
-                          imageUrl: str.startsWith('http') ? str : null,
-                          title: img['title'] ?? 'Showcase Detail',
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Post Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 14,
+                        backgroundColor: Colors.blue.shade100,
+                        backgroundImage: postAvatarImage,
+                        child: postAvatarImage == null
+                            ? Text(
+                                bName.isNotEmpty ? bName[0].toUpperCase() : 'P',
+                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          bName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    );
-                  }
-                },
-                child: AspectRatio(
-                  aspectRatio: 1.1,
-                  child: _buildPortfolioImageWidget(rawImg, fit: BoxFit.cover),
+                      if (imageId != null)
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                          tooltip: 'Delete Photo',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _confirmDeletePortfolioImage(context, imageId),
+                        ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: Icon(Icons.close_rounded, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Post Info
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      img['title'] ?? 'Showcase Detail',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
-                    ),
-                    if (img['description'] != null && img['description'].toString().trim().isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        img['description'],
-                        style: TextStyle(
-                          color: isDark ? Colors.white70 : Colors.grey.shade700,
-                          fontSize: 12.5,
-                          height: 1.4,
+                // Post Image with zoom action
+                GestureDetector(
+                  onTap: () {
+                    if (rawImg != null) {
+                      final str = rawImg.toString();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FullScreenImageViewer(
+                            base64Image: str.startsWith('http') ? null : str,
+                            imageUrl: str.startsWith('http') ? str : null,
+                            title: img['title'] ?? 'Showcase Detail',
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1.1,
+                        child: _buildPortfolioImageWidget(rawImg, fit: BoxFit.cover),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.zoom_in_rounded, color: Colors.white, size: 15),
+                            SizedBox(width: 4),
+                            Text(
+                              'Tap to zoom',
+                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                // Post Info
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        img['title'] ?? 'Showcase Project',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15.5,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (img['description'] != null && img['description'].toString().trim().isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          img['description'].toString().trim(),
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.grey.shade700,
+                            fontSize: 13,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            if (rawImg != null) {
+                              final str = rawImg.toString();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FullScreenImageViewer(
+                                    base64Image: str.startsWith('http') ? null : str,
+                                    imageUrl: str.startsWith('http') ? str : null,
+                                    title: img['title'] ?? 'Showcase Detail',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.fullscreen_rounded, size: 20),
+                          label: const Text(
+                            'View Fullscreen',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark ? const Color(0xFF0D9488) : const Color(0xFF002E3B),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
+  }
+
+  void _confirmDeletePortfolioImage(BuildContext context, dynamic imageId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Photo?'),
+        content: const Text('Are you sure you want to remove this photo from your showcase?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+              await _deletePortfolioImage(imageId);
+            },
+            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePortfolioImage(dynamic imageId) async {
+    final auth = ref.read(authProvider);
+    final prefs = await SharedPreferences.getInstance();
+    final effectiveId = auth.id ?? prefs.getString('auth_id');
+    if (effectiveId == null) return;
+
+    try {
+      final res = await http.delete(
+        Uri.parse('$apiBaseUrl/providers/$effectiveId/portfolio?imageId=$imageId'),
+      );
+      if (res.statusCode == 200) {
+        setState(() {
+          _portfolio.removeWhere((item) => item['id'] == imageId);
+        });
+        ref.invalidate(socialFeedProvider);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Photo removed from showcase')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error deleting portfolio photo: $e');
+    }
   }
 
   void _showSettingsBottomSheet(BuildContext context) {
@@ -2006,9 +2283,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final inquiries = userProjectsData?.inquiries ?? [];
 
     if (_isLoading || (userProjectsAsync != null && userProjectsAsync.isLoading && projects.isEmpty)) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
-        body: SafeArea(
+      return Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        body: const SafeArea(
           child: ShimmerUserProfile(isConsumer: true),
         ),
       );
@@ -2030,7 +2307,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final horizontalPadding = isTabletOrLaptop ? 24.0 : (isSmallScreen ? 12.0 : 16.0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -2052,18 +2329,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(
+                                color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+                            child: Icon(
+                              Icons.chevron_left_rounded,
+                              size: 22,
+                              color: isDark ? Colors.white : const Color(0xFF1E293B),
+                            ),
                           ),
                         ),
                       ),
@@ -2074,7 +2357,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             style: TextStyle(
                               fontSize: isSmallScreen ? 18 : 20,
                               fontWeight: FontWeight.w900,
-                              color: const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
                               letterSpacing: -0.4,
                             ),
                           ),
@@ -2097,18 +2380,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(
+                                color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.settings_outlined, size: 20, color: Color(0xFF1E293B)),
+                            child: Icon(
+                              Icons.settings_outlined,
+                              size: 20,
+                              color: isDark ? Colors.white : const Color(0xFF1E293B),
+                            ),
                           ),
                         ),
                       ),
@@ -2148,7 +2437,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           bottom: -15,
                           child: Opacity(
                             opacity: 0.12,
-                            child: Icon(
+                            child: const Icon(
                               Icons.location_city_rounded,
                               size: 160,
                               color: Colors.white,
@@ -2340,12 +2629,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     vertical: isSmallScreen ? 12 : 14,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
+                      width: 1.2,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),
@@ -2358,8 +2650,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         count: projectsCount.toString().padLeft(2, '0'),
                         label: 'Projects\nCreated',
                         color: const Color(0xFF0D9488),
-                        bg: const Color(0xFFF0FDFA),
+                        bg: isDark ? const Color(0xFF0D9488).withValues(alpha: 0.15) : const Color(0xFFF0FDFA),
                         isSmallScreen: isSmallScreen,
+                        isDark: isDark,
                         onTap: () => context.push('/dashboard'),
                       ),
                       _buildAccountStatItem(
@@ -2367,8 +2660,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         count: quotesCount.toString().padLeft(2, '0'),
                         label: 'Quotes\nRequested',
                         color: const Color(0xFF2563EB),
-                        bg: const Color(0xFFEFF6FF),
+                        bg: isDark ? const Color(0xFF2563EB).withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
                         isSmallScreen: isSmallScreen,
+                        isDark: isDark,
                         onTap: () => context.push('/dashboard'),
                       ),
                       _buildAccountStatItem(
@@ -2376,8 +2670,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         count: ordersCount.toString().padLeft(2, '0'),
                         label: 'Orders\nPlaced',
                         color: const Color(0xFFEA580C),
-                        bg: const Color(0xFFFFF7ED),
+                        bg: isDark ? const Color(0xFFEA580C).withValues(alpha: 0.15) : const Color(0xFFFFF7ED),
                         isSmallScreen: isSmallScreen,
+                        isDark: isDark,
                         onTap: () => context.push('/b2b-materials'),
                       ),
                       _buildAccountStatItem(
@@ -2385,8 +2680,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         count: inquiriesCount.toString().padLeft(2, '0'),
                         label: 'Inquiries\nMade',
                         color: const Color(0xFF9333EA),
-                        bg: const Color(0xFFFAF5FF),
+                        bg: isDark ? const Color(0xFF9333EA).withValues(alpha: 0.15) : const Color(0xFFFAF5FF),
                         isSmallScreen: isSmallScreen,
+                        isDark: isDark,
                         onTap: () => context.push('/b2b-my-inquiries'),
                       ),
                     ],
@@ -2397,12 +2693,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // Settings, Help & Support, and Logout Actions Menu Card
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
+                      width: 1.2,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                         blurRadius: 14,
                         offset: const Offset(0, 4),
                       ),
@@ -2413,29 +2712,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       _buildAccountActionTile(
                         icon: Icons.settings_outlined,
                         iconColor: const Color(0xFF0D9488),
-                        iconBg: const Color(0xFFF0FDFA),
+                        iconBg: isDark ? const Color(0xFF0D9488).withValues(alpha: 0.15) : const Color(0xFFF0FDFA),
                         title: 'Settings',
                         subtitle: 'Manage your profile and preferences',
+                        isDark: isDark,
                         onTap: () => context.push('/settings'),
                       ),
-                      const Divider(height: 1, indent: 64, endIndent: 16, color: Color(0xFFF1F5F9)),
+                      Divider(
+                        height: 1,
+                        indent: 64,
+                        endIndent: 16,
+                        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                      ),
                       _buildAccountActionTile(
                         icon: Icons.help_outline_rounded,
                         iconColor: const Color(0xFF2563EB),
-                        iconBg: const Color(0xFFEFF6FF),
+                        iconBg: isDark ? const Color(0xFF2563EB).withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
                         title: 'Help & Support',
                         subtitle: 'Get help and contact support team',
+                        isDark: isDark,
                         onTap: () => context.push('/help-support'),
                       ),
-                      const Divider(height: 1, indent: 64, endIndent: 16, color: Color(0xFFF1F5F9)),
+                      Divider(
+                        height: 1,
+                        indent: 64,
+                        endIndent: 16,
+                        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                      ),
                       _buildAccountActionTile(
                         icon: Icons.logout_rounded,
                         iconColor: const Color(0xFFDC2626),
-                        iconBg: const Color(0xFFFEF2F2),
+                        iconBg: isDark ? const Color(0xFFDC2626).withValues(alpha: 0.15) : const Color(0xFFFEF2F2),
                         title: 'Logout',
                         titleColor: const Color(0xFFDC2626),
                         subtitle: 'Sign out from your account',
                         trailingColor: const Color(0xFFDC2626),
+                        isDark: isDark,
                         onTap: () => _confirmLogout(context),
                       ),
                     ],
@@ -2448,28 +2760,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   width: double.infinity,
                   padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFFF0FDFA),
-                        Color(0xFFEFF6FF),
-                      ],
-                    ),
+                    color: isDark ? const Color(0xFF1E293B) : null,
+                    gradient: isDark
+                        ? null
+                        : const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFF0FDFA),
+                              Color(0xFFEFF6FF),
+                            ],
+                          ),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFCCFBF1)),
+                    border: Border.all(
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFCCFBF1),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF0F172A) : Colors.white,
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF99F6E4)),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF0D9488).withValues(alpha: 0.3) : const Color(0xFF99F6E4),
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                              color: const Color(0xFF0D9488).withValues(alpha: isDark ? 0.2 : 0.12),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -2482,12 +2801,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Your data is safe with us',
                               style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -2495,7 +2814,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               'We use advanced security to protect your information.',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey.shade600,
+                                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
                                 height: 1.25,
                               ),
                             ),
@@ -2533,6 +2852,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required Color color,
     required Color bg,
     required bool isSmallScreen,
+    bool isDark = false,
     VoidCallback? onTap,
   }) {
     return Expanded(
@@ -2564,7 +2884,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         style: TextStyle(
                           fontSize: isSmallScreen ? 15 : 18,
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
                     ),
@@ -2579,7 +2899,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     style: TextStyle(
                       fontSize: isSmallScreen ? 9.5 : 10.5,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF64748B),
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       height: 1.2,
                     ),
                   ),
@@ -2601,6 +2921,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required VoidCallback onTap,
     Color? titleColor,
     Color? trailingColor,
+    bool isDark = false,
   }) {
     return ListTile(
       onTap: onTap,
@@ -2618,16 +2939,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         style: TextStyle(
           fontWeight: FontWeight.w800,
           fontSize: 14.5,
-          color: titleColor ?? const Color(0xFF0F172A),
+          color: titleColor ?? (isDark ? Colors.white : const Color(0xFF0F172A)),
         ),
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 2),
         child: Text(
           subtitle,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11.5,
-            color: Color(0xFF64748B),
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -2635,7 +2956,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       trailing: Icon(
         Icons.chevron_right_rounded,
         size: 20,
-        color: trailingColor ?? const Color(0xFF94A3B8),
+        color: trailingColor ?? (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
       ),
     );
   }
@@ -2668,6 +2989,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
     );
+  }
+}
+
+class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  final bool isDark;
+
+  _SliverTabBarDelegate(this.tabBar, this.isDark);
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF121B22) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+            width: 1,
+          ),
+        ),
+      ),
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
+    return oldDelegate.isDark != isDark || oldDelegate.tabBar != tabBar;
   }
 }
 

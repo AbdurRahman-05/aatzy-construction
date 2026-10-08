@@ -527,15 +527,20 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
         return _buildEmptyState(isProvider, tabIndex);
       }
 
-      return RefreshIndicator(
-        onRefresh: _fetchData,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: list.length,
-          itemBuilder: (context, index) {
-            final lead = list[index];
-            return _buildProviderLeadCard(lead);
-          },
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: RefreshIndicator(
+            onRefresh: _fetchData,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: list.length,
+              itemBuilder: (context, index) {
+                final lead = list[index];
+                return _buildProviderLeadCard(lead);
+              },
+            ),
+          ),
         ),
       );
     } else {
@@ -552,15 +557,20 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
         return _buildEmptyState(isProvider, tabIndex);
       }
 
-      return RefreshIndicator(
-        onRefresh: _fetchData,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: list.length,
-          itemBuilder: (context, index) {
-            final inq = list[index];
-            return _buildConsumerInquiryCard(inq);
-          },
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: RefreshIndicator(
+            onRefresh: _fetchData,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: list.length,
+              itemBuilder: (context, index) {
+                final inq = list[index];
+                return _buildConsumerInquiryCard(inq);
+              },
+            ),
+          ),
         ),
       );
     }

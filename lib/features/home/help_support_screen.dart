@@ -37,6 +37,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Help & Support')),
       body: SingleChildScrollView(
@@ -44,52 +46,83 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Frequently Asked Questions',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
             const SizedBox(height: 12),
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: const Column(
+              child: Column(
                 children: [
                   ExpansionTile(
-                    leading: Icon(Icons.help_outline, color: Colors.blue),
-                    title: Text('How do I request a quote?'),
+                    leading: Icon(Icons.help_outline, color: isDark ? const Color(0xFF38BDF8) : Colors.blue),
+                    title: Text(
+                      'How do I request a quote?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(left: 56, right: 16, bottom: 16),
+                        padding: const EdgeInsets.only(left: 56, right: 16, bottom: 16),
                         child: Text(
                           'Navigate to the provider\'s profile, tap on the "Request Quote" button at the bottom, enter your project details or description, and submit. The provider will view this quote request in their leads panel.',
-                          style: TextStyle(color: Colors.black54, height: 1.4),
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+                            height: 1.45,
+                          ),
                         ),
                       )
                     ],
                   ),
-                  Divider(height: 1),
+                  const Divider(height: 1),
                   ExpansionTile(
-                    leading: Icon(Icons.help_outline, color: Colors.blue),
-                    title: Text('Are service providers verified?'),
+                    leading: Icon(Icons.help_outline, color: isDark ? const Color(0xFF38BDF8) : Colors.blue),
+                    title: Text(
+                      'Are service providers verified?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(left: 56, right: 16, bottom: 16),
+                        padding: const EdgeInsets.only(left: 56, right: 16, bottom: 16),
                         child: Text(
                           'Yes! All registration details, including PAN card, Aadhar card, and business verification documents, are manually reviewed by our admin panel team before a provider receives their verification badge.',
-                          style: TextStyle(color: Colors.black54, height: 1.4),
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+                            height: 1.45,
+                          ),
                         ),
                       )
                     ],
                   ),
-                  Divider(height: 1),
+                  const Divider(height: 1),
                   ExpansionTile(
-                    leading: Icon(Icons.help_outline, color: Colors.blue),
-                    title: Text('What is the cost estimation tool?'),
+                    leading: Icon(Icons.help_outline, color: isDark ? const Color(0xFF38BDF8) : Colors.blue),
+                    title: Text(
+                      'What is the cost estimation tool?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(left: 56, right: 16, bottom: 16),
+                        padding: const EdgeInsets.only(left: 56, right: 16, bottom: 16),
                         child: Text(
                           'Our smart cost estimation calculator helps you project total material, labor, and compliance costs based on your plot size, building type, location, and structural configuration. Use it in the "Tools" panel.',
-                          style: TextStyle(color: Colors.black54, height: 1.4),
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+                            height: 1.45,
+                          ),
                         ),
                       )
                     ],
@@ -98,9 +131,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Contact Support Team',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
             const SizedBox(height: 12),
             Card(
@@ -114,10 +151,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     children: [
                       TextFormField(
                         controller: _nameController,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                        decoration: InputDecoration(
                           labelText: 'Your Name',
-                          prefixIcon: Icon(Icons.person),
-                          border: OutlineInputBorder(),
+                          labelStyle: TextStyle(color: isDark ? Colors.white70 : null),
+                          prefixIcon: const Icon(Icons.person),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         validator: (v) => v!.isEmpty ? 'Please enter your name' : null,
                       ),
@@ -125,10 +164,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                        decoration: InputDecoration(
                           labelText: 'Email Address',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
+                          labelStyle: TextStyle(color: isDark ? Colors.white70 : null),
+                          prefixIcon: const Icon(Icons.email),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         validator: (v) {
                           if (v == null || v.isEmpty) return 'Please enter your email';
@@ -140,11 +181,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       TextFormField(
                         controller: _messageController,
                         maxLines: 4,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+                        decoration: InputDecoration(
                           labelText: 'Describe your issue',
-                          prefixIcon: Icon(Icons.message),
+                          labelStyle: TextStyle(color: isDark ? Colors.white70 : null),
+                          prefixIcon: const Icon(Icons.message),
                           alignLabelWithHint: true,
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         validator: (v) => v!.isEmpty ? 'Please describe your request' : null,
                       ),
@@ -152,8 +195,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       ElevatedButton(
                         onPressed: _isSubmitting ? null : _submitForm,
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? const Color(0xFF0D9488) : Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: _isSubmitting
                             ? const SizedBox(
@@ -171,29 +216,34 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             const SizedBox(height: 24),
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              color: Colors.blue.shade50,
-              child: const Padding(
-                padding: EdgeInsets.all(16),
+              color: isDark ? const Color(0xFF1E293B) : Colors.blue.shade50,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.phone, color: Colors.blue),
-                        SizedBox(width: 12),
+                        Icon(Icons.phone, color: isDark ? const Color(0xFF38BDF8) : Colors.blue),
+                        const SizedBox(width: 12),
                         Text(
                           'Phone: +1 (800) 555-0199',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? const Color(0xFF38BDF8) : Colors.blue.shade800,
+                          ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.support_agent, color: Colors.blue),
-                        SizedBox(width: 12),
+                        Icon(Icons.support_agent, color: isDark ? const Color(0xFF38BDF8) : Colors.blue),
+                        const SizedBox(width: 12),
                         Text(
                           'Support Hours: Mon-Fri, 9AM-6PM',
-                          style: TextStyle(color: Colors.blue),
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFF94A3B8) : Colors.blue.shade700,
+                          ),
                         ),
                       ],
                     ),

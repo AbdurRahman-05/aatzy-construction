@@ -36,57 +36,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       totalBudget += double.tryParse((p['budget'] ?? '0').toString()) ?? 0;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFFAFAFA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: const Text('My Dashboard', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+        title: Text('My Dashboard', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 18)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Performance Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('Performance Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 16),
-            _buildStatCard('Total Budget', '₹${totalBudget.toStringAsFixed(0)}', Icons.account_balance_wallet, Colors.green),
+            _buildStatCard('Total Budget', '₹${totalBudget.toStringAsFixed(0)}', Icons.account_balance_wallet, Colors.green, isDark),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildSmallStatCard('Active Projects', activeProjects.toString(), Icons.business, Colors.blue)),
+                Expanded(child: _buildSmallStatCard('Active Projects', activeProjects.toString(), Icons.business, Colors.blue, isDark)),
                 const SizedBox(width: 16),
-                Expanded(child: _buildSmallStatCard('Total Estimates', projects.length.toString(), Icons.calculate, Colors.orange)),
+                Expanded(child: _buildSmallStatCard('Total Estimates', projects.length.toString(), Icons.calculate, Colors.orange, isDark)),
               ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildSmallStatCard('Material Orders', orders.length.toString(), Icons.inventory_2, Colors.purple)),
+                Expanded(child: _buildSmallStatCard('Material Orders', orders.length.toString(), Icons.inventory_2, Colors.purple, isDark)),
                 const SizedBox(width: 16),
-                Expanded(child: _buildSmallStatCard('Saved Providers', '0', Icons.people, Colors.teal)),
+                Expanded(child: _buildSmallStatCard('Saved Providers', '0', Icons.people, Colors.teal, isDark)),
               ],
             ),
             const SizedBox(height: 32),
-            const Text('Recent Analytics', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('Recent Analytics', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
             const SizedBox(height: 16),
             Container(
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
               ),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.bar_chart, size: 64, color: Colors.grey.shade300),
+                    Icon(Icons.bar_chart, size: 64, color: isDark ? const Color(0xFF475569) : Colors.grey.shade300),
                     const SizedBox(height: 16),
-                    Text('Not enough data to display charts.', style: TextStyle(color: Colors.grey.shade500)),
+                    Text('Not enough data to display charts.', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500)),
                   ],
                 ),
               ),
@@ -97,29 +99,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(String title, String value, IconData icon, Color color, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
+        boxShadow: [BoxShadow(color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+            decoration: BoxDecoration(color: color.withValues(alpha: isDark ? 0.2 : 0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+              Text(title, style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
-              Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+              Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
             ],
           ),
         ],
@@ -127,22 +129,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildSmallStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildSmallStatCard(String title, String value, IconData icon, Color color, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
           const SizedBox(height: 2),
-          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
+          Text(title, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
         ],
       ),
     );

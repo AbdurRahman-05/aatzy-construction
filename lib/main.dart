@@ -187,17 +187,28 @@ class ConstructionApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isUltraWide = screenWidth > 1200;
+
+        // Mobile phones and tablets (up to 1200px):
+        // Render full tablet width without 600px letterboxing so the UI utilizes both sides completely.
+        if (!isUltraWide) {
+          return child ?? const SizedBox.shrink();
+        }
+
+        // Ultra-wide Desktop displays (> 1200px):
+        // Center with balanced side margins and subtle elevation.
         return Container(
           color: isDark ? const Color(0xFF121B22) : Colors.grey.shade100,
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
+              constraints: const BoxConstraints(maxWidth: 1200),
               child: Container(
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
+                      blurRadius: 24,
                       offset: const Offset(0, 4),
                     ),
                   ],

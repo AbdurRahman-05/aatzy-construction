@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
 import '../../core/services/push_notification_service.dart';
@@ -32,6 +33,26 @@ class Worker {
 
   double get totalEarned => daysPresent * dailyWage;
   double get remainingSalary => totalEarned - amountPaid;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'role': role,
+    'dailyWage': dailyWage,
+    'isPresentToday': isPresentToday,
+    'daysPresent': daysPresent,
+    'amountPaid': amountPaid,
+  };
+
+  factory Worker.fromJson(Map<String, dynamic> json) => Worker(
+    id: json['id'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    role: json['role'] as String? ?? '',
+    dailyWage: (json['dailyWage'] as num?)?.toDouble() ?? 0.0,
+    isPresentToday: json['isPresentToday'] as bool? ?? false,
+    daysPresent: (json['daysPresent'] as num?)?.toInt() ?? 0,
+    amountPaid: (json['amountPaid'] as num?)?.toDouble() ?? 0.0,
+  );
 }
 
 class ProviderJobDetail extends ConsumerStatefulWidget {
@@ -52,18 +73,53 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
   @override
   void initState() {
     super.initState();
-    _initializeWorkers();
+    _loadWorkers();
     _fetchProjectDetails();
   }
 
-  void _initializeWorkers() {
-    if (_workers.isEmpty) {
-      _workers = [
-        Worker(id: 'w1', name: 'Rajesh Kumar', role: 'Mason (Lead)', dailyWage: 25.0, daysPresent: 12, amountPaid: 200.0, isPresentToday: true),
-        Worker(id: 'w2', name: 'Amit Singh', role: 'Helper Labor', dailyWage: 15.0, daysPresent: 10, amountPaid: 150.0, isPresentToday: true),
-        Worker(id: 'w3', name: 'Sunil Verma', role: 'Carpenter', dailyWage: 22.0, daysPresent: 8, amountPaid: 100.0, isPresentToday: false),
-        Worker(id: 'w4', name: 'Vijay Yadav', role: 'Plumber', dailyWage: 20.0, daysPresent: 5, amountPaid: 100.0, isPresentToday: false),
-      ];
+  Future<void> _loadWorkers() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('project_workers_${widget.projectId}');
+      if (raw != null && raw.isNotEmpty) {
+        final List list = jsonDecode(raw);
+        // Exclude legacy mock worker IDs and names so only user-added workers are loaded
+        final loaded = list
+            .map((item) => Worker.fromJson(item))
+            .where((w) =>
+                !['w1', 'w2', 'w3', 'w4'].contains(w.id) &&
+                !['Rajesh Kumar', 'Amit Singh', 'Sunil Verma', 'Vijay Yadav'].contains(w.name))
+            .toList();
+        if (mounted) {
+          setState(() {
+            _workers = loaded;
+          });
+        }
+        // If legacy mock workers were filtered out, update persistent store immediately
+        if (loaded.length != list.length) {
+          final encoded = jsonEncode(loaded.map((w) => w.toJson()).toList());
+          await prefs.setString('project_workers_${widget.projectId}', encoded);
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _workers = [];
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading workers: $e');
+      if (mounted) setState(() => _workers = []);
+    }
+  }
+
+  Future<void> _saveWorkers() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_workers.map((w) => w.toJson()).toList());
+      await prefs.setString('project_workers_${widget.projectId}', encoded);
+    } catch (e) {
+      debugPrint('Error saving workers: $e');
     }
   }
 
@@ -1520,6 +1576,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                           height: 48,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             children: [
                               _buildCategoryTab(0, Icons.hourglass_empty, 'Pending', tasks.where((t) => t['status'] == 'Todo').length),
                               const SizedBox(width: 8),
@@ -1529,9 +1586,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                               const SizedBox(width: 8),
                               _buildCategoryTab(3, Icons.account_balance_wallet, 'Financials', null),
                               const SizedBox(width: 8),
-                              _buildCategoryTab(4, Icons.people, 'Workers', null),
+                              _buildCategoryTab(4, Icons.people, 'Workers', _workers.length),
                               const SizedBox(width: 8),
                               _buildCategoryTab(5, Icons.description, 'Daily Logs', updates.length),
+                              const SizedBox(width: 12),
                             ],
                           ),
                         ),
@@ -1579,23 +1637,30 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                               ),
                             )
                           ] else ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Pending Project Steps',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                if (!isReadOnly)
-                                  ElevatedButton.icon(
-                                    onPressed: _showAddTaskDialog,
-                                    icon: const Icon(Icons.add_task, size: 16),
-                                    label: const Text('Add Step'),
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    ),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Text(
+                                    'Pending Project Steps',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                   ),
-                              ],
+                                  if (!isReadOnly)
+                                    ElevatedButton.icon(
+                                      onPressed: _showAddTaskDialog,
+                                      icon: const Icon(Icons.add_task, size: 16),
+                                      label: const Text('Add Step'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Builder(
@@ -2258,177 +2323,278 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
                         // Tab 4: Workers Attendance & Salary
                         if (_selectedTab == 4) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Labor & Wage Management',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              if (!isReadOnly)
-                                ElevatedButton.icon(
-                                  onPressed: _showAddWorkerDialog,
-                                  icon: const Icon(Icons.person_add, size: 16),
-                                  label: const Text('Add Worker'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  ),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                Text(
+                                  'Labor & Wage Management',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                 ),
-                            ],
+                                if (!isReadOnly)
+                                  ElevatedButton.icon(
+                                    onPressed: _showAddWorkerDialog,
+                                    icon: const Icon(Icons.person_add, size: 16),
+                                    label: const Text('Add Worker'),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Card(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             elevation: 2,
                             child: Padding(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
-                                  Column(
-                                    children: [
-                                      const Text('Active Workers', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                                      const SizedBox(height: 4),
-                                      Text('${_workers.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                    ],
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        const Text('Active Workers', style: TextStyle(color: Colors.grey, fontSize: 11), textAlign: TextAlign.center),
+                                        const SizedBox(height: 4),
+                                        Text('${_workers.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18), textAlign: TextAlign.center),
+                                      ],
+                                    ),
                                   ),
-                                  Column(
-                                    children: [
-                                      const Text('Paid Salary', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.amountPaid).toStringAsFixed(0)}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
-                                      ),
-                                    ],
+                                  Container(width: 1, height: 32, color: Colors.grey.shade300),
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        const Text('Paid Salary', style: TextStyle(color: Colors.grey, fontSize: 11), textAlign: TextAlign.center),
+                                        const SizedBox(height: 4),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.amountPaid).toStringAsFixed(0)}',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  Column(
-                                    children: [
-                                      const Text('Unpaid Salary', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.remainingSalary).toStringAsFixed(0)}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red),
-                                      ),
-                                    ],
+                                  Container(width: 1, height: 32, color: Colors.grey.shade300),
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        const Text('Unpaid Salary', style: TextStyle(color: Colors.grey, fontSize: 11), textAlign: TextAlign.center),
+                                        const SizedBox(height: 4),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.remainingSalary).toStringAsFixed(0)}',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
                           const SizedBox(height: 12),
-                          ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _workers.length,
-                            separatorBuilder: (context, idx) => const SizedBox(height: 10),
-                            itemBuilder: (context, idx) {
-                              final worker = _workers[idx];
-                              return Card(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
+                          if (_workers.isEmpty)
+                            Card(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                                child: Center(
                                   child: Column(
                                     children: [
-                                      Row(
-                                        children: [
-                                          CircleAvatar(
-                                            backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                                            child: Text(worker.name.substring(0, 1), style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(worker.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                                Text(worker.role, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                                                const SizedBox(height: 2),
-                                                Text('Wage: ₹${worker.dailyWage.toStringAsFixed(2)} / day • Worked: ${worker.daysPresent} days', style: TextStyle(fontSize: 11, color: Colors.grey.shade700)),
-                                              ],
-                                            ),
-                                          ),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              Text('Earned: ₹${worker.totalEarned.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                              Text('Paid: ₹${worker.amountPaid.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.green)),
-                                              Text('Unpaid: ₹${worker.remainingSalary.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
-                                            ],
-                                          ),
-                                        ],
+                                      Icon(Icons.engineering_outlined, size: 48, color: Colors.grey.shade400),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'No workers added yet',
+                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.grey.shade700),
                                       ),
-                                      const Divider(height: 16),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Checkbox(
-                                                value: worker.isPresentToday,
-                                                activeColor: Theme.of(context).primaryColor,
-                                                onChanged: isReadOnly
-                                                    ? null
-                                                    : (val) {
-                                                        if (val != null) {
-                                                          setState(() {
-                                                            worker.isPresentToday = val;
-                                                            if (val) {
-                                                              worker.daysPresent += 1;
-                                                            } else {
-                                                              worker.daysPresent = (worker.daysPresent - 1).clamp(0, 999);
-                                                            }
-                                                          });
-                                                        }
-                                                      },
-                                              ),
-                                              const Text('Present Today', style: TextStyle(fontSize: 12)),
-                                            ],
-                                          ),
-                                          if (!isReadOnly)
-                                            Row(
-                                              children: [
-                                                TextButton.icon(
-                                                  onPressed: () => _showEditWorkerDialog(worker),
-                                                  icon: const Icon(Icons.edit, size: 14),
-                                                  label: const Text('Edit', style: TextStyle(fontSize: 12)),
-                                                  style: TextButton.styleFrom(
-                                                    foregroundColor: Colors.blue,
-                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  onPressed: () => _deleteWorker(worker),
-                                                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                                  padding: EdgeInsets.zero,
-                                                  constraints: const BoxConstraints(),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                TextButton.icon(
-                                                  onPressed: () => _showPayWagesDialog(worker),
-                                                  icon: const Icon(Icons.payment, size: 14),
-                                                  label: const Text('Pay Wages', style: TextStyle(fontSize: 12)),
-                                                  style: TextButton.styleFrom(
-                                                    foregroundColor: Theme.of(context).primaryColor,
-                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                        ],
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Add your workers to track daily attendance, daily wages, and payouts.',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                        textAlign: TextAlign.center,
                                       ),
+                                      if (!isReadOnly) ...[
+                                        const SizedBox(height: 16),
+                                        ElevatedButton.icon(
+                                          onPressed: _showAddWorkerDialog,
+                                          icon: const Icon(Icons.person_add, size: 16),
+                                          label: const Text('Add First Worker'),
+                                          style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                          ),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            )
+                          else
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _workers.length,
+                              separatorBuilder: (context, idx) => const SizedBox(height: 10),
+                              itemBuilder: (context, idx) {
+                                final worker = _workers[idx];
+                                return Card(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            CircleAvatar(
+                                              backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                                              child: Text(
+                                                worker.name.isNotEmpty ? worker.name.substring(0, 1).toUpperCase() : 'W',
+                                                style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(worker.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                                  Text(worker.role, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    'Wage: ₹${worker.dailyWage.toStringAsFixed(0)} / day • Worked: ${worker.daysPresent} days',
+                                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Column(
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                Text('Earned: ₹${worker.totalEarned.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                                Text('Paid: ₹${worker.amountPaid.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                                                Text('Unpaid: ₹${worker.remainingSalary.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        const Divider(height: 16),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: Wrap(
+                                            alignment: WrapAlignment.spaceBetween,
+                                            crossAxisAlignment: WrapCrossAlignment.center,
+                                            spacing: 8,
+                                            runSpacing: 4,
+                                            children: [
+                                              InkWell(
+                                                onTap: isReadOnly
+                                                    ? null
+                                                    : () {
+                                                        setState(() {
+                                                          worker.isPresentToday = !worker.isPresentToday;
+                                                          if (worker.isPresentToday) {
+                                                            worker.daysPresent += 1;
+                                                          } else {
+                                                            worker.daysPresent = (worker.daysPresent - 1).clamp(0, 999);
+                                                          }
+                                                        });
+                                                        _saveWorkers();
+                                                      },
+                                                borderRadius: BorderRadius.circular(4),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Checkbox(
+                                                      value: worker.isPresentToday,
+                                                      activeColor: Theme.of(context).primaryColor,
+                                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                      visualDensity: VisualDensity.compact,
+                                                      onChanged: isReadOnly
+                                                          ? null
+                                                          : (val) {
+                                                              if (val != null) {
+                                                                setState(() {
+                                                                  worker.isPresentToday = val;
+                                                                  if (val) {
+                                                                    worker.daysPresent += 1;
+                                                                  } else {
+                                                                    worker.daysPresent = (worker.daysPresent - 1).clamp(0, 999);
+                                                                  }
+                                                                });
+                                                                _saveWorkers();
+                                                              }
+                                                            },
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    const Text('Present Today', style: TextStyle(fontSize: 12)),
+                                                  ],
+                                                ),
+                                              ),
+                                              if (!isReadOnly)
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    TextButton.icon(
+                                                      onPressed: () => _showEditWorkerDialog(worker),
+                                                      icon: const Icon(Icons.edit, size: 14),
+                                                      label: const Text('Edit', style: TextStyle(fontSize: 12)),
+                                                      style: TextButton.styleFrom(
+                                                        foregroundColor: Colors.blue,
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                                        visualDensity: VisualDensity.compact,
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      onPressed: () => _deleteWorker(worker),
+                                                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                      constraints: const BoxConstraints(),
+                                                      tooltip: 'Delete Worker',
+                                                    ),
+                                                    const SizedBox(width: 2),
+                                                    TextButton.icon(
+                                                      onPressed: () => _showPayWagesDialog(worker),
+                                                      icon: const Icon(Icons.payment, size: 14),
+                                                      label: const Text('Pay Wages', style: TextStyle(fontSize: 12)),
+                                                      style: TextButton.styleFrom(
+                                                        foregroundColor: Theme.of(context).primaryColor,
+                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                                        visualDensity: VisualDensity.compact,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                         ],
 
-                          // Tab 5: Daily Logs
-                          if (_selectedTab == 5) ...[
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        // Tab 5: Daily Logs
+                        if (_selectedTab == 5) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
                                 Text(
                                   'Daily Progress Logs',
@@ -2441,10 +2607,12 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                     label: const Text('Add Log'),
                                     style: ElevatedButton.styleFrom(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      visualDensity: VisualDensity.compact,
                                     ),
                                   ),
                               ],
                             ),
+                          ),
                             const SizedBox(height: 16),
                             if (updates.isEmpty)
                               Card(
@@ -2757,6 +2925,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     dailyWage: wage,
                   ));
                 });
+                _saveWorkers();
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Worker added successfully!')),
@@ -2814,6 +2983,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                 setState(() {
                   worker.amountPaid += amount;
                 });
+                _saveWorkers();
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Paid ₹${amount.toStringAsFixed(2)} to ${worker.name}!')),
@@ -2904,6 +3074,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   worker.daysPresent = days;
                   worker.amountPaid = paid;
                 });
+                _saveWorkers();
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Worker details updated successfully!')),
@@ -2934,6 +3105,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
               setState(() {
                 _workers.removeWhere((w) => w.id == worker.id);
               });
+              _saveWorkers();
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Worker removed.')),

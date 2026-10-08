@@ -164,6 +164,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
       }
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final leftBarWidth = isSmallScreen ? 74.0 : 86.0;
 
     return GestureDetector(
@@ -174,11 +175,11 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
       child: Container(
         margin: isGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200, width: 1),
           boxShadow: [
-            BoxShadow(color: cardColor.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4)),
+            BoxShadow(color: isDark ? Colors.black.withValues(alpha: 0.25) : cardColor.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4)),
           ],
         ),
         clipBehavior: Clip.antiAlias,
@@ -248,7 +249,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
                                     fontSize: isSmallScreen ? 13.5 : 15,
-                                    color: const Color(0xFF1E1E2D),
+                                    color: isDark ? Colors.white : const Color(0xFF1E1E2D),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -256,21 +257,21 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 const SizedBox(height: 2),
                                 Row(
                                   children: [
-                                    Icon(Icons.person_outline_rounded, size: 12, color: Colors.grey.shade400),
+                                    Icon(Icons.person_outline_rounded, size: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400),
                                     const SizedBox(width: 3),
                                     Text(
                                       clientName,
-                                      style: TextStyle(color: Colors.grey.shade700, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w600),
+                                      style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade700, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w600),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(width: 6),
-                                    Icon(Icons.location_on_rounded, size: 11, color: Colors.grey.shade400),
+                                    Icon(Icons.location_on_rounded, size: 11, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400),
                                     const SizedBox(width: 2),
                                     Expanded(
                                       child: Text(
                                         location,
-                                        style: TextStyle(color: Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
+                                        style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -288,17 +289,17 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: isCancelled
-                                      ? Colors.red.shade50
+                                      ? (isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade50)
                                       : (isCompleted
-                                          ? Colors.green.shade50
-                                          : (isPendingApproval ? Colors.amber.shade50 : const Color(0xFFEEF2FF))),
+                                          ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade50)
+                                          : (isPendingApproval ? (isDark ? Colors.amber.withValues(alpha: 0.2) : Colors.amber.shade50) : (isDark ? const Color(0xFF4F46E5).withValues(alpha: 0.25) : const Color(0xFFEEF2FF)))),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: isCancelled
-                                        ? Colors.red.shade200
+                                        ? (isDark ? Colors.red.shade400 : Colors.red.shade200)
                                         : (isCompleted
-                                            ? Colors.green.shade200
-                                            : (isPendingApproval ? Colors.amber.shade300 : const Color(0xFFC7D2FE))),
+                                            ? (isDark ? Colors.green.shade400 : Colors.green.shade200)
+                                            : (isPendingApproval ? (isDark ? Colors.amber.shade400 : Colors.amber.shade300) : (isDark ? const Color(0xFF818CF8) : const Color(0xFFC7D2FE)))),
                                     width: 0.8,
                                   ),
                                 ),
@@ -314,8 +315,8 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                       color: isCancelled
                                           ? Colors.red
                                           : (isCompleted
-                                              ? Colors.green.shade700
-                                              : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
+                                              ? (isDark ? Colors.greenAccent : Colors.green.shade700)
+                                              : (isPendingApproval ? (isDark ? Colors.amberAccent : Colors.amber.shade900) : (isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5)))),
                                       size: 10,
                                     ),
                                     const SizedBox(width: 3),
@@ -329,8 +330,8 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                         color: isCancelled
                                             ? Colors.red
                                             : (isCompleted
-                                                ? Colors.green.shade700
-                                                : (isPendingApproval ? Colors.amber.shade900 : const Color(0xFF4F46E5))),
+                                                ? (isDark ? Colors.greenAccent : Colors.green.shade700)
+                                                : (isPendingApproval ? (isDark ? Colors.amberAccent : Colors.amber.shade900) : (isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5)))),
                                         fontSize: 8.5,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -345,9 +346,9 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: Colors.red.shade50,
+                                      color: isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade50,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.red.shade300, width: 0.8),
+                                      border: Border.all(color: isDark ? Colors.red.shade400 : Colors.red.shade300, width: 0.8),
                                     ),
                                     child: const Icon(Icons.delete_outline, size: 12, color: Colors.red),
                                   ),
@@ -362,9 +363,9 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200),
                         ),
                         child: Row(
                           children: [
@@ -375,7 +376,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 children: [
                                   Text('CONTRACT VALUE',
                                       style: TextStyle(
-                                          color: Colors.grey.shade500,
+                                          color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500,
                                           fontSize: 7.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.3),
@@ -387,14 +388,14 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                     alignment: Alignment.centerLeft,
                                     child: Text('₹ ${budget.toStringAsFixed(0)}',
                                         style: TextStyle(
-                                            color: Colors.green.shade700,
+                                            color: isDark ? const Color(0xFF34D399) : Colors.green.shade700,
                                             fontSize: isSmallScreen ? 11.5 : 12.5,
                                             fontWeight: FontWeight.w900)),
                                   ),
                                 ],
                               ),
                             ),
-                            Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 6), color: Colors.grey.shade200),
+                            Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 6), color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +403,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 children: [
                                   Text('STAGE',
                                       style: TextStyle(
-                                          color: Colors.grey.shade500,
+                                          color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500,
                                           fontSize: 7.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.3),
@@ -411,7 +412,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                   const SizedBox(height: 1),
                                   Row(
                                     children: [
-                                      Icon(Icons.calendar_month_rounded, size: 10, color: Colors.grey.shade600),
+                                      Icon(Icons.calendar_month_rounded, size: 10, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
                                       const SizedBox(width: 3),
                                       Expanded(
                                         child: FittedBox(
@@ -420,7 +421,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                           child: Text(
                                             dateStr,
                                             style: TextStyle(
-                                                color: Colors.grey.shade800,
+                                                color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade800,
                                                 fontSize: isSmallScreen ? 10 : 11,
                                                 fontWeight: FontWeight.w700),
                                           ),
@@ -453,6 +454,8 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
       totalValue += (p['budget'] as num? ?? 0.0).toDouble();
     }
     
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (filtered.isEmpty) {
       return Center(
         child: SingleChildScrollView(
@@ -460,11 +463,11 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.business_center_outlined, size: 64, color: Colors.grey.shade400),
+              Icon(Icons.business_center_outlined, size: 64, color: isDark ? const Color(0xFF475569) : Colors.grey.shade400),
               const SizedBox(height: 16),
               Text(
                 'No projects found in this category',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
+                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -501,13 +504,13 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                       vertical: isSmall ? 8 : 10,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50.withValues(alpha: 0.6),
+                      color: isDark ? const Color(0xFF0F766E).withValues(alpha: 0.16) : Colors.green.shade50.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green.shade200, width: 1),
+                      border: Border.all(color: isDark ? const Color(0xFF0F766E).withValues(alpha: 0.4) : Colors.green.shade200, width: 1),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle, color: Colors.green, size: isSmall ? 16 : 18),
+                        Icon(Icons.check_circle, color: isDark ? const Color(0xFF2DD4BF) : Colors.green, size: isSmall ? 16 : 18),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -515,6 +518,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: isSmall ? 12.5 : 13.5,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -523,18 +527,18 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade100,
+                            color: isDark ? const Color(0xFF0F766E).withValues(alpha: 0.3) : Colors.green.shade100,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${filtered.length}',
-                            style: const TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: isDark ? const Color(0xFF2DD4BF) : Colors.green, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
                         const Spacer(),
                         Text(
                           'Total: ',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: isSmall ? 10 : 11, fontWeight: FontWeight.w500),
+                          style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: isSmall ? 10 : 11, fontWeight: FontWeight.w500),
                         ),
                         Flexible(
                           child: FittedBox(
@@ -542,7 +546,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                             alignment: Alignment.centerRight,
                             child: Text(
                               '₹${totalValue.toStringAsFixed(0)}',
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: isSmall ? 13 : 14, color: Colors.green.shade800),
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: isSmall ? 13 : 14, color: isDark ? Colors.white : Colors.green.shade800),
                             ),
                           ),
                         ),
@@ -584,6 +588,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
   }
 
   Widget _buildTabItem(IconData icon, String label, int count, Color color, {required bool isSmallScreen}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 12, vertical: 6),
       decoration: BoxDecoration(
@@ -592,14 +597,14 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: isSmallScreen ? 14 : 16, color: Colors.black87),
+          Icon(icon, size: isSmallScreen ? 14 : 16, color: isDark ? Colors.white : Colors.black87),
           SizedBox(width: isSmallScreen ? 4 : 6),
-          Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: isSmallScreen ? 11.5 : 13, color: Colors.black87)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? Colors.white : Colors.black87)),
           SizedBox(width: isSmallScreen ? 6 : 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: isDark ? 0.25 : 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(count.toString(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900)),
@@ -623,6 +628,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
     final cancelledCount = _projects.where((p) => (p['currentStage'] as String? ?? '').toLowerCase() == 'cancelled').length;
 
     final mediaQuery = MediaQuery.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = mediaQuery.size.width;
     final isSmallScreen = screenWidth < 360;
     final isTabletOrLaptop = screenWidth >= 700;
@@ -630,7 +636,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
 
     return WallpaperBackground(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF9FAFB),
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator(color: Color(0xFF0F766E)))
@@ -650,20 +656,20 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('PROJECTS & JOBS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF0F766E), letterSpacing: 1.2)),
+                                    Text('PROJECTS & JOBS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E), letterSpacing: 1.2)),
                                     const SizedBox(height: 2),
                                     Text(
                                       'My Projects',
                                       style: TextStyle(
                                         fontSize: isSmallScreen ? 22 : (isTabletOrLaptop ? 32 : 28),
                                         fontWeight: FontWeight.w900,
-                                        color: const Color(0xFF1E1E2D),
+                                        color: isDark ? Colors.white : const Color(0xFF1E1E2D),
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'Track and manage all your assigned construction jobs.',
-                                      style: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                      style: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
@@ -674,7 +680,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 height: isSmallScreen ? 65 : (isTabletOrLaptop ? 100 : 85),
                                 width: isSmallScreen ? 65 : (isTabletOrLaptop ? 100 : 85),
                                 fit: BoxFit.contain,
-                                color: const Color(0xFFF9FAFB),
+                                color: isDark ? null : const Color(0xFFF9FAFB),
                                 colorBlendMode: BlendMode.darken,
                                 errorBuilder: (context, error, stackTrace) => SizedBox(height: isSmallScreen ? 65 : 85, width: isSmallScreen ? 65 : 85),
                               ),
@@ -691,10 +697,10 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                             isScrollable: true,
                             tabAlignment: TabAlignment.start,
                             indicator: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
-                                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
+                                BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 4, offset: const Offset(0, 2)),
                               ],
                             ),
                             dividerColor: Colors.transparent,
@@ -715,9 +721,9 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                           child: Container(
                             height: 42,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade200),
+                              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200),
                             ),
                             child: TextField(
                               onChanged: (val) {
@@ -725,10 +731,11 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                   _searchQuery = val;
                                 });
                               },
+                              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                               decoration: InputDecoration(
                                 hintText: isSmallScreen ? 'Search jobs...' : 'Search jobs by title, client, or site...',
-                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13),
-                                prefixIcon: const Icon(Icons.search, size: 18),
+                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
+                                prefixIcon: Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               ),

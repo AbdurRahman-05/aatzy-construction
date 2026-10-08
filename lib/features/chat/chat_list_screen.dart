@@ -213,7 +213,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: Column(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
@@ -489,7 +492,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildPartnerAvatar(String? partnerId, String partnerImage, String partnerName) {

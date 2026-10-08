@@ -281,11 +281,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -294,10 +297,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               child: const Icon(Icons.done_all_rounded, size: 48, color: Color(0xFF0F766E)),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'All Caught Up!',
               style: TextStyle(
-                color: Color(0xFF1E293B),
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
               ),
@@ -305,7 +308,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             const SizedBox(height: 6),
             Text(
               'You have no unread notifications.',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              style: TextStyle(
+                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 16),
             OutlinedButton(
@@ -331,27 +337,37 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(Icons.notifications_none_rounded, size: 54, color: Colors.grey.shade400),
+            child: Icon(Icons.notifications_none_rounded, size: 54, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No Notifications',
-            style: TextStyle(color: Color(0xFF1E293B), fontSize: 17, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Updates about bids, leads, and orders will show here.',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            style: TextStyle(
+              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+              fontSize: 13,
+            ),
           ),
         ],
       ),

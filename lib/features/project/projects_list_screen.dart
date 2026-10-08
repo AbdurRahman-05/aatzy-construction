@@ -154,6 +154,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
       dateStr = project['timeline']?.toString() ?? 'Planning Phase';
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final leftBarWidth = isSmallScreen ? 74.0 : 86.0;
 
     return GestureDetector(
@@ -164,11 +165,11 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
       child: Container(
         margin: isGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.grey.shade200, width: 1),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200, width: 1),
           boxShadow: [
-            BoxShadow(color: cardColor.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4)),
+            BoxShadow(color: isDark ? Colors.black.withValues(alpha: 0.25) : cardColor.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4)),
           ],
         ),
         clipBehavior: Clip.antiAlias,
@@ -235,7 +236,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                                 style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   fontSize: isSmallScreen ? 13.5 : 15,
-                                  color: const Color(0xFF1E1E2D),
+                                  color: isDark ? Colors.white : const Color(0xFF1E1E2D),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -243,12 +244,12 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                               const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  Icon(Icons.location_on_rounded, size: 12, color: Colors.grey.shade400),
+                                  Icon(Icons.location_on_rounded, size: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400),
                                   const SizedBox(width: 3),
                                   Expanded(
                                     child: Text(
                                       location,
-                                      style: TextStyle(color: Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
+                                      style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -263,17 +264,21 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
                             color: isCancelled 
-                                ? Colors.red.shade50 
+                                ? (isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade50)
                                 : (isCompleted 
-                                    ? Colors.green.shade50 
-                                    : (isPending ? Colors.orange.shade50 : Colors.indigo.shade50)),
+                                    ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade50)
+                                    : (isPending 
+                                        ? (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade50) 
+                                        : (isDark ? Colors.indigo.withValues(alpha: 0.25) : Colors.indigo.shade50))),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isCancelled 
-                                  ? Colors.red.shade200 
+                                  ? (isDark ? Colors.red.shade400 : Colors.red.shade200) 
                                   : (isCompleted 
-                                      ? Colors.green.shade200 
-                                      : (isPending ? Colors.orange.shade200 : Colors.indigo.shade200)), 
+                                      ? (isDark ? Colors.green.shade400 : Colors.green.shade200) 
+                                      : (isPending 
+                                          ? (isDark ? Colors.orange.shade400 : Colors.orange.shade200) 
+                                          : (isDark ? Colors.indigo.shade300 : Colors.indigo.shade200))), 
                               width: 0.8,
                             ),
                           ),
@@ -289,8 +294,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                                 color: isCancelled 
                                     ? Colors.red 
                                     : (isCompleted 
-                                        ? Colors.green.shade700 
-                                        : (isPending ? Colors.orange.shade800 : Colors.indigo)),
+                                        ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
+                                        : (isPending 
+                                            ? (isDark ? Colors.orangeAccent : Colors.orange.shade800) 
+                                            : (isDark ? const Color(0xFF818CF8) : Colors.indigo))),
                                 size: 10,
                               ),
                               const SizedBox(width: 3),
@@ -304,8 +311,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                                   color: isCancelled 
                                       ? Colors.red 
                                       : (isCompleted 
-                                          ? Colors.green.shade700 
-                                          : (isPending ? Colors.orange.shade800 : Colors.indigo)),
+                                          ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
+                                          : (isPending 
+                                              ? (isDark ? Colors.orangeAccent : Colors.orange.shade800) 
+                                              : (isDark ? const Color(0xFF818CF8) : Colors.indigo))),
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -320,9 +329,9 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200),
                       ),
                       child: Row(
                         children: [
@@ -331,33 +340,33 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('TOTAL BUDGET', style: TextStyle(color: Colors.grey.shade500, fontSize: 7.5, fontWeight: FontWeight.w800, letterSpacing: 0.3), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                Text('TOTAL BUDGET', style: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500, fontSize: 7.5, fontWeight: FontWeight.w800, letterSpacing: 0.3), maxLines: 1, overflow: TextOverflow.ellipsis),
                                 const SizedBox(height: 1),
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerLeft,
-                                  child: Text('₹ $budget', style: TextStyle(color: Colors.green.shade700, fontSize: isSmallScreen ? 12 : 13, fontWeight: FontWeight.w900)),
+                                  child: Text('₹ $budget', style: TextStyle(color: isDark ? const Color(0xFF34D399) : Colors.green.shade700, fontSize: isSmallScreen ? 12 : 13, fontWeight: FontWeight.w900)),
                                 ),
                               ],
                             ),
                           ),
-                          Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 6), color: Colors.grey.shade200),
+                          Container(width: 1, height: 18, margin: const EdgeInsets.symmetric(horizontal: 6), color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('DEADLINE', style: TextStyle(color: Colors.grey.shade500, fontSize: 7.5, fontWeight: FontWeight.w800, letterSpacing: 0.3), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                Text('DEADLINE', style: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500, fontSize: 7.5, fontWeight: FontWeight.w800, letterSpacing: 0.3), maxLines: 1, overflow: TextOverflow.ellipsis),
                                 const SizedBox(height: 1),
                                 Row(
                                   children: [
-                                    Icon(Icons.calendar_month_rounded, size: 10, color: Colors.grey.shade600),
+                                    Icon(Icons.calendar_month_rounded, size: 10, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
                                     const SizedBox(width: 3),
                                     Expanded(
                                       child: FittedBox(
                                         fit: BoxFit.scaleDown,
                                         alignment: Alignment.centerLeft,
-                                        child: Text(dateStr, style: TextStyle(color: Colors.grey.shade800, fontSize: isSmallScreen ? 10.5 : 11.5, fontWeight: FontWeight.w700)),
+                                        child: Text(dateStr, style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade800, fontSize: isSmallScreen ? 10.5 : 11.5, fontWeight: FontWeight.w700)),
                                       ),
                                     ),
                                   ],
@@ -393,6 +402,8 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
       totalValue += (p['budget'] as num? ?? 10000).toDouble();
     }
     
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (filtered.isEmpty) {
       return Center(
         child: SingleChildScrollView(
@@ -400,11 +411,11 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.business, size: 64, color: Colors.grey.shade400),
+              Icon(Icons.business, size: 64, color: isDark ? const Color(0xFF475569) : Colors.grey.shade400),
               const SizedBox(height: 16),
               Text(
                 'No projects found in this category',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
+                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -443,9 +454,9 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                       vertical: isSmall ? 8 : 10,
                     ),
                     decoration: BoxDecoration(
-                      color: themeColor.withValues(alpha: 0.08),
+                      color: themeColor.withValues(alpha: isDark ? 0.16 : 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: themeColor.withValues(alpha: 0.25), width: 1),
+                      border: Border.all(color: themeColor.withValues(alpha: isDark ? 0.35 : 0.25), width: 1),
                     ),
                     child: Row(
                       children: [
@@ -457,6 +468,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                             style: TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: isSmall ? 12.5 : 13.5,
+                              color: isDark ? Colors.white : Colors.black87,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -465,7 +477,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: themeColor.withValues(alpha: 0.15),
+                            color: themeColor.withValues(alpha: isDark ? 0.25 : 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -476,7 +488,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                         const Spacer(),
                         Text(
                           'Total: ',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: isSmall ? 10 : 11, fontWeight: FontWeight.w500),
+                          style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: isSmall ? 10 : 11, fontWeight: FontWeight.w500),
                         ),
                         Flexible(
                           child: FittedBox(
@@ -484,7 +496,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                             alignment: Alignment.centerRight,
                             child: Text(
                               '₹${totalValue.toStringAsFixed(0)}',
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: isSmall ? 13 : 14, color: themeColor),
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: isSmall ? 13 : 14, color: isDark ? Colors.white : themeColor),
                             ),
                           ),
                         ),
@@ -529,6 +541,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
   }
 
   Widget _buildTabItem(IconData icon, String label, int count, Color color, {required bool isSmallScreen}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 12, vertical: 6),
       decoration: BoxDecoration(
@@ -537,14 +550,14 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: isSmallScreen ? 14 : 16, color: Colors.black87),
+          Icon(icon, size: isSmallScreen ? 14 : 16, color: isDark ? Colors.white : Colors.black87),
           SizedBox(width: isSmallScreen ? 4 : 6),
-          Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: isSmallScreen ? 11.5 : 13, color: Colors.black87)),
+          Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? Colors.white : Colors.black87)),
           SizedBox(width: isSmallScreen ? 6 : 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: isDark ? 0.25 : 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(count.toString(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900)),
@@ -574,6 +587,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
     final cancelledCount = projects.where((p) => _isCancelledStage(p['currentStage'] as String?)).length;
 
     final mediaQuery = MediaQuery.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = mediaQuery.size.width;
     final isSmallScreen = screenWidth < 360;
     final isTabletOrLaptop = screenWidth >= 700;
@@ -581,7 +595,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
     return WallpaperBackground(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF9FAFB),
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: isLoading
               ? const Padding(
@@ -604,20 +618,20 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('PROJECTS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.indigo, letterSpacing: 1.2)),
+                                    Text('PROJECTS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isDark ? const Color(0xFF818CF8) : Colors.indigo, letterSpacing: 1.2)),
                                     const SizedBox(height: 2),
                                     Text(
                                       'My Projects',
                                       style: TextStyle(
                                         fontSize: isSmallScreen ? 22 : (isTabletOrLaptop ? 32 : 28),
                                         fontWeight: FontWeight.w900,
-                                        color: const Color(0xFF1E1E2D),
+                                        color: isDark ? Colors.white : const Color(0xFF1E1E2D),
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'Track and manage all your projects in one place.',
-                                      style: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                      style: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
@@ -628,7 +642,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                                 height: isSmallScreen ? 65 : (isTabletOrLaptop ? 100 : 85),
                                 width: isSmallScreen ? 65 : (isTabletOrLaptop ? 100 : 85),
                                 fit: BoxFit.contain,
-                                color: const Color(0xFFF9FAFB),
+                                color: isDark ? null : const Color(0xFFF9FAFB),
                                 colorBlendMode: BlendMode.darken,
                                 errorBuilder: (context, error, stackTrace) => SizedBox(height: isSmallScreen ? 65 : 85, width: isSmallScreen ? 65 : 85),
                               ),
@@ -645,10 +659,10 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                             isScrollable: true,
                             tabAlignment: TabAlignment.start,
                             indicator: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
-                                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2)),
+                                BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 4, offset: const Offset(0, 2)),
                               ],
                             ),
                             dividerColor: Colors.transparent,
@@ -669,9 +683,9 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                           child: Container(
                             height: 42,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade200),
+                              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200),
                             ),
                             child: TextField(
                               onChanged: (val) {
@@ -679,10 +693,11 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                                   _searchQuery = val;
                                 });
                               },
+                              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                               decoration: InputDecoration(
                                 hintText: isSmallScreen ? 'Search projects...' : 'Search projects by title or location...',
-                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13),
-                                prefixIcon: const Icon(Icons.search, size: 18),
+                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
+                                prefixIcon: Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               ),

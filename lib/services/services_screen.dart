@@ -117,13 +117,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     final unreadCount = notifications.where((n) => n.isUnread).length;
 
     final mediaQuery = MediaQuery.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenWidth = mediaQuery.size.width;
     final isSmallScreen = screenWidth < 360;
     final isTabletOrLaptop = screenWidth >= 700;
     final horizontalPadding = isTabletOrLaptop ? 24.0 : (isSmallScreen ? 12.0 : 16.0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -144,7 +145,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 16 : 19,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 letterSpacing: -0.5,
                               ),
                               maxLines: 1,
@@ -157,7 +158,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                   : 'Explore our completed projects',
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 10 : 11.5,
-                                color: const Color(0xFF64748B),
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
@@ -175,11 +176,11 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
                                 ),
-                                child: const Icon(Icons.notifications_outlined, color: Color(0xFF1E293B), size: 19),
+                                child: Icon(Icons.notifications_outlined, color: isDark ? Colors.white : const Color(0xFF1E293B), size: 19),
                               ),
                               if (unreadCount > 0)
                                 Positioned(
@@ -210,9 +211,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
                     ),
                     child: Row(
                       children: [
@@ -241,13 +242,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                   Icon(
                                     Icons.grid_view_rounded,
                                     size: 16,
-                                    color: _selectedTab == 0 ? Colors.white : const Color(0xFF64748B),
+                                    color: _selectedTab == 0 ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Services',
                                     style: TextStyle(
-                                      color: _selectedTab == 0 ? Colors.white : const Color(0xFF64748B),
+                                      color: _selectedTab == 0 ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
                                     ),
@@ -282,13 +283,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                   Icon(
                                     Icons.business_center_rounded,
                                     size: 16,
-                                    color: _selectedTab == 1 ? Colors.white : const Color(0xFF64748B),
+                                    color: _selectedTab == 1 ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'Portfolio',
                                     style: TextStyle(
-                                      color: _selectedTab == 1 ? Colors.white : const Color(0xFF64748B),
+                                      color: _selectedTab == 1 ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
                                     ),
@@ -321,6 +322,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   // SERVICES TAB VIEW (Left Screen in Image)
   // ==========================================
   Widget _buildServicesView(bool isSmallScreen, double screenWidth, double horizontalPadding) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
@@ -339,17 +341,23 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFFEFF6FF),
-                  const Color(0xFFF8FAFC),
-                  const Color(0xFFEEF2FF),
-                ],
+                colors: isDark
+                    ? [
+                        const Color(0xFF1E293B),
+                        const Color(0xFF0F172A),
+                        const Color(0xFF1E293B),
+                      ]
+                    : [
+                        const Color(0xFFEFF6FF),
+                        const Color(0xFFF8FAFC),
+                        const Color(0xFFEEF2FF),
+                      ],
               ),
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFDBEAFE)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1E293B).withValues(alpha: 0.04),
+                  color: isDark ? Colors.black.withValues(alpha: 0.3) : const Color(0xFF1E293B).withValues(alpha: 0.04),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -371,7 +379,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 16 : 19,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                                 letterSpacing: -0.4,
                               ),
                             ),
@@ -380,7 +388,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                               'From planning to completion,\nwe build your dreams',
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 11 : 12.5,
-                                color: const Color(0xFF64748B),
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                                 height: 1.35,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -450,9 +458,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'All Services',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                   const SizedBox(height: 2),
                   Container(width: 24, height: 2.5, decoration: BoxDecoration(color: const Color(0xFF1D4ED8), borderRadius: BorderRadius.circular(2))),
@@ -462,8 +470,8 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 onTap: () => context.push('/providers/All'),
                 child: Row(
                   children: [
-                    Text('View All', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey.shade600),
+                    Text('View All', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                    Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
                   ],
                 ),
               ),
@@ -491,12 +499,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 onTap: () => context.push('/providers/${Uri.encodeComponent(cat['name'])}'),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9), width: 1.2),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                        color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF0F172A).withValues(alpha: 0.03),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -512,7 +520,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                               width: isSmallScreen ? 40 : 44,
                               height: isSmallScreen ? 40 : 44,
                               decoration: BoxDecoration(
-                                color: bgColor,
+                                color: isDark ? iconColor.withValues(alpha: 0.2) : bgColor,
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
@@ -532,7 +540,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: isSmallScreen ? 10.5 : 11.5,
-                                    color: const Color(0xFF1E293B),
+                                    color: isDark ? Colors.white : const Color(0xFF1E293B),
                                     height: 1.2,
                                   ),
                                   maxLines: 2,
@@ -546,7 +554,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                       Positioned(
                         right: 8,
                         bottom: 8,
-                        child: Icon(Icons.arrow_forward_rounded, size: 10, color: Colors.grey.shade300),
+                        child: Icon(Icons.arrow_forward_rounded, size: 10, color: isDark ? const Color(0xFF475569) : Colors.grey.shade300),
                       ),
                     ],
                   ),
@@ -564,13 +572,18 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFFF8FAFC),
-                  const Color(0xFFEFF6FF),
-                ],
+                colors: isDark
+                    ? [
+                        const Color(0xFF1E293B),
+                        const Color(0xFF0F172A),
+                      ]
+                    : [
+                        const Color(0xFFF8FAFC),
+                        const Color(0xFFEFF6FF),
+                      ],
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFDBEAFE)),
             ),
             child: Row(
               children: [
@@ -579,14 +592,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Have a Custom Requirement?',
-                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                        style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'We\'ll create a tailored solution just for your project.',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600, height: 1.3),
+                        style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, height: 1.3),
                       ),
                       const SizedBox(height: 12),
                       GestureDetector(
@@ -617,7 +630,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                     'assets/images/banner_building.jpg',
                     height: 80,
                     fit: BoxFit.contain,
-                    color: const Color(0xFFF8FAFC),
+                    color: isDark ? null : const Color(0xFFF8FAFC),
                     colorBlendMode: BlendMode.darken,
                     errorBuilder: (context, error, stackTrace) => const Icon(Icons.apartment, size: 60, color: Colors.blue),
                   ),
@@ -637,6 +650,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   // PORTFOLIO TAB VIEW (Live Builder Showcases Only)
   // ==========================================
   Widget _buildPortfolioView(bool isSmallScreen, double screenWidth, double horizontalPadding) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final filterOptions = ['All Projects', 'Residential', 'Commercial', 'Interior', 'Infrastructure'];
     final socialAsync = ref.watch(socialFeedProvider);
     final socialPosts = socialAsync.value ?? [];
@@ -721,10 +735,10 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF1D4ED8) : Colors.white,
+                      color: isSelected ? const Color(0xFF1D4ED8) : (isDark ? const Color(0xFF1E293B) : Colors.white),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFFE2E8F0),
+                        color: isSelected ? const Color(0xFF1D4ED8) : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
                       ),
                       boxShadow: isSelected
                           ? [
@@ -741,7 +755,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                        color: isSelected ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
                       ),
                     ),
                   ),
@@ -756,12 +770,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             width: double.infinity,
             padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  color: isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0xFF0F172A).withValues(alpha: 0.03),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -778,9 +792,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Live Project Showcases',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -788,9 +802,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF10B981), height: 1.1),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Verified contractor inspirations and live project showcases',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3),
+                            style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), height: 1.3),
                           ),
                         ],
                       ),
@@ -829,16 +843,16 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Builder Inspirations',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
               ),
               GestureDetector(
                 onTap: () => setState(() => _selectedPortfolioFilter = 'All Projects'),
                 child: Row(
                   children: [
-                    Text('View All ($totalCount)', style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600)),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: Colors.grey.shade600),
+                    Text('View All ($totalCount)', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
+                    Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
                   ],
                 ),
               ),
@@ -858,31 +872,31 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               margin: const EdgeInsets.symmetric(vertical: 12),
               padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9)),
               ),
               child: Column(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFEFF6FF),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.apartment_rounded, color: Color(0xFF2563EB), size: 36),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
+                  Text(
                     'No Showcases Found',
-                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _selectedPortfolioFilter == 'All Projects'
                         ? 'Contractor inspirations and live showcases will appear here.'
                         : 'No live showcases found under "$_selectedPortfolioFilter".',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -904,12 +918,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9), width: 1.2),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                        color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF0F172A).withValues(alpha: 0.04),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -925,13 +939,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                         child: Container(
                           width: isSmallScreen ? 90 : 105,
                           height: isSmallScreen ? 90 : 105,
-                          color: const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                           child: hasBase64
                               ? Image.memory(
                                   base64Decode(imageData.contains(',') ? imageData.split(',').last : imageData),
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.image, size: 40, color: Colors.grey),
+                                      Icon(Icons.image, size: 40, color: isDark ? const Color(0xFF475569) : Colors.grey),
                                 )
                               : (project['image'] != null && (project['image'] as String).startsWith('http')
                                   ? Image.network(
@@ -964,7 +978,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: project['tagBg'] as Color? ?? const Color(0xFFECFDF5),
+                                        color: isDark ? (project['tagColor'] as Color? ?? const Color(0xFF10B981)).withValues(alpha: 0.2) : (project['tagBg'] as Color? ?? const Color(0xFFECFDF5)),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -994,7 +1008,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                   child: Icon(
                                     isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                                     size: 18,
-                                    color: isBookmarked ? const Color(0xFF1D4ED8) : Colors.grey.shade400,
+                                    color: isBookmarked ? const Color(0xFF1D4ED8) : (isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
                                   ),
                                 ),
                               ],
@@ -1005,7 +1019,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 13.5 : 15,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1016,7 +1030,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                 Flexible(
                                   child: Text(
                                     builder,
-                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+                                    style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade700, fontWeight: FontWeight.w600),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1028,12 +1042,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                Icon(Icons.location_on_rounded, size: 11, color: Colors.grey.shade400),
+                                Icon(Icons.location_on_rounded, size: 11, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400),
                                 const SizedBox(width: 2),
                                 Expanded(
                                   child: Text(
                                     project['location'] as String? ?? 'Chennai',
-                                    style: TextStyle(fontSize: 10.5, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                                    style: TextStyle(fontSize: 10.5, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500, fontWeight: FontWeight.w500),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1057,7 +1071,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFEFF6FF),
+                                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFEFF6FF),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const Row(
@@ -1076,17 +1090,17 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                                 else
                                   Text(
                                     '${project['area']} • ${project['year']}',
-                                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                                    style: TextStyle(fontSize: 10, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600),
                                   ),
                                 GestureDetector(
                                   onTap: () => _showProjectDetailDialog(project),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: isDark ? const Color(0xFF0F172A) : Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: (project['tagColor'] as Color? ?? const Color(0xFF1D4ED8)).withValues(alpha: 0.5),
+                                        color: (project['tagColor'] as Color? ?? const Color(0xFF1D4ED8)).withValues(alpha: isDark ? 0.35 : 0.5),
                                       ),
                                     ),
                                     child: Text(
@@ -1119,22 +1133,27 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFFF0FDF4),
-                  const Color(0xFFEFF6FF),
-                ],
+                colors: isDark
+                    ? [
+                        const Color(0xFF1E293B),
+                        const Color(0xFF0F172A),
+                      ]
+                    : [
+                        const Color(0xFFF0FDF4),
+                        const Color(0xFFEFF6FF),
+                      ],
               ),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFDBEAFE)),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFBFDBFE)),
                   ),
                   child: const Icon(Icons.apartment_rounded, color: Color(0xFF2563EB), size: 22),
                 ),
@@ -1143,14 +1162,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Have a project in mind?',
-                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Let\'s build something amazing together',
-                        style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
+                        style: TextStyle(fontSize: 10.5, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
                       ),
                     ],
                   ),
@@ -1183,13 +1202,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   }
 
   Widget _buildMiniStat(String count, String label, IconData icon, Color color, Color bg) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
         decoration: BoxDecoration(
-          color: bg,
+          color: isDark ? const Color(0xFF0F172A) : bg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
+          border: Border.all(color: color.withValues(alpha: isDark ? 0.3 : 0.15)),
         ),
         child: Column(
           children: [
@@ -1201,7 +1221,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             ),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(label, style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+              child: Text(label, style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700)),
             ),
           ],
         ),
@@ -1210,6 +1230,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   }
 
   void _showProjectDetailDialog(Map<String, dynamic> project) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final imageData = project['imageData'] as String?;
     final hasBase64 = imageData != null && imageData.isNotEmpty;
     final providerId = project['providerId'] as String? ?? '';
@@ -1221,9 +1242,9 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1233,7 +1254,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               child: Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: isDark ? const Color(0xFF475569) : Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
@@ -1246,7 +1267,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                         base64Decode(imageData.contains(',') ? imageData.split(',').last : imageData),
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.image, size: 60, color: Colors.grey),
+                            Icon(Icons.image, size: 60, color: isDark ? const Color(0xFF475569) : Colors.grey),
                       )
                     : (project['image'] != null && (project['image'] as String).startsWith('http')
                         ? Image.network(
@@ -1270,7 +1291,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 Expanded(
                   child: Text(
                     project['title'] as String? ?? 'Architectural Project',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1280,7 +1301,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: project['tagBg'] as Color? ?? const Color(0xFFECFDF5),
+                      color: isDark ? (project['tagColor'] as Color? ?? const Color(0xFF10B981)).withValues(alpha: 0.2) : (project['tagBg'] as Color? ?? const Color(0xFFECFDF5)),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1302,7 +1323,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               children: [
                 const Icon(Icons.person_rounded, size: 14, color: Color(0xFF2563EB)),
                 const SizedBox(width: 4),
-                Text(builder, style: const TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.w700, fontSize: 13)),
+                Text(builder, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B), fontWeight: FontWeight.w700, fontSize: 13)),
                 const SizedBox(width: 4),
                 const Icon(Icons.verified_rounded, color: Color(0xFF2563EB), size: 13),
               ],
@@ -1312,7 +1333,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               children: [
                 const Icon(Icons.location_on_rounded, size: 14, color: Colors.grey),
                 const SizedBox(width: 4),
-                Text(project['location'] as String? ?? 'Chennai', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                Text(project['location'] as String? ?? 'Chennai', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 12),
@@ -1320,14 +1341,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
-                  child: Text('📐 Area: ${project['area']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  decoration: BoxDecoration(color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
+                  child: Text('📐 Area: ${project['area']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFCBD5E1) : Colors.black87)),
                 ),
                 const SizedBox(width: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
-                  child: Text('📅 Year: ${project['year']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  decoration: BoxDecoration(color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(8)),
+                  child: Text('📅 Year: ${project['year']}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFFCBD5E1) : Colors.black87)),
                 ),
               ],
             ),

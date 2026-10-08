@@ -83,6 +83,7 @@ class _ProviderLayoutState extends ConsumerState<ProviderLayout> {
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(providerTabProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isTablet = MediaQuery.of(context).size.width >= 700;
 
     final screens = const [
       ProviderDashboard(),
@@ -108,11 +109,11 @@ class _ProviderLayoutState extends ConsumerState<ProviderLayout> {
             ),
         bottomNavigationBar: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: EdgeInsets.fromLTRB(isTablet ? 32 : 16, 0, isTablet ? 32 : 16, 12),
             child: Center(
               heightFactor: 1.0,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
+                constraints: BoxConstraints(maxWidth: isTablet ? 720 : 560),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(36),
                   child: BackdropFilter(

@@ -169,6 +169,11 @@ class AppTheme {
         filled: true,
         fillColor: const Color(0xFF1B2730),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        floatingLabelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+        prefixIconColor: Colors.white,
+        suffixIconColor: Colors.white70,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1.0),

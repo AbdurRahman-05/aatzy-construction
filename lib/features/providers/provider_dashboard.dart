@@ -172,6 +172,8 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final isSmallScreen = screenWidth < 360;
+    final isTabletOrLaptop = screenWidth >= 700;
+    final horizontalPadding = isTabletOrLaptop ? 24.0 : (isSmallScreen ? 12.0 : 16.0);
 
     final notifications = ref.watch(notificationsProvider);
     final unreadNotifs = notifications.where((n) => n.isUnread).length;
@@ -182,27 +184,79 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
         automaticallyImplyLeading: false,
         centerTitle: true,
-        title: Image.asset(
-          'assets/partnerslogo.png',
-          height: 38,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => Text(
-            'Connectzy Partner',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              color: isDark ? Colors.white : const Color(0xFF0F766E),
-              letterSpacing: -0.4,
-            ),
-          ),
-        ),
+        title: isDark
+            ? Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  // Luminous ambient glow aura behind logo in dark mode
+                  Container(
+                    width: 146,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0D9488).withValues(alpha: 0.65),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF2DD4BF).withValues(alpha: 0.40),
+                          blurRadius: 36,
+                          spreadRadius: 6,
+                        ),
+                        BoxShadow(
+                          color: const Color(0xFF14B8A6).withValues(alpha: 0.20),
+                          blurRadius: 52,
+                          spreadRadius: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Image.asset(
+                    'assets/partnerslogo.png',
+                    height: 38,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Text(
+                      'Connectzy Partner',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                        color: Colors.white,
+                        letterSpacing: -0.4,
+                        shadows: [
+                          Shadow(
+                            color: const Color(0xFF2DD4BF).withValues(alpha: 0.8),
+                            blurRadius: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : Image.asset(
+                'assets/partnerslogo.png',
+                height: 38,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Text(
+                  'Connectzy Partner',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    color: Color(0xFF0F766E),
+                    letterSpacing: -0.4,
+                  ),
+                ),
+              ),
         actions: [
           // Notification Bell with dynamic unread counter badge
           Stack(
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_none_rounded, color: Color(0xFF0F172A), size: 24),
+                icon: Icon(Icons.notifications_none_rounded, color: isDark ? Colors.white : const Color(0xFF0F172A), size: 24),
                 onPressed: () => context.push('/notifications'),
               ),
               if (unreadNotifs > 0)
@@ -271,9 +325,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               onRefresh: _fetchStats,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12.0 : 16.0, vertical: 12.0),
-                  child: Column(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12.0),
+                      child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // 1. Hero Provider Welcome Banner Card
@@ -329,6 +386,8 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 ),
               ),
             ),
+          ),
+        ),
     );
   }
   // ==========================================
@@ -518,15 +577,16 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   // 3. SEGMENTED SWITCHER (Overview vs Financials)
   // ==========================================
   Widget _buildSegmentedPillSwitcher(bool isSmallScreen) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.3 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -540,7 +600,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: _dashboardTab == 0 ? const Color(0xFFF1F5F9) : Colors.transparent,
+                  color: _dashboardTab == 0 ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)) : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -549,7 +609,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     Icon(
                       Icons.dashboard_customize_outlined,
                       size: 16,
-                      color: _dashboardTab == 0 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
+                      color: _dashboardTab == 0 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -557,7 +617,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
-                        color: _dashboardTab == 0 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
+                        color: _dashboardTab == 0 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       ),
                     ),
                   ],
@@ -571,7 +631,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: _dashboardTab == 1 ? const Color(0xFFF1F5F9) : Colors.transparent,
+                  color: _dashboardTab == 1 ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)) : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -580,7 +640,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     Icon(
                       Icons.account_balance_wallet_outlined,
                       size: 16,
-                      color: _dashboardTab == 1 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
+                      color: _dashboardTab == 1 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -588,7 +648,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
-                        color: _dashboardTab == 1 ? const Color(0xFF0F766E) : const Color(0xFF64748B),
+                        color: _dashboardTab == 1 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       ),
                     ),
                   ],
@@ -605,6 +665,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   // 4. 3 KEY METRIC STAT CARDS
   // ==========================================
   Widget _buildKeyMetricsRow(bool isSmallScreen) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeMaterialLeadsCount = _materialLeads.where((lead) {
       final status = lead['status'] ?? 'New';
       return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
@@ -624,6 +685,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final activeJobsCount = runningProjects + ongoingMaterialJobsCount;
 
     final ongoingDealsCount = ongoingMaterialJobsCount;
+    final metricCardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Row(
       children: [
@@ -633,9 +695,9 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             value: '$activeLeadsCount',
             subtitle: 'Inquiries listed',
             icon: Icons.people_alt_outlined,
-            iconColor: const Color(0xFF0F766E),
-            iconBg: const Color(0xFFCCFBF1),
-            cardBg: Colors.white,
+            iconColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
+            iconBg: isDark ? const Color(0xFF0F766E).withValues(alpha: 0.25) : const Color(0xFFCCFBF1),
+            cardBg: metricCardBg,
             onTap: () => ref.read(providerTabProvider.notifier).setTab(2),
           ),
         ),
@@ -646,9 +708,9 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             value: '$activeJobsCount',
             subtitle: 'Sites under work',
             icon: Icons.business_center_outlined,
-            iconColor: const Color(0xFF2563EB),
-            iconBg: const Color(0xFFDBEAFE),
-            cardBg: Colors.white,
+            iconColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+            iconBg: isDark ? const Color(0xFF2563EB).withValues(alpha: 0.25) : const Color(0xFFDBEAFE),
+            cardBg: metricCardBg,
             onTap: () => ref.read(providerTabProvider.notifier).setTab(1),
           ),
         ),
@@ -659,9 +721,9 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             value: '$ongoingDealsCount',
             subtitle: 'Active orders',
             icon: Icons.assignment_outlined,
-            iconColor: const Color(0xFFEA580C),
-            iconBg: const Color(0xFFFFEDD5),
-            cardBg: Colors.white,
+            iconColor: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+            iconBg: isDark ? const Color(0xFFEA580C).withValues(alpha: 0.25) : const Color(0xFFFFEDD5),
+            cardBg: metricCardBg,
             onTap: () => context.push('/b2b-materials'),
           ),
         ),
@@ -679,6 +741,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     required Color cardBg,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -686,10 +749,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+              color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.3 : 0.03),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -715,10 +778,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF64748B),
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -729,10 +792,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF0F172A),
                 height: 1.1,
               ),
             ),
@@ -743,7 +806,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 Expanded(
                   child: Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 9.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 9.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -751,10 +814,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.arrow_forward_rounded, size: 10, color: Color(0xFF64748B)),
+                  child: Icon(Icons.arrow_forward_rounded, size: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                 ),
               ],
             ),
@@ -768,16 +831,19 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   // 5. RUNNING PROJECT STAGES TIMELINE CARD
   // ==========================================
   Widget _buildRunningProjectStagesCard(bool isSmallScreen) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -786,14 +852,21 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Running Project Stages',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
           ),
           const SizedBox(height: 2),
-          const Text(
+          Text(
             'Track site progress timeline',
-            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -839,9 +912,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           Container(
             padding: EdgeInsets.all(isSmallScreen ? 12 : 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.25) : const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCFCE7)),
+              border: Border.all(
+                color: isDark ? const Color(0xFF059669).withValues(alpha: 0.3) : const Color(0xFFDCFCE7),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -851,25 +926,33 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFDCFCE7),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF059669).withValues(alpha: 0.2) : const Color(0xFFDCFCE7),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.celebration_rounded, color: Color(0xFF16A34A), size: 20),
+                      child: const Icon(Icons.celebration_rounded, color: Color(0xFF10B981), size: 20),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'All Projects Executed!',
-                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: Color(0xFF0F172A)),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13.5,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
                           ),
-                          SizedBox(height: 3),
+                          const SizedBox(height: 3),
                           Text(
                             'Great job! There are no outstanding works on site. Check customer inquiries to start new ones.',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF475569), height: 1.3),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                              height: 1.3,
+                            ),
                           ),
                         ],
                       ),
@@ -910,6 +993,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   }
 
   Widget _buildMilestoneItem(String label, IconData icon, String status, Color statusColor, bool isSmallScreen) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -918,7 +1002,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           height: isSmallScreen ? 26 : 30,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: statusColor.withValues(alpha: 0.1),
+            color: statusColor.withValues(alpha: isDark ? 0.2 : 0.1),
             border: Border.all(color: statusColor, width: 1.5),
           ),
           child: Icon(icon, size: isSmallScreen ? 13 : 15, color: statusColor),
@@ -931,7 +1015,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             style: TextStyle(
               fontSize: isSmallScreen ? 9 : 10,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
         ),
@@ -952,11 +1036,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   }
 
   Widget _buildMilestoneConnector(bool isDone) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
         height: 1.5,
         margin: const EdgeInsets.only(bottom: 24),
-        color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
+        color: isDone
+            ? const Color(0xFF10B981)
+            : (isDark ? Colors.white.withValues(alpha: 0.15) : const Color(0xFFCBD5E1)),
       ),
     );
   }
@@ -965,6 +1052,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   // 6. TWO COLUMN CARDS: ONGOING DEALS & HOT MARKET ENQUIRIES (Equal Heights)
   // ==========================================
   Widget _buildDealsAndEnquiriesRow(bool isSmallScreen, double screenWidth) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -974,12 +1062,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                    color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -994,10 +1084,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     children: [
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               'Ongoing Deals',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1007,15 +1101,26 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
+                                color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Text('View All', style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
-                                  SizedBox(width: 2),
-                                  Icon(Icons.arrow_forward_rounded, size: 7.5, color: Color(0xFF2563EB)),
+                                children: [
+                                  Text(
+                                    'View All',
+                                    style: TextStyle(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 7.5,
+                                    color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1025,9 +1130,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       const SizedBox(height: 2),
                       SizedBox(
                         height: 24,
-                        child: const Text(
+                        child: Text(
                           'Track in-progress processes and shipments',
-                          style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1044,15 +1152,23 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Icons.local_shipping_outlined, color: Color(0xFF64748B), size: 26),
+                          child: Icon(
+                            Icons.local_shipping_outlined,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            size: 26,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'No Ongoing Deals',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w900,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1060,10 +1176,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         const SizedBox(height: 3),
                         SizedBox(
                           height: 34,
-                          child: const Text(
+                          child: Text(
                             'Active material negotiations and shipments will appear here.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 9, color: Color(0xFF64748B), height: 1.25),
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              height: 1.25,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1082,12 +1202,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                    color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -1100,18 +1222,25 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Hot Market Enquiries',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       SizedBox(
                         height: 24,
-                        child: const Text(
+                        child: Text(
                           'Opportunities in your service areas',
-                          style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1128,15 +1257,23 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Icon(Icons.saved_search_rounded, color: Color(0xFF2563EB), size: 26),
+                          child: Icon(
+                            Icons.saved_search_rounded,
+                            color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                            size: 26,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'No inquiries in your area',
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w900,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1144,10 +1281,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         const SizedBox(height: 3),
                         SizedBox(
                           height: 34,
-                          child: const Text(
+                          child: Text(
                             "We'll notify you when new opportunities are available.",
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 9, color: Color(0xFF64748B), height: 1.25),
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              height: 1.25,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1168,17 +1309,25 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   // 7. SUPPLIER MANAGEMENT CONSOLE
   // ==========================================
   Widget _buildSupplierManagementConsole(bool isSmallScreen) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Supplier Management Console',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
         ),
         const SizedBox(height: 2),
-        const Text(
+        Text(
           'Utilities to update items and quotes',
-          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          ),
         ),
         const SizedBox(height: 12),
 
@@ -1191,9 +1340,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFDBEAFE)),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFDBEAFE),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -1212,12 +1363,19 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                           children: [
                             Text(
                               _supplierProducts.isNotEmpty ? 'My Products (${_supplierProducts.length})' : 'My Products',
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
                             ),
                             const SizedBox(height: 2),
-                            const Text(
+                            Text(
                               'Update rates & items',
-                              style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
                             ),
                           ],
                         ),
@@ -1244,9 +1402,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF10B981).withValues(alpha: 0.3) : const Color(0xFFA7F3D0),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -1262,15 +1422,22 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
                               'Material Leads',
-                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A)),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               'Submit B2B quotes',
-                              style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
                             ),
                           ],
                         ),
@@ -2108,7 +2275,7 @@ class _MaterialSourcingCarouselWidgetState extends ConsumerState<MaterialSourcin
               width: isSelected ? 16 : 5,
               height: 5,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFCBD5E1),
+                color: isSelected ? const Color(0xFF0F766E) : (Theme.of(context).brightness == Brightness.dark ? Colors.white24 : const Color(0xFFCBD5E1)),
                 borderRadius: BorderRadius.circular(4),
               ),
             );

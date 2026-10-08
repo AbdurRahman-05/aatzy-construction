@@ -225,6 +225,9 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 700;
+    final horizontalPadding = isTablet ? 32.0 : 16.0;
 
     if (_isLoading) {
       return WallpaperBackground(
@@ -379,10 +382,13 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
           ),
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            child: Form(
-              key: _formKey,
-              child: Column(
+            padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 32),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ==========================================
@@ -1135,7 +1141,9 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   // ==========================================
