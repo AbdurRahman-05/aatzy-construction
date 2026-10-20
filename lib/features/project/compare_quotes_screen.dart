@@ -240,6 +240,237 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
     );
   }
 
+  void _showAcceptConfirmation(String quoteId, String providerName, String cost) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        bool acknowledged = false;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.gavel_rounded, color: Color(0xFFD97706), size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Accept Quote Confirmation',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              Text(
+                                'Please review terms before proceeding',
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Quote summary tile
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'CONTRACTOR',
+                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  providerName,
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(
+                                'ESTIMATED BID',
+                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '₹$cost',
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Important Disclaimer & Caution Box
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(Icons.warning_amber_rounded, size: 18, color: Color(0xFFD97706)),
+                              SizedBox(width: 6),
+                              Text(
+                                'Important Price Disclaimer',
+                                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF92400E)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'The final payable amount may differ from this received quote. It might be less than or higher than the quoted amount depending on actual site conditions, measurements, material price fluctuations, or mutually agreed scope changes during execution.',
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF78350F), height: 1.4),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Acknowledgment Checkbox
+                    InkWell(
+                      onTap: () {
+                        setModalState(() {
+                          acknowledged = !acknowledged;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: acknowledged,
+                              onChanged: (val) {
+                                setModalState(() {
+                                  acknowledged = val ?? false;
+                                });
+                              },
+                              activeColor: const Color(0xFF4F46E5),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                            ),
+                            const Expanded(
+                              child: Text(
+                                'I understand and acknowledge that the final amount may vary from the quoted price.',
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF64748B),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                            ),
+                            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: !acknowledged
+                                ? null
+                                : () {
+                                    Navigator.pop(ctx);
+                                    _acceptQuote(quoteId, providerName);
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey.shade300,
+                              disabledForegroundColor: Colors.grey.shade500,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              'Confirm & Accept Quote',
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final projectTitle = _project?['title'] ?? 'Selected Project';
@@ -345,6 +576,29 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                   ),
 
                   const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                  if (_quotes.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, size: 15, color: Color(0xFFD97706)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Quotes are preliminary estimates. The final payable amount may vary (lower or higher) based on actual site conditions & execution.',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF92400E), height: 1.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                   // Quotes List or Empty State
                   Expanded(
@@ -591,6 +845,61 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
               ),
             ],
 
+            // Pricing Disclaimer & Caution Banner
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isAccepted ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isAccepted ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    isAccepted ? Icons.check_circle_outline_rounded : Icons.info_outline_rounded,
+                    size: 16,
+                    color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isAccepted ? const Color(0xFF166534) : const Color(0xFF92400E),
+                          height: 1.35,
+                        ),
+                        children: isAccepted
+                            ? const [
+                                TextSpan(
+                                  text: 'Agreed Estimate: ',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                                TextSpan(
+                                  text: 'Final billed amount is subject to actual on-site measurements and project execution.',
+                                ),
+                              ]
+                            : const [
+                                TextSpan(
+                                  text: 'Caution on Quoted Amount: ',
+                                  style: TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                                TextSpan(
+                                  text: 'The final amount may differ from this received quote — it might be less than or higher than the quoted amount based on actual site conditions, scope changes, or material price fluctuations.',
+                                ),
+                              ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 14),
 
             // Action Buttons (Accept, Profile, Chat)
@@ -630,7 +939,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                 ],
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: isAccepted || _isAccepting ? null : () => _acceptQuote(quoteId, providerName),
+                    onPressed: isAccepted || _isAccepting ? null : () => _showAcceptConfirmation(quoteId, providerName, cost),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isAccepted ? const Color(0xFF10B981) : const Color(0xFF0F172A),
                       foregroundColor: Colors.white,

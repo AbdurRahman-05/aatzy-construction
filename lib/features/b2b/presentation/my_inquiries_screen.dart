@@ -464,6 +464,63 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
     }
   }
 
+  void _confirmAcceptQuote() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 24),
+            SizedBox(width: 8),
+            Text('Accept Material Quote', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Before accepting this quote, please note:',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: const Text(
+                'The final payable amount may differ from this received quote — it might be less than or higher than the quoted amount based on actual weighbridge verification, transportation distance, or material tax adjustments.',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF78350F), height: 1.35),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _updateStatus('Closed');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('I Understand & Accept', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitReview() async {
     if (_reviewController.text.trim().isEmpty) return;
     setState(() => _isSubmittingReview = true);
@@ -771,7 +828,40 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
           ],
 
           if (inq.status == 'Quote Sent') ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            // Price variation caution banner
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFD97706)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      text: const TextSpan(
+                        style: TextStyle(fontSize: 11, color: Color(0xFF92400E), height: 1.35),
+                        children: [
+                          TextSpan(
+                            text: 'Caution on Quote: ',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          TextSpan(
+                            text: 'The final invoice amount may differ from the received quote (it could be less than or higher than the quoted amount based on actual dispatch weight, transport distance, or material rate fluctuations).',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             if (_isUpdating)
               const Center(child: CircularProgressIndicator())
             else
@@ -792,7 +882,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _updateStatus('Closed'),
+                      onPressed: _confirmAcceptQuote,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
