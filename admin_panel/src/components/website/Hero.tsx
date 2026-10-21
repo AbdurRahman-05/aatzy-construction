@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Download, Calculator, CheckCircle2, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { Calculator, CheckCircle2, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { RippleButton } from './RippleButton';
 import { MobileAppMockup } from './MobileAppMockup';
+import { HeroStoreBadges } from './StoreButtons';
 
 interface HeroProps {
   onNavigate: (target: string) => void;
@@ -119,21 +120,14 @@ export function Hero({ onNavigate }: HeroProps) {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="mt-8 flex flex-col sm:flex-row gap-3.5 w-full sm:w-auto"
+            className="mt-8 flex flex-col sm:flex-row flex-wrap items-center gap-3.5 w-full sm:w-auto"
           >
-            <RippleButton
-              variant="primary"
-              onClick={() => onNavigate('download')}
-              className="group px-8 py-4 w-full sm:w-auto justify-center text-sm sm:text-base font-extrabold shadow-xl shadow-blue-600/30"
-            >
-              <Download className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
-              Download Android App
-            </RippleButton>
+            <HeroStoreBadges onNavigate={onNavigate} />
 
             <RippleButton
               variant="secondary"
               onClick={scrollToEstimator}
-              className="group px-7 py-4 w-full sm:w-auto justify-center text-sm sm:text-base font-bold border border-slate-300 shadow-sm bg-white hover:bg-slate-50"
+              className="group px-6 py-3.5 w-full sm:w-auto justify-center text-sm font-bold border border-slate-300 shadow-sm bg-white hover:bg-slate-50 rounded-2xl cursor-pointer"
             >
               <Calculator className="h-5 w-5 text-blue-600" />
               Instant Cost Calculator
@@ -142,7 +136,7 @@ export function Hero({ onNavigate }: HeroProps) {
             <button
               type="button"
               onClick={() => onNavigate('services-directory')}
-              className="inline-flex items-center justify-center gap-1.5 px-5 py-4 text-sm font-bold text-slate-700 hover:text-blue-600 transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-3.5 text-sm font-bold text-slate-700 hover:text-blue-600 transition cursor-pointer"
             >
               <span>Explore 45+ Trades</span>
               <ArrowRight className="w-4 h-4" />

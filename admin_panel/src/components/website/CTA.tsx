@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Download, Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Sparkles, ShieldCheck, ArrowRight } from 'lucide-react';
 import { useInView } from '../../hooks/useInView';
-import { RippleButton } from './RippleButton';
+import { HeroStoreBadges } from './StoreButtons';
 
 interface CTAProps {
   onNavigate: (target: string) => void;
@@ -53,20 +53,13 @@ export function CTA({ onNavigate }: CTAProps) {
               Join thousands of homeowners, verified contractors, and building material suppliers already building smarter with Connectzy Construction.
             </p>
 
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <RippleButton
-                variant="primary"
-                onClick={() => onNavigate('download')}
-                className="group px-8 py-4 text-base font-extrabold shadow-xl shadow-blue-500/30 w-full sm:w-auto justify-center"
-              >
-                <Download className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
-                Download Android Mobile App
-              </RippleButton>
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row flex-wrap">
+              <HeroStoreBadges onNavigate={onNavigate} />
 
               <button
                 type="button"
                 onClick={() => onNavigate('estimator')}
-                className="px-7 py-4 rounded-full border border-slate-700 bg-slate-800/80 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition w-full sm:w-auto cursor-pointer"
+                className="px-7 py-3.5 rounded-2xl border border-slate-700 bg-slate-800/80 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition w-full sm:w-auto cursor-pointer"
               >
                 Instant Cost Calculator
               </button>

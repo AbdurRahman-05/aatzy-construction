@@ -80,6 +80,17 @@ function WebsiteContent() {
         return;
       }
 
+      // Handle store downloads
+      if (target === 'download-playstore' || target === 'download') {
+        window.open('https://play.google.com/store/apps/details?id=com.constructionapp.construction_app', '_blank');
+        notify('Redirecting to Google Play Store...');
+        return;
+      }
+      if (target === 'download-appstore') {
+        notify('Apple iOS app is in final App Store review & launching soon!');
+        return;
+      }
+
       // Handle home navigation
       if (target === 'home') {
         setCurrentPage('home');

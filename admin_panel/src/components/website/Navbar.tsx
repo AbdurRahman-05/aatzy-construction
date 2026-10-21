@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Download } from 'lucide-react';
-import { RippleButton } from './RippleButton';
+import { Menu, X } from 'lucide-react';
+import { NavStoreButtons, PlayStoreIcon, AppleStoreIcon } from './StoreButtons';
 
 const navLinks = [
   { label: 'Home', target: 'hero' },
@@ -72,16 +72,9 @@ export function Navbar({ onNavigate }: NavbarProps) {
           ))}
         </div>
 
-        {/* Desktop CTA - Download Android App only (Admin accessible via URL path directly) */}
-        <div className="hidden items-center lg:flex">
-          <RippleButton
-            variant="primary"
-            className="text-xs xl:text-sm shadow-md font-bold px-4 py-2.5"
-            onClick={() => handleLinkClick('download')}
-          >
-            <Download className="h-4 w-4 mr-1.5" />
-            Get Android App
-          </RippleButton>
+        {/* Desktop Store Badges - Google Play & App Store */}
+        <div className="hidden items-center lg:flex shrink-0">
+          <NavStoreButtons onNavigate={handleLinkClick} />
         </div>
 
         {/* Mobile toggle */}
@@ -114,14 +107,24 @@ export function Navbar({ onNavigate }: NavbarProps) {
             ))}
 
             <div className="my-2 h-px bg-slate-100" />
-            <RippleButton
-              variant="primary"
-              className="mt-2 w-full justify-center text-sm font-bold"
-              onClick={() => handleLinkClick('download')}
-            >
-              <Download className="h-4 w-4 mr-1.5" />
-              Download Android App
-            </RippleButton>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => handleLinkClick('download-playstore')}
+                className="flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-slate-900 border border-slate-800 cursor-pointer"
+              >
+                <PlayStoreIcon className="w-4 h-4 shrink-0" />
+                <span>Google Play</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLinkClick('download-appstore')}
+                className="flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-slate-900 border border-slate-800 cursor-pointer"
+              >
+                <AppleStoreIcon className="w-4 h-4 shrink-0 text-white" />
+                <span>App Store</span>
+              </button>
+            </div>
 
             <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-slate-500 font-medium">
               <Link href="/privacy-policy" target="_blank" className="hover:text-blue-600 transition-colors">Privacy</Link>
