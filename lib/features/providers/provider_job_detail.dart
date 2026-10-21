@@ -763,6 +763,17 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                           );
                                         }
 
+                                        if (expenseType == 'Material' && materialNameController.text.trim().isNotEmpty) {
+                                          PushNotificationService().showNotification(
+                                            id: DateTime.now().millisecondsSinceEpoch ~/ 1000 + 1,
+                                            title: '🧱 Material Logged: ${materialNameController.text.trim()}',
+                                            body: 'Site material updated: ${qtyVal?.toStringAsFixed(0) ?? ''} units @ ₹${costVal?.toStringAsFixed(0) ?? ''} on "${_project?['title'] ?? 'Project'}".',
+                                            payload: '/provider-job/${widget.projectId}',
+                                            channelId: 'buildzy_orders_v2',
+                                            channelName: 'Material Inquiries & Orders',
+                                          );
+                                        }
+
                                         if (sheetContext.mounted) {
                                           Navigator.pop(sheetContext);
                                           ScaffoldMessenger.of(sheetContext).showSnackBar(

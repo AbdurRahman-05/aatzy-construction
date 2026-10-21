@@ -56,6 +56,12 @@ android {
         multiDexEnabled = true
     }
 
+    packaging {
+        jniLibs {
+            keepDebugSymbols += "**/*.so"
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = if (keystorePropertiesFile != null && keystorePropertiesFile.exists()) {

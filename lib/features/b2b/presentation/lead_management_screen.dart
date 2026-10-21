@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
 import 'widgets/custom_image.dart';
+import '../../../core/services/push_notification_service.dart';
 
 class LeadItem {
   final String id;
@@ -159,6 +160,26 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
           if (deliveryStatus != null) lead.deliveryStatus = deliveryStatus;
           if (gstPercent != null) lead.gstPercent = gstPercent;
         });
+
+        // Trigger native push notification on device
+        final notifStage = deliveryStatus ?? newStatus;
+        PushNotificationService().showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: notifStage == 'Delivered'
+              ? '✅ Material Delivered: ${lead.requirementTitle}'
+              : (notifStage == 'Dispatched'
+                  ? '🚚 Material Dispatched: ${lead.requirementTitle}'
+                  : (notifStage == 'Packed'
+                      ? '📦 Material Packed: ${lead.requirementTitle}'
+                      : (newStatus == 'Quote Sent'
+                          ? '💰 Quote Sent: ₹${quotedPrice?.toStringAsFixed(0) ?? ''}/${lead.unit}'
+                          : '📦 Order Updated: $notifStage'))),
+          body: 'Order for "${lead.requirementTitle}" (${lead.quantity}) updated to $notifStage.',
+          payload: '/b2b-materials',
+          channelId: 'buildzy_orders_v2',
+          channelName: 'Material Inquiries & Orders',
+        );
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Lead status updated to $newStatus successfully!')),
@@ -350,7 +371,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
                     Navigator.pop(context);
                     _updateLeadStatus(
                       lead,
-                      'Closed',
+                      selectedDeliveryStatus == 'Delivered' ? 'Completed' : 'Closed',
                       notesController.text.trim(),
                       deliveryStatus: selectedDeliveryStatus,
                     );
@@ -424,7 +445,9 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
                                             border: Border.all(color: _getStatusColor(lead.status).withValues(alpha: 0.3)),
                                           ),
                                           child: Text(
-                                            lead.status == 'Closed' ? 'Deal Closed' : lead.status,
+                                            lead.status == 'Closed'
+                                                ? (lead.deliveryStatus == 'Delivered' ? 'Deal Closed' : 'In Transit (${lead.deliveryStatus})')
+                                                : lead.status,
                                             style: TextStyle(color: _getStatusColor(lead.status), fontSize: 11, fontWeight: FontWeight.bold),
                                           ),
                                         ),
@@ -456,7 +479,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
                                        Row(
                                          children: [
                                            _buildBadge(Icons.monetization_on_outlined, 'Quoted: ₹${lead.quotedPrice!.toStringAsFixed(2)}'),
-                                           if (lead.status == 'Closed') ...[
+                                           if (lead.status == 'Closed' || lead.status == 'Accepted') ...[
                                              const SizedBox(width: 8),
                                              _buildBadge(Icons.local_shipping_outlined, 'Shipment: ${lead.deliveryStatus}'),
                                            ],
@@ -508,7 +531,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
   }
 
   Widget _buildActionButtons(LeadItem lead) {
-    if (lead.status == 'Completed') {
+    if (lead.status == 'Completed' || (lead.status == 'Closed' && lead.deliveryStatus == 'Delivered')) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -548,6 +571,22 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
+                );
+              },
+              icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
+              label: const Text('Call Buyer'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ),
         ],
       );
     }
@@ -598,7 +637,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
       );
     }
 
-    if (lead.status == 'Accepted') {
+    if (lead.status == 'Accepted' || (lead.status == 'Closed' && lead.deliveryStatus != 'Delivered')) {
       return Row(
         children: [
           Expanded(

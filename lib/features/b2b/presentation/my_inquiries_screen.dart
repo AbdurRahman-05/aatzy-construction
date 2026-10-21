@@ -7,6 +7,7 @@ import 'widgets/custom_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import '../../../core/widgets/shimmer_loading.dart';
+import '../../../core/services/push_notification_service.dart';
 
 class InquiryModel {
   final String id;
@@ -406,6 +407,14 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
         'images': [_materialPhotoBase64!]
       });
       if (res.success) {
+        PushNotificationService().showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: '✅ Material Received & Order Closed',
+          body: 'Delivery confirmed for "${widget.inq.productName}". Photo proof sent to supplier.',
+          payload: '/b2b-my-inquiries',
+          channelId: 'buildzy_orders_v2',
+          channelName: 'Material Inquiries & Orders',
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Order closed successfully! Delivery photo sent to provider.')),
@@ -447,6 +456,16 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
         'notes': isAccept ? 'Quote accepted by buyer. Deal closed.' : 'Quote rejected by buyer.',
       });
       if (res.success) {
+        PushNotificationService().showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: isAccept ? '🎉 Quote Accepted & Deal Finalized' : '❌ Quote Declined',
+          body: isAccept 
+              ? 'You accepted the quote for "${widget.inq.productName}". Supplier notified to dispatch.' 
+              : 'You declined the quotation for "${widget.inq.productName}".',
+          payload: '/b2b-my-inquiries',
+          channelId: 'buildzy_orders_v2',
+          channelName: 'Material Inquiries & Orders',
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Quote ${isAccept ? "Accepted & Deal Closed" : "Rejected"} successfully!')),

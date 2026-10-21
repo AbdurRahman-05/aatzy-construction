@@ -113,7 +113,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // Fetch buyer and supplier details to send notification emails
+    // Fetch buyer and supplier details to send notification emails & push notifications
     Promise.all([
       prisma.user.findUnique({ where: { id: buyerId } }),
       prisma.provider.findUnique({ where: { id: supplierId } }),
@@ -123,6 +123,18 @@ export async function POST(request: Request) {
         sendInquiryNotification(inquiry, buyer, provider).catch((err: any) => {
           console.error('Inquiry notification email error:', err);
         });
+
+        // Send push notification to supplier
+        const { createNotification } = require('@/lib/notifications');
+        createNotification({
+          recipientId: supplierId,
+          role: 'PROVIDER',
+          title: `📦 New Material Request: ${inquiry.title}`,
+          body: `${buyer.name || 'Customer'} requested ${inquiry.quantity} ${inquiry.unit} in ${inquiry.location}. Tap to quote.`,
+          type: 'NEW_LEAD',
+          entityId: inquiry.id,
+          route: '/b2b-materials',
+        }).catch((err: any) => console.error('Material inquiry push error:', err));
       }
     }).catch(err => {
       console.error('Failed to fetch users for inquiry notification:', err);

@@ -9,6 +9,7 @@ import 'my_inquiries_screen.dart';
 import 'lead_management_screen.dart';
 import 'widgets/custom_image.dart';
 import '../../../core/widgets/shimmer_loading.dart';
+import '../../../core/services/push_notification_service.dart';
 
 class MaterialsScreen extends ConsumerStatefulWidget {
   const MaterialsScreen({super.key});
@@ -172,6 +173,26 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
           if (deliveryStatus != null) lead.deliveryStatus = deliveryStatus;
           if (gstPercent != null) lead.gstPercent = gstPercent;
         });
+
+        // Trigger native push notification on device
+        final notifStage = deliveryStatus ?? newStatus;
+        PushNotificationService().showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: notifStage == 'Delivered'
+              ? '✅ Material Delivered: ${lead.requirementTitle}'
+              : (notifStage == 'Dispatched'
+                  ? '🚚 Material Dispatched: ${lead.requirementTitle}'
+                  : (notifStage == 'Packed'
+                      ? '📦 Material Packed: ${lead.requirementTitle}'
+                      : (newStatus == 'Quote Sent'
+                          ? '💰 Quote Sent: ₹${quotedPrice?.toStringAsFixed(0) ?? ''}/${lead.unit}'
+                          : '📦 Order Updated: $notifStage'))),
+          body: 'Order for "${lead.requirementTitle}" (${lead.quantity}) updated to $notifStage.',
+          payload: '/b2b-materials',
+          channelId: 'buildzy_orders_v2',
+          channelName: 'Material Inquiries & Orders',
+        );
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Lead status updated to $newStatus successfully!')),
@@ -339,7 +360,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                     Navigator.pop(context);
                     _updateLeadStatus(
                       lead,
-                      'Closed',
+                      selectedDeliveryStatus == 'Delivered' ? 'Completed' : 'Closed',
                       notesController.text.trim(),
                       deliveryStatus: selectedDeliveryStatus,
                     );
@@ -740,9 +761,11 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  (lead.status == 'Completed' || lead.status == 'Closed') && lead.finishedDate.isNotEmpty
+                  (lead.status == 'Completed' || (lead.status == 'Closed' && lead.deliveryStatus == 'Delivered')) && lead.finishedDate.isNotEmpty
                       ? 'CLOSED ON: ${lead.finishedDate}'
-                      : 'DATE: ${lead.date}',
+                      : (lead.status == 'Closed' || lead.status == 'Accepted'
+                          ? 'ORDER DATE: ${lead.finishedDate.isNotEmpty ? lead.finishedDate : lead.date}'
+                          : 'DATE: ${lead.date}'),
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
                 ),
                 Container(
@@ -753,7 +776,9 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                     border: Border.all(color: _getStatusColor(lead.status).withValues(alpha: 0.3)),
                   ),
                   child: Text(
-                    lead.status == 'Closed' ? 'Deal Closed' : lead.status,
+                    lead.status == 'Closed'
+                        ? (lead.deliveryStatus == 'Delivered' ? 'Deal Closed' : 'In Transit (${lead.deliveryStatus})')
+                        : lead.status,
                     style: TextStyle(color: _getStatusColor(lead.status), fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -782,7 +807,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
               Row(
                 children: [
                   _buildBadge(Icons.monetization_on_outlined, 'Quoted: ₹${lead.quotedPrice!.toStringAsFixed(2)}'),
-                  if (lead.status == 'Closed') ...[
+                  if (lead.status == 'Closed' || lead.status == 'Accepted') ...[
                     const SizedBox(width: 8),
                     _buildBadge(Icons.local_shipping_outlined, 'Shipment: ${lead.deliveryStatus}'),
                   ],
@@ -843,7 +868,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   }
 
   Widget _buildProviderActionButtons(LeadItem lead) {
-    if (lead.status == 'Completed') {
+    if (lead.status == 'Completed' || (lead.status == 'Closed' && lead.deliveryStatus == 'Delivered')) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -883,6 +908,22 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
+                );
+              },
+              icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
+              label: const Text('Call Buyer'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ),
         ],
       );
     }
@@ -933,7 +974,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
       );
     }
 
-    if (lead.status == 'Accepted') {
+    if (lead.status == 'Accepted' || (lead.status == 'Closed' && lead.deliveryStatus != 'Delivered')) {
       return Row(
         children: [
           Expanded(
@@ -1142,6 +1183,14 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
         'images': [_materialPhotoBase64!]
       });
       if (res.success) {
+        PushNotificationService().showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: '✅ Material Received & Order Closed',
+          body: 'Delivery confirmed for "${widget.inq.productName}". Photo proof sent to supplier.',
+          payload: '/b2b-my-inquiries',
+          channelId: 'buildzy_orders_v2',
+          channelName: 'Material Inquiries & Orders',
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Order closed successfully! Delivery photo sent to provider.')),
@@ -1183,6 +1232,16 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
         'notes': isAccept ? 'Quote accepted by buyer. Deal closed.' : 'Quote rejected by buyer.',
       });
       if (res.success) {
+        PushNotificationService().showNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: isAccept ? '🎉 Quote Accepted & Deal Finalized' : '❌ Quote Declined',
+          body: isAccept 
+              ? 'You accepted the quote for "${widget.inq.productName}". Supplier notified to dispatch.' 
+              : 'You declined the quotation for "${widget.inq.productName}".',
+          payload: '/b2b-my-inquiries',
+          channelId: 'buildzy_orders_v2',
+          channelName: 'Material Inquiries & Orders',
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Quote ${isAccept ? "Accepted & Deal Closed" : "Rejected"} successfully!')),

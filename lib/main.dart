@@ -32,25 +32,39 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }
 
     final targetRecipient = message.data['recipientId'];
-    if (targetRecipient != null && targetRecipient.isNotEmpty && targetRecipient != currentUserId) {
-      debugPrint('[FCM Background] Suppressed — intended for $targetRecipient but active user is $currentUserId');
+    if (targetRecipient != null &&
+        targetRecipient.isNotEmpty &&
+        targetRecipient != currentUserId) {
+      debugPrint(
+        '[FCM Background] Suppressed — intended for $targetRecipient but active user is $currentUserId',
+      );
       return;
     }
 
-    final title = message.notification?.title ?? message.data['title'] ?? 'Connectzy Alert';
+    final title =
+        message.notification?.title ??
+        message.data['title'] ??
+        'Connectzy Alert';
     final body = message.notification?.body ?? message.data['body'] ?? '';
     final route = message.data['route'] ?? '/notifications';
 
     if (message.notification == null && title.isNotEmpty) {
       final localNotif = FlutterLocalNotificationsPlugin();
-      const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
-      await localNotif.initialize(settings: const InitializationSettings(android: androidSettings));
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/launcher_icon',
+      );
+      await localNotif.initialize(
+        settings: const InitializationSettings(android: androidSettings),
+      );
 
-      const customSound = RawResourceAndroidNotificationSound('construction_chime');
+      const customSound = RawResourceAndroidNotificationSound(
+        'construction_chime',
+      );
       final androidDetails = AndroidNotificationDetails(
         'buildzy_leads_v2',
         'Leads & Proposals',
-        channelDescription: 'Instant alerts for customer project inquiries, quote acceptances, and bids.',
+        channelDescription:
+            'Instant alerts for customer project inquiries, quote acceptances, and bids.',
         importance: Importance.max,
         priority: Priority.high,
         showWhen: true,
@@ -81,7 +95,9 @@ void main() async {
   if (!kIsWeb) {
     try {
       await Firebase.initializeApp();
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
     } catch (e) {
       debugPrint('[Firebase] Initialization error: $e');
     }
@@ -98,7 +114,7 @@ void main() async {
     }
     apiBaseUrl = sanitized;
   } else {
-    apiBaseUrl = "https://aatzy-construction.vercel.app/api";
+    apiBaseUrl = "https://connectzy.app/api";
   }
 
   // Start the UI immediately without blocking on network calls
@@ -112,7 +128,8 @@ Future<void> _initAsyncServices(SharedPreferences prefs) async {
   try {
     String webClientId = prefs.getString('google_client_id_override') ?? '';
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/users/google-client-id'))
+      final response = await http
+          .get(Uri.parse('$apiBaseUrl/users/google-client-id'))
           .timeout(const Duration(seconds: 3));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -147,7 +164,9 @@ Future<void> _initAsyncServices(SharedPreferences prefs) async {
   }
 }
 
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
+);
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
@@ -227,7 +246,11 @@ class SmoothScrollBehavior extends MaterialScrollBehavior {
   const SmoothScrollBehavior();
 
   @override
-  Widget buildScrollbar(BuildContext context, Widget child, ScrollableDetails details) {
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
     return child;
   }
 
@@ -245,9 +268,13 @@ class SmoothScrollBehavior extends MaterialScrollBehavior {
     switch (defaultTargetPlatform) {
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
-        return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+        return const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        );
       default:
-        return const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+        return const ClampingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        );
     }
   }
 }

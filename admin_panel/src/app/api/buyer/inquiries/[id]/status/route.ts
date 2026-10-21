@@ -54,11 +54,41 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       },
     });
 
-    // Notify status change asynchronously
+    // Notify status change asynchronously via email
     const { notifyInquiryStatusChange } = require('@/lib/mail');
     notifyInquiryStatusChange(id).catch((err: any) => {
       console.error('Inquiry status change email notification error:', err);
     });
+
+    // Send push notification & in-app notification to supplier
+    try {
+      const { createNotification } = await import('@/lib/notifications');
+      let provTitle = `📦 Material Inquiry Updated: ${inquiry.title}`;
+      let provBody = `Buyer updated order status to: ${status || inquiry.status}`;
+
+      if (status === 'Accepted' || status === 'Closed') {
+        provTitle = `🎉 Quote Accepted: ${inquiry.title}!`;
+        provBody = `Buyer accepted your quote of ₹${inquiry.quotedPrice ?? ''}/${inquiry.unit}. Prepare material for delivery.`;
+      } else if (status === 'Completed') {
+        provTitle = `✅ Delivery Confirmed: ${inquiry.title}`;
+        provBody = `Buyer confirmed receipt of materials. The order is now completed!`;
+      } else if (status === 'Rejected') {
+        provTitle = `⚠️ Quote Declined: ${inquiry.title}`;
+        provBody = `Buyer declined the proposed quotation for ${inquiry.title}.`;
+      }
+
+      await createNotification({
+        recipientId: inquiry.providerId,
+        role: 'PROVIDER',
+        title: provTitle,
+        body: provBody,
+        type: 'QUOTE_ACCEPTED',
+        entityId: inquiry.id,
+        route: '/b2b-materials',
+      });
+    } catch (notifErr) {
+      console.error('Error dispatching material push notification to supplier:', notifErr);
+    }
 
     return NextResponse.json({
       success: true,

@@ -33,11 +33,52 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       },
     });
 
-    // Notify status change asynchronously
+    // Notify status change asynchronously via email
     const { notifyInquiryStatusChange } = require('@/lib/mail');
     notifyInquiryStatusChange(id).catch((err: any) => {
       console.error('Lead status change email notification error:', err);
     });
+
+    // Send push notification & in-app notification to buyer
+    try {
+      const { createNotification } = await import('@/lib/notifications');
+      let notifTitle = `📦 Material Update: ${inquiry.title}`;
+      let notifBody = `Order status updated to: ${status || inquiry.status}`;
+
+      if (deliveryStatus) {
+        if (deliveryStatus === 'Packed') {
+          notifTitle = `📦 Material Packed: ${inquiry.title}`;
+          notifBody = `Your order of ${inquiry.quantity} ${inquiry.unit} has been packed and prepared for dispatch.`;
+        } else if (deliveryStatus === 'Dispatched') {
+          notifTitle = `🚚 Material Dispatched: ${inquiry.title}`;
+          notifBody = `Your order of ${inquiry.quantity} ${inquiry.unit} is on the way to ${inquiry.location}.`;
+        } else if (deliveryStatus === 'Delivered') {
+          notifTitle = `✅ Material Delivered: ${inquiry.title}`;
+          notifBody = `Your order of ${inquiry.quantity} ${inquiry.unit} has arrived! Please confirm receipt.`;
+        } else {
+          notifTitle = `📦 Shipment Status: ${deliveryStatus}`;
+          notifBody = `${inquiry.title} (${inquiry.quantity} ${inquiry.unit}) is now ${deliveryStatus}.`;
+        }
+      } else if (status === 'Quote Sent' || (quotedPrice !== undefined && quotedPrice !== null)) {
+        notifTitle = `💰 New Quotation: ₹${quotedPrice}/${inquiry.unit}`;
+        notifBody = `Supplier submitted a wholesale quote for ${inquiry.title}. Tap to review and accept.`;
+      } else if (status === 'Lead Rejected') {
+        notifTitle = `❌ Material Request Declined: ${inquiry.title}`;
+        notifBody = `Supplier could not fulfill your inquiry at this time.`;
+      }
+
+      await createNotification({
+        recipientId: inquiry.buyerId,
+        role: 'CONSUMER',
+        title: notifTitle,
+        body: notifBody,
+        type: 'TASK_COMPLETED',
+        entityId: inquiry.id,
+        route: '/b2b-my-inquiries',
+      });
+    } catch (notifErr) {
+      console.error('Error dispatching material push notification to buyer:', notifErr);
+    }
 
     return NextResponse.json({
       success: true,
