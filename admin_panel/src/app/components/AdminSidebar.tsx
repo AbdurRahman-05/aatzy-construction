@@ -81,6 +81,8 @@ export default function AdminSidebar({
         </svg>
       ),
     },
+    /*
+    // Subscriptions feature hidden from UI
     {
       id: 'subscriptions',
       label: 'Subscriptions',
@@ -91,6 +93,7 @@ export default function AdminSidebar({
         </svg>
       ),
     },
+    */
     {
       id: 'ads',
       label: 'Manage Ads',

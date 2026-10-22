@@ -1,4 +1,4 @@
-import 'dart:ui';
+// import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,10 +17,13 @@ class ProviderSubscriptionPaywallOverlay extends ConsumerStatefulWidget {
 
 class _ProviderSubscriptionPaywallOverlayState
     extends ConsumerState<ProviderSubscriptionPaywallOverlay> {
-  bool _isDismissed = false;
+  // bool _isDismissed = false;
 
   @override
   Widget build(BuildContext context) {
+    // Paywall overlay disabled and hidden from UI
+    return widget.child;
+    /*
     final auth = ref.watch(authProvider);
     final subState = ref.watch(subscriptionProvider);
 
@@ -70,6 +73,7 @@ class _ProviderSubscriptionPaywallOverlayState
           ),
       ],
     );
+    */
   }
 }
 
@@ -727,7 +731,10 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
   }
 }
 
-Future<void> showProviderSubscriptionModal(BuildContext context) {
+Future<void> showProviderSubscriptionModal(BuildContext context) async {
+  // Subscription modal disabled and hidden from UI
+  return;
+  /*
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -748,4 +755,5 @@ Future<void> showProviderSubscriptionModal(BuildContext context) {
       ),
     ),
   );
+  */
 }

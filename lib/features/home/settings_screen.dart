@@ -8,8 +8,8 @@ import '../../core/constants.dart';
 import '../../core/services/push_notification_service.dart';
 import '../../main.dart'; // import themeModeProvider
 import 'widgets/user_tutorial_dialog.dart';
-import '../../core/services/subscription_service.dart';
-import '../subscription/widgets/provider_subscription_modal.dart';
+// import '../../core/services/subscription_service.dart';
+// import '../subscription/widgets/provider_subscription_modal.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -214,14 +214,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authProvider);
-    final subState = ref.watch(subscriptionProvider);
+    // final auth = ref.watch(authProvider);
+    // final subState = ref.watch(subscriptionProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         children: [
+          /*
+          // Membership & Billing disabled and hidden from UI
           if (auth.role == 'PROVIDER') ...[
             _buildSectionHeader('Membership & Billing'),
             Card(
@@ -266,6 +268,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 12),
           ],
+          */
           _buildSectionHeader('Notifications'),
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

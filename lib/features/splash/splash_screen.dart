@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../auth/auth_provider.dart';
 import '../../core/providers/app_prefetch.dart';
 import '../../core/services/location_service.dart';
@@ -15,10 +14,8 @@ import '../../core/services/push_notification_service.dart';
 /// 2. Concentric expanding acoustic pulse rings ("radar connect" aura).
 /// 3. Spring-physics entrance animation (easeOutBack).
 /// 4. Shimmer light-reflection sweep across the logo silhouette.
-/// 5. Inspiring quote reveal: "Connecting Your Dreams".
-/// 6. Continuous subtle breathing cycle keeping the UI organic and alive.
-/// 7. Sleek multi-color gradient loading runner.
-/// 8. Seamless exit transition with parallel asynchronous startup prefetching.
+/// 5. Continuous subtle breathing cycle keeping the UI organic and alive.
+/// 6. Seamless exit transition with parallel asynchronous startup prefetching.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -35,11 +32,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late Animation<double> _logoScale;
   late Animation<double> _logoOpacity;
   late Animation<double> _shimmerSweep;
-  late Animation<Offset> _quoteSlide;
-  late Animation<double> _quoteOpacity;
   late Animation<double> _waveProgress1;
   late Animation<double> _waveProgress2;
-  late Animation<double> _indicatorOpacity;
 
   // Continuous breathing / pulse animation controller (2000ms loop)
   late AnimationController _pulseController;
@@ -106,32 +100,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       CurvedAnimation(
         parent: _entranceController,
         curve: const Interval(0.42, 0.76, curve: Curves.easeInOut),
-      ),
-    );
-
-    // Quote "Connecting Your Dreams" slide & fade (50% -> 82%)
-    _quoteSlide = Tween<Offset>(
-      begin: const Offset(0, 0.35),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _entranceController,
-        curve: const Interval(0.50, 0.82, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    _quoteOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _entranceController,
-        curve: const Interval(0.50, 0.78, curve: Curves.easeOut),
-      ),
-    );
-
-    // Indicator fade in (68% -> 95%)
-    _indicatorOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _entranceController,
-        curve: const Interval(0.68, 0.95, curve: Curves.easeIn),
       ),
     );
 
@@ -336,106 +304,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ),
 
-                // 2. Primary Foreground Content
+                // 2. Primary Foreground Content (Centered Animated Logo)
                 Center(
                   child: Opacity(
                     opacity: totalOpacity,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Spacer(flex: 3),
-
-                        // Prominent Big Logo without Background Box (Spring scale + Shimmer + Subtle Glow)
-                        Transform.scale(
-                          scale: combinedScale,
-                          child: _CleanAnimatedLogo(
-                            logoWidth: logoWidth,
-                            shimmerProgress: _shimmerSweep.value,
-                            isDark: isDark,
-                          ),
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        // Quote & Tagline: "Connecting Your Dreams"
-                        SlideTransition(
-                          position: _quoteSlide,
-                          child: Opacity(
-                            opacity: (_quoteOpacity.value * _exitOpacity.value).clamp(0.0, 1.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 1.5,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.transparent,
-                                        const Color(0xFF0F766E).withValues(alpha: 0.7),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  child: Text(
-                                    '“ Connecting Your Dreams ”',
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1.4,
-                                      fontStyle: FontStyle.italic,
-                                      color: isDark
-                                          ? const Color(0xFFE2E8F0)
-                                          : const Color(0xFF1E293B),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: 24,
-                                  height: 1.5,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        const Color(0xFF0F766E).withValues(alpha: 0.7),
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const Spacer(flex: 2),
-
-                        // Modern Gradient Loading Indicator
-                        Opacity(
-                          opacity: (_indicatorOpacity.value * _exitOpacity.value).clamp(0.0, 1.0),
-                          child: _GradientLoadingBar(isDark: isDark),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Bottom Branding / Version Info
-                        Opacity(
-                          opacity: (_indicatorOpacity.value * _exitOpacity.value * 0.75).clamp(0.0, 1.0),
-                          child: Text(
-                            'v1.0.0 · Verified Infrastructure Hub',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.6,
-                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 32),
-                      ],
+                    child: Transform.scale(
+                      scale: combinedScale,
+                      child: _CleanAnimatedLogo(
+                        logoWidth: logoWidth,
+                        shimmerProgress: _shimmerSweep.value,
+                        isDark: isDark,
+                      ),
                     ),
                   ),
                 ),
@@ -564,95 +443,6 @@ class _CleanAnimatedLogo extends StatelessWidget {
         width: logoWidth,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.high,
-      ),
-    );
-  }
-}
-
-/// Sleek Multi-Color Gradient Loading Runner
-class _GradientLoadingBar extends StatefulWidget {
-  final bool isDark;
-
-  const _GradientLoadingBar({required this.isDark});
-
-  @override
-  State<_GradientLoadingBar> createState() => _GradientLoadingBarState();
-}
-
-class _GradientLoadingBarState extends State<_GradientLoadingBar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _runnerController;
-
-  @override
-  void initState() {
-    super.initState();
-    _runnerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _runnerController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final trackColor = widget.isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.06);
-
-    return SizedBox(
-      width: 140,
-      height: 3.5,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(3),
-        child: Stack(
-          children: [
-            // Background track
-            Positioned.fill(
-              child: Container(color: trackColor),
-            ),
-
-            // Smooth sliding multi-gradient runner
-            AnimatedBuilder(
-              animation: _runnerController,
-              builder: (context, child) {
-                final value = _runnerController.value;
-                final leftFraction = (value * 1.7) - 0.7;
-                const widthFraction = 0.42;
-
-                return Align(
-                  alignment: Alignment(leftFraction * 2 - 1, 0),
-                  child: FractionallySizedBox(
-                    widthFactor: widthFraction,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(3),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF0F766E),
-                            Color(0xFF06B6D4),
-                            Color(0xFFF59E0B),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF06B6D4).withValues(alpha: 0.5),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
       ),
     );
   }

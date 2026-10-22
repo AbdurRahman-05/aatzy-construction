@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
-import '../../core/services/subscription_service.dart';
-import '../subscription/widgets/provider_subscription_modal.dart';
+// import '../../core/services/subscription_service.dart';
+// import '../subscription/widgets/provider_subscription_modal.dart';
 import '../../core/widgets/shimmer_loading.dart';
 
 class ProviderLeadsScreen extends ConsumerStatefulWidget {
@@ -233,11 +233,11 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () async {
-          final subState = ref.read(subscriptionProvider);
-          if (!subState.isSubscribed) {
-            showProviderSubscriptionModal(context);
-            return;
-          }
+          // final subState = ref.read(subscriptionProvider);
+          // if (!subState.isSubscribed) {
+          //   showProviderSubscriptionModal(context);
+          //   return;
+          // }
           await context.push('/provider-lead/${lead['id']}');
           _fetchLeads(); // refresh on returning
         },

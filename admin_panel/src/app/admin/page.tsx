@@ -417,9 +417,11 @@ export default async function AdminDashboard({
               </div>
             )}
 
+            {/* 
             {view === 'subscriptions' && (
               <SubscriptionManager providers={providersWithSubData} />
             )}
+            */}
 
             {view === 'ads' && (
               <AdsManager initialAds={adsJson} />

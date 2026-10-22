@@ -1,9 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:razorpay_flutter/razorpay_flutter.dart';
+// import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../constants.dart';
 
 class SubscriptionState {
@@ -18,8 +17,8 @@ class SubscriptionState {
   final String? lastPaymentId;
 
   const SubscriptionState({
-    this.isSubscribed = false,
-    this.daysLeft = 0,
+    this.isSubscribed = true,
+    this.daysLeft = 365,
     this.subscriptionExpiresAt,
     this.subscriptionStartedAt,
     this.plan = 'YEARLY_5999',
@@ -55,18 +54,18 @@ class SubscriptionState {
 }
 
 class SubscriptionNotifier extends Notifier<SubscriptionState> {
-  Razorpay? _razorpay;
-  String? _currentPendingOrderId;
-  String? _currentPendingProviderId;
-  Function(bool success, String message)? _paymentCallback;
+  // Razorpay? _razorpay;
+  // String? _currentPendingOrderId;
+  // String? _currentPendingProviderId;
+  // Function(bool success, String message)? _paymentCallback;
 
   @override
   SubscriptionState build() {
-    _initRazorpay();
-    ref.onDispose(() {
-      _razorpay?.clear();
-    });
-    return const SubscriptionState(isLoading: false);
+    // _initRazorpay();
+    // ref.onDispose(() {
+    //   _razorpay?.clear();
+    // });
+    return const SubscriptionState(isSubscribed: true, daysLeft: 365, isLoading: false);
   }
 
   void resetLoading() {
@@ -75,6 +74,8 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
     }
   }
 
+  /*
+  // Razorpay payment integration handlers (disabled)
   void _initRazorpay() {
     if (!kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
@@ -122,6 +123,7 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
     debugPrint('[Razorpay External Wallet] Wallet: ${response.walletName}');
     _paymentCallback?.call(false, 'External wallet ${response.walletName} selected');
   }
+  */
 
   Future<void> fetchStatus(String providerId) async {
     if (providerId.isEmpty) return;
@@ -132,14 +134,14 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final isActive = data['isActive'] == true;
-        final daysLeft = (data['daysLeft'] as num?)?.toInt() ?? 0;
+        // final isActive = data['isActive'] == true;
+        final daysLeft = (data['daysLeft'] as num?)?.toInt() ?? 365;
         final expiresAt = data['subscriptionExpiresAt'] as String?;
         final startedAt = data['subscriptionStartedAt'] as String?;
 
         state = state.copyWith(
-          isSubscribed: isActive,
-          daysLeft: daysLeft,
+          isSubscribed: true,
+          daysLeft: daysLeft > 0 ? daysLeft : 365,
           subscriptionExpiresAt: expiresAt,
           subscriptionStartedAt: startedAt,
           isLoading: false,
@@ -159,6 +161,13 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
     required String phone,
     required Function(bool success, String message) onComplete,
   }) async {
+    // Payment integration disabled - automatic success
+    state = state.copyWith(isLoading: false, isSubscribed: true, daysLeft: 365);
+    onComplete(true, 'Payment integration disabled');
+    return;
+
+    /*
+    // Razorpay Payment Flow (Disabled)
     _paymentCallback = onComplete;
     _currentPendingProviderId = providerId;
     state = state.copyWith(isLoading: true, error: null);
@@ -193,7 +202,6 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
               defaultTargetPlatform == TargetPlatform.macOS ||
               defaultTargetPlatform == TargetPlatform.linux);
 
-      // If running on Web, Desktop, or Sandbox mode, present a verified mock/test checkout dialog
       if (kIsWeb || isDesktop || isSandbox) {
         state = state.copyWith(isLoading: false);
         _showWebOrSandboxCheckoutDialog(
@@ -245,8 +253,10 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
       state = state.copyWith(isLoading: false, error: e.toString());
       onComplete(false, 'Checkout failed: $e');
     }
+    */
   }
 
+  /*
   Future<void> _verifyPaymentOnServer({
     required String providerId,
     required String orderId,
@@ -404,6 +414,7 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
       ),
     );
   }
+  */
 }
 
 final subscriptionProvider = NotifierProvider<SubscriptionNotifier, SubscriptionState>(SubscriptionNotifier.new);

@@ -21,14 +21,14 @@
 -keep class com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
 
-# Razorpay SDK & WebKit Javascript Interface
--keepattributes *Annotation*
--dontwarn com.razorpay.**
--keep class com.razorpay.** { *; }
--keepclassmembers class * {
-    @android.webkit.JavascriptInterface <methods>;
-}
--keep class android.webkit.** { *; }
+# Razorpay SDK & WebKit Javascript Interface (Disabled)
+# -keepattributes *Annotation*
+# -dontwarn com.razorpay.**
+# -keep class com.razorpay.** { *; }
+# -keepclassmembers class * {
+#     @android.webkit.JavascriptInterface <methods>;
+# }
+# -keep class android.webkit.** { *; }
 
 # Flutter Local Notifications
 -keep class com.dexterous.flutterlocalnotifications.** { *; }

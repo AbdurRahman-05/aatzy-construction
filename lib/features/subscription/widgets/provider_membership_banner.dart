@@ -11,6 +11,12 @@ class ProviderMembershipBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Membership banner disabled and hidden from UI
+    return const SizedBox.shrink();
+  }
+
+  // ignore: unused_element
+  Widget _buildBanner(BuildContext context, WidgetRef ref) {
     final subState = ref.watch(subscriptionProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
