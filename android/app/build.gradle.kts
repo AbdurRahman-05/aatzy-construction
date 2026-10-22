@@ -56,11 +56,11 @@ android {
         multiDexEnabled = true
     }
 
-    packaging {
-        jniLibs {
-            keepDebugSymbols += "**/*.so"
-        }
-    }
+    // packaging {
+    //     jniLibs {
+    //         keepDebugSymbols += "**/*.so"
+    //     }
+    // }
 
     buildTypes {
         release {
