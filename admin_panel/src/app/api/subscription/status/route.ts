@@ -35,20 +35,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
 
-    const now = new Date();
-    const daysLeft = calculateDaysLeft(provider.subscriptionExpiresAt);
-    const isExpired = provider.subscriptionExpiresAt ? new Date(provider.subscriptionExpiresAt) < now : true;
-    const isActive = provider.subscriptionStatus === 'ACTIVE' && !isExpired;
-
-    // Automatically synchronize status if expired
-    let currentStatus = provider.subscriptionStatus;
-    if (provider.subscriptionStatus === 'ACTIVE' && isExpired) {
-      currentStatus = 'EXPIRED';
-      await prisma.provider.update({
-        where: { id: provider.id },
-        data: { subscriptionStatus: 'EXPIRED' },
-      });
-    }
+    // Payment integration disabled - full free access for all providers in production
+    const isActive = true;
+    const daysLeft = 365;
+    const currentStatus = 'ACTIVE';
 
     return NextResponse.json({
       providerId: provider.id,
