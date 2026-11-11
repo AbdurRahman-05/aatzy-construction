@@ -53,6 +53,7 @@ const serviceList: ServiceItem[] = [
   { name: 'Master Painter & Texture', category: 'Interiors & Finishing', desc: 'Royal luxury emulsion, exterior weather-guard coatings & texture art', icon: Paintbrush, color: 'text-rose-600', bg: 'bg-rose-50' },
   { name: 'False Ceiling & Drywall', category: 'Interiors & Finishing', desc: 'Gypsum board cove lighting ceilings, acoustic grid panels & partition', icon: Layers, color: 'text-sky-600', bg: 'bg-sky-50' },
   { name: 'Custom Carpenter & Woodwork', category: 'Interiors & Finishing', desc: 'Teak doors, custom wardrobe laminates & veneer wall paneling', icon: Hammer, color: 'text-amber-800', bg: 'bg-amber-50' },
+  { name: 'LED Walls & Digital Displays', category: 'Interiors & Finishing', desc: 'Active LED video walls, digital commercial displays, indoor video panels & home theater screens', icon: Sparkles, color: 'text-cyan-600', bg: 'bg-cyan-50' },
 
   // --- 4. MEP & Utilities ---
   { name: 'Licensed Electrical Contractor', category: 'MEP & Utilities', desc: 'Concealed wiring, 3-phase distribution boards & earthing pits', icon: Zap, color: 'text-yellow-600', bg: 'bg-yellow-50' },

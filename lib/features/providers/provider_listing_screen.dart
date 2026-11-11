@@ -92,6 +92,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
     'Interior Design - Residential',
     'Interiors & Finishing',
     'Kitchen Construction',
+    'LED Walls & Digital Displays',
     'Land & Legal',
     'Logistics & Equipment',
     'Materials & Supply',
@@ -162,6 +163,13 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
       'color': Color(0xFF9333EA),
       'bg': Color(0xFFFAF5FF),
       'border': Color(0xFFE9D5FF),
+    },
+    {
+      'name': 'LED Walls & Digital Displays',
+      'icon': Icons.smart_display_rounded,
+      'color': Color(0xFF0284C7),
+      'bg': Color(0xFFE0F2FE),
+      'border': Color(0xFFBAE6FD),
     },
     {
       'name': 'Plumbing',

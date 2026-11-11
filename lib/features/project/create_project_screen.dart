@@ -136,6 +136,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     {'name': 'Garage Doors', 'category': 'Interiors & Finishing', 'icon': Icons.garage_rounded, 'color': Color(0xFF1E293B), 'bg': Color(0xFFF1F5F9)},
     {'name': 'Shutters & Awnings', 'category': 'Interiors & Finishing', 'icon': Icons.blinds_rounded, 'color': Color(0xFF475569), 'bg': Color(0xFFF1F5F9)},
     {'name': 'Window Treatments', 'category': 'Interiors & Finishing', 'icon': Icons.curtains_rounded, 'color': Color(0xFF9333EA), 'bg': Color(0xFFFAF5FF)},
+    {'name': 'LED Walls & Digital Displays', 'category': 'Interiors & Finishing', 'icon': Icons.smart_display_rounded, 'color': Color(0xFF0284C7), 'bg': Color(0xFFE0F2FE)},
 
     // --- 4. MEP & Utilities (12 services) ---
     {'name': 'Engineering (MEP)', 'category': 'MEP & Utilities', 'icon': Icons.settings_rounded, 'color': Color(0xFF10B981), 'bg': Color(0xFFECFDF5)},

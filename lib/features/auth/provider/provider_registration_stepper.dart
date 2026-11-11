@@ -119,7 +119,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
     'Flooring', 'Garage Doors', 'Glass', 'Ground Work',
     'Handyman', 'Heating Engineer', 'HVAC - Heating & Air',
     'Interior Design - Commercial', 'Interior Design - Residential',
-    'Kitchen Construction', 'Metal Work', 'Painter', 'Pest Control',
+    'Kitchen Construction', 'LED Walls & Digital Displays', 'Metal Work', 'Painter', 'Pest Control',
     'Plasterer', 'Plumbing', 'Pools, Spas & Saunas', 'Power Generator',
     'Power Washing', 'Protective Coatings/Sealants', 'Renovations/Remodeling',
     'Restoration', 'Roofing & Gutters', 'Septic Systems', 'Shutters & Awnings',
