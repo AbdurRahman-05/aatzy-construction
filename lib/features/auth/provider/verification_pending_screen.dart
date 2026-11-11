@@ -24,30 +24,50 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
   @override
   void initState() {
     super.initState();
-    if (widget.email.isNotEmpty && widget.password.isNotEmpty) {
-      _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-        _checkApproval();
-      });
-    }
+    // Periodically check if the administrator approves or re-activates the account
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _checkApproval();
+    });
   }
 
   Future<void> _checkApproval() async {
     try {
-      final response = await http.post(
-        Uri.parse('$apiBaseUrl/providers/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': widget.email,
-          'password': widget.password,
-        }),
-      );
+      if (widget.email.isNotEmpty && widget.password.isNotEmpty) {
+        final response = await http.post(
+          Uri.parse('$apiBaseUrl/providers/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': widget.email,
+            'password': widget.password,
+          }),
+        );
 
-      if (response.statusCode == 200) {
-        _timer?.cancel();
-        final data = jsonDecode(response.body);
-        if (mounted) {
-          ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
-          context.go('/provider-home');
+        if (response.statusCode == 200) {
+          _timer?.cancel();
+          final data = jsonDecode(response.body);
+          if (mounted) {
+            ref.read(authProvider.notifier).login(data['provider'], 'PROVIDER');
+            context.go('/provider-home');
+          }
+        }
+      } else {
+        // Dynamic verification check: Account was toggled inactive while logged in or via Google Login
+        final currentId = ref.read(authProvider).id;
+        if (currentId != null && currentId.isNotEmpty) {
+          final response = await http.get(
+            Uri.parse('$apiBaseUrl/providers/$currentId/profile'),
+          ).timeout(const Duration(seconds: 4));
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final provider = (data is Map && data.containsKey('provider')) ? data['provider'] : data;
+            if (provider is Map && provider['isVerified'] == true) {
+              _timer?.cancel();
+              if (mounted) {
+                context.go('/provider-home');
+              }
+            }
+          }
         }
       }
     } catch (e) {

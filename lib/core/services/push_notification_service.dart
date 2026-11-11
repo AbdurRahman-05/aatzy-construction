@@ -121,6 +121,23 @@ class PushNotificationService {
             return;
           }
 
+          // Check if message is account deactivation directive from admin (Active -> Inactive)
+          if (message.data['action'] == 'ACCOUNT_DEACTIVATED' || message.data['action'] == 'VERIFICATION_PENDING') {
+            debugPrint('[FCM] Account deactivated directive received from admin.');
+            AuthNotifier.triggerProviderDeactivated();
+            return;
+          }
+
+          // Check if message is account activation directive from admin (Inactive -> Active)
+          if (message.data['action'] == 'ACCOUNT_ACTIVATED') {
+            debugPrint('[FCM] Account activated directive received from admin.');
+            final context = rootNavigatorKey.currentContext;
+            if (context != null && context.mounted) {
+              context.go('/provider-home');
+            }
+            return;
+          }
+
           final notification = message.notification;
           if (notification == null) return;
 
@@ -169,6 +186,17 @@ class PushNotificationService {
             AuthNotifier.triggerForceLogout(reason: reason);
             return;
           }
+          if (message.data['action'] == 'ACCOUNT_DEACTIVATED' || message.data['action'] == 'VERIFICATION_PENDING') {
+            AuthNotifier.triggerProviderDeactivated();
+            return;
+          }
+          if (message.data['action'] == 'ACCOUNT_ACTIVATED') {
+            final context = rootNavigatorKey.currentContext;
+            if (context != null && context.mounted) {
+              context.go('/provider-home');
+            }
+            return;
+          }
           final prefs = await SharedPreferences.getInstance();
           final currentUserId = prefs.getString('auth_id');
           if (currentUserId == null || currentUserId.isEmpty) {
@@ -190,6 +218,17 @@ class PushNotificationService {
           if (initialMessage.data['action'] == 'FORCE_LOGOUT') {
             final reason = initialMessage.data['body'] ?? initialMessage.notification?.body ?? 'Your account has been deleted by an administrator.';
             AuthNotifier.triggerForceLogout(reason: reason);
+            return;
+          }
+          if (initialMessage.data['action'] == 'ACCOUNT_DEACTIVATED' || initialMessage.data['action'] == 'VERIFICATION_PENDING') {
+            AuthNotifier.triggerProviderDeactivated();
+            return;
+          }
+          if (initialMessage.data['action'] == 'ACCOUNT_ACTIVATED') {
+            final context = rootNavigatorKey.currentContext;
+            if (context != null && context.mounted) {
+              context.go('/provider-home');
+            }
             return;
           }
           final prefs = await SharedPreferences.getInstance();

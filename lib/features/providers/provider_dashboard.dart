@@ -88,6 +88,17 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         if (res3.statusCode == 200) {
           profData = jsonDecode(res3.body)['provider'];
           profImg = profData?['profileImage'];
+
+          // If admin set provider status to Inactive (isVerified == false), immediately route to verification pending
+          if (profData != null && profData['isVerified'] == false) {
+            if (mounted) {
+              context.go('/provider-verification-pending', extra: {
+                'email': auth.email ?? profData['email'] ?? '',
+                'password': '',
+              });
+              return;
+            }
+          }
         }
 
         List<dynamic> prodsList = [];

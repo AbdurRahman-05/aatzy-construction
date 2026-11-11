@@ -209,10 +209,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
       final auth = ref.read(authProvider);
       if (auth.id != null) {
-        // Validate that account was not deleted from the admin panel while the app was closed
+        // Validate that account was not deleted or deactivated from the admin panel while the app was closed
         final exists = await ref.read(authProvider.notifier).validateAccountExists();
         if (!exists) {
-          debugPrint('[Splash] Account was deleted on server. Terminating startup session.');
+          debugPrint('[Splash] Account was deleted or deactivated on server. Terminating startup session.');
+          _navigationTriggered = true;
           return;
         }
         LocationService().detectAndSaveLocation();

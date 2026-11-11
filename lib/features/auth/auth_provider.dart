@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -82,8 +83,10 @@ class AuthNotifier extends Notifier<AuthState> {
     });
   }
 
-  /// Verifies with the server that the currently logged-in account still exists in the database.
-  /// If the admin deleted the account from the admin panel, the server returns 404, which triggers immediate logout.
+  /// Verifies with the server that the currently logged-in account still exists in the database
+  /// and that the account is active/verified.
+  /// If the admin deleted the account from the admin panel (404), triggers immediate logout.
+  /// If the admin changed provider status to inactive (isVerified == false), redirects to verification pending.
   Future<bool> validateAccountExists() async {
     final currentId = state.id;
     final currentRole = state.role;
@@ -103,10 +106,80 @@ class AuthNotifier extends Notifier<AuthState> {
         await forceLogout(reason: 'Your account has been deleted by an administrator.');
         return false;
       }
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (currentRole == 'PROVIDER') {
+          final provider = (decoded is Map && decoded.containsKey('provider')) ? decoded['provider'] : decoded;
+          if (provider is Map && provider['isVerified'] == false) {
+            debugPrint('[Auth] Provider account is inactive / pending verification.');
+            await handleProviderDeactivated();
+            return false;
+          }
+        } else if (currentRole == 'CONSUMER') {
+          if (decoded is Map && decoded['isApproved'] == false) {
+            debugPrint('[Auth] Consumer account is inactive.');
+            await forceLogout(reason: 'Your account has been deactivated by an administrator.');
+            return false;
+          }
+        }
+      }
     } catch (e) {
       debugPrint('[Auth] Account validation check exception: $e');
     }
     return true;
+  }
+
+  static bool _isHandlingDeactivation = false;
+
+  /// Redirects the provider to the verification pending screen when their status is changed to inactive
+  Future<void> handleProviderDeactivated() async {
+    if (_isHandlingDeactivation) return;
+    _isHandlingDeactivation = true;
+
+    try {
+      _accountCheckTimer?.cancel();
+      _accountCheckTimer = null;
+
+      final email = state.email ?? '';
+      final context = rootNavigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        try {
+          final currentLoc = GoRouter.of(context).routeInformationProvider.value.uri.toString();
+          if (currentLoc == '/provider-verification-pending') {
+            return;
+          }
+        } catch (_) {}
+
+        GoRouter.of(context).go('/provider-verification-pending', extra: {
+          'email': email,
+          'password': '',
+        });
+      }
+    } catch (e) {
+      debugPrint('[Auth] Error during handleProviderDeactivated: $e');
+    } finally {
+      Future.delayed(const Duration(seconds: 2), () {
+        _isHandlingDeactivation = false;
+      });
+    }
+  }
+
+  /// Static trigger so FCM notifications can immediately redirect the provider to verification pending
+  static Future<void> triggerProviderDeactivated() async {
+    if (_activeInstance != null) {
+      await _activeInstance!.handleProviderDeactivated();
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('auth_email') ?? '';
+      final context = rootNavigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        GoRouter.of(context).go('/provider-verification-pending', extra: {
+          'email': email,
+          'password': '',
+        });
+      }
+    }
   }
 
   /// Immediately terminates the session, wipes credentials, and navigates to the login screen with a dialog

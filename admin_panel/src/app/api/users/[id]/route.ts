@@ -14,6 +14,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         phone: true,
         profileImage: true,
         role: true,
+        isApproved: true,
         createdAt: true,
       },
     });
