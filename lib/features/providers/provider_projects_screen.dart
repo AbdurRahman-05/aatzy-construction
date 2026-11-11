@@ -7,6 +7,7 @@ import '../../core/constants.dart';
 import '../../core/wallpaper_background.dart';
 import '../../core/utils/project_progress_helper.dart';
 import '../auth/auth_provider.dart';
+import 'provider_layout.dart';
 
 class ProviderProjectsScreen extends ConsumerStatefulWidget {
   const ProviderProjectsScreen({super.key});
@@ -616,6 +617,13 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Instantly refresh projects when the user navigates to the Projects tab
+    ref.listen<int>(providerTabProvider, (prev, next) {
+      if (next == 1 && prev != 1) {
+        _fetchProjects();
+      }
+    });
+
     final pendingCount = _projects.where((p) {
       final s = (p['currentStage'] as String? ?? '').toLowerCase().trim();
       return s == 'finished pending approval' || s == 'pending approval' || s == 'planning & approvals' || s == 'planning' || s == 'pending';

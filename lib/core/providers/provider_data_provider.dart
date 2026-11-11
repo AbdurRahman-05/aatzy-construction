@@ -23,6 +23,36 @@ final providerDashboardProvider = FutureProvider.family<ProviderDashboardData, S
   return fetchProviderDashboard(providerId);
 });
 
+class ProviderLeadsNotifier extends Notifier<List<dynamic>> {
+  @override
+  List<dynamic> build() => [];
+
+  void setLeads(List<dynamic> leads) {
+    state = List<dynamic>.from(leads);
+  }
+
+  void updateLead(String leadId, Map<String, dynamic> updatedFields) {
+    state = state.map((lead) {
+      if (lead is Map && lead['id'] == leadId) {
+        return {...lead, ...updatedFields};
+      }
+      return lead;
+    }).toList();
+  }
+}
+
+final providerLeadsProvider = NotifierProvider<ProviderLeadsNotifier, List<dynamic>>(ProviderLeadsNotifier.new);
+
+class ProviderLeadsRefreshNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void trigger() => state++;
+}
+
+/// Counter to trigger an explicit reload of leads across provider screens
+final providerLeadsRefreshTriggerProvider = NotifierProvider<ProviderLeadsRefreshNotifier, int>(ProviderLeadsRefreshNotifier.new);
+
 Future<ProviderDashboardData> fetchProviderDashboard(String providerId) async {
   try {
     final statsReq = http.get(Uri.parse('$apiBaseUrl/providers/$providerId/stats'))

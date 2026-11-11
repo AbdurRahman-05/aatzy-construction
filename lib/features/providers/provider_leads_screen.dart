@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import '../../core/constants.dart';
+import '../../core/providers/notifications_provider.dart';
+import '../../core/providers/provider_data_provider.dart';
 import '../auth/auth_provider.dart';
+import 'provider_layout.dart';
 // import '../../core/services/subscription_service.dart';
 // import '../subscription/widgets/provider_subscription_modal.dart';
 import '../../core/widgets/shimmer_loading.dart';
@@ -16,71 +20,149 @@ class ProviderLeadsScreen extends ConsumerStatefulWidget {
   ConsumerState<ProviderLeadsScreen> createState() => _ProviderLeadsScreenState();
 }
 
-class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
+class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with WidgetsBindingObserver {
   List<dynamic> _allLeads = [];
   List<dynamic> _filteredLeads = [];
   bool _isLoading = true;
   final _searchController = TextEditingController();
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
-    _fetchLeads();
+    WidgetsBinding.instance.addObserver(this);
     _searchController.addListener(_onSearchChanged);
+
+    // If leads were already pre-populated into providerLeadsProvider (e.g. from ProviderDashboard), load them instantly
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final cached = ref.read(providerLeadsProvider);
+      if (cached.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _allLeads = cached;
+            _applyFilter();
+            _isLoading = false;
+          });
+        }
+      }
+      _fetchLeads(silent: cached.isNotEmpty);
+    });
+
+    // Auto-poll silently every 20 seconds while user is active on the Leads tab
+    _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted && ref.read(providerTabProvider) == 2) {
+        _fetchLeads(silent: true);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchLeads() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && ref.read(providerTabProvider) == 2) {
+      _fetchLeads(silent: true);
+    }
+  }
+
+  Future<void> _fetchLeads({bool silent = false}) async {
     final auth = ref.read(authProvider);
     if (auth.id == null) {
       if (mounted) setState(() => _isLoading = false);
       return;
     }
 
+    if (!silent && _allLeads.isEmpty) {
+      if (mounted) setState(() => _isLoading = true);
+    }
+
     try {
       final response = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats'));
+      if (response.statusCode == 404) {
+        ref.read(authProvider.notifier).forceLogout(reason: 'Your account has been deleted by an administrator.');
+        return;
+      }
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final leads = (data['allLeads'] as List? ?? []);
+        ref.read(providerLeadsProvider.notifier).setLeads(leads);
         if (mounted) {
           setState(() {
-            _allLeads = data['allLeads'] ?? [];
-            _filteredLeads = List.from(_allLeads);
+            _allLeads = leads;
+            _applyFilter();
             _isLoading = false;
           });
         }
       } else {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted && _isLoading) setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint('Error fetching leads: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted && _isLoading) setState(() => _isLoading = false);
+    }
+  }
+
+  void _applyFilter() {
+    final query = _searchController.text.toLowerCase().trim();
+    if (query.isEmpty) {
+      _filteredLeads = List.from(_allLeads);
+    } else {
+      _filteredLeads = _allLeads.where((lead) {
+        final title = (lead['title'] ?? '').toString().toLowerCase();
+        final location = (lead['location'] ?? '').toString().toLowerCase();
+        final client = (lead['userName'] ?? '').toString().toLowerCase();
+        return title.contains(query) || location.contains(query) || client.contains(query);
+      }).toList();
     }
   }
 
   void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase().trim();
     setState(() {
-      if (query.isEmpty) {
-        _filteredLeads = List.from(_allLeads);
-      } else {
-        _filteredLeads = _allLeads.where((lead) {
-          final title = (lead['title'] ?? '').toString().toLowerCase();
-          final location = (lead['location'] ?? '').toString().toLowerCase();
-          final client = (lead['userName'] ?? '').toString().toLowerCase();
-          return title.contains(query) || location.contains(query) || client.contains(query);
-        }).toList();
-      }
+      _applyFilter();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // 1. Sync immediately whenever providerLeadsProvider updates (e.g. from Dashboard or other screens)
+    ref.listen<List<dynamic>>(providerLeadsProvider, (prev, next) {
+      if (mounted && next != _allLeads) {
+        setState(() {
+          _allLeads = next;
+          _applyFilter();
+          _isLoading = false;
+        });
+      }
+    });
+
+    // 2. Auto-fetch fresh leads when user navigates to the Leads tab (tab 2)
+    ref.listen<int>(providerTabProvider, (prev, next) {
+      if (next == 2 && prev != 2) {
+        _fetchLeads(silent: _allLeads.isNotEmpty);
+      }
+    });
+
+    // 3. Listen to explicit refresh triggers (e.g. re-tapping Leads tab icon)
+    ref.listen<int>(providerLeadsRefreshTriggerProvider, (prev, next) {
+      if (next != prev) {
+        _fetchLeads(silent: _allLeads.isNotEmpty);
+      }
+    });
+
+    // 4. Auto-refresh when notifications update (e.g. new lead notification arrived via 20s poll)
+    ref.listen(notificationsProvider, (prev, next) {
+      if (next.length != prev?.length) {
+        _fetchLeads(silent: true);
+      }
+    });
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth >= 700;
     final horizontalPadding = isTablet ? 24.0 : 16.0;
@@ -239,7 +321,7 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> {
           //   return;
           // }
           await context.push('/provider-lead/${lead['id']}');
-          _fetchLeads(); // refresh on returning
+          _fetchLeads(silent: true); // refresh silently on returning
         },
       ),
     );

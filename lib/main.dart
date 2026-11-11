@@ -14,11 +14,26 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'features/auth/auth_provider.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   debugPrint('[FCM Background] Handling message: ${message.messageId}');
+
+  // Immediately wipe stored credentials if force logout is dispatched
+  if (message.data['action'] == 'FORCE_LOGOUT') {
+    debugPrint('[FCM Background] Force logout action received. Clearing persisted auth.');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_id');
+    await prefs.remove('auth_name');
+    await prefs.remove('auth_email');
+    await prefs.remove('auth_businessName');
+    await prefs.remove('auth_role');
+    await prefs.remove('auth_gstNumber');
+    await prefs.remove('auth_profileImage');
+    return;
+  }
 
   // If the message is a data payload or received on OEM devices that suppress automatic display,
   // explicitly present the heads-up notification via FlutterLocalNotificationsPlugin
@@ -188,11 +203,35 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
   }
 }
 
-class ConstructionApp extends ConsumerWidget {
+class ConstructionApp extends ConsumerStatefulWidget {
   const ConstructionApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConstructionApp> createState() => _ConstructionAppState();
+}
+
+class _ConstructionAppState extends ConsumerState<ConstructionApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(authProvider.notifier).validateAccountExists();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
 

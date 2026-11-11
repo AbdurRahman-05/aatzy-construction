@@ -9,6 +9,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/providers/notifications_provider.dart';
+import '../../core/providers/provider_data_provider.dart';
 import '../auth/auth_provider.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'provider_layout.dart';
@@ -69,6 +70,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
       final res3 = responses[3] as http.Response;
       final resProds = responses[4] as B2BApiResponse;
 
+      if (res0.statusCode == 404 || res3.statusCode == 404) {
+        debugPrint('[Dashboard] Provider account returned 404 (deleted from admin panel). Force logging out.');
+        ref.read(authProvider.notifier).forceLogout(reason: 'Your account has been deleted by an administrator.');
+        return;
+      }
+
       if (res0.statusCode == 200 && res1.statusCode == 200) {
         List<dynamic> matLeads = [];
         if (res2.statusCode == 200) {
@@ -97,9 +104,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           }
         }
 
+        final decodedStats = jsonDecode(res0.body);
+        if (decodedStats is Map && decodedStats['allLeads'] is List) {
+          ref.read(providerLeadsProvider.notifier).setLeads(decodedStats['allLeads']);
+        }
+
         if (mounted) {
           setState(() {
-            _stats = jsonDecode(res0.body);
+            _stats = decodedStats is Map<String, dynamic> ? decodedStats : jsonDecode(res0.body);
             _projects = jsonDecode(res1.body);
             _materialLeads = matLeads;
             _profileData = profData;
@@ -177,6 +189,13 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
     final notifications = ref.watch(notificationsProvider);
     final unreadNotifs = notifications.where((n) => n.isUnread).length;
+
+    // Refresh dashboard stats when navigating back to Home tab
+    ref.listen<int>(providerTabProvider, (prev, next) {
+      if (next == 0 && prev != 0) {
+        _fetchStats();
+      }
+    });
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),

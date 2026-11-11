@@ -223,6 +223,10 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
       if (auth.role?.toUpperCase() == 'PROVIDER') {
         // Provider Side Notifications
         final statsRes = await http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats'));
+        if (statsRes.statusCode == 404) {
+          ref.read(authProvider.notifier).forceLogout(reason: 'Your account has been deleted by an administrator.');
+          return;
+        }
         if (statsRes.statusCode == 200) {
           final statsData = jsonDecode(statsRes.body);
           final recentLeads = statsData['recentLeads'] as List? ?? [];
@@ -316,6 +320,14 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
         ));
       } else {
         // Consumer / Homeowner Side Notifications
+        try {
+          final userRes = await http.get(Uri.parse('$apiBaseUrl/users/${auth.id}')).timeout(const Duration(seconds: 8));
+          if (userRes.statusCode == 404) {
+            ref.read(authProvider.notifier).forceLogout(reason: 'Your account has been deleted by an administrator.');
+            return;
+          }
+        } catch (_) {}
+
         final projectsData = ref.read(userProjectsProvider(auth.id!)).value;
         if (projectsData != null) {
           for (var order in projectsData.materialOrders.take(4)) {

@@ -90,6 +90,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           futures.add(ref.refresh(userProjectsProvider(effectiveId).future));
           final results = await Future.wait(futures);
           final userRes = results[0] as http.Response;
+          if (userRes.statusCode == 404) {
+            ref.read(authProvider.notifier).forceLogout(reason: 'Your account has been deleted by an administrator.');
+            return;
+          }
           if (mounted && userRes.statusCode == 200) {
             final data = jsonDecode(userRes.body);
             final newImg = data['profileImage'] as String?;
@@ -118,6 +122,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       try {
         final profileRes = await http.get(Uri.parse('$apiBaseUrl/providers/$effectiveId/profile'));
+        if (profileRes.statusCode == 404) {
+          ref.read(authProvider.notifier).forceLogout(reason: 'Your account has been deleted by an administrator.');
+          return;
+        }
         if (mounted && profileRes.statusCode == 200) {
           final decoded = jsonDecode(profileRes.body);
           setState(() {

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -85,7 +86,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: borderColor, width: 1.0),
@@ -109,8 +113,13 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -118,8 +127,13 @@ class AppTheme {
           foregroundColor: textDark,
           side: const BorderSide(color: borderColor, width: 1.5),
           padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
         ),
       ),
     );
@@ -160,7 +174,10 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1.0),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1.0,
+          ),
         ),
         color: const Color(0xFF1B2730),
         margin: const EdgeInsets.only(bottom: 10),
@@ -168,19 +185,34 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF1B2730),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-        floatingLabelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        labelStyle: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        floatingLabelStyle: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
         hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
         prefixIconColor: Colors.white,
         suffixIconColor: Colors.white70,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1.0),
+          borderSide: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1.0,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1.0),
+          borderSide: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1.0,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -197,17 +229,30 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
           padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
         ),
       ),
     );
@@ -226,10 +271,7 @@ class SmoothPageTransitionsBuilder extends PageTransitionsBuilder {
     Widget child,
   ) {
     return FadeTransition(
-      opacity: CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeOut,
-      ),
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
       child: child,
     );
   }

@@ -209,6 +209,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
       final auth = ref.read(authProvider);
       if (auth.id != null) {
+        // Validate that account was not deleted from the admin panel while the app was closed
+        final exists = await ref.read(authProvider.notifier).validateAccountExists();
+        if (!exists) {
+          debugPrint('[Splash] Account was deleted on server. Terminating startup session.');
+          return;
+        }
         LocationService().detectAndSaveLocation();
         if (auth.role != null) {
           PushNotificationService().syncFCMToken(userId: auth.id, role: auth.role);

@@ -12,6 +12,7 @@ import '../router.dart';
 import 'active_chat_manager.dart';
 import '../../features/home/main_layout.dart';
 import '../../features/providers/provider_layout.dart';
+import '../../features/auth/auth_provider.dart';
 
 class PushNotificationService {
   static final PushNotificationService _instance = PushNotificationService._internal();
@@ -111,6 +112,15 @@ class PushNotificationService {
         // Listen for foreground FCM messages and display them as native alerts
         FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
           debugPrint('[FCM] Foreground notification received: ${message.notification?.title}');
+
+          // Check if message is a force logout directive from admin (e.g. account deleted)
+          if (message.data['action'] == 'FORCE_LOGOUT') {
+            debugPrint('[FCM] Force logout directive received from admin.');
+            final reason = message.data['body'] ?? message.notification?.body ?? 'Your account has been deleted by an administrator.';
+            AuthNotifier.triggerForceLogout(reason: reason);
+            return;
+          }
+
           final notification = message.notification;
           if (notification == null) return;
 
@@ -154,6 +164,11 @@ class PushNotificationService {
         // Listen for notification taps when the app was in the background
         FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
           debugPrint('[FCM] App opened via notification: ${message.data}');
+          if (message.data['action'] == 'FORCE_LOGOUT') {
+            final reason = message.data['body'] ?? message.notification?.body ?? 'Your account has been deleted by an administrator.';
+            AuthNotifier.triggerForceLogout(reason: reason);
+            return;
+          }
           final prefs = await SharedPreferences.getInstance();
           final currentUserId = prefs.getString('auth_id');
           if (currentUserId == null || currentUserId.isEmpty) {
@@ -172,6 +187,11 @@ class PushNotificationService {
         final initialMessage = await messaging.getInitialMessage();
         if (initialMessage != null) {
           debugPrint('[FCM] Cold-start from notification: ${initialMessage.data}');
+          if (initialMessage.data['action'] == 'FORCE_LOGOUT') {
+            final reason = initialMessage.data['body'] ?? initialMessage.notification?.body ?? 'Your account has been deleted by an administrator.';
+            AuthNotifier.triggerForceLogout(reason: reason);
+            return;
+          }
           final prefs = await SharedPreferences.getInstance();
           final currentUserId = prefs.getString('auth_id');
           if (currentUserId != null && currentUserId.isNotEmpty) {

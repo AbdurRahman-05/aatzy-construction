@@ -11,6 +11,7 @@ import '../../core/services/subscription_service.dart';
 import '../subscription/widgets/provider_subscription_modal.dart';
 import '../auth/auth_provider.dart';
 import '../../core/services/ad_popup_service.dart';
+import '../../core/providers/provider_data_provider.dart';
 
 class ProviderTabNotifier extends Notifier<int> {
   final List<int> _history = [0];
@@ -37,6 +38,9 @@ class ProviderTabNotifier extends Notifier<int> {
   }
 
   void setTab(int idx) {
+    if (state == idx && idx == 2) {
+      ref.read(providerLeadsRefreshTriggerProvider.notifier).trigger();
+    }
     state = idx;
   }
 
@@ -237,7 +241,12 @@ class _ProviderLayoutState extends ConsumerState<ProviderLayout> {
     const activeColor = Color(0xFF0F766E);
 
     return GestureDetector(
-      onTap: () => ref.read(providerTabProvider.notifier).setTab(index),
+      onTap: () {
+        if (currentIndex == 2 && index == 2) {
+          ref.read(providerLeadsRefreshTriggerProvider.notifier).trigger();
+        }
+        ref.read(providerTabProvider.notifier).setTab(index);
+      },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
