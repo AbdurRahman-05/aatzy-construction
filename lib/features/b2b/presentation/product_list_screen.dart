@@ -155,7 +155,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     children: [
                       _buildFilterDropdown(
                         'Category: $_selectedCategory',
-                        ['All', 'Materials & Supply', 'Electrical', 'Plumbing', 'Interior Design', 'Furniture', 'Paints', 'Hardware'],
+                        ['All', 'Materials & Supply', 'LED Walls & Digital Displays', 'Electrical', 'Plumbing', 'Interior Design', 'Furniture', 'Paints', 'Hardware'],
                         (val) {
                           setState(() => _selectedCategory = val);
                           _fetchProducts();

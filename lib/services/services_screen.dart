@@ -18,6 +18,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   int _selectedTab = 0; // 0 for Services, 1 for Portfolio
   String _selectedPortfolioFilter = 'All Projects';
   final Set<String> _bookmarkedProjects = {};
+  String _serviceSearchQuery = '';
 
   final List<Map<String, dynamic>> categories = const [
     // --- Original Main Categories ---
@@ -28,6 +29,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     {'name': 'Construction', 'icon': Icons.construction_rounded, 'color': Color(0xFF0284C7), 'bg': Color(0xFFF0F9FF)},
     {'name': 'Engineering (MEP)', 'icon': Icons.settings_rounded, 'color': Color(0xFF10B981), 'bg': Color(0xFFECFDF5)},
     {'name': 'Materials & Supply', 'icon': Icons.inventory_2_rounded, 'color': Color(0xFFE11D48), 'bg': Color(0xFFFFF1F2)},
+    {'name': 'LED Walls & Digital Displays', 'icon': Icons.smart_display_rounded, 'color': Color(0xFF0284C7), 'bg': Color(0xFFE0F2FE)},
     {'name': 'Utilities', 'icon': Icons.bolt_rounded, 'color': Color(0xFFF59E0B), 'bg': Color(0xFFFEF3C7)},
     {'name': 'Borewell', 'icon': Icons.water_drop_rounded, 'color': Color(0xFF06B6D4), 'bg': Color(0xFFECFEFF)},
     {'name': 'Interiors & Finishing', 'icon': Icons.chair_rounded, 'color': Color(0xFF8B5CF6), 'bg': Color(0xFFF5F3FF)},
@@ -68,7 +70,6 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     {'name': 'Interior Design - Commercial', 'icon': Icons.business_center_rounded, 'color': Color(0xFF6D28D9), 'bg': Color(0xFFF5F3FF)},
     {'name': 'Interior Design - Residential', 'icon': Icons.chair_rounded, 'color': Color(0xFF7C3AED), 'bg': Color(0xFFEDE9FE)},
     {'name': 'Kitchen Construction', 'icon': Icons.soup_kitchen_rounded, 'color': Color(0xFFC2410C), 'bg': Color(0xFFFFEDD5)},
-    {'name': 'LED Walls & Digital Displays', 'icon': Icons.smart_display_rounded, 'color': Color(0xFF0284C7), 'bg': Color(0xFFE0F2FE)},
     {'name': 'Metal Work', 'icon': Icons.precision_manufacturing_rounded, 'color': Color(0xFF475569), 'bg': Color(0xFFF1F5F9)},
     {'name': 'Painter', 'icon': Icons.format_paint_rounded, 'color': Color(0xFFDB2777), 'bg': Color(0xFFFCE7F3)},
     {'name': 'Pest Control', 'icon': Icons.pest_control_rounded, 'color': Color(0xFF15803D), 'bg': Color(0xFFDCFCE7)},
@@ -450,7 +451,79 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+
+          // Search Bar for Services
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              onChanged: (val) => setState(() => _serviceSearchQuery = val.trim()),
+              decoration: InputDecoration(
+                hintText: 'Search 50+ services (e.g. LED Walls, Interiors)...',
+                hintStyle: TextStyle(
+                  fontSize: 12.5,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8),
+                ),
+                prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF1D4ED8)),
+                suffixIcon: _serviceSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        onPressed: () => setState(() => _serviceSearchQuery = ''),
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Quick Filter Chips (Featuring LED Walls, Interiors, etc.)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildQuickFilterChip('All', _serviceSearchQuery.isEmpty, () {
+                  setState(() => _serviceSearchQuery = '');
+                }, isDark),
+                const SizedBox(width: 6),
+                _buildQuickFilterChip('LED Walls', _serviceSearchQuery.toLowerCase() == 'led', () {
+                  setState(() => _serviceSearchQuery = 'LED');
+                }, isDark, highlight: true),
+                const SizedBox(width: 6),
+                _buildQuickFilterChip('Interiors', _serviceSearchQuery.toLowerCase() == 'interior', () {
+                  setState(() => _serviceSearchQuery = 'Interior');
+                }, isDark),
+                const SizedBox(width: 6),
+                _buildQuickFilterChip('Contractors', _serviceSearchQuery.toLowerCase() == 'contractor', () {
+                  setState(() => _serviceSearchQuery = 'Contractor');
+                }, isDark),
+                const SizedBox(width: 6),
+                _buildQuickFilterChip('Electrical', _serviceSearchQuery.toLowerCase() == 'electrical', () {
+                  setState(() => _serviceSearchQuery = 'Electrical');
+                }, isDark),
+                const SizedBox(width: 6),
+                _buildQuickFilterChip('Materials', _serviceSearchQuery.toLowerCase() == 'material', () {
+                  setState(() => _serviceSearchQuery = 'Material');
+                }, isDark),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // "All Services" Section Header
           Row(
@@ -460,7 +533,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'All Services',
+                    _serviceSearchQuery.isEmpty ? 'All Services' : 'Search Results',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
                   const SizedBox(height: 2),
@@ -468,11 +541,24 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 ],
               ),
               GestureDetector(
-                onTap: () => context.push('/providers/All'),
+                onTap: () {
+                  if (_serviceSearchQuery.isNotEmpty) {
+                    setState(() => _serviceSearchQuery = '');
+                  } else {
+                    context.push('/providers/All');
+                  }
+                },
                 child: Row(
                   children: [
-                    Text('View All', style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                    Text(
+                      _serviceSearchQuery.isNotEmpty ? 'Clear Search' : 'View All',
+                      style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600),
+                    ),
+                    Icon(
+                      _serviceSearchQuery.isNotEmpty ? Icons.close_rounded : Icons.chevron_right_rounded,
+                      size: 16,
+                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    ),
                   ],
                 ),
               ),
@@ -481,85 +567,140 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           const SizedBox(height: 14),
 
           // 3-Column Services Grid (Preserving ALL 48+ services)
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: gridCrossAxisCount,
-              childAspectRatio: isSmallScreen ? 0.85 : 0.88,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final cat = categories[index];
-              final Color iconColor = cat['color'] as Color? ?? const Color(0xFF1D4ED8);
-              final Color bgColor = cat['bg'] as Color? ?? const Color(0xFFEFF6FF);
+          Builder(
+            builder: (context) {
+              final filteredCategories = _serviceSearchQuery.isEmpty
+                  ? categories
+                  : categories.where((c) {
+                      final name = (c['name'] as String).toLowerCase();
+                      return name.contains(_serviceSearchQuery.toLowerCase());
+                    }).toList();
 
-              return GestureDetector(
-                onTap: () => context.push('/providers/${Uri.encodeComponent(cat['name'])}'),
-                child: Container(
+              if (filteredCategories.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9), width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF0F172A).withValues(alpha: 0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9)),
                   ),
-                  child: Stack(
+                  child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(6, 12, 6, 8),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: isSmallScreen ? 40 : 44,
-                              height: isSmallScreen ? 40 : 44,
-                              decoration: BoxDecoration(
-                                color: isDark ? iconColor.withValues(alpha: 0.2) : bgColor,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  cat['icon'] as IconData,
-                                  size: isSmallScreen ? 20 : 22,
-                                  color: iconColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  cat['name'] as String,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: isSmallScreen ? 10.5 : 11.5,
-                                    color: isDark ? Colors.white : const Color(0xFF1E293B),
-                                    height: 1.2,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
+                      Icon(Icons.search_off_rounded, size: 48, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
+                      const SizedBox(height: 10),
+                      Text(
+                        'No services matching "$_serviceSearchQuery"',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
                         ),
                       ),
-                      Positioned(
-                        right: 8,
-                        bottom: 8,
-                        child: Icon(Icons.arrow_forward_rounded, size: 10, color: isDark ? const Color(0xFF475569) : Colors.grey.shade300),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Try searching for "LED", "Interior", or "Builder"',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: () => setState(() => _serviceSearchQuery = ''),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1D4ED8),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Reset Search', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
                     ],
                   ),
+                );
+              }
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: gridCrossAxisCount,
+                  childAspectRatio: isSmallScreen ? 0.85 : 0.88,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
                 ),
+                itemCount: filteredCategories.length,
+                itemBuilder: (context, index) {
+                  final cat = filteredCategories[index];
+                  final Color iconColor = cat['color'] as Color? ?? const Color(0xFF1D4ED8);
+                  final Color bgColor = cat['bg'] as Color? ?? const Color(0xFFEFF6FF);
+
+                  return GestureDetector(
+                    onTap: () => context.push('/providers/${Uri.encodeComponent(cat['name'])}'),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF0F172A).withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(6, 12, 6, 8),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: isSmallScreen ? 40 : 44,
+                                  height: isSmallScreen ? 40 : 44,
+                                  decoration: BoxDecoration(
+                                    color: isDark ? iconColor.withValues(alpha: 0.2) : bgColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Icon(
+                                      cat['icon'] as IconData,
+                                      size: isSmallScreen ? 20 : 22,
+                                      color: iconColor,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: Center(
+                                    child: Text(
+                                      cat['name'] as String,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: isSmallScreen ? 10.5 : 11.5,
+                                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                        height: 1.2,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Positioned(
+                            right: 8,
+                            bottom: 8,
+                            child: Icon(Icons.arrow_forward_rounded, size: 10, color: isDark ? const Color(0xFF475569) : Colors.grey.shade300),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -644,6 +785,61 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       ),
     );
       },
+    );
+  }
+
+  Widget _buildQuickFilterChip(String label, bool isSelected, VoidCallback onTap, bool isDark, {bool highlight = false}) {
+    final activeBg = highlight ? const Color(0xFF0284C7) : const Color(0xFF1D4ED8);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeBg
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? activeBg
+                : (highlight
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.5)
+                    : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0))),
+            width: highlight && !isSelected ? 1.4 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeBg.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (highlight && !isSelected) ...[
+              const Icon(Icons.smart_display_rounded, size: 13, color: Color(0xFF0284C7)),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : (highlight ? FontWeight.w700 : FontWeight.w600),
+                color: isSelected
+                    ? Colors.white
+                    : (highlight
+                        ? (isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7))
+                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

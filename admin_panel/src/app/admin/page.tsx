@@ -121,6 +121,90 @@ export default async function AdminDashboard({
     }
   }));
 
+  // Fetch completed / closed material inquiries for material profits breakdown
+  const completedInquiriesRaw = await prisma.inquiry.findMany({
+    where: {
+      OR: [
+        { status: 'Completed' },
+        { status: 'Closed' }
+      ]
+    },
+    include: {
+      provider: {
+        select: {
+          id: true,
+          businessName: true,
+          ownerName: true,
+          email: true,
+          phone: true,
+          category: true
+        }
+      },
+      buyer: {
+        select: {
+          id: true,
+          name: true,
+          email: true
+        }
+      },
+      product: {
+        select: {
+          id: true,
+          name: true,
+          pricePerUnit: true,
+          costPrice: true,
+          category: true,
+          unitType: true
+        }
+      }
+    },
+    orderBy: { updatedAt: 'desc' }
+  });
+
+  const completedInquiriesJson = completedInquiriesRaw.map(inq => {
+    const qty = inq.quantity || 1;
+    const unitPrice = inq.quotedPrice ?? (inq.product?.pricePerUnit ?? 0);
+    const totalRevenue = unitPrice * qty;
+    const unitCost = inq.product?.costPrice ?? 0;
+    const totalCost = unitCost > 0 ? unitCost * qty : 0;
+    const netProfit = totalCost > 0 ? Math.max(0, totalRevenue - totalCost) : Math.round(totalRevenue * 0.10);
+
+    return {
+      id: inq.id,
+      title: inq.title,
+      quantity: qty,
+      unit: inq.unit || inq.product?.unitType || 'Units',
+      unitPrice,
+      totalRevenue,
+      unitCost,
+      totalCost,
+      netProfit,
+      status: inq.status,
+      deliveryStatus: inq.deliveryStatus,
+      gstPercent: inq.gstPercent || 18,
+      createdAt: inq.createdAt.toISOString(),
+      updatedAt: inq.updatedAt.toISOString(),
+      provider: inq.provider ? {
+        id: inq.provider.id,
+        businessName: inq.provider.businessName,
+        ownerName: inq.provider.ownerName,
+        email: inq.provider.email,
+        phone: inq.provider.phone,
+        category: inq.provider.category
+      } : null,
+      buyer: inq.buyer ? {
+        id: inq.buyer.id,
+        name: inq.buyer.name,
+        email: inq.buyer.email
+      } : null,
+      product: inq.product ? {
+        id: inq.product.id,
+        name: inq.product.name,
+        category: inq.product.category
+      } : null
+    };
+  });
+
   const providersWithSubData = allProviders.map(p => {
     const expiresAt = p.subscriptionExpiresAt;
     const now = new Date();
@@ -262,6 +346,7 @@ export default async function AdminDashboard({
                   acceptedQuotes={acceptedQuotesJson} 
                   providers={providersJson}
                   recentActions={recentActions}
+                  materialOrders={completedInquiriesJson}
                 />
               )}
 

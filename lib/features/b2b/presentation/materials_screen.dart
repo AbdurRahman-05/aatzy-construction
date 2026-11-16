@@ -12,7 +12,8 @@ import '../../../core/widgets/shimmer_loading.dart';
 import '../../../core/services/push_notification_service.dart';
 
 class MaterialsScreen extends ConsumerStatefulWidget {
-  const MaterialsScreen({super.key});
+  final int initialTab;
+  const MaterialsScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<MaterialsScreen> createState() => _MaterialsScreenState();
@@ -32,7 +33,11 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 2),
+    );
     _fetchData();
   }
 
@@ -418,7 +423,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),
         ),
-        title: Text(isProvider ? 'Supplier Materials Console' : 'Materials Procurement'),
+        title: Text(isProvider ? 'Supplier Materials Console' : 'Materials & Purchased History'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -437,7 +442,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Not Started'),
+                  Text(isProvider ? 'Not Started' : 'Quotes / Inquiries'),
                   if (notStartedCount > 0) ...[
                     const SizedBox(width: 4),
                     Container(
@@ -460,7 +465,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('On Processes'),
+                  Text(isProvider ? 'On Processes' : 'In Transit'),
                   if (onProcessesCount > 0) ...[
                     const SizedBox(width: 4),
                     Container(
@@ -483,7 +488,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Closed Deals'),
+                  Text(isProvider ? 'Closed Deals' : 'Purchased History'),
                   if (closedDealsCount > 0) ...[
                     const SizedBox(width: 4),
                     Container(
@@ -585,9 +590,56 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
             onRefresh: _fetchData,
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: list.length,
+              itemCount: list.length + (tabIndex == 2 ? 1 : 0),
               itemBuilder: (context, index) {
-                final inq = list[index];
+                if (tabIndex == 2 && index == 0) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Purchased Materials History',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  color: Color(0xFF065F46),
+                                ),
+                              ),
+                              Text(
+                                '${list.length} completed & delivered order${list.length > 1 ? 's' : ''} in your history.',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: Color(0xFF047857),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                final inq = tabIndex == 2 ? list[index - 1] : list[index];
                 return _buildConsumerInquiryCard(inq);
               },
             ),
@@ -611,9 +663,9 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
       subtitle = isProvider ? 'No orders currently in packed or dispatched stages.' : 'No active shipments currently on transit.';
       icon = Icons.local_shipping_outlined;
     } else {
-      title = 'No Closed Deals';
-      subtitle = isProvider ? 'You haven\'t closed or completed any bulk deals yet.' : 'No finalized or delivered orders in history.';
-      icon = Icons.archive_outlined;
+      title = isProvider ? 'No Closed Deals' : 'No Purchased Materials Yet';
+      subtitle = isProvider ? 'You haven\'t closed or completed any bulk deals yet.' : 'All your delivered material orders and purchase receipts will appear here.';
+      icon = Icons.inventory_2_outlined;
     }
 
     return Center(
@@ -640,6 +692,20 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
+            if (!isProvider && tabIndex == 2) ...[
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => context.push('/b2b-products'),
+                icon: const Icon(Icons.shopping_bag_outlined, size: 16),
+                label: const Text('Browse & Buy Materials', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F766E),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ],
         ),
       ),

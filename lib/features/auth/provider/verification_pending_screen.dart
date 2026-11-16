@@ -78,7 +78,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
   Future<void> _makeCall() async {
     final Uri launchUri = Uri(
       scheme: 'tel',
-      path: '+919986232326',
+      path: '+918122558115',
     );
     try {
       final canLaunch = await canLaunchUrl(launchUri);
@@ -87,7 +87,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
         await launchUrl(launchUri);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch dialer. Call support at +91 9986232326.')),
+          const SnackBar(content: Text('Could not launch dialer. Call support at +91 8122558115.')),
         );
       }
     } catch (e) {
@@ -97,7 +97,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
 
   Future<void> _sendText() async {
     final String textMsg = 'Hi Connectzy Support, I registered as a provider and am waiting for profile approval.';
-    final Uri whatsappUri = Uri.parse('https://wa.me/919986232326?text=${Uri.encodeComponent(textMsg)}');
+    final Uri whatsappUri = Uri.parse('https://wa.me/918122558115?text=${Uri.encodeComponent(textMsg)}');
     try {
       final canLaunchWhatsapp = await canLaunchUrl(whatsappUri);
       if (!mounted) return;
@@ -106,7 +106,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
       } else {
         final Uri smsUri = Uri(
           scheme: 'sms',
-          path: '+919986232326',
+          path: '+918122558115',
           queryParameters: <String, String>{
             'body': textMsg,
           },
@@ -117,7 +117,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
           await launchUrl(smsUri);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch SMS. Support number: +91 9986232326.')),
+            const SnackBar(content: Text('Could not launch SMS. Support number: +91 8122558115.')),
           );
         }
       }

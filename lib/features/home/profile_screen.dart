@@ -2288,6 +2288,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userProjectsData = userProjectsAsync?.value;
     final projects = userProjectsData?.projects ?? [];
     final orders = userProjectsData?.materialOrders ?? [];
+    final purchased = userProjectsData?.purchasedHistory ?? [];
     final inquiries = userProjectsData?.inquiries ?? [];
 
     if (_isLoading || (userProjectsAsync != null && userProjectsAsync.isLoading && projects.isEmpty)) {
@@ -2305,7 +2306,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
     final int projectsCount = projects.length;
     final int quotesCount = calculatedQuotes;
-    final int ordersCount = orders.length;
+    final int ordersCount = orders.length + purchased.length;
     final int inquiriesCount = inquiries.length;
 
     final mediaQuery = MediaQuery.of(context);
@@ -2717,6 +2718,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   child: Column(
                     children: [
+                      _buildAccountActionTile(
+                        icon: Icons.receipt_long_rounded,
+                        iconColor: const Color(0xFF10B981),
+                        iconBg: isDark ? const Color(0xFF10B981).withValues(alpha: 0.15) : const Color(0xFFECFDF5),
+                        title: 'Purchased Materials History',
+                        subtitle: 'Delivered orders, materials & purchase receipts',
+                        isDark: isDark,
+                        onTap: () => context.push('/b2b-materials?tab=2'),
+                      ),
+                      Divider(
+                        height: 1,
+                        indent: 64,
+                        endIndent: 16,
+                        color: isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                      ),
                       _buildAccountActionTile(
                         icon: Icons.settings_outlined,
                         iconColor: const Color(0xFF0D9488),

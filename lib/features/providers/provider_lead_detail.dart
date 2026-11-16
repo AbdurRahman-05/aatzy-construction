@@ -770,7 +770,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                                   Icon(Icons.verified_rounded, size: 14, color: Color(0xFF10B981)),
                                   SizedBox(width: 4),
                                   Text(
-                                    'Verified Aatzy Client',
+                                    'Verified Connectzy Client',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,

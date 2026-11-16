@@ -37,6 +37,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
     {'id': 5, 'name': 'Furniture', 'icon': Icons.chair_rounded},
     {'id': 6, 'name': 'Paints', 'icon': Icons.color_lens_rounded},
     {'id': 7, 'name': 'Hardware', 'icon': Icons.hardware_rounded},
+    {'id': 8, 'name': 'LED Walls & Digital Displays', 'icon': Icons.smart_display_rounded},
   ];
 
   final List<Map<String, String>> _presets = [

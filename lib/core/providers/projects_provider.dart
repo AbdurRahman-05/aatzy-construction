@@ -8,11 +8,13 @@ class UserProjectsData {
   final List<dynamic> projects;
   final List<dynamic> materialOrders;
   final List<dynamic> inquiries;
+  final List<dynamic> purchasedHistory;
 
   const UserProjectsData({
     this.projects = const [],
     this.materialOrders = const [],
     this.inquiries = const [],
+    this.purchasedHistory = const [],
   });
 }
 
@@ -42,6 +44,7 @@ Future<UserProjectsData> fetchUserProjects(String userId) async {
     List<dynamic> projects = [];
     List<dynamic> materialOrders = [];
     List<dynamic> inquiries = [];
+    List<dynamic> purchasedHistory = [];
 
     if (responses[0].statusCode == 200) {
       final decoded = jsonDecode(responses[0].body);
@@ -55,6 +58,8 @@ Future<UserProjectsData> fetchUserProjects(String userId) async {
     if (responses[1].statusCode == 200) {
       final decoded = jsonDecode(responses[1].body);
       inquiries = decoded['inquiries'] ?? (decoded is List ? decoded : []);
+      
+      // Separate active material orders and purchased materials history
       materialOrders = inquiries.where((i) {
         final status = i['status'];
         final deliveryStatus = i['delivery_status'];
@@ -68,12 +73,19 @@ Future<UserProjectsData> fetchUserProjects(String userId) async {
           status == 'Quote Sent'
         );
       }).toList();
+
+      purchasedHistory = inquiries.where((i) {
+        final status = i['status'];
+        final deliveryStatus = i['delivery_status'];
+        return status == 'Completed' || (status == 'Closed' && deliveryStatus == 'Delivered');
+      }).toList();
     }
 
     return UserProjectsData(
       projects: projects,
       materialOrders: materialOrders,
       inquiries: inquiries,
+      purchasedHistory: purchasedHistory,
     );
   } catch (e) {
     debugPrint('fetchUserProjects error: $e');

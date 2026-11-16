@@ -97,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final projData = projectsAsync.asData?.value ?? projectsAsync.value;
       if (projData != null) {
         _projects = projData.projects;
-        _materialOrders = projData.materialOrders;
+        _materialOrders = [...projData.materialOrders, ...projData.purchasedHistory];
       }
       if (projectsAsync.isLoading && _projects.isEmpty) {
         _isLoading = true;
@@ -716,6 +716,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'tags': ['Modular Kitchen', 'Woodwork', 'Decor'],
         'route': '/providers/Interiors%20%26%20Finishing',
         'buttonText': 'Find Designers',
+      },
+      {
+        'title': 'LED Walls',
+        'badge': 'Digital Displays',
+        'subtitle': 'Commercial LED Walls, Digital Video Displays & Stage Screens',
+        'icon': Icons.smart_display_rounded,
+        'gradient': const [Color(0xFF0284C7), Color(0xFF06B6D4)],
+        'accent': const Color(0xFF0284C7),
+        'bg': const Color(0xFFE0F2FE),
+        'tags': ['LED Screens', 'Digital Signage', 'Stage Displays'],
+        'route': '/providers/LED%20Walls%20%26%20Digital%20Displays',
+        'buttonText': 'Find LED Experts',
       },
     ];
 
@@ -1746,7 +1758,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(width: 6),
             GestureDetector(
-              onTap: () => ref.read(mainTabProvider.notifier).state = 1,
+              onTap: () {
+                if (_activeTabIndex == 2) {
+                  context.push('/b2b-materials?tab=2');
+                } else if (_activeTabIndex == 3) {
+                  context.push('/b2b-my-inquiries');
+                } else if (_activeTabIndex == 1) {
+                  context.push('/dashboard');
+                } else {
+                  ref.read(mainTabProvider.notifier).state = 1;
+                }
+              },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1969,25 +1991,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final title = order['title'] ?? order['product_name'] ?? 'Material';
     final status = order['status'] ?? 'New';
+    final deliveryStatus = order['delivery_status'];
+    final isDelivered = status == 'Completed' || (status == 'Closed' && deliveryStatus == 'Delivered');
+
     return GestureDetector(
-      onTap: () => context.push('/b2b-materials'),
+      onTap: () => context.push(isDelivered ? '/b2b-materials?tab=2' : '/b2b-materials'),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
+          border: Border.all(
+            color: isDelivered
+                ? (isDark ? const Color(0xFF10B981).withValues(alpha: 0.3) : const Color(0xFFA7F3D0))
+                : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
+          ),
         ),
         child: Row(
           children: [
             Container(
               padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
               decoration: BoxDecoration(
-                color: isDark ? Colors.purple.shade900.withValues(alpha: 0.3) : Colors.purple.shade50,
+                color: isDelivered
+                    ? (isDark ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFECFDF5))
+                    : (isDark ? Colors.purple.shade900.withValues(alpha: 0.3) : Colors.purple.shade50),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.inventory_2_rounded, color: isDark ? const Color(0xFFC084FC) : Colors.purple.shade700, size: isSmallScreen ? 18 : 22),
+              child: Icon(
+                isDelivered ? Icons.check_circle_rounded : Icons.inventory_2_rounded,
+                color: isDelivered
+                    ? const Color(0xFF10B981)
+                    : (isDark ? const Color(0xFFC084FC) : Colors.purple.shade700),
+                size: isSmallScreen ? 18 : 22,
+              ),
             ),
             SizedBox(width: isSmallScreen ? 10 : 14),
             Expanded(
@@ -2002,13 +2039,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Status: $status',
-                    style: TextStyle(
-                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
-                      fontSize: 10.5,
-                    ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: isDelivered
+                              ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                              : Colors.blue.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          isDelivered ? 'Purchased & Delivered' : 'Status: $status',
+                          style: TextStyle(
+                            color: isDelivered ? const Color(0xFF059669) : Colors.blue.shade700,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

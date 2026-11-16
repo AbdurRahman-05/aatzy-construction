@@ -182,7 +182,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/b2b-materials',
-        builder: (context, state) => const MaterialsScreen(),
+        builder: (context, state) {
+          final tabParam = int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
+          return MaterialsScreen(initialTab: tabParam);
+        },
       ),
       GoRoute(
         path: '/b2b-news',
