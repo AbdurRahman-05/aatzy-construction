@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:convert';
 
-String apiBaseUrl = "https://aatzy-construction.vercel.app/api";
+String apiBaseUrl = "https://connectzy.app/api";
 
 class Base64ImageCache {
   static final Map<String, Uint8List> _cache = {};

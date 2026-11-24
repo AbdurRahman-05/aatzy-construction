@@ -190,8 +190,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                       ],
                                     ),
                                   ),
-                                ),
-                                Tab(
+                                  Tab(
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [

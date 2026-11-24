@@ -5,42 +5,81 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     const { id } = await context.params;
 
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        },
-        quotes: {
-          include: {
-            provider: {
-              select: {
-                id: true,
-                businessName: true,
-                ownerName: true,
-                phone: true,
-                email: true,
-                profileImage: true,
+    let project: any = null;
+    try {
+      project = await prisma.project.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
+          },
+          quotes: {
+            include: {
+              provider: {
+                select: {
+                  id: true,
+                  businessName: true,
+                  ownerName: true,
+                  phone: true,
+                  email: true,
+                  profileImage: true,
+                }
               }
             }
-          }
-        },
-        updates: {
-          orderBy: {
-            createdAt: 'desc'
-          }
-        },
-        tasks: {
-          orderBy: {
-            createdAt: 'asc'
+          },
+          updates: {
+            orderBy: {
+              createdAt: 'desc'
+            }
+          },
+          tasks: {
+            orderBy: {
+              createdAt: 'asc'
+            }
           }
         }
+      });
+    } catch (queryErr) {
+      console.warn('Full project include failed, attempting fallback query without updates:', queryErr);
+      project = await prisma.project.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
+          },
+          quotes: {
+            include: {
+              provider: {
+                select: {
+                  id: true,
+                  businessName: true,
+                  ownerName: true,
+                  phone: true,
+                  email: true,
+                  profileImage: true,
+                }
+              }
+            }
+          },
+          tasks: {
+            orderBy: {
+              createdAt: 'asc'
+            }
+          }
+        }
+      });
+      if (project) {
+        project.updates = [];
       }
-    });
+    }
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
