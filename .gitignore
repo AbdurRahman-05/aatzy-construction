@@ -64,3 +64,5 @@ key.properties
 
 # Quotation / proposal documents
 Aatzy_*.md
+# Widget Preview related
+.widget_preview/

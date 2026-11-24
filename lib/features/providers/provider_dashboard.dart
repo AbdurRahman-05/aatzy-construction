@@ -728,7 +728,13 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             iconColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
             iconBg: isDark ? const Color(0xFF0F766E).withValues(alpha: 0.25) : const Color(0xFFCCFBF1),
             cardBg: metricCardBg,
-            onTap: () => ref.read(providerTabProvider.notifier).setTab(2),
+            onTap: () {
+              if (activeMaterialLeadsCount > 0 && (_stats?['activeLeads'] ?? 0) == 0) {
+                context.push('/b2b-materials');
+              } else {
+                ref.read(providerTabProvider.notifier).setTab(2);
+              }
+            },
           ),
         ),
         const SizedBox(width: 8),
@@ -993,7 +999,17 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
-                    onTap: () => ref.read(providerTabProvider.notifier).setTab(2),
+                    onTap: () {
+                      final activeMatLeads = _materialLeads.where((lead) {
+                        final status = lead['status'] ?? 'New';
+                        return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
+                      }).length;
+                      if (activeMatLeads > 0 && (_stats?['activeLeads'] ?? 0) == 0) {
+                        context.push('/b2b-materials');
+                      } else {
+                        ref.read(providerTabProvider.notifier).setTab(2);
+                      }
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                       decoration: BoxDecoration(
@@ -1083,49 +1099,119 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   // ==========================================
   Widget _buildDealsAndEnquiriesRow(bool isSmallScreen, double screenWidth) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // 1. Ongoing Deals (Orders in Process / Delivery)
+    final ongoingDeals = _materialLeads.where((lead) {
+      final status = lead['status'] ?? 'New';
+      final deliveryStatus = lead['delivery_status'] ?? 'Pending';
+      return status == 'Accepted' || (status == 'Closed' && deliveryStatus != 'Delivered');
+    }).toList();
+
+    final inNegotiationDeals = _materialLeads.where((lead) {
+      final status = lead['status'] ?? 'New';
+      return status == 'Quote Sent' || status == 'Contacted';
+    }).toList();
+
+    // 2. Hot Market Enquiries (Pending quote requests)
+    final newInquiries = _materialLeads.where((lead) {
+      final status = lead['status'] ?? 'New';
+      return ['New', 'Viewed', 'Contacted'].contains(status);
+    }).toList();
+
+    final allActiveInquiries = _materialLeads.where((lead) {
+      final status = lead['status'] ?? 'New';
+      return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
+    }).toList();
+
+    final activeEnquiryList = newInquiries.isNotEmpty ? newInquiries : allActiveInquiries;
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Left: Ongoing Deals Card
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
+            child: _buildOngoingDealsCard(isDark, ongoingDeals, inNegotiationDeals),
+          ),
+          const SizedBox(width: 10),
+
+          // Right: Hot Market Enquiries Card
+          Expanded(
+            child: _buildHotEnquiriesCard(isDark, activeEnquiryList),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOngoingDealsCard(bool isDark, List<dynamic> ongoingDeals, List<dynamic> inNegotiationDeals) {
+    final hasOngoing = ongoingDeals.isNotEmpty;
+    final hasNegotiation = inNegotiationDeals.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () => context.push(hasOngoing ? '/b2b-materials?tab=1' : '/b2b-materials'),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Ongoing Deals',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (hasOngoing || hasNegotiation) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: hasOngoing
+                                  ? (isDark ? const Color(0xFF065F46) : const Color(0xFFDCFCE7))
+                                  : (isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF)),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                             child: Text(
-                              'Ongoing Deals',
+                              hasOngoing ? '${ongoingDeals.length} Active' : '${inNegotiationDeals.length} In Review',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: hasOngoing
+                                    ? (isDark ? const Color(0xFF34D399) : const Color(0xFF16A34A))
+                                    : (isDark ? const Color(0xFFC084FC) : const Color(0xFF9333EA)),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                        ] else ...[
                           GestureDetector(
                             onTap: () => context.push('/b2b-materials'),
                             child: Container(
@@ -1156,24 +1242,129 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 2),
-                      SizedBox(
-                        height: 24,
-                        child: Text(
-                          'Track in-progress processes and shipments',
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    SizedBox(
+                      height: 24,
+                      child: Text(
+                        hasOngoing
+                            ? 'Shipments and orders in process'
+                            : (hasNegotiation ? 'Quotes submitted to buyers' : 'Track in-progress processes and shipments'),
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                if (hasOngoing || hasNegotiation) ...[
+                  Builder(
+                    builder: (context) {
+                      final deal = hasOngoing ? ongoingDeals.first : inNegotiationDeals.first;
+                      final title = (deal['title'] ?? 'Material Deal').toString();
+                      final qty = deal['quantity']?.toString() ?? '1';
+                      final unit = (deal['unit'] ?? 'Unit').toString();
+                      final stage = hasOngoing
+                          ? (deal['delivery_status'] ?? 'Accepted')
+                          : (deal['status'] ?? 'Quote Sent');
+
+                      return Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: hasOngoing
+                                        ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                        : const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Icon(
+                                    hasOngoing ? Icons.local_shipping : Icons.mark_chat_read_outlined,
+                                    color: hasOngoing ? const Color(0xFF10B981) : const Color(0xFF8B5CF6),
+                                    size: 13,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    stage,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: hasOngoing ? const Color(0xFF10B981) : const Color(0xFF8B5CF6),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Qty: $qty $unit',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Track Orders',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 9,
+                        color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-
+                ] else ...[
                   // Truck Graphic & Empty State
                   Center(
                     child: Column(
@@ -1222,63 +1413,227 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
-          const SizedBox(width: 10),
+        ),
+      ),
+    );
+  }
 
-          // Right: Hot Market Enquiries Card
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hot Market Enquiries',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+  Widget _buildHotEnquiriesCard(bool isDark, List<dynamic> activeEnquiryList) {
+    final hasEnquiries = activeEnquiryList.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: () => context.push('/b2b-materials?tab=0'),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Hot Market Enquiries',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        maxLines: 1,
+                        if (hasEnquiries) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF9A3412) : const Color(0xFFFFEDD5),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('🔥', style: TextStyle(fontSize: 8)),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${activeEnquiryList.length} New',
+                                  style: TextStyle(
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'View All',
+                                  style: TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 7.5,
+                                  color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    SizedBox(
+                      height: 24,
+                      child: Text(
+                        hasEnquiries
+                            ? 'Client quote requests in your area'
+                            : 'Opportunities in your service areas',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        ),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
-                      SizedBox(
-                        height: 24,
-                        child: Text(
-                          'Opportunities in your service areas',
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                if (hasEnquiries) ...[
+                  Builder(
+                    builder: (context) {
+                      final inq = activeEnquiryList.first;
+                      final title = (inq['title'] ?? 'Material Requirement').toString();
+                      final qty = inq['quantity']?.toString() ?? '1';
+                      final unit = (inq['unit'] ?? 'Units').toString();
+                      final loc = (inq['location'] ?? '').toString();
+                      final location = loc.isNotEmpty && loc != 'none' ? loc : 'Madurai';
+
+                      return Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
                         ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEA580C).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Icon(Icons.flash_on_rounded, color: Color(0xFFEA580C), size: 13),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    location,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFFEA580C),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Qty: $qty $unit',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Send Quote',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 9,
+                        color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-
+                ] else ...[
                   // Search Graphic & Empty State
                   Center(
                     child: Column(
@@ -1327,10 +1682,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

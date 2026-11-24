@@ -118,6 +118,7 @@ model ProjectUpdate {
   title     String
   status    String   // e.g. "In Progress", "Completed", "Milestone Reached"
   notes     String?
+  photoUrl  String?  // base64 or URL of daily log update photo
   createdAt DateTime @default(now())
   project   Project  @relation(fields: [projectId], references: [id])
 }

@@ -161,12 +161,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  String _getTimeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Good Morning';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Good Afternoon';
+    } else if (hour >= 17 && hour < 22) {
+      return 'Good Evening';
+    } else {
+      return 'Good Night';
+    }
+  }
+
+  String _getTimeGreetingEmoji() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return '☀️';
+    } else if (hour >= 12 && hour < 17) {
+      return '🌤️';
+    } else if (hour >= 17 && hour < 22) {
+      return '🌆';
+    } else {
+      return '🌙';
+    }
+  }
+
+  String _getTimeGreetingSubtitle() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Let\'s build something great today.';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Keep tracking your active site progress.';
+    } else if (hour >= 17 && hour < 22) {
+      return 'Review your day\'s construction milestones.';
+    } else {
+      return 'Plan ahead for tomorrow\'s site milestones.';
+    }
+  }
+
   Widget _buildHeader(String name, String? profileImage, bool isSmallScreen) {
     final todayStr = DateFormat('EEEE, MMM d').format(DateTime.now());
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     final notifications = ref.watch(notificationsProvider);
     final unreadCount = notifications.where((n) => n.isUnread).length;
+
+    final greeting = _getTimeGreeting();
+    final greetingEmoji = _getTimeGreetingEmoji();
+    final subtitle = _getTimeGreetingSubtitle();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +227,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Good Morning, $name 👋',
+                    '$greeting, $name $greetingEmoji',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 18 : 22,
                       fontWeight: FontWeight.w800,
@@ -196,7 +239,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Let\'s build something great today.',
+                    subtitle,
                     style: TextStyle(
                       fontSize: isSmallScreen ? 12 : 14,
                       color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
@@ -810,7 +853,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(width: 8),
             // See More / Market Button
             GestureDetector(
-              onTap: () => ref.read(mainTabProvider.notifier).state = 2,
+              behavior: HitTestBehavior.opaque,
+              onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
               child: Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: isSmallScreen ? 12 : 16,
@@ -1108,7 +1152,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildMarketEndCard(bool isSmallScreen) {
     return GestureDetector(
-      onTap: () => ref.read(mainTabProvider.notifier).state = 2,
+      behavior: HitTestBehavior.opaque,
+      onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
       child: Container(
         width: isSmallScreen ? 170 : 190,
         margin: const EdgeInsets.only(right: 4),
@@ -1170,30 +1215,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF38BDF8),
+            Material(
+              color: const Color(0xFF38BDF8),
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Go to Market',
-                    style: TextStyle(
-                      color: Color(0xFF0F172A),
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w900,
-                    ),
+                splashColor: Colors.white.withValues(alpha: 0.35),
+                onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Go to Market',
+                        style: TextStyle(
+                          color: Color(0xFF0F172A),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 11,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 11,
-                    color: Color(0xFF0F172A),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -1204,7 +1254,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildMarketPromotionBanner(bool isSmallScreen) {
     return GestureDetector(
-      onTap: () => ref.read(mainTabProvider.notifier).state = 2,
+      behavior: HitTestBehavior.opaque,
+      onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -1301,33 +1352,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 8 : 12,
-                      vertical: isSmallScreen ? 6 : 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF38BDF8),
+                  Material(
+                    color: const Color(0xFF38BDF8),
+                    borderRadius: BorderRadius.circular(20),
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          isSmallScreen ? 'Market' : 'Go to Market',
-                          style: TextStyle(
-                            color: const Color(0xFF0F172A),
-                            fontWeight: FontWeight.w900,
-                            fontSize: isSmallScreen ? 10.5 : 11.5,
-                          ),
+                      splashColor: Colors.white.withValues(alpha: 0.35),
+                      highlightColor: Colors.white.withValues(alpha: 0.15),
+                      onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 10 : 13,
+                          vertical: isSmallScreen ? 7 : 9,
                         ),
-                        const SizedBox(width: 3),
-                        const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 12,
-                          color: Color(0xFF0F172A),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isSmallScreen ? 'Market' : 'Go to Market',
+                              style: TextStyle(
+                                color: const Color(0xFF0F172A),
+                                fontWeight: FontWeight.w900,
+                                fontSize: isSmallScreen ? 10.5 : 11.5,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 13,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
@@ -1479,49 +1536,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+      builder: (ctx) => SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Select Project to Compare Quotes',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+              const SizedBox(height: 16),
+              Text(
+                'Select Project to Compare Quotes',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Choose which construction project you want to review bids for:',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              const SizedBox(height: 4),
+              Text(
+                'Choose which construction project you want to review bids for:',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 320),
-              child: ListView.builder(
-                shrinkWrap: true,
+              const SizedBox(height: 14),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
                 itemCount: activeProjects.length,
                 itemBuilder: (context, idx) {
                   final p = activeProjects[idx];
@@ -1604,8 +1666,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildQuickActionCard(
       String title, String subtitle, String buttonText, IconData icon, Color color, String imagePath, VoidCallback onTap, bool isSmallScreen) {
@@ -1749,9 +1812,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Row(
                   children: [
                     _buildActivityTab('Projects', 0, isSmallScreen),
-                    _buildActivityTab('Quotes', 1, isSmallScreen),
-                    _buildActivityTab('Orders', 2, isSmallScreen),
-                    _buildActivityTab('Inquiries', 3, isSmallScreen),
+                    _buildActivityTab('Orders', 1, isSmallScreen),
+                    _buildActivityTab('Inquiries', 2, isSmallScreen),
                   ],
                 ),
               ),
@@ -1759,12 +1821,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(width: 6),
             GestureDetector(
               onTap: () {
-                if (_activeTabIndex == 2) {
+                if (_activeTabIndex == 1) {
                   context.push('/b2b-materials?tab=2');
-                } else if (_activeTabIndex == 3) {
+                } else if (_activeTabIndex == 2) {
                   context.push('/b2b-my-inquiries');
-                } else if (_activeTabIndex == 1) {
-                  context.push('/dashboard');
                 } else {
                   ref.read(mainTabProvider.notifier).state = 1;
                 }
@@ -1804,7 +1864,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return _isLoading
           ? const ShimmerProjectList(itemCount: 2)
           : Column(children: activeProjectsList.take(3).map((p) => _buildProjectListItem(p, isSmallScreen)).toList());
-    } else if (_activeTabIndex == 2) {
+    } else if (_activeTabIndex == 1) {
       if (_materialOrders.isEmpty && !_isLoading) {
         return _buildActivityEmptyState('No active orders', 'Purchase materials at wholesale prices.', Icons.inventory_2, 'assets/images/no_materials_orders.png', 'Shop Materials', () => context.push('/b2b-products'), isSmallScreen);
       }
@@ -1812,7 +1872,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ? const ShimmerOrderList(itemCount: 2)
           : Column(children: _materialOrders.take(3).map((o) => _buildOrderListItem(o, isSmallScreen)).toList());
     } else {
-      return _buildActivityEmptyState('Nothing to show yet', 'No records found for this category.', Icons.inbox, 'assets/images/construction_paused.png', 'Explore', () => ref.read(mainTabProvider.notifier).state = 2, isSmallScreen);
+      return _buildActivityEmptyState('No recent inquiries', 'Explore materials and suppliers to send inquiries.', Icons.inbox, 'assets/images/construction_paused.png', 'Explore Inquiries', () => context.push('/b2b-my-inquiries'), isSmallScreen);
     }
   }
 
@@ -1826,10 +1886,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     
     final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
+    final isOnHold = currentStage.toString().toLowerCase().trim() == 'on hold';
     
     final int colorIndex = projectId.hashCode.abs() % 3;
     final List<Color> colors = [Colors.green, Colors.blue, Colors.purple];
-    final Color cardColor = isCancelled ? Colors.red : (isCompleted ? colors[colorIndex] : Colors.green);
+    final Color cardColor = isCancelled ? Colors.red : (isOnHold ? Colors.orange : (isCompleted ? colors[colorIndex] : Colors.green));
     final IconData icon = [Icons.home_rounded, Icons.business_rounded, Icons.storefront_rounded][colorIndex];
 
     final progressResult = ProjectProgressHelper.calculateFromProject(project);
@@ -1935,18 +1996,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Text('Cancelled', style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold)),
+                                )
+                              else if (isOnHold)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(alpha: isDark ? 0.25 : 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.orange.withValues(alpha: 0.4), width: 0.8),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.pause_circle_filled_rounded, color: Colors.orange, size: 9),
+                                      SizedBox(width: 2),
+                                      Text('On Hold', style: TextStyle(color: Colors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
                                 ),
                             ],
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            isCompleted ? 'Finished' : 'Stage: $currentStage',
+                            isCompleted ? 'Finished' : (isOnHold ? 'Status: On Hold (Paused)' : 'Stage: $currentStage'),
                             style: TextStyle(
-                              color: isCompleted
-                                  ? (isDark ? const Color(0xFF34D399) : Colors.green.shade700)
-                                  : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                              color: isOnHold
+                                  ? Colors.orange
+                                  : (isCompleted
+                                      ? (isDark ? const Color(0xFF34D399) : Colors.green.shade700)
+                                      : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600)),
                               fontSize: 10.5,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: isOnHold ? FontWeight.w700 : FontWeight.w500,
                             ),
                           ),
                         ],

@@ -5,6 +5,7 @@ import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
 import 'widgets/custom_image.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/media_picker_service.dart';
 import 'dart:convert';
 import '../../../core/widgets/shimmer_loading.dart';
 import '../../../core/services/push_notification_service.dart';
@@ -368,10 +369,10 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
   }
 
   Future<void> _pickMaterialPhoto() async {
-    final picker = ImagePicker();
     try {
-      final XFile? image = await picker.pickImage(
+      final XFile? image = await MediaPickerService.pickImage(
         source: ImageSource.camera,
+        context: context,
         maxWidth: 800,
         maxHeight: 800,
         imageQuality: 70,
@@ -481,6 +482,63 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
         setState(() => _isUpdating = false);
       }
     }
+  }
+
+  void _confirmRejectQuote() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: const [
+            Icon(Icons.cancel_outlined, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Reject Quote Proposal?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to decline this quote proposal for "${widget.inq.productName}"?',
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: const Text(
+                'Once rejected, you will not be able to accept this quoted price and negotiation will be closed.',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF991B1B), height: 1.35),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Keep Quote', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _updateStatus('Rejected');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Yes, Reject Quote', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _confirmAcceptQuote() {
@@ -888,7 +946,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _updateStatus('Rejected'),
+                      onPressed: _confirmRejectQuote,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),

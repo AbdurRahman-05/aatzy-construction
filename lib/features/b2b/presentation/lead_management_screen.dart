@@ -204,6 +204,63 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
     }
   }
 
+  void _confirmRejectLead(LeadItem lead, {String reason = 'Lead rejected by supplier during negotiation.'}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Reject Lead Inquiry?', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to reject the requirement for "${lead.requirementTitle.isNotEmpty ? lead.requirementTitle : 'this material'}" from ${lead.buyerName}?',
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: const Text(
+                'Once rejected, this lead will be marked as Lead Rejected and negotiation will terminate.',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF991B1B), height: 1.35),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _updateLeadStatus(lead, 'Lead Rejected', reason);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Yes, Reject', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status) {
       case 'New':
@@ -228,77 +285,420 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
   }
 
   void _showQuoteDialog(LeadItem lead, {bool isNewQuote = false}) {
-    double selectedGstPercent = lead.gstPercent;
-    final notesController = TextEditingController(text: isNewQuote ? 'Generated a revised quote for the buyer.' : 'Quote proposed to the buyer.');
-    final quotedPriceController = TextEditingController(text: lead.quotedPrice?.toString() ?? '');
+    double selectedGstPercent = lead.gstPercent > 0 ? lead.gstPercent : 18.0;
+    final notesController = TextEditingController(
+      text: isNewQuote ? 'Generated a revised quote for the buyer.' : 'Quote proposed to the buyer.',
+    );
+    final quotedPriceController = TextEditingController(
+      text: (lead.quotedPrice != null && lead.quotedPrice! > 0) ? lead.quotedPrice!.toStringAsFixed(2) : '',
+    );
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(isNewQuote ? 'Generate Revised Quote' : 'Propose Price Quotation'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: quotedPriceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Quoted Rate per Unit (₹)',
-                        hintText: 'e.g. 410.00',
+            final rate = double.tryParse(quotedPriceController.text.trim()) ?? 0.0;
+            final qty = lead.quantityVal > 0 ? lead.quantityVal : 1.0;
+            final subtotal = rate * qty;
+            final gstAmount = subtotal * (selectedGstPercent / 100.0);
+            final totalAmount = subtotal + gstAmount;
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<double>(
-                      initialValue: selectedGstPercent,
-                      decoration: const InputDecoration(labelText: 'GST Percent (%)'),
-                      items: [5.0, 12.0, 18.0, 28.0].map((gst) {
-                        return DropdownMenuItem(value: gst, child: Text('${gst.toStringAsFixed(0)}%'));
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setDialogState(() {
-                            selectedGstPercent = val;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Timeline/Negotiation Notes',
-                        hintText: 'Enter specifications or timeline details...',
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 1. Header Banner
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 16, 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                          border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.receipt_long_rounded,
+                                color: Color(0xFF2563EB),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isNewQuote ? 'Revise Price Quotation' : 'Propose Price Quotation',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'For ${lead.buyerName} • ${lead.location}',
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B), size: 20),
+                              splashRadius: 18,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          ],
+                        ),
                       ),
-                      maxLines: 2,
-                    ),
-                  ],
+
+                      // 2. Dialog Scrollable Body
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Requirement Summary Card
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'TARGET REQUIREMENT',
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF1D4ED8),
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            lead.requirementTitle,
+                                            style: const TextStyle(
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF1E293B),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: const Color(0xFF93C5FD)),
+                                      ),
+                                      child: Text(
+                                        lead.quantity,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF1D4ED8),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+
+                              // Rate Field
+                              const Text(
+                                'Quoted Rate per Unit',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              TextFormField(
+                                controller: quotedPriceController,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                onChanged: (_) => setDialogState(() {}),
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                decoration: InputDecoration(
+                                  prefixIcon: const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 12),
+                                    child: Text(
+                                      '₹',
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                    ),
+                                  ),
+                                  prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                                  suffixText: '/ ${lead.unit}',
+                                  suffixStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                                  hintText: 'e.g. 350.00',
+                                  hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey.shade400, fontWeight: FontWeight.normal),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+
+                              // GST Selection as Segmented Chips
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Applicable GST Tax',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF334155),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${selectedGstPercent.toStringAsFixed(0)}% Tax Selected',
+                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF2563EB), fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [5.0, 12.0, 18.0, 28.0].map((gst) {
+                                  final isSelected = selectedGstPercent == gst;
+                                  return Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(10),
+                                        onTap: () {
+                                          setDialogState(() {
+                                            selectedGstPercent = gst;
+                                          });
+                                        },
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 150),
+                                          padding: const EdgeInsets.symmetric(vertical: 9),
+                                          decoration: BoxDecoration(
+                                            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFFE2E8F0),
+                                              width: isSelected ? 1.5 : 1,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '${gst.toStringAsFixed(0)}%',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w800,
+                                                color: isSelected ? Colors.white : const Color(0xFF475569),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 18),
+
+                              // Live Pricing & Billing Breakdown
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text('Material Subtotal (${lead.quantity})', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                        Text('₹${subtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF1E293B))),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text('GST (${selectedGstPercent.toStringAsFixed(0)}%)', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                        Text('+ ₹${gstAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF16A34A))),
+                                      ],
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 8),
+                                      child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Text('Estimated Billing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                                        Text(
+                                          '₹${totalAmount.toStringAsFixed(2)}',
+                                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+
+                              // Timeline / Notes Field
+                              const Text(
+                                'Timeline / Negotiation Notes',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: notesController,
+                                maxLines: 2,
+                                style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+                                decoration: InputDecoration(
+                                  hintText: 'e.g. Ready for dispatch within 2 days. Valid for 7 days...',
+                                  hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade400),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // 3. Action Buttons
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+                          border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  foregroundColor: const Color(0xFF64748B),
+                                ),
+                                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  final qPrice = double.tryParse(quotedPriceController.text.trim()) ?? 0.0;
+                                  if (qPrice <= 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please enter a valid quoted rate per unit.')),
+                                    );
+                                    return;
+                                  }
+                                  Navigator.pop(context);
+                                  _updateLeadStatus(
+                                    lead,
+                                    'Quote Sent',
+                                    notesController.text.trim(),
+                                    quotedPrice: qPrice,
+                                    gstPercent: selectedGstPercent,
+                                  );
+                                },
+                                icon: const Icon(Icons.send_rounded, size: 16),
+                                label: const Text('Send Quote', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2563EB),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    final qPrice = double.tryParse(quotedPriceController.text) ?? 0.0;
-                    _updateLeadStatus(
-                      lead,
-                      'Quote Sent',
-                      notesController.text.trim(),
-                      quotedPrice: qPrice,
-                      gstPercent: selectedGstPercent,
-                    );
-                  },
-                  child: const Text('Send Quote'),
-                ),
-              ],
             );
           },
         );
@@ -315,70 +715,253 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: Text(selectedDeliveryStatus == 'Delivered' ? 'Finalize & Close Deal' : 'Update Status'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedDeliveryStatus,
-                      decoration: const InputDecoration(labelText: 'Delivery Stage'),
-                      items: ['Pending', 'Packed', 'Dispatched', 'Delivered'].map((stage) {
-                        return DropdownMenuItem(value: stage, child: Text(stage));
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setDialogState(() {
-                            selectedDeliveryStatus = val;
-                            // Update notes template if not customized
-                            if (notesController.text.startsWith('Status updated to') ||
-                                notesController.text == 'Deal finalized and closed successfully!' ||
-                                notesController.text.isEmpty) {
-                              if (val == 'Delivered') {
-                                notesController.text = 'Deal finalized and closed successfully!';
-                              } else {
-                                notesController.text = 'Status updated to $val';
-                              }
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Timeline Notes',
-                        hintText: 'Enter dispatch or receipt info...',
+            final isDelivered = selectedDeliveryStatus == 'Delivered';
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
-                      maxLines: 2,
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Header
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 16, 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                          border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: (isDelivered ? Colors.green : const Color(0xFF2563EB)).withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isDelivered ? Icons.check_circle_rounded : Icons.local_shipping_rounded,
+                                color: isDelivered ? Colors.green : const Color(0xFF2563EB),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isDelivered ? 'Finalize & Close Deal' : 'Update Delivery Status',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'For ${lead.buyerName} • ${lead.requirementTitle}',
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B), size: 20),
+                              splashRadius: 18,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Body
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Text(
+                                'Select Shipment / Delivery Stage',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: ['Pending', 'Packed', 'Dispatched', 'Delivered'].map((stage) {
+                                  final isSelected = selectedDeliveryStatus == stage;
+                                  Color activeColor = const Color(0xFF2563EB);
+                                  if (stage == 'Delivered') activeColor = Colors.green;
+                                  if (stage == 'Dispatched') activeColor = Colors.orange;
+
+                                  return Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(10),
+                                        onTap: () {
+                                          setDialogState(() {
+                                            selectedDeliveryStatus = stage;
+                                            if (notesController.text.startsWith('Status updated to') ||
+                                                notesController.text == 'Deal finalized and closed successfully!' ||
+                                                notesController.text.isEmpty) {
+                                              if (stage == 'Delivered') {
+                                                notesController.text = 'Deal finalized and closed successfully!';
+                                              } else {
+                                                notesController.text = 'Status updated to $stage';
+                                              }
+                                            }
+                                          });
+                                        },
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 150),
+                                          padding: const EdgeInsets.symmetric(vertical: 9),
+                                          decoration: BoxDecoration(
+                                            color: isSelected ? activeColor : const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: isSelected ? activeColor : const Color(0xFFE2E8F0),
+                                              width: isSelected ? 1.5 : 1,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              stage,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w800,
+                                                color: isSelected ? Colors.white : const Color(0xFF475569),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 18),
+                              const Text(
+                                'Timeline / Tracking Notes',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: notesController,
+                                maxLines: 2,
+                                style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+                                decoration: InputDecoration(
+                                  hintText: 'Enter dispatch, vehicle number, or receipt info...',
+                                  hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade400),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Actions
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+                          border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  foregroundColor: const Color(0xFF64748B),
+                                ),
+                                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 2,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _updateLeadStatus(
+                                    lead,
+                                    isDelivered ? 'Completed' : 'Closed',
+                                    notesController.text.trim(),
+                                    deliveryStatus: selectedDeliveryStatus,
+                                  );
+                                },
+                                icon: Icon(isDelivered ? Icons.check_circle_rounded : Icons.save_rounded, size: 16),
+                                label: Text(
+                                  isDelivered ? 'Finalize & Close Deal' : 'Update & Save',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isDelivered ? Colors.green : const Color(0xFF2563EB),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _updateLeadStatus(
-                      lead,
-                      selectedDeliveryStatus == 'Delivered' ? 'Completed' : 'Closed',
-                      notesController.text.trim(),
-                      deliveryStatus: selectedDeliveryStatus,
-                    );
-                  },
-                  child: Text(selectedDeliveryStatus == 'Delivered' ? 'Close Deal' : 'Update & Save'),
-                ),
-              ],
             );
           },
         );
@@ -625,7 +1208,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
           ),
           const SizedBox(width: 12),
           OutlinedButton(
-            onPressed: () => _updateLeadStatus(lead, 'Lead Rejected', 'Lead rejected by supplier during negotiation.'),
+            onPressed: () => _confirmRejectLead(lead),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: const BorderSide(color: Colors.red),
@@ -689,7 +1272,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () => _updateLeadStatus(lead, 'Lead Rejected', 'Supplier rejected lead after buyer rejected the quote.'),
+              onPressed: () => _confirmRejectLead(lead, reason: 'Supplier rejected lead after buyer rejected the quote.'),
               icon: const Icon(Icons.cancel_outlined, size: 18),
               label: const Text('Reject Lead'),
               style: OutlinedButton.styleFrom(

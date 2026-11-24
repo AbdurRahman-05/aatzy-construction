@@ -22,13 +22,15 @@ export async function POST(request: Request) {
     });
 
     // Fetch details to send quote proposal notification emails & in-app notification
-    Promise.all([
-      prisma.project.findUnique({ where: { id: projectId }, include: { user: true } }),
-      prisma.provider.findUnique({ where: { id: providerId } }),
-    ]).then(([project, provider]) => {
+    try {
+      const [project, provider] = await Promise.all([
+        prisma.project.findUnique({ where: { id: projectId }, include: { user: true } }).catch(() => null),
+        prisma.provider.findUnique({ where: { id: providerId } }).catch(() => null),
+      ]);
+
       if (project && project.user && provider) {
-        // In-app notification to consumer
-        createNotification({
+        // In-app notification & push to consumer
+        await createNotification({
           recipientId: project.userId,
           role: 'CONSUMER',
           title: `💬 New Bid: ${provider.businessName}`,
@@ -36,16 +38,16 @@ export async function POST(request: Request) {
           type: 'QUOTE_ACCEPTED',
           entityId: project.id,
           route: `/compare-quotes/${project.id}`,
-        }).catch(err => console.error('Quote proposal in-app notification error:', err));
+        });
 
         const { sendQuoteNotification } = require('@/lib/mail');
         sendQuoteNotification(quote, project, project.user, provider).catch((err: any) => {
           console.error('Quote proposal email error:', err);
         });
       }
-    }).catch(err => {
-      console.error('Failed to fetch details for quote notification:', err);
-    });
+    } catch (notifErr) {
+      console.error('Failed to dispatch quote proposal notification:', notifErr);
+    }
 
     return NextResponse.json(quote, { status: 201 });
   } catch (error) {

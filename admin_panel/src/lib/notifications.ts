@@ -220,40 +220,55 @@ export async function createNotification(params: CreateNotificationParams) {
     });
 
     // Send instant FCM push notification to phone if recipient has device fcmToken
-    (async () => {
-      try {
-        let fcmToken: string | null = null;
-        if (params.role === 'PROVIDER') {
-          const prov = await prisma.provider.findUnique({
-            where: { id: params.recipientId },
-            select: { fcmToken: true },
-          });
-          fcmToken = prov?.fcmToken ?? null;
-        } else {
+    try {
+      let fcmToken: string | null = null;
+      if (params.role === 'PROVIDER') {
+        const prov = await prisma.provider.findUnique({
+          where: { id: params.recipientId },
+          select: { fcmToken: true },
+        });
+        fcmToken = prov?.fcmToken ?? null;
+        if (!fcmToken) {
           const usr = await prisma.user.findUnique({
             where: { id: params.recipientId },
             select: { fcmToken: true },
           });
           fcmToken = usr?.fcmToken ?? null;
         }
-
-        if (fcmToken) {
-          await sendFCMNotification({
-            token: fcmToken,
-            title: params.title,
-            body: params.body,
-            route: params.route,
-            recipientId: params.recipientId,
-            role: params.role,
-            // Pass senderId so the Flutter FCM listener can suppress the notification
-            // when the user is already viewing that specific chat conversation.
-            senderId: params.senderId ?? params.entityId,
+      } else {
+        const usr = await prisma.user.findUnique({
+          where: { id: params.recipientId },
+          select: { fcmToken: true },
+        });
+        fcmToken = usr?.fcmToken ?? null;
+        if (!fcmToken) {
+          const prov = await prisma.provider.findUnique({
+            where: { id: params.recipientId },
+            select: { fcmToken: true },
           });
+          fcmToken = prov?.fcmToken ?? null;
         }
-      } catch (fcmErr) {
-        console.error('FCM device push error:', fcmErr);
       }
-    })();
+
+      if (fcmToken) {
+        await sendFCMNotification({
+          token: fcmToken,
+          title: params.title,
+          body: params.body,
+          route: params.route,
+          recipientId: params.recipientId,
+          role: params.role,
+          // Pass senderId so the Flutter FCM listener can suppress the notification
+          // when the user is already viewing that specific chat conversation.
+          senderId: params.senderId ?? params.entityId,
+        });
+        console.log(`[FCM] Push dispatched successfully to ${params.role} ${params.recipientId} (type: ${params.type})`);
+      } else {
+        console.log(`[FCM] No device token registered for ${params.role} ${params.recipientId}`);
+      }
+    } catch (fcmErr) {
+      console.error('FCM device push error:', fcmErr);
+    }
 
     return record;
   } catch (error) {

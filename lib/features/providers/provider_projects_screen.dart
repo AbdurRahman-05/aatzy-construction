@@ -146,17 +146,20 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
     final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
     final isPendingApproval = currentStage.toString().toLowerCase() == 'finished pending approval';
+    final isOnHold = currentStage.toString().toLowerCase().trim() == 'on hold';
     
     final int colorIndex = projectId.hashCode.abs() % 3;
     final List<Color> colors = [const Color(0xFF10B981), const Color(0xFF0F766E), const Color(0xFF3B82F6)];
-    final Color cardColor = isCancelled ? const Color(0xFFEF4444) : (isCompleted ? const Color(0xFF10B981) : colors[colorIndex]);
+    final Color cardColor = isCancelled ? const Color(0xFFEF4444) : (isOnHold ? const Color(0xFFF59E0B) : (isCompleted ? const Color(0xFF10B981) : colors[colorIndex]));
     final IconData icon = [Icons.business_center_rounded, Icons.apartment_rounded, Icons.construction_rounded][colorIndex];
 
     final progressResult = ProjectProgressHelper.calculateFromProject(project);
     final double progress = progressResult.progressValue;
 
     String dateStr = 'Active';
-    if (isCompleted || isCancelled || isPendingApproval) {
+    if (isOnHold) {
+      dateStr = 'Job On Hold';
+    } else if (isCompleted || isCancelled || isPendingApproval) {
       final updated = project['updatedAt'] ?? project['updated_at'];
       if (updated != null) {
         dateStr = updated.toString().split('T')[0];
@@ -291,16 +294,20 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 decoration: BoxDecoration(
                                   color: isCancelled
                                       ? (isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade50)
-                                      : (isCompleted
-                                          ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade50)
-                                          : (isPendingApproval ? (isDark ? Colors.amber.withValues(alpha: 0.2) : Colors.amber.shade50) : (isDark ? const Color(0xFF4F46E5).withValues(alpha: 0.25) : const Color(0xFFEEF2FF)))),
+                                      : (isOnHold
+                                          ? (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade50)
+                                          : (isCompleted
+                                              ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade50)
+                                              : (isPendingApproval ? (isDark ? Colors.amber.withValues(alpha: 0.2) : Colors.amber.shade50) : (isDark ? const Color(0xFF4F46E5).withValues(alpha: 0.25) : const Color(0xFFEEF2FF))))),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: isCancelled
                                         ? (isDark ? Colors.red.shade400 : Colors.red.shade200)
-                                        : (isCompleted
-                                            ? (isDark ? Colors.green.shade400 : Colors.green.shade200)
-                                            : (isPendingApproval ? (isDark ? Colors.amber.shade400 : Colors.amber.shade300) : (isDark ? const Color(0xFF818CF8) : const Color(0xFFC7D2FE)))),
+                                        : (isOnHold
+                                            ? (isDark ? Colors.orange.shade400 : Colors.orange.shade200)
+                                            : (isCompleted
+                                                ? (isDark ? Colors.green.shade400 : Colors.green.shade200)
+                                                : (isPendingApproval ? (isDark ? Colors.amber.shade400 : Colors.amber.shade300) : (isDark ? const Color(0xFF818CF8) : const Color(0xFFC7D2FE))))),
                                     width: 0.8,
                                   ),
                                 ),
@@ -310,29 +317,37 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                     Icon(
                                       isCancelled
                                           ? Icons.cancel_rounded
-                                          : (isCompleted
-                                              ? Icons.check_circle_rounded
-                                              : (isPendingApproval ? Icons.rate_review_rounded : Icons.sync_rounded)),
+                                          : (isOnHold
+                                              ? Icons.pause_circle_filled_rounded
+                                              : (isCompleted
+                                                  ? Icons.check_circle_rounded
+                                                  : (isPendingApproval ? Icons.rate_review_rounded : Icons.sync_rounded))),
                                       color: isCancelled
                                           ? Colors.red
-                                          : (isCompleted
-                                              ? (isDark ? Colors.greenAccent : Colors.green.shade700)
-                                              : (isPendingApproval ? (isDark ? Colors.amberAccent : Colors.amber.shade900) : (isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5)))),
+                                          : (isOnHold
+                                              ? (isDark ? Colors.orangeAccent : Colors.orange.shade800)
+                                              : (isCompleted
+                                                  ? (isDark ? Colors.greenAccent : Colors.green.shade700)
+                                                  : (isPendingApproval ? (isDark ? Colors.amberAccent : Colors.amber.shade900) : (isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5))))),
                                       size: 10,
                                     ),
                                     const SizedBox(width: 3),
                                     Text(
                                       isCancelled
                                           ? 'Cancelled'
-                                          : (isCompleted
-                                              ? 'Finished'
-                                              : (isPendingApproval ? 'Pending' : 'Ongoing')),
+                                          : (isOnHold
+                                              ? 'On Hold'
+                                              : (isCompleted
+                                                  ? 'Finished'
+                                                  : (isPendingApproval ? 'Pending' : 'Ongoing'))),
                                       style: TextStyle(
                                         color: isCancelled
                                             ? Colors.red
-                                            : (isCompleted
-                                                ? (isDark ? Colors.greenAccent : Colors.green.shade700)
-                                                : (isPendingApproval ? (isDark ? Colors.amberAccent : Colors.amber.shade900) : (isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5)))),
+                                            : (isOnHold
+                                                ? (isDark ? Colors.orangeAccent : Colors.orange.shade800)
+                                                : (isCompleted
+                                                    ? (isDark ? Colors.greenAccent : Colors.green.shade700)
+                                                    : (isPendingApproval ? (isDark ? Colors.amberAccent : Colors.amber.shade900) : (isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5))))),
                                         fontSize: 8.5,
                                         fontWeight: FontWeight.bold,
                                       ),

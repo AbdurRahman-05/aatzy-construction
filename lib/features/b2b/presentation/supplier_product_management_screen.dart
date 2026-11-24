@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/media_picker_service.dart';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
 import 'widgets/custom_image.dart';
@@ -145,9 +146,9 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
 
   Future<void> _pickLocalImage() async {
     try {
-      final picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
+      final XFile? image = await MediaPickerService.pickImage(
         source: ImageSource.gallery,
+        context: context,
         maxWidth: 800,
         maxHeight: 800,
         imageQuality: 70,
@@ -294,18 +295,22 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => context.pop(),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _isEditing ? 'Edit Material Listing' : 'Add Material Listing',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark),
-            ),
-            Text(
-              'B2B Supplier Marketplace',
-              style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500),
-            ),
-          ],
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isEditing ? 'Edit Material Listing' : 'Add Material Listing',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textDark),
+              ),
+              Text(
+                'B2B Supplier Marketplace',
+                style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
         ),
         actions: [
           Container(
@@ -542,6 +547,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
 
           // Marketplace Category
           DropdownButtonFormField<int>(
+            isExpanded: true,
             initialValue: _selectedCategory,
             items: _categories.map((cat) {
               return DropdownMenuItem<int>(
@@ -549,8 +555,14 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
                 child: Row(
                   children: [
                     Icon(cat['icon'] as IconData, size: 18, color: primaryColor),
-                    const SizedBox(width: 10),
-                    Text(cat['name'] as String),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        cat['name'] as String,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               );

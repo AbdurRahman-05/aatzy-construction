@@ -38,13 +38,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         });
 
         // Fetch details to send quote acceptance notification emails & in-app notifications
-        Promise.all([
-          prisma.project.findUnique({ where: { id: quote.projectId }, include: { user: true } }),
-          prisma.provider.findUnique({ where: { id: quote.providerId } }),
-        ]).then(([project, provider]) => {
+        try {
+          const [project, provider] = await Promise.all([
+            prisma.project.findUnique({ where: { id: quote.projectId }, include: { user: true } }).catch(() => null),
+            prisma.provider.findUnique({ where: { id: quote.providerId } }).catch(() => null),
+          ]);
+
           if (project && project.user && provider) {
             // 1. Notify Provider: Quote was accepted!
-            createNotification({
+            await createNotification({
               recipientId: quote.providerId,
               role: 'PROVIDER',
               title: '🤝 Bid Accepted!',
@@ -52,10 +54,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
               type: 'QUOTE_ACCEPTED',
               entityId: quote.projectId,
               route: `/provider-job/${quote.projectId}`,
-            }).catch(err => console.error('Provider quote acceptance notification error:', err));
+            });
 
             // 2. Notify Consumer: Contract Confirmed!
-            createNotification({
+            await createNotification({
               recipientId: project.userId,
               role: 'CONSUMER',
               title: '🎉 Contract Confirmed',
@@ -63,11 +65,16 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
               type: 'QUOTE_ACCEPTED',
               entityId: quote.projectId,
               route: `/project-detail/${quote.projectId}`,
-            }).catch(err => console.error('Consumer quote confirmation notification error:', err));
+            });
 
             const { sendQuoteAcceptedNotification } = require('@/lib/mail');
             sendQuoteAcceptedNotification(updatedQuote, project, project.user, provider).catch((err: any) => {
               console.error('Quote acceptance notification email error:', err);
+            });
+          }
+        } catch (notifErr) {
+          console.error('Failed to dispatch quote acceptance notifications:', notifErr);
+        }
             });
           }
         }).catch(err => {

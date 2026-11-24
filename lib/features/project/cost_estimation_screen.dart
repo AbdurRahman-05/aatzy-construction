@@ -1,9 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/wallpaper_background.dart';
 
+class CostEstimateResult {
+  final double totalCost;
+  final double areaSqFt;
+  final String buildingType;
+  final String configuration;
+  final String quality;
+  final double ratePerSqFt;
+  final String timelineEstimate;
+  final List<String> selectedAddons;
+  final Map<String, double> categoryBreakdown;
+
+  const CostEstimateResult({
+    required this.totalCost,
+    required this.areaSqFt,
+    required this.buildingType,
+    required this.configuration,
+    required this.quality,
+    required this.ratePerSqFt,
+    required this.timelineEstimate,
+    this.selectedAddons = const [],
+    this.categoryBreakdown = const {},
+  });
+}
+
 class CostEstimationScreen extends StatefulWidget {
-  const CostEstimationScreen({super.key});
+  final bool isSelectMode;
+  final double? initialArea;
+  final String? initialBuildingType;
+
+  const CostEstimationScreen({
+    super.key,
+    this.isSelectMode = false,
+    this.initialArea,
+    this.initialBuildingType,
+  });
 
   @override
   State<CostEstimationScreen> createState() => _CostEstimationScreenState();
@@ -35,6 +69,13 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialArea != null && widget.initialArea! > 0) {
+      _area = widget.initialArea!;
+      _areaController.text = _area.toStringAsFixed(0);
+    }
+    if (widget.initialBuildingType != null && widget.initialBuildingType!.isNotEmpty) {
+      _buildingType = widget.initialBuildingType!;
+    }
     _areaController.addListener(() {
       final parsed = double.tryParse(_areaController.text);
       if (parsed != null && parsed != _area) {
@@ -148,6 +189,18 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             ),
           ),
           actions: [
+            if (widget.isSelectMode && totalCost > 0)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: TextButton.icon(
+                  onPressed: () => Navigator.of(context).pop(_buildEstimateResult(totalCost)),
+                  icon: const Icon(Icons.check_circle_rounded, size: 18, color: primaryPurple),
+                  label: const Text(
+                    'Apply',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: primaryPurple),
+                  ),
+                ),
+              ),
             IconButton(
               icon: Icon(Icons.info_outline_rounded, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
               onPressed: _showInfoDialog,
@@ -1553,10 +1606,47 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
     );
   }
 
+  String _calculateEstimatedTimeline() {
+    if (_area <= 800) return '4-6 Months';
+    if (_area <= 1500) return '6-8 Months';
+    if (_area <= 2500) return '8-12 Months';
+    if (_area <= 4000) return '12-16 Months';
+    return '16-24 Months';
+  }
+
+  CostEstimateResult _buildEstimateResult(double totalCost) {
+    final ratePerSqFt = _area > 0 ? totalCost / _area : 0.0;
+    final costCategories = getCostCategories();
+    final Map<String, double> breakdown = {};
+    for (final cat in costCategories) {
+      breakdown[cat.categoryName] = totalCost * cat.percentage;
+    }
+
+    final List<String> addons = [];
+    if (_includeInterior) addons.add('Interior Design');
+    if (_includeSmartHome) addons.add('Smart Home');
+    if (_includeLandscaping) addons.add('Landscaping');
+    if (_includeSolar) addons.add('Solar Power');
+
+    return CostEstimateResult(
+      totalCost: totalCost,
+      areaSqFt: _area,
+      buildingType: _buildingType,
+      configuration: _getActiveConfig(),
+      quality: _quality,
+      ratePerSqFt: ratePerSqFt,
+      timelineEstimate: _calculateEstimatedTimeline(),
+      selectedAddons: addons,
+      categoryBreakdown: breakdown,
+    );
+  }
+
   // Floating Bottom Total Bar
   Widget _buildBottomStickyBar(double totalCost, bool isDark) {
+    final estimateResult = _buildEstimateResult(totalCost);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(16),
@@ -1573,22 +1663,54 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Total Estimated Budget',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : darkPurple,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Estimated Budget',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white70 : darkPurple,
+                  ),
+                ),
+                Text(
+                  _currencyFormatter.format(totalCost),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: primaryPurple,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            _currencyFormatter.format(totalCost),
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              color: primaryPurple,
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () {
+              if (widget.isSelectMode) {
+                Navigator.of(context).pop(estimateResult);
+              } else {
+                context.push('/create-project', extra: estimateResult);
+              }
+            },
+            icon: Icon(
+              widget.isSelectMode ? Icons.check_circle_rounded : Icons.rocket_launch_rounded,
+              size: 16,
+            ),
+            label: Text(
+              widget.isSelectMode ? 'Apply to Project' : 'Use in Project',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryPurple,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ],

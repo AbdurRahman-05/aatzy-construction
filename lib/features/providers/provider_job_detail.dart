@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/services/media_picker_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants.dart';
@@ -926,15 +927,20 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     }
   }
 
-  Future<void> _addDailyUpdate(String title, String status, String notes) async {
+  Future<void> _addDailyUpdate(String title, String status, String notes, [String? photoUrl]) async {
     try {
+      final effectiveNotes = (photoUrl != null && photoUrl.isNotEmpty)
+          ? '$notes\n[PHOTO:$photoUrl]'.trim()
+          : notes;
+
       final response = await http.post(
         Uri.parse('$apiBaseUrl/projects/${widget.projectId}/updates'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'title': title,
           'status': status,
-          'notes': notes,
+          'notes': effectiveNotes,
+          if (photoUrl != null && photoUrl.isNotEmpty) 'photoUrl': photoUrl,
         }),
       );
 
@@ -962,6 +968,8 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     final titleController = TextEditingController();
     final notesController = TextEditingController();
     String selectedStatus = 'In Progress';
+    String? updatePhotoBase64;
+    bool isPickingImage = false;
 
     showModalBottomSheet(
       context: context,
@@ -979,78 +987,204 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                 left: 20,
                 right: 20,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Post Daily Update',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Update Title',
-                      hintText: 'e.g. Concrete pouring finished, Bricks delivery',
-                      border: OutlineInputBorder(),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Post Daily Update',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedStatus,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: ['In Progress', 'Completed', 'Milestone Reached']
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setModalState(() {
-                          selectedStatus = val;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: notesController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Optional Notes',
-                      hintText: 'Provide details about today\'s tasks...',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (titleController.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please enter a title for the update.')),
-                          );
-                          return;
-                        }
-                        Navigator.pop(context);
-                        _addDailyUpdate(
-                          titleController.text.trim(),
-                          selectedStatus,
-                          notesController.text.trim(),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Update Title',
+                        hintText: 'e.g. Concrete pouring finished, Bricks delivery',
+                        border: OutlineInputBorder(),
                       ),
-                      child: const Text('Submit Daily Log'),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedStatus,
+                      decoration: const InputDecoration(
+                        labelText: 'Status',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: ['In Progress', 'Completed', 'Milestone Reached']
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setModalState(() {
+                            selectedStatus = val;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: notesController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Optional Notes',
+                        hintText: 'Provide details about today\'s tasks...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Photo Attachment Section
+                    if (updatePhotoBase64 != null) ...[
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Builder(
+                              builder: (context) {
+                                try {
+                                  final cleanB64 = updatePhotoBase64!.contains(',')
+                                      ? updatePhotoBase64!.split(',').last
+                                      : updatePhotoBase64!;
+                                  return Image.memory(
+                                    base64Decode(cleanB64.replaceAll(RegExp(r'\s+'), '')),
+                                    height: 140,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  );
+                                } catch (_) {
+                                  return Container(
+                                    height: 140,
+                                    width: double.infinity,
+                                    color: Colors.grey.shade200,
+                                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: InkWell(
+                              onTap: () {
+                                setModalState(() {
+                                  updatePhotoBase64 = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, color: Colors.white, size: 18),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: isPickingImage
+                                  ? null
+                                  : () async {
+                                      setModalState(() => isPickingImage = true);
+                                      try {
+                                        final XFile? photo = await MediaPickerService.pickImage(
+                                          source: ImageSource.camera,
+                                          context: context,
+                                          maxWidth: 1000,
+                                          maxHeight: 1000,
+                                          imageQuality: 75,
+                                        );
+                                        if (photo != null) {
+                                          final bytes = await photo.readAsBytes();
+                                          setModalState(() {
+                                            updatePhotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                          });
+                                        }
+                                      } finally {
+                                        setModalState(() => isPickingImage = false);
+                                      }
+                                    },
+                              icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                              label: const Text('Camera', style: TextStyle(fontSize: 13)),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: isPickingImage
+                                  ? null
+                                  : () async {
+                                      setModalState(() => isPickingImage = true);
+                                      try {
+                                        final XFile? photo = await MediaPickerService.pickImage(
+                                          source: ImageSource.gallery,
+                                          context: context,
+                                          maxWidth: 1000,
+                                          maxHeight: 1000,
+                                          imageQuality: 75,
+                                        );
+                                        if (photo != null) {
+                                          final bytes = await photo.readAsBytes();
+                                          setModalState(() {
+                                            updatePhotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                          });
+                                        }
+                                      } finally {
+                                        setModalState(() => isPickingImage = false);
+                                      }
+                                    },
+                              icon: const Icon(Icons.photo_library_outlined, size: 18),
+                              label: const Text('Gallery', style: TextStyle(fontSize: 13)),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (titleController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter a title for the update.')),
+                            );
+                            return;
+                          }
+                          Navigator.pop(context);
+                          _addDailyUpdate(
+                            titleController.text.trim(),
+                            selectedStatus,
+                            notesController.text.trim(),
+                            updatePhotoBase64,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Submit Daily Log'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -2659,7 +2793,19 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                   final update = updates[index];
                                   final upTitle = update['title'] ?? 'Update';
                                   final upStatus = update['status'] ?? 'In Progress';
-                                  final upNotes = update['notes'] ?? '';
+                                  final rawNotes = (update['notes'] ?? '').toString();
+                                  String upNotes = rawNotes;
+                                  String? updatePhoto = (update['photoUrl'] as String?)?.trim();
+
+                                  // Extract embedded photo tag if present
+                                  final photoMatch = RegExp(r'\[PHOTO:(.+?)\]').firstMatch(rawNotes);
+                                  if (photoMatch != null) {
+                                    if (updatePhoto == null || updatePhoto.isEmpty) {
+                                      updatePhoto = photoMatch.group(1)?.trim();
+                                    }
+                                    upNotes = upNotes.replaceAll(RegExp(r'\[PHOTO:.+?\]'), '').trim();
+                                  }
+
                                   final upTime = update['createdAt'] != null
                                       ? DateTime.tryParse(update['createdAt'])?.toLocal().toString().substring(0, 16) ?? ''
                                       : '';
@@ -2708,6 +2854,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                               upNotes,
                                               style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                                             ),
+                                          ],
+                                          if (updatePhoto != null && updatePhoto.isNotEmpty) ...[
+                                            const SizedBox(height: 10),
+                                            _buildDailyLogPhotoPreview(context, updatePhoto, upTitle),
                                           ],
                                           const Divider(height: 20),
                                           Row(
@@ -3125,6 +3275,87 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
             child: const Text('DELETE'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDailyLogPhotoPreview(BuildContext context, String photoUrl, String title) {
+    final isNet = photoUrl.startsWith('http://') || photoUrl.startsWith('https://');
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullScreenImageViewer(
+              base64Image: isNet ? null : photoUrl,
+              imageUrl: isNet ? photoUrl : null,
+              title: title,
+            ),
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          children: [
+            Builder(
+              builder: (context) {
+                if (isNet) {
+                  return Image.network(
+                    photoUrl,
+                    height: 140,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 140,
+                      color: Colors.grey.shade200,
+                      child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                    ),
+                  );
+                }
+                try {
+                  final cleanB64 = (photoUrl.contains(',') ? photoUrl.split(',').last : photoUrl).replaceAll(RegExp(r'\s+'), '');
+                  return Image.memory(
+                    base64Decode(cleanB64),
+                    height: 140,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 140,
+                      color: Colors.grey.shade200,
+                      child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                    ),
+                  );
+                } catch (_) {
+                  return Container(
+                    height: 140,
+                    color: Colors.grey.shade200,
+                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                  );
+                }
+              },
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.zoom_in, color: Colors.white, size: 14),
+                    SizedBox(width: 4),
+                    Text('Tap to expand', style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

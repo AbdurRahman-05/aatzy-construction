@@ -62,7 +62,9 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
         s.contains('track') ||
         s.contains('execut') ||
         s == 'in progress' ||
-        s == 'ongoing') {
+        s == 'ongoing' ||
+        s == 'on hold' ||
+        s == 'hold') {
       return false;
     }
     if (s == 'design & planning') return false;
@@ -76,6 +78,12 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
         s == 'draft' ||
         s.contains('pending') ||
         (s.contains('planning') && !s.contains('design'));
+  }
+
+  static bool _isOnHoldStage(String? stage) {
+    if (stage == null) return false;
+    final s = stage.trim().toLowerCase();
+    return s == 'on hold' || s == 'hold' || s == 'paused';
   }
 
   static bool _isFinishedStage(String? stage) {
@@ -128,22 +136,27 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
 
     final isCompleted = _isFinishedStage(currentStage);
     final isCancelled = _isCancelledStage(currentStage);
+    final isOnHold = _isOnHoldStage(currentStage);
     final isPending = _isPendingStage(currentStage, project);
     
     final int colorIndex = projectId.hashCode.abs() % 3;
     final List<Color> colors = [const Color(0xFF10B981), const Color(0xFF3B82F6), const Color(0xFF8B5CF6)];
     final Color cardColor = isCancelled 
         ? const Color(0xFFEF4444) 
-        : (isPending 
-            ? const Color(0xFFF59E0B) 
-            : (isCompleted ? colors[colorIndex] : const Color(0xFF10B981)));
+        : (isOnHold
+            ? const Color(0xFFF59E0B)
+            : (isPending 
+                ? const Color(0xFFF59E0B) 
+                : (isCompleted ? colors[colorIndex] : const Color(0xFF10B981))));
     final IconData icon = [Icons.home_rounded, Icons.business_rounded, Icons.storefront_rounded][colorIndex];
 
     final progressResult = ProjectProgressHelper.calculateFromProject(project);
     final double progress = progressResult.progressValue;
 
     String dateStr = project['timeline']?.toString() ?? 'Upcoming';
-    if (isCompleted || isCancelled) {
+    if (isOnHold) {
+      dateStr = 'Project On Hold';
+    } else if (isCompleted || isCancelled) {
       final updated = project['updatedAt'] ?? project['updated_at'];
       if (updated != null) {
         dateStr = updated.toString().split('T')[0];
@@ -265,20 +278,24 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                           decoration: BoxDecoration(
                             color: isCancelled 
                                 ? (isDark ? Colors.red.withValues(alpha: 0.2) : Colors.red.shade50)
-                                : (isCompleted 
-                                    ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade50)
-                                    : (isPending 
-                                        ? (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade50) 
-                                        : (isDark ? Colors.indigo.withValues(alpha: 0.25) : Colors.indigo.shade50))),
+                                : (isOnHold
+                                    ? (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade50)
+                                    : (isCompleted 
+                                        ? (isDark ? Colors.green.withValues(alpha: 0.2) : Colors.green.shade50)
+                                        : (isPending 
+                                            ? (isDark ? Colors.orange.withValues(alpha: 0.2) : Colors.orange.shade50) 
+                                            : (isDark ? Colors.indigo.withValues(alpha: 0.25) : Colors.indigo.shade50)))),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isCancelled 
                                   ? (isDark ? Colors.red.shade400 : Colors.red.shade200) 
-                                  : (isCompleted 
-                                      ? (isDark ? Colors.green.shade400 : Colors.green.shade200) 
-                                      : (isPending 
-                                          ? (isDark ? Colors.orange.shade400 : Colors.orange.shade200) 
-                                          : (isDark ? Colors.indigo.shade300 : Colors.indigo.shade200))), 
+                                  : (isOnHold
+                                      ? (isDark ? Colors.orange.shade400 : Colors.orange.shade200)
+                                      : (isCompleted 
+                                          ? (isDark ? Colors.green.shade400 : Colors.green.shade200) 
+                                          : (isPending 
+                                              ? (isDark ? Colors.orange.shade400 : Colors.orange.shade200) 
+                                              : (isDark ? Colors.indigo.shade300 : Colors.indigo.shade200)))), 
                               width: 0.8,
                             ),
                           ),
@@ -288,33 +305,41 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> with Si
                               Icon(
                                 isCancelled 
                                     ? Icons.cancel_rounded 
-                                    : (isCompleted 
-                                        ? Icons.check_circle_rounded 
-                                        : (isPending ? Icons.access_time_rounded : Icons.sync_rounded)), 
+                                    : (isOnHold
+                                        ? Icons.pause_circle_filled_rounded
+                                        : (isCompleted 
+                                            ? Icons.check_circle_rounded 
+                                            : (isPending ? Icons.access_time_rounded : Icons.sync_rounded))), 
                                 color: isCancelled 
                                     ? Colors.red 
-                                    : (isCompleted 
-                                        ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
-                                        : (isPending 
-                                            ? (isDark ? Colors.orangeAccent : Colors.orange.shade800) 
-                                            : (isDark ? const Color(0xFF818CF8) : Colors.indigo))),
+                                    : (isOnHold
+                                        ? (isDark ? Colors.orangeAccent : Colors.orange.shade800)
+                                        : (isCompleted 
+                                            ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
+                                            : (isPending 
+                                                ? (isDark ? Colors.orangeAccent : Colors.orange.shade800) 
+                                                : (isDark ? const Color(0xFF818CF8) : Colors.indigo)))),
                                 size: 10,
                               ),
                               const SizedBox(width: 3),
                               Text(
                                 isCancelled 
                                     ? 'Cancelled' 
-                                    : (isCompleted 
-                                        ? 'Finished' 
-                                        : (isPending ? 'Pending' : 'Ongoing')),
+                                    : (isOnHold
+                                        ? 'On Hold'
+                                        : (isCompleted 
+                                            ? 'Finished' 
+                                            : (isPending ? 'Pending' : 'Ongoing'))),
                                 style: TextStyle(
                                   color: isCancelled 
                                       ? Colors.red 
-                                      : (isCompleted 
-                                          ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
-                                          : (isPending 
-                                              ? (isDark ? Colors.orangeAccent : Colors.orange.shade800) 
-                                              : (isDark ? const Color(0xFF818CF8) : Colors.indigo))),
+                                      : (isOnHold
+                                          ? (isDark ? Colors.orangeAccent : Colors.orange.shade800)
+                                          : (isCompleted 
+                                              ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
+                                              : (isPending 
+                                                  ? (isDark ? Colors.orangeAccent : Colors.orange.shade800) 
+                                                  : (isDark ? const Color(0xFF818CF8) : Colors.indigo)))),
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.bold,
                                 ),

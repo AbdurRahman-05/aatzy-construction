@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/media_picker_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants.dart';
 
@@ -25,7 +26,6 @@ class ProviderRegistrationStepper extends ConsumerStatefulWidget {
 class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrationStepper> {
   int _currentStep = 0;
   bool _isLoading = false;
-  final ImagePicker _picker = ImagePicker();
   
   // Controllers
   final _ownerNameController = TextEditingController();
@@ -61,8 +61,9 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
 
   Future<void> _pickImage(String type) async {
     try {
-      final XFile? image = await _picker.pickImage(
+      final XFile? image = await MediaPickerService.pickImage(
         source: ImageSource.gallery,
+        context: context,
         maxWidth: 800, // Reduced size for Base64 efficiency
         maxHeight: 800,
         imageQuality: 70,

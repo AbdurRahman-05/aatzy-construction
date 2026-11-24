@@ -113,6 +113,16 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     }
   }
 
+  Future<void> _onRefresh() async {
+    try {
+      ref.invalidate(socialFeedProvider);
+      ref.invalidate(notificationsProvider);
+      await ref.read(socialFeedProvider.future);
+    } catch (e) {
+      debugPrint('Services onRefresh error: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final notifications = ref.watch(notificationsProvider);
@@ -308,9 +318,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
 
                 // Main Content Body
                 Expanded(
-                  child: _selectedTab == 0
-                      ? _buildServicesView(isSmallScreen, screenWidth, horizontalPadding)
-                      : _buildPortfolioView(isSmallScreen, screenWidth, horizontalPadding),
+                  child: RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: const Color(0xFF1D4ED8),
+                    backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    child: _selectedTab == 0
+                        ? _buildServicesView(isSmallScreen, screenWidth, horizontalPadding)
+                        : _buildPortfolioView(isSmallScreen, screenWidth, horizontalPadding),
+                  ),
                 ),
               ],
             ),
@@ -331,7 +346,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
         final gridCrossAxisCount = availableWidth >= 900 ? 5 : (availableWidth >= 650 ? 4 : 3);
 
         return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -914,7 +929,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     }).toList();
 
     return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

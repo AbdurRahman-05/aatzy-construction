@@ -10,6 +10,7 @@ import '../../core/providers/projects_provider.dart';
 import '../../core/wallpaper_background.dart';
 import '../b2b/services/b2b_api_service.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/services/media_picker_service.dart';
 import '../b2b/presentation/widgets/custom_image.dart';
 import 'main_layout.dart';
 import '../providers/provider_layout.dart';
@@ -35,7 +36,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isLoading = false;
   bool _isFetching = false;
   bool _hasFetchedConsumer = false;
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -251,8 +251,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _handleImagePick(ImageSource source) async {
     try {
-      final XFile? image = await _picker.pickImage(
+      final XFile? image = await MediaPickerService.pickImage(
         source: source,
+        context: context,
         maxWidth: 800,
         maxHeight: 800,
         imageQuality: 75,
@@ -1463,8 +1464,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 else
                   OutlinedButton.icon(
                     onPressed: () async {
-                      final XFile? image = await _picker.pickImage(
+                      final XFile? image = await MediaPickerService.pickImage(
                         source: ImageSource.gallery,
+                        context: context,
                         maxWidth: 1000,
                         maxHeight: 1000,
                         imageQuality: 75,

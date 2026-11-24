@@ -5,18 +5,23 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     const { id } = await context.params;
     const body = await request.json();
-    const { title, status, notes } = body;
+    const { title, status, notes, photoUrl, imageUrl } = body;
 
     if (!title || !status) {
       return NextResponse.json({ error: 'Title and status are required' }, { status: 400 });
     }
+
+    const finalPhoto = photoUrl || imageUrl || null;
+    const notesToSave = finalPhoto && !notes?.includes('[PHOTO:')
+      ? `${notes || ''}\n[PHOTO:${finalPhoto}]`
+      : (notes || '');
 
     const newUpdate = await prisma.projectUpdate.create({
       data: {
         projectId: id,
         title,
         status,
-        notes: notes || '',
+        notes: notesToSave,
       }
     });
 

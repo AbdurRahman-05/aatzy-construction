@@ -32,6 +32,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     _fetchProviderData();
   }
 
+  Future<void> _onRefresh() async {
+    await _fetchProviderData();
+    await _fetchBackgroundDetails();
+  }
+
   Future<void> _fetchProviderData() async {
     setState(() => _isLoading = true);
     try {
@@ -131,9 +136,12 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _provider == null
                 ? const Center(child: Text('Provider not found'))
-                : DefaultTabController(
-                    length: 4,
-                    child: NestedScrollView(
+                : RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F9B8E),
+                    child: DefaultTabController(
+                      length: 4,
+                      child: NestedScrollView(
                       headerSliverBuilder: (context, innerBoxIsScrolled) {
                         return [
                           SliverToBoxAdapter(
@@ -208,6 +216,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                       ),
                     ),
                   ),
+                ),
       ),
     );
   }
@@ -1031,7 +1040,6 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     final experience = _provider!['experience'] ?? 0;
     final address = _provider!['address'] ?? 'No address provided.';
     final email = _provider!['email'] ?? 'No email provided.';
-    final phone = _provider!['phone'] ?? 'No phone provided.';
     final completedCount = _completedProjectsCount;
 
     return SingleChildScrollView(
@@ -1050,7 +1058,6 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           const SizedBox(height: 16),
           _buildInfoRow(Icons.business_center_rounded, 'Experience', '$experience Years in Industry'),
           _buildInfoRow(Icons.email_rounded, 'Email Address', email),
-          _buildInfoRow(Icons.phone_android_rounded, 'Phone Number', phone),
           _buildInfoRow(Icons.location_on_rounded, 'Headquarters', address),
           _buildInfoRow(Icons.task_alt_rounded, 'Completed Work Site Audits', '$completedCount Projects'),
         ],

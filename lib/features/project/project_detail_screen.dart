@@ -460,6 +460,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
 
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
     final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
+    final isOnHold = currentStage.toString().toLowerCase().trim() == 'on hold';
 
     double totalQuotedTasks = 0.0;
     double totalSpent = 0.0;
@@ -676,6 +677,88 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   ),
                                 ],
 
+                                // Project On Hold Alert Banner
+                                if (isOnHold) ...[
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.25) : const Color(0xFFFFFBEB),
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: isDark ? const Color(0xFFF59E0B).withValues(alpha: 0.4) : const Color(0xFFFDE68A),
+                                        width: 1.2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFD97706).withValues(alpha: isDark ? 0.2 : 0.08),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(Icons.pause_circle_filled_rounded, color: Color(0xFFD97706), size: 28),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    'Project On Hold',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.w900,
+                                                      fontSize: 15,
+                                                      color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFD97706).withValues(alpha: 0.15),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: const Text(
+                                                      'PAUSED',
+                                                      style: TextStyle(
+                                                        fontSize: 9.5,
+                                                        fontWeight: FontWeight.w900,
+                                                        color: Color(0xFFD97706),
+                                                        letterSpacing: 0.5,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'The service provider has temporarily put this project on hold. Work execution is currently paused and will resume shortly.',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: isDark ? const Color(0xFFFDE68A).withValues(alpha: 0.85) : const Color(0xFF78350F),
+                                                  height: 1.35,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+
                                 // 1. Hero Project Overview Card
                                 _buildHeroOverviewCard(
                                   title: title,
@@ -686,6 +769,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   projectId: projectIdFormatted,
                                   isCancelled: isCancelled,
                                   isCompleted: isCompleted,
+                                  isOnHold: isOnHold,
                                   isSmallScreen: isSmallScreen,
                                 ),
                                 // 2. Project Progress Card (Gauge + Stepper + Execution Tasks + Logs)
@@ -694,6 +778,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                                   currentStage: currentStage,
                                   isCancelled: isCancelled,
                                   isCompleted: isCompleted,
+                                  isOnHold: isOnHold,
                                   isSmallScreen: isSmallScreen,
                                   tasks: tasksList,
                                   updates: _project?['updates'] as List? ?? [],
@@ -755,16 +840,27 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     required String projectId,
     required bool isCancelled,
     required bool isCompleted,
+    required bool isOnHold,
     required bool isSmallScreen,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final statusText = isCancelled ? 'Cancelled' : (isCompleted ? 'Finished' : 'Active');
-    final statusColor = isCancelled ? const Color(0xFFEF4444) : (isCompleted ? const Color(0xFF3B82F6) : const Color(0xFF10B981));
+    final statusText = isCancelled
+        ? 'Cancelled'
+        : (isCompleted
+            ? 'Finished'
+            : (isOnHold ? 'On Hold' : 'Active'));
+    final statusColor = isCancelled
+        ? const Color(0xFFEF4444)
+        : (isCompleted
+            ? const Color(0xFF3B82F6)
+            : (isOnHold ? const Color(0xFFF59E0B) : const Color(0xFF10B981)));
     final statusBg = isCancelled
         ? (isDark ? const Color(0xFFEF4444).withValues(alpha: 0.2) : const Color(0xFFFEF2F2))
         : (isCompleted
             ? (isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.2) : const Color(0xFFEFF6FF))
-            : (isDark ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFECFDF5)));
+            : (isOnHold
+                ? (isDark ? const Color(0xFFF59E0B).withValues(alpha: 0.2) : const Color(0xFFFFFBEB))
+                : (isDark ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFECFDF5))));
 
     return Container(
       decoration: BoxDecoration(
@@ -1008,6 +1104,7 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     required String currentStage,
     required bool isCancelled,
     required bool isCompleted,
+    required bool isOnHold,
     required bool isSmallScreen,
     required List<dynamic> tasks,
     required List<dynamic> updates,
@@ -1076,7 +1173,11 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                         value: progressValue,
                         strokeWidth: isSmallScreen ? 6.5 : 7.5,
                         backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
-                        valueColor: AlwaysStoppedAnimation<Color>(isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB)),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isOnHold
+                              ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFF59E0B))
+                              : (isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB)),
+                        ),
                         strokeCap: StrokeCap.round,
                       ),
                     ),
@@ -1092,8 +1193,14 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           ),
                         ),
                         Text(
-                          'Completed',
-                          style: TextStyle(fontSize: isSmallScreen ? 7.0 : 8.0, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
+                          isOnHold ? 'On Hold' : 'Completed',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 7.0 : 8.0,
+                            fontWeight: FontWeight.w600,
+                            color: isOnHold
+                                ? const Color(0xFFD97706)
+                                : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
+                          ),
                         ),
                       ],
                     ),
@@ -1135,6 +1242,31 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                               ],
                             ),
                           )
+                        else if (isOnHold)
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFFF59E0B).withValues(alpha: 0.2) : const Color(0xFFFFFBEB),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: isDark ? const Color(0xFFF59E0B).withValues(alpha: 0.4) : const Color(0xFFFDE68A)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.pause_circle_filled_rounded, color: Color(0xFFD97706), size: 10),
+                                  SizedBox(width: 2),
+                                  Flexible(
+                                    child: Text(
+                                      'On Hold',
+                                      style: TextStyle(fontSize: 9, color: Color(0xFFD97706), fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
                         else
                           Flexible(
                             child: Container(
@@ -1167,7 +1299,13 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                         _buildStepConnector(isDesignOrHigher),
                         _buildStepItem('Design', Icons.edit_note_rounded, isDesignOrHigher, isSmallScreen),
                         _buildStepConnector(isExecutionOrHigher),
-                        _buildStepItem('Execution', Icons.engineering_rounded, isExecutionOrHigher, isSmallScreen),
+                        _buildStepItem(
+                          'Execution',
+                          Icons.engineering_rounded,
+                          isExecutionOrHigher,
+                          isSmallScreen,
+                          isHold: isOnHold && isExecutionOrHigher && !isHandoverOrHigher,
+                        ),
                         _buildStepConnector(isHandoverOrHigher),
                         _buildStepItem('Handover', Icons.vpn_key_rounded, isHandoverOrHigher, isSmallScreen),
                       ],
@@ -1556,7 +1694,18 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                   final update = updates[idx];
                   final upTitle = update['title'] ?? 'Update';
                   final upStatus = update['status'] ?? 'In Progress';
-                  final upNotes = update['notes'] ?? '';
+                  final rawNotes = (update['notes'] ?? '').toString();
+                  String upNotes = rawNotes;
+                  String? updatePhoto = (update['photoUrl'] as String?)?.trim();
+
+                  final photoMatch = RegExp(r'\[PHOTO:(.+?)\]').firstMatch(rawNotes);
+                  if (photoMatch != null) {
+                    if (updatePhoto == null || updatePhoto.isEmpty) {
+                      updatePhoto = photoMatch.group(1)?.trim();
+                    }
+                    upNotes = upNotes.replaceAll(RegExp(r'\[PHOTO:.+?\]'), '').trim();
+                  }
+
                   final upTime = update['createdAt'] != null
                       ? DateTime.tryParse(update['createdAt'])?.toLocal().toString().substring(0, 16) ?? ''
                       : '';
@@ -1602,6 +1751,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
                           const SizedBox(height: 4),
                           Text(upNotes, style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade700, fontSize: 11.5, height: 1.3)),
                         ],
+                        if (updatePhoto != null && updatePhoto.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _buildDailyLogPhotoPreview(updatePhoto, upTitle),
+                        ],
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1617,6 +1770,110 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
               ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildDailyLogPhotoPreview(String photoUrl, String title) {
+    final isNetworkUrl = photoUrl.startsWith('http://') || photoUrl.startsWith('https://');
+
+    Widget imageWidget;
+    if (isNetworkUrl) {
+      imageWidget = Image.network(
+        photoUrl,
+        height: 130,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            height: 130,
+            color: const Color(0xFFF1F5F9),
+            child: const Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF10B981)),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
+      );
+    } else {
+      try {
+        final rawB64 = photoUrl.contains(',') ? photoUrl.split(',').last : photoUrl;
+        final cleanB64 = rawB64.replaceAll(RegExp(r'\s+'), '');
+        final bytes = base64Decode(cleanB64);
+        imageWidget = Image.memory(
+          bytes,
+          height: 130,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
+        );
+      } catch (e) {
+        debugPrint('Error decoding daily log photo: $e');
+        imageWidget = _buildImageErrorPlaceholder();
+      }
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullScreenImageViewer(
+              base64Image: isNetworkUrl ? null : photoUrl,
+              imageUrl: isNetworkUrl ? photoUrl : null,
+              title: '$title Photo',
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(top: 4, bottom: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Stack(
+            children: [
+              imageWidget,
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.fullscreen_rounded, size: 13, color: Colors.white),
+                      SizedBox(width: 3),
+                      Text(
+                        'Tap to zoom',
+                        style: TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1773,10 +2030,22 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     );
   }
 
-  Widget _buildStepItem(String label, IconData icon, bool isActive, bool isSmallScreen) {
+  Widget _buildStepItem(String label, IconData icon, bool isActive, bool isSmallScreen, {bool isHold = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final circleSize = isSmallScreen ? 20.0 : 23.0;
     final iconSize = isSmallScreen ? 10.0 : 11.5;
+
+    final Color stepColor = isHold
+        ? const Color(0xFFF59E0B)
+        : (isActive ? const Color(0xFF10B981) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)));
+    final Color stepBg = isHold
+        ? (isDark ? const Color(0xFFF59E0B).withValues(alpha: 0.2) : const Color(0xFFFFFBEB))
+        : (isActive
+            ? (isDark ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFECFDF5))
+            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)));
+    final Color borderColor = isHold
+        ? const Color(0xFFF59E0B)
+        : (isActive ? const Color(0xFF10B981) : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)));
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1785,30 +2054,30 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
           width: circleSize,
           height: circleSize,
           decoration: BoxDecoration(
-            color: isActive
-                ? (isDark ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFECFDF5))
-                : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
+            color: stepBg,
             shape: BoxShape.circle,
             border: Border.all(
-              color: isActive ? const Color(0xFF10B981) : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
+              color: borderColor,
               width: 1.2,
             ),
           ),
           child: Icon(
-            icon,
+            isHold ? Icons.pause_rounded : icon,
             size: iconSize,
-            color: isActive ? const Color(0xFF10B981) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+            color: stepColor,
           ),
         ),
         const SizedBox(height: 2),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            label,
+            isHold ? '$label (Hold)' : label,
             style: TextStyle(
               fontSize: isSmallScreen ? 7.0 : 8.0,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-              color: isActive ? (isDark ? Colors.white : const Color(0xFF0F172A)) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+              fontWeight: (isActive || isHold) ? FontWeight.w700 : FontWeight.w500,
+              color: isHold
+                  ? const Color(0xFFD97706)
+                  : (isActive ? (isDark ? Colors.white : const Color(0xFF0F172A)) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8))),
             ),
             maxLines: 1,
           ),

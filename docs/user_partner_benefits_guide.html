@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Connectzy — Comprehensive User & Partner Benefits Guide</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 16mm 14mm 18mm 14mm;
+      @bottom-right {
+        content: "Page " counter(page);
+        font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+        font-size: 8.5pt;
+        color: #64748b;
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.5;
+      font-size: 9.5pt;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Header Banner */
+    .header-banner {
+      background: linear-gradient(135deg, #042f2e 0%, #0f172a 50%, #0d9488 100%);
+      color: #ffffff;
+      padding: 24px 22px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 14px rgba(4, 47, 46, 0.15);
+    }
+
+    .brand-tag {
+      display: inline-block;
+      background: #14b8a6;
+      color: #042f2e;
+      font-size: 7.5pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .header-title {
+      font-size: 20pt;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin: 0 0 4px 0;
+      line-height: 1.2;
+    }
+
+    .header-subtitle {
+      font-size: 11pt;
+      color: #99f6e4;
+      margin: 0 0 12px 0;
+      font-weight: 500;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 10px;
+      font-size: 8pt;
+    }
+
+    .meta-item strong {
+      color: #cbd5e1;
+      display: block;
+      font-size: 7pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Section Styling */
+    h2 {
+      font-size: 13pt;
+      font-weight: 800;
+      color: #0f172a;
+      border-left: 4px solid #0d9488;
+      padding-left: 8px;
+      margin: 18px 0 10px 0;
+      letter-spacing: -0.2px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #0d9488;
+      margin: 12px 0 6px 0;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin: 0 0 8px 0;
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      page-break-inside: avoid;
+    }
+
+    .card-teal {
+      background: #f0fdfa;
+      border: 1px solid #ccfbf1;
+      border-left: 4px solid #0d9488;
+    }
+
+    .card-blue {
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .card-amber {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      border-left: 4px solid #f59e0b;
+    }
+
+    .card-title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 4px 0;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 7px 10px;
+      text-align: left;
+      font-weight: 700;
+      border-top: 1px solid #334155;
+    }
+
+    td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .badge-yes {
+      background: #dcfce7;
+      color: #15803d;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 7.5pt;
+      display: inline-block;
+    }
+
+    .badge-no {
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 7.5pt;
+      display: inline-block;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    ul, ol {
+      margin: 0 0 8px 0;
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    .highlight-box {
+      background: #042f2e;
+      color: #ffffff;
+      padding: 14px;
+      border-radius: 8px;
+      margin: 12px 0;
+      page-break-inside: avoid;
+    }
+
+    .highlight-box h4 {
+      color: #5eead4;
+      margin: 0 0 6px 0;
+      font-size: 10pt;
+    }
+
+    .footer-note {
+      font-size: 8pt;
+      color: #64748b;
+      text-align: center;
+      margin-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="header-banner">
+    <div class="brand-tag">Connectzy Official Guide</div>
+    <h1 class="header-title">User & Partner Benefits Guide</h1>
+    <p class="header-subtitle">Empowering Homeowners, Civil Contractors, Specialists & Building Material Suppliers</p>
+    <div class="meta-grid">
+      <div class="meta-item"><strong>Platform Version</strong> 1.0.2 (Build 6)</div>
+      <div class="meta-item"><strong>Audience</strong> Clients & Business Partners</div>
+      <div class="meta-item"><strong>Model</strong> Direct Zero-Brokerage B2B/B2C</div>
+      <div class="meta-item"><strong>Helpline</strong> +91 8122558115</div>
+    </div>
+  </div>
+
+  <h2>1. Platform Ecosystem & Executive Overview</h2>
+  <p>
+    Connectzy is India's premier digital construction marketplace, connecting property owners directly with verified civil contractors, 50+ specialized trade subcontractors, and factory-direct building material manufacturers. By eliminating predatory middleman brokerages and opaque markups, Connectzy delivers radical transparency, milestone financial protection, and institutional-grade project tracking.
+  </p>
+
+  <div class="grid-3">
+    <div class="card card-teal">
+      <div class="card-title">Homeowners & Clients</div>
+      <p style="font-size: 8.5pt; margin-bottom: 6px;">Zero brokerage, verified contractors, smart cost estimates, milestone payment escrow, and wholesale material rates.</p>
+      <span class="badge-yes">100% Free for Clients</span>
+    </div>
+    <div class="card card-blue">
+      <div class="card-title">Civil Contractors & Trades</div>
+      <p style="font-size: 8.5pt; margin-bottom: 6px;">Zero percentage commissions, qualified local leads, direct client contact, verified badge, and mobile management.</p>
+      <span class="badge-yes">₹5,999/yr Flat Membership</span>
+    </div>
+    <div class="card card-amber">
+      <div class="card-title">Building Material Suppliers</div>
+      <p style="font-size: 8.5pt; margin-bottom: 6px;">Direct B2B orders from builders, real-time RFQ inquiry ledger, flexible GST pricing, and immediate client connections.</p>
+      <span class="badge-yes">Direct Bulk Volume</span>
+    </div>
+  </div>
+
+  <h2>2. Traditional Construction Market vs. The Connectzy Solution</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 28%;">Parameter</th>
+        <th style="width: 36%;">Traditional Offline / Broker Model</th>
+        <th style="width: 36%;">Connectzy Digital Ecosystem</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Brokerage / Commission</strong></td>
+        <td><span class="badge-no">High (3% to 10% project fee)</span></td>
+        <td><span class="badge-yes">0% Brokerage & Zero Commission</span></td>
+      </tr>
+      <tr>
+        <td><strong>Contractor Verification</strong></td>
+        <td>Unverified references, no criminal or GST checks</td>
+        <td><span class="badge-yes">Govt ID, GST, Experience & Work Proof</span></td>
+      </tr>
+      <tr>
+        <td><strong>Payment Safety</strong></td>
+        <td>Large upfront deposits with project delay risk</td>
+        <td><span class="badge-yes">Milestone Escrow — Pay only on verified completion</span></td>
+      </tr>
+      <tr>
+        <td><strong>Material Procurement</strong></td>
+        <td>Opaque dealer markups, fake invoices, mixed brands</td>
+        <td><span class="badge-yes">Direct Supplier Ledger, wholesale pricing, verified specs</span></td>
+      </tr>
+      <tr>
+        <td><strong>Project Tracking</strong></td>
+        <td>Manual phone calls, physical site arguments</td>
+        <td><span class="badge-yes">In-App Live Photos, Site Logs & Digital Milestones</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Key Benefits for Homeowners & Clients (Consumers)</h2>
+  <div class="grid-2">
+    <div class="card card-teal">
+      <div class="card-title">1. Multi-Bid Price Discovery</div>
+      <p style="font-size: 8.5pt;">Post your construction or interior design project once. Receive itemized proposals from multiple vetted local contractors. Compare scope, timeline, and rates side-by-side without pressure.</p>
+    </div>
+    <div class="card card-teal">
+      <div class="card-title">2. Verified Connectzy Client Badge</div>
+      <p style="font-size: 8.5pt;">Authenticated clients receive an instant Trust Badge, signalling high intent to contractors and unlocking priority quotation responses from top-rated professionals.</p>
+    </div>
+    <div class="card card-teal">
+      <div class="card-title">3. Wholesale Material Catalog</div>
+      <p style="font-size: 8.5pt;">Order cement, TMT steel, ready-mix concrete, tiles, paint, and high-tech LED video walls at wholesale factory prices directly through the marketplace.</p>
+    </div>
+    <div class="card card-teal">
+      <div class="card-title">4. Real-time Purchase History</div>
+      <p style="font-size: 8.5pt;">View a permanent digital record of all placed material orders, delivery progress (Pending, Shipped, Delivered), and verified order invoices for life.</p>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 2 ==================== -->
+  <div class="page-break"></div>
+
+  <h2>4. Key Benefits for Contractors & Specialist Partners</h2>
+  <p>Connectzy eliminates expensive lead generation brokers who sell the same contact to 15 contractors simultaneously. We provide exclusive, verified, high-intent local building leads directly to our subscribed members.</p>
+
+  <div class="grid-2">
+    <div class="card card-blue">
+      <div class="card-title">0% Commission on Contracts</div>
+      <p style="font-size: 8.5pt;">Keep 100% of your contract value. Whether you win a ₹5,00,000 renovation or a ₹2 Crore commercial project, Connectzy charges ₹0 in completion commission.</p>
+    </div>
+    <div class="card card-blue">
+      <div class="card-title">Direct Client Phone Calling</div>
+      <p style="font-size: 8.5pt;">No hidden numbers or third-party call centers. Instantly place direct calls to verified homeowners and project managers right from the lead detail screen.</p>
+    </div>
+    <div class="card card-blue">
+      <div class="card-title">Official Verified Partner Badge</div>
+      <p style="font-size: 8.5pt;">Gain elite credibility with the green Verified Partner badge on search listings, building trust instantly with clients over unverified competitors.</p>
+    </div>
+    <div class="card card-blue">
+      <div class="card-title">In-App Quotation Revision</div>
+      <p style="font-size: 8.5pt;">Submit competitive bids with estimated cost, project timeline, and itemized specs. Revise bids on the fly as project requirements evolve.</p>
+    </div>
+  </div>
+
+  <h2>5. Annual Partner Membership ROI Analysis</h2>
+  <div class="highlight-box">
+    <h4>Connectzy Partner Plan: ₹5,999 / Year (Flat Fee)</h4>
+    <p style="font-size: 8.5pt; margin-bottom: 0;">Unlimited direct leads across your chosen trade category for 365 days. No per-lead charge. No project deductions.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Contract Value</th>
+        <th>Old Aggregator Fee (5% to 8%)</th>
+        <th>Connectzy Annual Cost</th>
+        <th>Contractor Savings with Connectzy</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>₹10,00,000</strong> (Small Renovation)</td>
+        <td>₹50,000 – ₹80,000</td>
+        <td>₹5,999</td>
+        <td><strong style="color: #0d9488;">₹44,001 – ₹74,001 Saved</strong></td>
+      </tr>
+      <tr>
+        <td><strong>₹50,00,000</strong> (Full Home Construction)</td>
+        <td>₹2,50,000 – ₹4,00,000</td>
+        <td>₹5,999</td>
+        <td><strong style="color: #0d9488;">₹2,44,001 – ₹3,94,001 Saved</strong></td>
+      </tr>
+      <tr>
+        <td><strong>₹1,50,00,000</strong> (Commercial Villa/Office)</td>
+        <td>₹7,50,000 – ₹12,00,000</td>
+        <td>₹5,999</td>
+        <td><strong style="color: #0d9488;">₹7,44,001 – ₹11,94,001 Saved</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6. Key Benefits for Raw Material Suppliers & Distributors</h2>
+  <div class="grid-3">
+    <div class="card card-amber">
+      <div class="card-title">Bulk Contractor Demand</div>
+      <p style="font-size: 8.5pt;">Access contractors actively pouring foundations, laying brickwork, and fitting electricals who require ongoing repeat truckload orders.</p>
+    </div>
+    <div class="card card-amber">
+      <div class="card-title">Flexible Pricing & GST</div>
+      <p style="font-size: 8.5pt;">List prices per unit (bags, tons, sq.ft) with customizable GST tiers, minimum order quantities (MOQ), and shipping delivery areas.</p>
+    </div>
+    <div class="card card-amber">
+      <div class="card-title">Live Inquiry Management</div>
+      <p style="font-size: 8.5pt;">Manage incoming inquiries directly through your provider dashboard with one-click quotation dispatch and delivery dispatch logs.</p>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 3 ==================== -->
+  <div class="page-break"></div>
+
+  <h2>7. Step-by-Step Onboarding Walkthrough</h2>
+
+  <div class="grid-2">
+    <div class="card card-teal">
+      <div class="card-title">Client / Homeowner Flow</div>
+      <ol style="font-size: 8.5pt; margin: 4px 0 0 0; padding-left: 18px;">
+        <li><strong>Sign Up:</strong> Register with your mobile number & enter OTP.</li>
+        <li><strong>Post Project:</strong> Specify work category, plot size, estimated budget, city, and upload reference blueprints or photos.</li>
+        <li><strong>Review Bids:</strong> Compare itemized proposals submitted by local verified contractors.</li>
+        <li><strong>Award & Build:</strong> Approve quotation, set milestone stages, track live progress with verified site photos.</li>
+        <li><strong>Shop Materials:</strong> Order wholesale cement, steel, paints, or LED services anytime.</li>
+      </ol>
+    </div>
+    <div class="card card-blue">
+      <div class="card-title">Contractor & Specialist Partner Flow</div>
+      <ol style="font-size: 8.5pt; margin: 4px 0 0 0; padding-left: 18px;">
+        <li><strong>Register Business:</strong> Submit business name, owner name, trade category, and GST/Aadhaar.</li>
+        <li><strong>Admin KYC Approval:</strong> Team verifies business credentials within 2–4 hours.</li>
+        <li><strong>Activate Membership:</strong> Subscribe to the ₹5,999/yr unlimited membership plan.</li>
+        <li><strong>Browse & Bid:</strong> Filter live project leads by distance and category; submit quotes.</li>
+        <li><strong>Connect & Close:</strong> Call clients directly, finalize site visits, and execute milestones.</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>8. 50+ Specialized Service Categories Covered</h2>
+  <table style="font-size: 8pt;">
+    <thead>
+      <tr>
+        <th>Core Civil & Structural</th>
+        <th>Specialized Finishing & Trades</th>
+        <th>High-Tech & Commercial Systems</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>General Civil Contracting & Foundation</td>
+        <td>False Ceiling & Drywall Partitions</td>
+        <td>Commercial LED Video Walls & Displays</td>
+      </tr>
+      <tr>
+        <td>Architectural Design & Structural Engineering</td>
+        <td>Modular Kitchens & Custom Wardrobes</td>
+        <td>Solar Rooftop & Inverter Installations</td>
+      </tr>
+      <tr>
+        <td>Excavation, Earthmoving & Demolition</td>
+        <td>Interior & Exterior Texture Painting</td>
+        <td>CCTV Surveillance & Access Security</td>
+      </tr>
+      <tr>
+        <td>Reinforced Cement Concrete (RCC) Works</td>
+        <td>Plumbing, Drainage & Sanitary Piping</td>
+        <td>Smart Home Automation & IoT Lighting</td>
+      </tr>
+      <tr>
+        <td>Waterproofing & Basement Damp Treatment</td>
+        <td>Electrical Wiring, DB Boards & Earthing</td>
+        <td>Fire Fighting & Sprinkler Systems</td>
+      </tr>
+      <tr>
+        <td>Fabrication, MS Grills & Steel Structures</td>
+        <td>Granite, Italian Marble & Tile Laying</td>
+        <td>HVAC & Central Air Conditioning Ducting</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>9. Platform Governance, Safety & Support</h2>
+  <div class="card" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
+    <p style="margin-bottom: 6px;"><strong>Strict KYC Verification:</strong> Every service provider and supplier undergoes document verification before lead access is granted.</p>
+    <p style="margin-bottom: 6px;"><strong>Trader Status & Consumer Protection Compliance:</strong> Connectzy is registered as an official commercial trade entity on the Google Play Store and complies with European, UK, and Indian consumer protection directives.</p>
+    <p style="margin-bottom: 0;"><strong>Dedicated Partner Help Desk:</strong> Direct phone and WhatsApp support is available Monday to Saturday (9:00 AM – 7:00 PM IST) at <strong>+91 8122558115</strong> or via email at <strong>support@connectzy.in</strong>.</p>
+  </div>
+
+  <div class="footer-note">
+    © 2026 Connectzy Technologies. All Rights Reserved. • Generated for Production Release v1.0.2 (Build 6)
+  </div>
+
+</body>
+</html>

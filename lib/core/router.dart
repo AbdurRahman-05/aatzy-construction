@@ -76,7 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'create-project',
-            builder: (context, state) => const CreateProjectScreen(),
+            builder: (context, state) {
+              final estimate = state.extra is CostEstimateResult ? state.extra as CostEstimateResult : null;
+              return CreateProjectScreen(initialEstimate: estimate);
+            },
           ),
           GoRoute(
             path: 'dashboard',

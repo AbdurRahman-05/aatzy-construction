@@ -72,6 +72,56 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       },
     });
 
+    if (currentStage === 'On Hold' && updatedProject.userId) {
+      try {
+        await prisma.notification.create({
+          data: {
+            recipientId: updatedProject.userId,
+            role: 'CONSUMER',
+            title: 'Project Put On Hold',
+            body: `Your project "${updatedProject.title}" has been put on hold by the service provider.`,
+            type: 'STAGE_COMPLETED',
+            entityId: id,
+            route: `/project-detail/${id}`,
+          },
+        });
+        await prisma.projectUpdate.create({
+          data: {
+            projectId: id,
+            title: 'Project Status: On Hold',
+            status: 'On Hold',
+            notes: 'Service provider temporarily paused this project.',
+          },
+        });
+      } catch (e) {
+        console.error('Failed to log on-hold event:', e);
+      }
+    } else if (currentStage === 'Tracking' && updatedProject.userId) {
+      try {
+        await prisma.notification.create({
+          data: {
+            recipientId: updatedProject.userId,
+            role: 'CONSUMER',
+            title: 'Project Resumed',
+            body: `Work has resumed on your project "${updatedProject.title}".`,
+            type: 'STAGE_COMPLETED',
+            entityId: id,
+            route: `/project-detail/${id}`,
+          },
+        });
+        await prisma.projectUpdate.create({
+          data: {
+            projectId: id,
+            title: 'Project Status: Resumed',
+            status: 'Tracking',
+            notes: 'Service provider resumed work on this project.',
+          },
+        });
+      } catch (e) {
+        console.error('Failed to log resume event:', e);
+      }
+    }
+
     return NextResponse.json(updatedProject);
   } catch (error) {
     console.error('Update project error:', error);

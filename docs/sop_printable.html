@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Connectzy Platform — Standard Operating Procedure (SOP) Manual</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 14mm 20mm 14mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+        font-size: 9pt;
+        color: #64748b;
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.55;
+      font-size: 10pt;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Cover / Header Banner */
+    .header-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0d9488 100%);
+      color: #ffffff;
+      padding: 28px 24px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    }
+
+    .brand-tag {
+      display: inline-block;
+      background: #0d9488;
+      color: #ffffff;
+      font-size: 8pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .header-title {
+      font-size: 22pt;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin: 0 0 6px 0;
+      color: #ffffff;
+    }
+
+    .header-subtitle {
+      font-size: 11pt;
+      color: #94a3b8;
+      font-weight: 500;
+      margin: 0 0 16px 0;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      padding-top: 14px;
+    }
+
+    .meta-item {
+      font-size: 8.5pt;
+    }
+
+    .meta-label {
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 7.5pt;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .meta-value {
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    /* Headings */
+    h1 {
+      font-size: 15pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 28px 0 12px 0;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      page-break-after: avoid;
+    }
+
+    h2 {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #0d9488;
+      margin: 20px 0 10px 0;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #334155;
+      margin: 14px 0 6px 0;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin: 0 0 10px 0;
+    }
+
+    /* Table of Contents */
+    .toc-container {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      page-break-inside: avoid;
+    }
+
+    .toc-title {
+      font-size: 11pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 20px;
+      font-size: 9pt;
+    }
+
+    .toc-item {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* Callout & Alerts */
+    .callout {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 14px 0;
+      font-size: 9pt;
+      border-left: 4px solid #0d9488;
+      background: #f0fdfa;
+      page-break-inside: avoid;
+    }
+
+    .callout-title {
+      font-weight: 800;
+      color: #0f766e;
+      margin-bottom: 4px;
+      font-size: 9.5pt;
+    }
+
+    .callout.warning {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .callout.warning .callout-title {
+      color: #b45309;
+    }
+
+    .callout.danger {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+    .callout.danger .callout-title {
+      color: #b91c1c;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 800;
+      text-align: left;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      text-transform: uppercase;
+      font-size: 7.5pt;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 7px 10px;
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    /* Diagram / Visual Workflow Boxes */
+    .flowchart-container {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      margin: 14px 0;
+      page-break-inside: avoid;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .flow-step {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-top: 3px solid #0d9488;
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      font-size: 8pt;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .flow-step.blue {
+      border-top-color: #2563eb;
+    }
+
+    .flow-step.amber {
+      border-top-color: #f59e0b;
+    }
+
+    .flow-step.emerald {
+      border-top-color: #10b981;
+    }
+
+    .flow-step strong {
+      display: block;
+      color: #0f172a;
+      margin-bottom: 2px;
+      font-size: 8.5pt;
+    }
+
+    .flow-arrow {
+      color: #94a3b8;
+      font-size: 14pt;
+      font-weight: bold;
+    }
+
+    /* Code blocks */
+    pre, code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 8pt;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10px 0;
+      line-height: 1.45;
+      page-break-inside: avoid;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-green { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .badge-amber { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-red { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .footer-note {
+      margin-top: 30px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 8pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Executive Header Banner -->
+  <div class="header-banner">
+    <span class="brand-tag">Official Operational Standard</span>
+    <h1 class="header-title">Connectzy Platform SOP Manual</h1>
+    <p class="header-subtitle">Standard Operating Procedures for Platform Administration, KYC Compliance, Procurement & Release Management</p>
+    
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Document ID</span>
+        <span class="meta-value">SOP-CONNECTZY-2026-V1</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Current Release</span>
+        <span class="meta-value">App v1.0.2 (Build 6)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Effective Date</span>
+        <span class="meta-value">November 2026</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Primary Owner</span>
+        <span class="meta-value">Operations & Tech Lead</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="toc-container">
+    <div class="toc-title">Table of Contents</div>
+    <div class="toc-grid">
+      <div>1. Document Purpose & Scope</div>
+      <div>5. SOP-03: B2B Materials Procurement</div>
+      <div>2. Architecture & Technical Stack</div>
+      <div>6. SOP-04: Admin Profits & Financial Ledger</div>
+      <div>3. Role & Permission Access Matrix</div>
+      <div>7. SOP-05: Annual Subscriptions (Razorpay)</div>
+      <div>4. SOP-01: Provider Onboarding & KYC</div>
+      <div>8. SOP-06: Production Build & AAB Release</div>
+      <div>5. SOP-02: Project Bidding & Milestone Execution</div>
+      <div>9. SOP-07: Play Store & Incident Escalation</div>
+    </div>
+  </div>
+
+  <!-- Section 1 -->
+  <h1>1. Document Purpose & Scope</h1>
+  <p>
+    This Standard Operating Procedure (SOP) defines the operational, administrative, compliance, and release guidelines governing the <strong>Connectzy Construction & Building Materials Platform</strong>. Connectzy bridges property developers, homeowners, civil builders, MEP engineers, interior contractors, and raw material suppliers under a verified and transparent digital marketplace.
+  </p>
+  <p>
+    All operational staff, platform moderators, technical leads, and customer support representatives must follow these procedures to maintain data integrity, legal compliance, and customer satisfaction.
+  </p>
+
+  <!-- Section 2 -->
+  <h1>2. System Architecture & Technical Stack</h1>
+  <p>
+    The platform operates on a resilient decoupled client-server architecture:
+  </p>
+
+  <div class="flowchart-container">
+    <div class="flow-row">
+      <div class="flow-step blue">
+        <strong>Consumer App</strong>
+        Flutter Client (iOS & Android)<br>Project creation, materials, tracking
+      </div>
+      <div class="flow-step emerald">
+        <strong>Provider App</strong>
+        Flutter Client (iOS & Android)<br>Leads, quotes, tasks & supplier portal
+      </div>
+      <div class="flow-step">
+        <strong>Admin Console</strong>
+        Next.js 16 Web Dashboard<br>Approvals, analytics, subscriptions
+      </div>
+    </div>
+    <div style="text-align: center; margin: 4px 0;" class="flow-arrow">&#8595; HTTPS REST APIs &#8595;</div>
+    <div class="flow-row">
+      <div class="flow-step" style="border-top-color: #0f172a; flex: 2;">
+        <strong>Connectzy Core REST API Engine</strong><br>
+        Next.js Route Handlers (Serverless on Vercel) • Prisma ORM 6.19
+      </div>
+      <div class="flow-step" style="border-top-color: #06b6d4; flex: 1;">
+        <strong>PostgreSQL Database</strong><br>
+        Neon Serverless Cloud Database
+      </div>
+    </div>
+    <div style="text-align: center; margin: 4px 0;" class="flow-arrow">&#8595; Third-Party Gateways &#8595;</div>
+    <div class="flow-row">
+      <div class="flow-step amber">
+        <strong>FCM</strong><br>Push Notifications
+      </div>
+      <div class="flow-step blue">
+        <strong>Message Central</strong><br>SMS & OTP Gateway
+      </div>
+      <div class="flow-step emerald">
+        <strong>Razorpay</strong><br>Membership Billing
+      </div>
+      <div class="flow-step">
+        <strong>Google OAuth</strong><br>Identity Sign-in
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Technology</th>
+        <th>Environment / Hosting</th>
+        <th>Key Function</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Mobile App</strong></td>
+        <td>Flutter 3.47.x / Dart 3.13.x</td>
+        <td>Android (AAB on Google Play) / iOS</td>
+        <td>Consumer project management & provider service delivery</td>
+      </tr>
+      <tr>
+        <td><strong>Admin Dashboard</strong></td>
+        <td>Next.js 16.2.4 (React 19, Tailwind CSS)</td>
+        <td>Vercel Production Deployment</td>
+        <td>Verification approvals, profit analytics, ad management</td>
+      </tr>
+      <tr>
+        <td><strong>Database</strong></td>
+        <td>PostgreSQL 16 / Prisma ORM</td>
+        <td>Neon.tech AWS ap-southeast-2</td>
+        <td>ACID compliant storage of users, projects, quotes, ledgers</td>
+      </tr>
+      <tr>
+        <td><strong>Push Engine</strong></td>
+        <td>Firebase Cloud Messaging (FCM)</td>
+        <td>Google Cloud Service Account (OAuth 2.0)</td>
+        <td>Real-time lead alerts and immediate session redirects</td>
+      </tr>
+      <tr>
+        <td><strong>Support Contact</strong></td>
+        <td>Official Hotline: <strong>+91 81225 58115</strong></td>
+        <td>Admin Dispatch: <strong>9994229553</strong></td>
+        <td>Customer escalation, provider document resolution</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Section 3 -->
+  <div class="page-break"></div>
+  <h1>3. Role & Permission Access Matrix</h1>
+  <p>The platform implements strict Role-Based Access Control (RBAC):</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Client Channel</th>
+        <th>Authorized Operations</th>
+        <th>Access Gates & Restrictions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-blue">Consumer</span></td>
+        <td>Mobile App</td>
+        <td>
+          • Post residential/commercial project requirements.<br>
+          • Request contractor quotes and accept proposals.<br>
+          • Purchase wholesale materials via B2B catalog.<br>
+          • View <strong>Purchased Materials History</strong> & receipts.<br>
+          • Submit ratings and reviews.
+        </td>
+        <td>Cannot view provider lead feeds, access supplier sales consoles, or enter admin dashboard.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">Provider (Contractor)</span></td>
+        <td>Mobile App</td>
+        <td>
+          • Access real-time project leads in matched categories.<br>
+          • Submit, revise, and negotiate price quotations.<br>
+          • Create project milestone tasks and upload proof logs.<br>
+          • Manage business profile and portfolio showcases.<br>
+          • Subscribe to Annual Membership (₹5,999/yr).
+        </td>
+        <td>Must pass KYC audit (<code style="color:#0f766e">isVerified=true</code>). Inactive status locks lead dashboard and triggers pending screen redirect.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-amber">Supplier (Vendor)</span></td>
+        <td>Mobile App</td>
+        <td>
+          • Manage inventory catalog (Cement, LED walls, Paints, etc.).<br>
+          • Receive buyer quotation inquiries (RFQs).<br>
+          • Propose bulk unit rates and GST taxes (5%-28%).<br>
+          • Update delivery stages (Dispatched, In Transit, Delivered).
+        </td>
+        <td>Restricted to material supply transactions and product inventory.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-red">Super Admin</span></td>
+        <td>Web Console</td>
+        <td>
+          • Approve/reject provider KYC applications.<br>
+          • Instant Active/Inactive status toggle.<br>
+          • Service profits & material order profits analytics.<br>
+          • Manual subscription grants and sponsor ads manager.
+        </td>
+        <td>Protected via session cookies and multi-factor authorization.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Section 4 -->
+  <h1>4. Operational Standard Operating Procedures</h1>
+
+  <h2>SOP-01: Provider Onboarding, KYC Verification & Status Administration</h2>
+  <div class="callout">
+    <div class="callout-title">Operational Goal</div>
+    Guarantee zero fraudulent contractors on the Connectzy network while maintaining a rapid &lt; 4-hour approval turnaround.
+  </div>
+
+  <div class="flowchart-container">
+    <div class="flow-row">
+      <div class="flow-step">
+        <strong>1. Registration</strong>
+        Provider completes 4-step registration on mobile app
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step amber">
+        <strong>2. Pending Screen</strong>
+        Session locked on VerificationPendingScreen
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step blue">
+        <strong>3. Admin Review</strong>
+        Admin checks Aadhar, PAN & portfolio images
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step emerald">
+        <strong>4. Live Activation</strong>
+        Approval triggers FCM push & instant dashboard unlock
+      </div>
+    </div>
+  </div>
+
+  <h3>Standard Operating Steps:</h3>
+  <ol>
+    <li>
+      <strong>Intake Verification:</strong> Admin accesses <code>/admin?view=pending</code>. Click <strong>Review Application</strong> to inspect uploaded credentials.
+    </li>
+    <li>
+      <strong>Identity Document Checklist:</strong>
+      <ul>
+        <li>Verify Aadhar number validity and ensure full name matches <code>ownerName</code>.</li>
+        <li>Validate PAN format (10 alphanumeric characters). Ensure business entity name corresponds to registration.</li>
+        <li>Audit portfolio photographs: Verify original construction site images without watermarks from third-party websites.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Approval Decision:</strong>
+      <ul>
+        <li><strong>Approve:</strong> Click <span class="badge badge-green">Approve Provider</span>. Database sets <code>isVerified=true</code>, dispatches an approval email via SMTP, and transmits an FCM push notification. The mobile app automatically navigates the provider to the dashboard.</li>
+        <li><strong>Reject:</strong> If unreadable or fraudulent, click <span class="badge badge-red">Reject Provider</span>. Record explicit reason (e.g., <em>"PAN image blurred; re-upload legible copy"</em>). The provider sees this explanation with direct dialer to <strong>+91 81225 58115</strong>.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Enforcing Real-Time Account Deactivation:</strong>
+      <ul>
+        <li>If an approved contractor incurs complaints, Admin toggles the switch on <strong>Approved Providers</strong> list.</li>
+        <li>The backend flags <code>isVerified=false</code>.</li>
+        <li>The mobile app's 15-second heartbeat listener and background FCM message automatically intercept active sessions, redirecting the user immediately to the <strong>Login Approval Pending</strong> screen.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <!-- Section 5 -->
+  <div class="page-break"></div>
+  <h2>SOP-02: Project Creation, Bidding & Milestone Execution</h2>
+
+  <div class="flowchart-container">
+    <div class="flow-row">
+      <div class="flow-step">
+        <strong>1. Client Posts Project</strong>
+        Specifies budget, timeline & location
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step blue">
+        <strong>2. Matching & Quotes</strong>
+        Verified contractors submit estimates
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step amber">
+        <strong>3. Agreement Lock</strong>
+        Client accepts quote; contract binds
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step emerald">
+        <strong>4. Tasks & Handover</strong>
+        Tasks completed (100%) & client signs off
+      </div>
+    </div>
+  </div>
+
+  <h3>Standard Operating Steps:</h3>
+  <ol>
+    <li>
+      <strong>Posting Requirement:</strong> Client launches <code>/create-project</code>, entering title, estimated budget, construction stage, and service category (e.g., <em>Builders</em>, <em>Architecture</em>, <em>Interiors</em>, <em>LED Walls & Digital Displays</em>).
+    </li>
+    <li>
+      <strong>Bidding Period:</strong> Contractors in that category review the lead. Quotations include:
+      <ul>
+        <li>Total estimated cost (&#8377;).</li>
+        <li>Detailed milestone scope of work & planned completion date.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Acceptance:</strong> Client accepts the optimal proposal. Quote transitions to <code>isAccepted: true</code>.
+    </li>
+    <li>
+      <strong>Milestone Execution:</strong>
+      <ul>
+        <li>Contractor logs daily progress under <strong>Provider Job Detail</strong>.</li>
+        <li>Tasks progress through <code>Not Started</code> &#8594; <code>In Progress</code> &#8594; <code>Completed</code>.</li>
+        <li>Overall project percentage dynamically updates on both Client and Provider dashboards.</li>
+      </ul>
+    </li>
+    <li>
+      <strong>Handover & Archive:</strong> When all tasks reach 100%, client inspects the premises and triggers <strong>Accept Final Handover</strong>. Project status becomes <code>Completed</code>.
+    </li>
+  </ol>
+
+  <!-- Section 6 -->
+  <h2>SOP-03: B2B Materials Procurement & Purchase History</h2>
+
+  <div class="callout">
+    <div class="callout-title">Procurement Guarantee</div>
+    All B2B orders undergo closed-deal receipt tracking. Completed deliveries automatically archive to the client's permanent <strong>Purchased Materials History</strong>.
+  </div>
+
+  <h3>Standard Operating Steps:</h3>
+  <ol>
+    <li>
+      <strong>Supplier Catalog Upload:</strong> Suppliers add items at <code>/supplier-product-management</code>, detailing unit price, unit type (Bags, Tons, Units, Sq Ft), and baseline Cost of Goods Sold (<code>costPrice</code>).
+    </li>
+    <li>
+      <strong>Buyer RFQ:</strong> Buyer browses <code>/b2b-products</code> and submits inquiry with quantity and delivery site location.
+    </li>
+    <li>
+      <strong>Quote Negotiation (Tab 0 - Quotes / Inquiries):</strong> Supplier sets quotation rate per unit and applicable GST (5%, 12%, 18%, 28%).
+    </li>
+    <li>
+      <strong>Shipment Tracking (Tab 1 - In Transit):</strong> When buyer accepts, order moves to <strong>In Transit</strong>. Supplier records vehicle dispatch numbers and logistics updates.
+    </li>
+    <li>
+      <strong>Delivery Finalization (Tab 2 - Purchased History):</strong>
+      <ul>
+        <li>Upon physical offloading at site, supplier selects <strong>Finalize & Close Deal</strong> and sets delivery status to <code>Delivered</code>.</li>
+        <li>Order status updates to <code>Closed / Completed</code>.</li>
+        <li>Buyer immediately sees the order in <strong>Purchased Materials History</strong> (accessible via Profile or <code>/b2b-materials?tab=2</code>) with invoice breakdown and verified green badge.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <!-- Section 7 -->
+  <h2>SOP-04: Admin Profits & Financial Ledger Reconciliation</h2>
+
+  <div class="flowchart-container">
+    <div class="flow-row">
+      <div class="flow-step blue">
+        <strong>Service Project Profits</strong><br>
+        Tracks accepted contractor quotes, project volume & contractor earnings
+      </div>
+      <div class="flow-step emerald">
+        <strong>Material Order Profits</strong><br>
+        Tracks supplier accounts, gross sales volume, COGS & net platform margins
+      </div>
+    </div>
+  </div>
+
+  <h3>Profit Calculation Formulas:</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Stream</th>
+        <th>Gross Revenue</th>
+        <th>Cost of Goods (COGS)</th>
+        <th>Net Profit / Margin Formula</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Material Orders (With COGS)</strong></td>
+        <td><code>Unit Quoted Price &times; Qty</code></td>
+        <td><code>Product costPrice &times; Qty</code></td>
+        <td><code>Gross Revenue - COGS</code></td>
+      </tr>
+      <tr>
+        <td><strong>Material Orders (Default Margin)</strong></td>
+        <td><code>Unit Quoted Price &times; Qty</code></td>
+        <td>Not Provided (0.00)</td>
+        <td><code>Gross Revenue &times; 10% (Platform Fee)</code></td>
+      </tr>
+      <tr>
+        <td><strong>Service Projects</strong></td>
+        <td><code>Accepted Quote Cost</code></td>
+        <td>Direct Contractor Execution</td>
+        <td>Platform commission on project billing</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Reconciliation Steps:</h3>
+  <ol>
+    <li>Navigate to <strong>Admin Console &#8594; Earnings & Profits</strong>.</li>
+    <li>Select sub-tab <strong>Material Profits (By Account)</strong> to inspect supplier-specific volume.</li>
+    <li>Filter by period (<strong>Day</strong>, <strong>Month</strong>, <strong>Year</strong>) to generate periodic financial summaries.</li>
+    <li>Click an individual supplier account in the leaderboard to isolate that supplier's itemized transaction ledger.</li>
+  </ol>
+
+  <!-- Section 8 -->
+  <div class="page-break"></div>
+  <h2>SOP-05: Annual Provider Membership Billing (Razorpay)</h2>
+  <p>
+    Connectzy charges providers an annual membership fee of <strong>&#8377;5,999/year</strong> to unlock unlimited biddings, chat capabilities, and portfolio showcases.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Channel</th>
+        <th>Trigger</th>
+        <th>System Action</th>
+        <th>SLA / Validation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>In-App Gateway</strong></td>
+        <td>Provider taps "Upgrade to Pro"</td>
+        <td>Razorpay modal loads order. Signature verified via <code>/api/subscription/verify-payment</code>.</td>
+        <td>Instant activation (+365 days).</td>
+      </tr>
+      <tr>
+        <td><strong>Admin Offline Grant</strong></td>
+        <td>NEFT / Cash / Promo Waiver</td>
+        <td>Admin opens <code>/admin?view=subscriptions</code>, enters duration (e.g. 365), clicks "Grant Subscription".</td>
+        <td>Processed within 1 hour of payment receipt.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Section 9 -->
+  <h1>5. Technical SOP: Build, Versioning & Release Management</h1>
+
+  <h2>SOP-06: Production Android App Bundle (.aab) Build Protocol</h2>
+  <div class="callout warning">
+    <div class="callout-title">Environment Requirement</div>
+    Release builds must execute under <strong>Microsoft OpenJDK 17</strong> and <strong>Android SDK Command-line Tools</strong> to ensure debug symbols strip cleanly.
+  </div>
+
+  <h3>Standard Build Sequence:</h3>
+  <ol>
+    <li>
+      <strong>Static Analysis Verification:</strong>
+      <pre><code>& "C:\Users\massa\flutter\bin\flutter.bat" analyze</code></pre>
+      <em>Build only when analyzer returns: <code>No issues found!</code></em>
+    </li>
+    <li>
+      <strong>Update Version Specification:</strong>
+      Open <code>pubspec.yaml</code> and increment the version at line 19:
+      <pre><code>version: 1.0.X+Y   # Example: version: 1.0.2+6 (versionCode 6, versionName 1.0.2)</code></pre>
+      <em>Note: Google Play Console will reject bundles with duplicate or lower version codes.</em>
+    </li>
+    <li>
+      <strong>Build Production AAB:</strong>
+      <pre><code>& "C:\Users\massa\flutter\bin\flutter.bat" build appbundle --release</code></pre>
+    </li>
+    <li>
+      <strong>Output Verification:</strong>
+      Confirm generated bundle at:
+      <pre><code>D:\construction app\build\app\outputs\bundle\release\app-release.aab</code></pre>
+      Verify file size is approximately <strong>72MB &ndash; 76MB</strong>.
+    </li>
+  </ol>
+
+  <!-- Section 10 -->
+  <h2>SOP-07: Google Play Console Release & Compliance Submission</h2>
+  <ol>
+    <li>Log in to <strong>Google Play Console</strong> &#8594; Select <strong>Connectzy</strong> app.</li>
+    <li>Navigate to <strong>Release &#8594; Production &#8594; Create New Release</strong>.</li>
+    <li>Upload <code>app-release.aab</code>.</li>
+    <li>
+      <strong>Trader Status Declaration:</strong>
+      Under Policy & Compliance, when prompted <em>"Does your trader status apply to this app?"</em>:
+      <br>&#10004; Select: <strong>"Yes, my trader status applies to this app"</strong> (mandatory under European Union Digital Services Act).
+    </li>
+    <li>
+      <strong>Release Notes (Copy & Paste):</strong>
+      <pre><code>What's New in Version 1.0.2:
+• LED Walls & Digital Displays: Discover and hire verified LED display specialists in the Marketplace.
+• Real-time Service Search: Quickly find 50+ construction & specialty services with instant search & filters.
+• Purchased Materials History: Track past delivered material orders, receipts & order status in your Account.
+• Performance & Stability: Enhanced order tracking, faster transitions & bug fixes.</code></pre>
+    </li>
+    <li>Click <strong>Save &#8594; Review Release &#8594; Start Rollout to Production</strong>.</li>
+  </ol>
+
+  <!-- Section 11 -->
+  <h1>6. Incident Management & Support Escalation</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Severity</th>
+        <th>Classification</th>
+        <th>SLA Response</th>
+        <th>Primary Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-red">P1 - Critical</span></td>
+        <td>Database outage, payment capture failure, app crash on launch</td>
+        <td>&lt; 30 Minutes</td>
+        <td>Check Neon PostgreSQL status, review Vercel serverless logs, verify Razorpay webhooks.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-amber">P2 - High</span></td>
+        <td>Provider status toggle delay, FCM push notifications delivery drop</td>
+        <td>&lt; 2 Hours</td>
+        <td>Verify Google Cloud FCM OAuth credentials, test heartbeat polling route.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">P3 - Medium</span></td>
+        <td>Quotation calculation discrepancy, image upload network timeout</td>
+        <td>&lt; 6 Hours</td>
+        <td>Review Cloudinary/Supabase storage quotas, check GST math helper.</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">P4 - Low</span></td>
+        <td>UI alignment tweak, copy edit, badge labeling enhancement</td>
+        <td>&lt; 24 Hours</td>
+        <td>Include in next planned maintenance release.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer-note">
+    <div><strong>Connectzy Operational Support:</strong> +91 81225 58115 | Admin Phone: 9994229553</div>
+    <div>Official Document &copy; 2026 Connectzy Platform. All rights reserved.</div>
+  </div>
+
+</body>
+</html>

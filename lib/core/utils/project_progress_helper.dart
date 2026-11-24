@@ -2,10 +2,11 @@
 class ProjectProgressResult {
   final double progressValue; // 0.0 to 1.0
   final int percentage; // 0 to 100
-  final String progressText; // e.g. "50% Done"
-  final String stageDisplayName; // e.g. "Tracking", "Design & Planning"
+  final String progressText; // e.g. "50% Done" or "50% (On Hold)"
+  final String stageDisplayName; // e.g. "Tracking", "Design & Planning", "On Hold"
   final int completedTasksCount;
   final int totalTasksCount;
+  final bool isOnHold;
 
   const ProjectProgressResult({
     required this.progressValue,
@@ -14,6 +15,7 @@ class ProjectProgressResult {
     required this.stageDisplayName,
     required this.completedTasksCount,
     required this.totalTasksCount,
+    this.isOnHold = false,
   });
 }
 
@@ -48,11 +50,12 @@ class ProjectProgressHelper {
 
     final isCancelled = stageLower == 'cancelled';
     final isCompleted = stageLower == 'completed' || stageLower == 'finished';
+    final isOnHold = stageLower == 'on hold' || stageLower == 'hold' || stageLower == 'paused';
     final isPendingApproval = stageLower == 'finished pending approval' ||
         stageLower.contains('pending approval');
     final isExecution = stageLower.contains('track') ||
         stageLower.contains('execut') ||
-        stageLower == 'on hold' ||
+        isOnHold ||
         isQuoteAccepted;
     final isDesign = stageLower.contains('design');
     final isPlanning = stageLower == 'planning' ||
@@ -104,6 +107,8 @@ class ProjectProgressHelper {
       progressText = 'Cancelled';
     } else if (isCompleted) {
       progressText = '100% Done';
+    } else if (isOnHold) {
+      progressText = '$percentage% (On Hold)';
     } else {
       progressText = '$percentage% Done';
     }
@@ -115,6 +120,7 @@ class ProjectProgressHelper {
       stageDisplayName: rawStage.isEmpty ? 'Planning' : rawStage,
       completedTasksCount: completedTasks,
       totalTasksCount: totalTasks,
+      isOnHold: isOnHold,
     );
   }
 
@@ -128,6 +134,7 @@ class ProjectProgressHelper {
         stageDisplayName: 'Planning',
         completedTasksCount: 0,
         totalTasksCount: 0,
+        isOnHold: false,
       );
     }
 

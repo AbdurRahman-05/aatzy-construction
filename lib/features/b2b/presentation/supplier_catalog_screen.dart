@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
+import 'widgets/custom_image.dart';
+import '../../../core/full_screen_image_viewer.dart';
 
 class CatalogItem {
   final String id;
@@ -36,8 +39,27 @@ class CatalogItem {
     }
 
     List<String> imgs = [];
-    if (json['images'] != null && json['images'] is List) {
-      imgs = List<String>.from(json['images']);
+    if (json['images'] != null) {
+      if (json['images'] is List) {
+        imgs = (json['images'] as List).map((e) => e.toString()).toList();
+      } else if (json['images'] is String && (json['images'] as String).isNotEmpty) {
+        final raw = (json['images'] as String).trim();
+        if (raw.startsWith('[') && raw.endsWith(']')) {
+          try {
+            final decoded = jsonDecode(raw);
+            if (decoded is List) {
+              imgs = decoded.map((e) => e.toString()).toList();
+            }
+          } catch (_) {
+            imgs = [raw];
+          }
+        } else {
+          imgs = [raw];
+        }
+      }
+    }
+    if (imgs.isEmpty && json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
+      imgs = [json['imageUrl'].toString()];
     }
 
     return CatalogItem(
@@ -168,7 +190,11 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),
         ),
-        title: const Text('My Product Catalog'),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text('My Product Catalog', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -224,16 +250,58 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.withValues(alpha: 0.08),
+                                    GestureDetector(
+                                      onTap: () {
+                                        if (item.images.isNotEmpty && item.images.first.isNotEmpty) {
+                                          final img = item.images.first;
+                                          final isNet = img.startsWith('http://') || img.startsWith('https://');
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => FullScreenImageViewer(
+                                                base64Image: isNet ? null : img,
+                                                imageUrl: isNet ? img : null,
+                                                title: item.name,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: ClipRRect(
                                         borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.inventory_2,
-                                        color: Colors.blue,
+                                        child: (item.images.isNotEmpty && item.images.first.isNotEmpty)
+                                            ? BuildMartImage(
+                                                imageUrl: item.images.first,
+                                                width: 54,
+                                                height: 54,
+                                                fit: BoxFit.cover,
+                                                placeholder: Container(
+                                                  width: 54,
+                                                  height: 54,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.withValues(alpha: 0.08),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.inventory_2,
+                                                    color: Colors.blue,
+                                                    size: 26,
+                                                  ),
+                                                ),
+                                              )
+                                            : Container(
+                                                width: 54,
+                                                height: 54,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue.withValues(alpha: 0.08),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.inventory_2,
+                                                  color: Colors.blue,
+                                                  size: 26,
+                                                ),
+                                              ),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -243,14 +311,18 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
                                         children: [
                                           Text(
                                             item.name,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
                                             item.categoryName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.bold),
                                           ),
-                                          const SizedBox(height: 6),
+                                          const SizedBox(height: 5),
                                           Text(
                                             item.description,
                                             maxLines: 2,
@@ -258,15 +330,22 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
                                             style: const TextStyle(fontSize: 12, color: Colors.grey),
                                           ),
                                           const SizedBox(height: 8),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          Wrap(
+                                            alignment: WrapAlignment.spaceBetween,
+                                            crossAxisAlignment: WrapCrossAlignment.center,
+                                            spacing: 6,
+                                            runSpacing: 4,
                                             children: [
-                                              Text(
-                                                'Price: ₹${item.pricePerUnit.toStringAsFixed(0)} / ${item.unitType}',
-                                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                              FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  'Price: ₹${item.pricePerUnit.toStringAsFixed(0)} / ${item.unitType}',
+                                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                                ),
                                               ),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                                 decoration: BoxDecoration(
                                                   color: Colors.green.withValues(alpha: 0.12),
                                                   borderRadius: BorderRadius.circular(6),
@@ -285,10 +364,14 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 6),
                                     Column(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                                           icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
                                           onPressed: () {
                                             context.push('/supplier-add-product', extra: {
@@ -305,7 +388,11 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
                                             }).then((_) => _fetchCatalogData());
                                           },
                                         ),
+                                        const SizedBox(height: 6),
                                         IconButton(
+                                          visualDensity: VisualDensity.compact,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                                           icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
                                           onPressed: () => _deleteCatalogItem(item),
                                         ),

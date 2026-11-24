@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
 import '../../core/wallpaper_background.dart';
 import '../../core/services/location_service.dart';
 import '../../core/providers/projects_provider.dart';
+import 'cost_estimation_screen.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
-  const CreateProjectScreen({super.key});
+  final CostEstimateResult? initialEstimate;
+  const CreateProjectScreen({super.key, this.initialEstimate});
 
   @override
   ConsumerState<CreateProjectScreen> createState() => _CreateProjectScreenState();
@@ -20,6 +23,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   // Current step: 0 = Services, 1 = Location & Specs, 2 = Review & Confirm
   int _currentStep = 0;
   bool _isLoading = false;
+  CostEstimateResult? _attachedEstimate;
 
   // Controllers
   final _titleController = TextEditingController();
@@ -176,6 +180,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialEstimate != null) {
+      _applyEstimate(widget.initialEstimate!);
+    }
     LocationService().getSavedLocation().then((loc) {
       if (mounted && loc.isNotEmpty) {
         setState(() {
@@ -183,6 +190,69 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         });
       }
     });
+  }
+
+  void _applyEstimate(CostEstimateResult result) {
+    _attachedEstimate = result;
+    _budgetController.text = result.totalCost.toStringAsFixed(0);
+    _plotSizeController.text = result.areaSqFt.toStringAsFixed(0);
+    _timelineController.text = result.timelineEstimate;
+    _selectedPropertyType = _mapBuildingTypeToPropertyType(result.buildingType);
+  }
+
+  String _mapPropertyTypeToBuildingType(String propType) {
+    if (propType.contains('Villa')) return 'Villa';
+    if (propType.contains('Apartment') || propType.contains('Flat')) return 'Apartment';
+    if (propType.contains('Commercial')) return 'Commercial';
+    if (propType.contains('Warehouse') || propType.contains('Industrial')) return 'Warehouse';
+    return 'House';
+  }
+
+  String _mapBuildingTypeToPropertyType(String buildingType) {
+    switch (buildingType) {
+      case 'Villa':
+        return 'Residential Villa';
+      case 'Apartment':
+        return 'Apartment / Flat';
+      case 'Commercial':
+      case 'Office':
+        return 'Commercial Complex';
+      case 'Warehouse':
+        return 'Industrial / Warehouse';
+      case 'House':
+      default:
+        return 'Residential Villa';
+    }
+  }
+
+  Future<void> _openCostEstimator() async {
+    final buildingType = _mapPropertyTypeToBuildingType(_selectedPropertyType);
+    final area = double.tryParse(_plotSizeController.text.trim()) ?? 1000.0;
+
+    final result = await Navigator.of(context).push<CostEstimateResult>(
+      MaterialPageRoute(
+        builder: (context) => CostEstimationScreen(
+          isSelectMode: true,
+          initialArea: area > 0 ? area : 1000.0,
+          initialBuildingType: buildingType,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _applyEstimate(result);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cost estimate of ₹${NumberFormat.compact().format(result.totalCost)} applied to project!'),
+            backgroundColor: const Color(0xFF059669),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -273,7 +343,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         body: jsonEncode({
           'userId': auth.id,
           'title': projectTitle,
-          'type': '$_selectedPropertyType - ${_selectedServices.join(', ')}',
+          'type': _attachedEstimate != null
+              ? '$_selectedPropertyType (${_attachedEstimate!.quality} Grade) - ${_selectedServices.join(', ')}'
+              : '$_selectedPropertyType - ${_selectedServices.join(', ')}',
           'location': LocationService.resolveToCityState(
             _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : 'Tamil Nadu',
           ),
@@ -1847,6 +1919,15 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         ),
         const SizedBox(height: 18),
 
+        // AI / Smart Cost Estimator Tool
+        _buildCostEstimatorBanner(isDark),
+        const SizedBox(height: 12),
+
+        if (_attachedEstimate != null) ...[
+          _buildAttachedEstimateCard(isDark),
+          const SizedBox(height: 12),
+        ],
+
         // 4. Plot Size, Budget & Timeline Specifications Card
         const Text(
           'PLOT SIZE, BUDGET & TIMELINE',
@@ -1975,28 +2056,43 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                 spacing: 6,
                 runSpacing: 4,
                 children: [
-                  {'l': '₹25L', 'v': '2500000'},
-                  {'l': '₹45L', 'v': '4500000'},
-                  {'l': '₹75L', 'v': '7500000'},
-                  {'l': '₹1.2Cr', 'v': '12000000'},
-                  {'l': '₹2.5Cr', 'v': '25000000'},
-                ].map((b) {
-                  final isSel = _budgetController.text == b['v'];
-                  return ActionChip(
-                    label: Text(
-                      b['l']!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isSel ? const Color(0xFF059669) : (isDark ? Colors.white70 : Colors.black87),
-                      ),
+                  ActionChip(
+                    avatar: const Icon(Icons.calculate_rounded, size: 14, color: Color(0xFF4F46E5)),
+                    label: const Text(
+                      'Estimate with AI',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
                     ),
-                    backgroundColor: isSel
-                        ? const Color(0xFFA7F3D0)
-                        : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
-                    onPressed: () => setState(() => _budgetController.text = b['v']!),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  );
-                }).toList(),
+                    backgroundColor: isDark ? const Color(0xFF312E81).withValues(alpha: 0.5) : const Color(0xFFEEF2FF),
+                    onPressed: _openCostEstimator,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Color(0xFFC7D2FE)),
+                    ),
+                  ),
+                  ...[
+                    {'l': '₹25L', 'v': '2500000'},
+                    {'l': '₹45L', 'v': '4500000'},
+                    {'l': '₹75L', 'v': '7500000'},
+                    {'l': '₹1.2Cr', 'v': '12000000'},
+                    {'l': '₹2.5Cr', 'v': '25000000'},
+                  ].map((b) {
+                    final isSel = _budgetController.text == b['v'];
+                    return ActionChip(
+                      label: Text(
+                        b['l']!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isSel ? const Color(0xFF059669) : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                      ),
+                      backgroundColor: isSel
+                          ? const Color(0xFFA7F3D0)
+                          : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                      onPressed: () => setState(() => _budgetController.text = b['v']!),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    );
+                  }),
+                ],
               ),
               Divider(height: 24, color: isDark ? Colors.white.withValues(alpha: 0.08) : null),
 
@@ -2447,6 +2543,11 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         ),
         const SizedBox(height: 12),
 
+        if (_attachedEstimate != null) ...[
+          _buildEstimateReviewBreakdownCard(isDark, isSmallScreen),
+          const SizedBox(height: 12),
+        ],
+
         // 4. Selected Services Card (Editable)
         Container(
           padding: const EdgeInsets.all(16),
@@ -2695,6 +2796,315 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCostEstimatorBanner(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF312E81), const Color(0xFF1E1B4B)]
+              : [const Color(0xFFEEF2FF), const Color(0xFFE0E7FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF4338CA) : const Color(0xFFC7D2FE),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4F46E5),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.calculate_rounded, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'AI Cost Estimator',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4F46E5).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'AUTO-CALCULATE',
+                        style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: Color(0xFF4F46E5)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Estimate construction budget, civil rate & timeline for your plot area.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFFC7D2FE) : const Color(0xFF475569),
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: _openCostEstimator,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4F46E5),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Estimate', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+                SizedBox(width: 4),
+                Icon(Icons.arrow_forward_rounded, size: 13),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachedEstimateCard(bool isDark) {
+    final est = _attachedEstimate!;
+    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFECFDF5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0),
+          width: 1.2,
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 18),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'AI Cost Estimate Attached',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                ),
+              ),
+              InkWell(
+                onTap: _openCostEstimator,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  child: Text(
+                    'Re-estimate',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              InkWell(
+                onTap: () => setState(() => _attachedEstimate = null),
+                child: const Icon(Icons.close_rounded, size: 16, color: Colors.grey),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Total Estimated Cost', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                    const SizedBox(height: 2),
+                    Text(
+                      currency.format(est.totalCost),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF059669)),
+                    ),
+                  ],
+                ),
+                Container(height: 22, width: 1, color: Colors.grey.shade300),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Rate / Sq Ft', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                    const SizedBox(height: 2),
+                    Text(
+                      '₹${est.ratePerSqFt.toStringAsFixed(0)} / sq.ft',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                    ),
+                  ],
+                ),
+                Container(height: 22, width: 1, color: Colors.grey.shade300),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Est. Timeline', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+                    const SizedBox(height: 2),
+                    Text(
+                      est.timelineEstimate,
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEstimateReviewBreakdownCard(bool isDark, bool isSmallScreen) {
+    final est = _attachedEstimate!;
+    final currency = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark ? const Color(0xFF6366F1).withValues(alpha: 0.3) : const Color(0xFFC7D2FE),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withValues(alpha: isDark ? 0.2 : 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.analytics_rounded, color: Color(0xFF6366F1), size: 16),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Verified Cost Estimate Breakdown',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${est.quality} Quality',
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Based on ${est.areaSqFt.toStringAsFixed(0)} sq.ft at ₹${est.ratePerSqFt.toStringAsFixed(0)} / sq.ft across ${est.configuration} layout.',
+            style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 10),
+          if (est.categoryBreakdown.isNotEmpty) ...[
+            ...est.categoryBreakdown.entries.take(4).map((entry) {
+              final pct = est.totalCost > 0 ? (entry.value / est.totalCost) : 0.0;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        entry.key,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 5,
+                          backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 70,
+                      child: Text(
+                        currency.format(entry.value),
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
       ),
     );
   }

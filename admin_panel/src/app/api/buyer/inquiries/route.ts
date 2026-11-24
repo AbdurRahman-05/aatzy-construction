@@ -114,31 +114,42 @@ export async function POST(request: Request) {
     });
 
     // Fetch buyer and supplier details to send notification emails & push notifications
-    Promise.all([
-      prisma.user.findUnique({ where: { id: buyerId } }),
-      prisma.provider.findUnique({ where: { id: supplierId } }),
-    ]).then(([buyer, provider]) => {
-      if (buyer && provider) {
-        const { sendInquiryNotification } = require('@/lib/mail');
-        sendInquiryNotification(inquiry, buyer, provider).catch((err: any) => {
-          console.error('Inquiry notification email error:', err);
-        });
+    try {
+      const [buyer, provider] = await Promise.all([
+        prisma.user.findUnique({ where: { id: buyerId } }).catch(() => null),
+        prisma.provider.findUnique({ where: { id: supplierId } }).catch(() => null),
+      ]);
 
-        // Send push notification to supplier
-        const { createNotification } = require('@/lib/notifications');
-        createNotification({
-          recipientId: supplierId,
-          role: 'PROVIDER',
-          title: `📦 New Material Request: ${inquiry.title}`,
-          body: `${buyer.name || 'Customer'} requested ${inquiry.quantity} ${inquiry.unit} in ${inquiry.location}. Tap to quote.`,
-          type: 'NEW_LEAD',
-          entityId: inquiry.id,
-          route: '/b2b-materials',
-        }).catch((err: any) => console.error('Material inquiry push error:', err));
+      const buyerName = buyer?.name || 'A customer';
+      const locText = inquiry.location && inquiry.location !== 'none' && inquiry.location.toLowerCase() !== 'india'
+        ? ` in ${inquiry.location}`
+        : '';
+      const bodyText = `${buyerName} requested ${inquiry.quantity} ${inquiry.unit}${locText}. Tap to quote.`;
+
+      // Send push notification & create in-app notification for the supplier
+      const { createNotification } = await import('@/lib/notifications');
+      await createNotification({
+        recipientId: supplierId,
+        role: 'PROVIDER',
+        title: `📦 New Material Request: ${inquiry.title}`,
+        body: bodyText,
+        type: 'NEW_LEAD',
+        entityId: inquiry.id,
+        route: '/b2b-materials',
+      });
+
+      // Send email if buyer and provider are found
+      if (buyer && provider) {
+        try {
+          const { sendInquiryNotification } = await import('@/lib/mail');
+          await sendInquiryNotification(inquiry, buyer, provider);
+        } catch (mailErr) {
+          console.error('Inquiry notification email error:', mailErr);
+        }
       }
-    }).catch(err => {
-      console.error('Failed to fetch users for inquiry notification:', err);
-    });
+    } catch (notifErr) {
+      console.error('Failed to dispatch inquiry notification:', notifErr);
+    }
 
     return NextResponse.json({
       success: true,

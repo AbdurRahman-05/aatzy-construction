@@ -153,88 +153,94 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+      builder: (ctx) => SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Switch Project',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Select which project quotes you want to compare:',
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 14),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _userProjects.length,
-                itemBuilder: (context, idx) {
-                  final p = _userProjects[idx];
-                  final pid = p['id'] ?? '';
-                  final isSelected = pid == _activeProjectId;
-                  final title = p['title'] ?? 'Project ${idx + 1}';
-                  final location = p['location'] ?? 'N/A';
+              const SizedBox(height: 16),
+              const Text(
+                'Switch Project',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Select which project quotes you want to compare:',
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 14),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _userProjects.length,
+                  itemBuilder: (context, idx) {
+                    final p = _userProjects[idx];
+                    final pid = p['id'] ?? '';
+                    final isSelected = pid == _activeProjectId;
+                    final title = p['title'] ?? 'Project ${idx + 1}';
+                    final location = p['location'] ?? 'N/A';
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
-                        width: isSelected ? 1.5 : 1,
-                      ),
-                    ),
-                    child: ListTile(
-                      title: Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                          width: isSelected ? 1.5 : 1,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text(
-                        location,
-                        style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                      child: ListTile(
+                        title: Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          location,
+                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                        ),
+                        trailing: isSelected
+                            ? const Icon(Icons.check_circle_rounded, color: Color(0xFF4F46E5), size: 20)
+                            : null,
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _activeProjectId = pid;
+                          });
+                          _fetchProjectDetails();
+                        },
                       ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_circle_rounded, color: Color(0xFF4F46E5), size: 20)
-                          : null,
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        setState(() {
-                          _activeProjectId = pid;
-                        });
-                        _fetchProjectDetails();
-                      },
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
