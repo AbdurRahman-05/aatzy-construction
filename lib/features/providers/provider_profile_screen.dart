@@ -16,7 +16,8 @@ class ProviderProfileScreen extends ConsumerStatefulWidget {
   const ProviderProfileScreen({super.key, required this.providerId});
 
   @override
-  ConsumerState<ProviderProfileScreen> createState() => _ProviderProfileScreenState();
+  ConsumerState<ProviderProfileScreen> createState() =>
+      _ProviderProfileScreenState();
 }
 
 class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
@@ -32,7 +33,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     _fetchProviderData();
   }
 
-  Future<void> _onRefresh() async {
+  Future<void> _fetchData() async {
     await _fetchProviderData();
     await _fetchBackgroundDetails();
   }
@@ -40,7 +41,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   Future<void> _fetchProviderData() async {
     setState(() => _isLoading = true);
     try {
-      final profileRes = await http.get(Uri.parse('$apiBaseUrl/providers/${widget.providerId}/profile'));
+      final profileRes = await http.get(
+        Uri.parse('$apiBaseUrl/providers/${widget.providerId}/profile'),
+      );
       if (mounted && profileRes.statusCode == 200) {
         setState(() {
           _provider = jsonDecode(profileRes.body)['provider'];
@@ -57,7 +60,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
 
   Future<void> _fetchBackgroundDetails() async {
     try {
-      final res = await http.get(Uri.parse('$apiBaseUrl/providers/${widget.providerId}/portfolio'));
+      final res = await http.get(
+        Uri.parse('$apiBaseUrl/providers/${widget.providerId}/portfolio'),
+      );
       if (res.statusCode == 200 && mounted) {
         setState(() {
           _portfolio = jsonDecode(res.body)['images'] ?? [];
@@ -68,7 +73,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     }
 
     try {
-      final res = await http.get(Uri.parse('$apiBaseUrl/providers/${widget.providerId}/projects'));
+      final res = await http.get(
+        Uri.parse('$apiBaseUrl/providers/${widget.providerId}/projects'),
+      );
       if (res.statusCode == 200 && mounted) {
         final projectsList = jsonDecode(res.body) as List;
         final completed = projectsList.where((p) {
@@ -85,7 +92,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     }
 
     try {
-      final res = await B2BApiService().get('/supplier/products', queryParameters: {'supplierId': widget.providerId});
+      final res = await B2BApiService().get(
+        '/supplier/products',
+        queryParameters: {'supplierId': widget.providerId},
+      );
       if (res.success && res.data != null && mounted) {
         setState(() {
           _supplierProducts = res.data['products'] ?? [];
@@ -99,45 +109,56 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
+    final primaryColor = isDark
+        ? const Color(0xFF0F9B8E)
+        : const Color(0xFF064354);
 
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: _isLoading || _provider == null ? null : AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-          title: Text(
-            _provider!['businessName'] ?? 'Provider Details',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.share_rounded),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile link copied to clipboard')),
-                );
-              },
-            )
-          ],
-        ),
+        appBar: _isLoading || _provider == null
+            ? null
+            : AppBar(
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+                title: Text(
+                  _provider!['businessName'] ?? 'Provider Details',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                backgroundColor: isDark
+                    ? const Color(0xFF121B22)
+                    : Colors.transparent,
+                elevation: 0,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.share_rounded),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Profile link copied to clipboard'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _provider == null
                 ? const Center(child: Text('Provider not found'))
                 : RefreshIndicator(
-                    onRefresh: _onRefresh,
+                    onRefresh: _fetchData,
                     color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F9B8E),
                     child: DefaultTabController(
                       length: 4,
@@ -169,54 +190,79 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                       ],
                                     ),
                                   ),
-                                  Tab(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.storefront_outlined, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('Materials', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
+                                ),
+                                Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.storefront_outlined, size: 16),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Materials',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Tab(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.star_outline_rounded, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('Reviews', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
+                                ),
+                                Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star_outline_rounded,
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Reviews',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Tab(
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.info_outline_rounded, size: 16),
-                                        SizedBox(width: 6),
-                                        Text('About', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
+                                ),
+                                Tab(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline_rounded,
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'About',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              isDark,
+                                ),
+                              ],
                             ),
+                            isDark,
                           ),
-                        ];
-                      },
-                      body: TabBarView(
-                        children: [
-                          _buildPortfolioTab(isDark),
-                          _buildSupplierProductsTab(isDark),
-                          _buildReviewsTab(isDark),
-                          _buildInfoTab(isDark),
-                        ],
-                      ),
+                        ),
+                      ];
+                    },
+                    body: TabBarView(
+                      children: [
+                        _buildPortfolioTab(isDark),
+                        _buildSupplierProductsTab(isDark),
+                        _buildReviewsTab(isDark),
+                        _buildInfoTab(isDark),
+                      ],
                     ),
                   ),
                 ),
+              ),
       ),
     );
   }
@@ -226,7 +272,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     final owner = _provider!['ownerName'] ?? 'N/A';
     final experience = _provider!['experience'] ?? 0;
     final rating = _provider!['avgRating'] ?? 0.0;
-    final categories = (_provider!['category'] as String? ?? 'General').split(',');
+    final categories = (_provider!['category'] as String? ?? 'General').split(
+      ',',
+    );
     final bio = _provider!['bio'] ?? 'No bio provided.';
     final reviewsCount = (_provider!['reviews'] as List?)?.length ?? 0;
     final profileImage = _provider!['profileImage'];
@@ -236,8 +284,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
-          colors: isDark 
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)] 
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
               : [Colors.white, Colors.grey.shade50],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -250,7 +298,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           ),
         ],
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.grey.shade200,
         ),
       ),
       child: ClipRRect(
@@ -289,23 +339,39 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                                color: isDark
+                                    ? const Color(0xFF2DD4BF)
+                                    : const Color(0xFF002E3B),
                                 width: 2,
                               ),
-                              color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : Colors.grey.shade200,
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(2),
                               child: CircleAvatar(
                                 radius: 36,
                                 backgroundColor: Colors.blue.shade100,
-                                backgroundImage: profileImage != null && profileImage.toString().isNotEmpty
-                                    ? MemoryImage(Base64ImageCache.decode(profileImage.toString()))
+                                backgroundImage:
+                                    profileImage != null &&
+                                        profileImage.toString().isNotEmpty
+                                    ? MemoryImage(
+                                        Base64ImageCache.decode(
+                                          profileImage.toString(),
+                                        ),
+                                      )
                                     : null,
-                                child: profileImage == null || profileImage.toString().isEmpty
+                                child:
+                                    profileImage == null ||
+                                        profileImage.toString().isEmpty
                                     ? Text(
                                         name[0].toUpperCase(),
-                                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
                                       )
                                     : null,
                               ),
@@ -317,10 +383,16 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0D9488) : const Color(0xFF002E3B),
+                                color: isDark
+                                    ? const Color(0xFF0D9488)
+                                    : const Color(0xFF002E3B),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.engineering_rounded, size: 12, color: Colors.white),
+                              child: const Icon(
+                                Icons.engineering_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -344,7 +416,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const Icon(Icons.verified_user_rounded, color: Colors.green, size: 18),
+                                const Icon(
+                                  Icons.verified_user_rounded,
+                                  color: Colors.green,
+                                  size: 18,
+                                ),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -352,7 +428,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               'User: $owner  •  $experience Yrs Exp',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF475569),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -364,19 +442,32 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                 final cTrim = c.trim();
                                 if (cTrim.isEmpty) return const SizedBox();
                                 return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.15) : const Color(0xFFEFF6FF),
+                                    color: isDark
+                                        ? const Color(
+                                            0xFF0284C7,
+                                          ).withValues(alpha: 0.15)
+                                        : const Color(0xFFEFF6FF),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: isDark ? const Color(0xFF38BDF8).withValues(alpha: 0.3) : const Color(0xFFBFDBFE),
+                                      color: isDark
+                                          ? const Color(
+                                              0xFF38BDF8,
+                                            ).withValues(alpha: 0.3)
+                                          : const Color(0xFFBFDBFE),
                                     ),
                                   ),
                                   child: Text(
                                     cTrim,
                                     style: TextStyle(
                                       fontSize: 10.5,
-                                      color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1D4ED8),
+                                      color: isDark
+                                          ? const Color(0xFF38BDF8)
+                                          : const Color(0xFF1D4ED8),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -393,10 +484,14 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      color: isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Column(
@@ -407,7 +502,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             Icon(
                               Icons.info_outline_rounded,
                               size: 14,
-                              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0F766E),
+                              color: isDark
+                                  ? const Color(0xFF38BDF8)
+                                  : const Color(0xFF0F766E),
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -415,7 +512,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               style: TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                                color: isDark
+                                    ? const Color(0xFF94A3B8)
+                                    : const Color(0xFF475569),
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -427,7 +526,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           style: TextStyle(
                             fontSize: 12.5,
                             height: 1.4,
-                            color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                            color: isDark
+                                ? const Color(0xFFF1F5F9)
+                                : const Color(0xFF1E293B),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -460,7 +561,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           icon: Icons.star_rounded,
                           label: 'Rating ($reviewsCount)',
                           value: rating.toStringAsFixed(1),
-                          color: isDark ? const Color(0xFFF59E0B) : const Color(0xFF002E3B),
+                          color: isDark
+                              ? const Color(0xFFF59E0B)
+                              : const Color(0xFF002E3B),
                         ),
                       ),
                     ],
@@ -475,15 +578,24 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             backgroundColor: primaryColor,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          child: const Text('Request Quote', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          child: const Text(
+                            'Request Quote',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: () {
-                          final businessName = _provider!['businessName'] ?? 'Provider';
+                          final businessName =
+                              _provider!['businessName'] ?? 'Provider';
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -495,21 +607,47 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          side: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          side: BorderSide(
+                            color: isDark
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade300,
+                          ),
                         ),
-                        child: Icon(Icons.chat_bubble_outline_rounded, color: primaryColor, size: 18),
+                        child: Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: primaryColor,
+                          size: 18,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: () => _showWriteReviewModal(context),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          side: BorderSide(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          side: BorderSide(
+                            color: isDark
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade300,
+                          ),
                         ),
-                        child: Icon(Icons.rate_review_outlined, color: primaryColor, size: 18),
+                        child: Icon(
+                          Icons.rate_review_outlined,
+                          color: primaryColor,
+                          size: 18,
+                        ),
                       ),
                     ],
                   ),
@@ -535,7 +673,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.grey.shade200,
         ),
       ),
       child: Column(
@@ -571,7 +711,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         width: width,
         height: height,
         color: Colors.grey.shade200,
-        child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 24)),
+        child: const Center(
+          child: Icon(Icons.image_outlined, color: Colors.grey, size: 24),
+        ),
       );
     }
 
@@ -581,7 +723,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         width: width,
         height: height,
         color: Colors.grey.shade200,
-        child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 24)),
+        child: const Center(
+          child: Icon(Icons.image_outlined, color: Colors.grey, size: 24),
+        ),
       );
     }
 
@@ -596,7 +740,13 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           width: width,
           height: height,
           color: Colors.grey.shade200,
-          child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey, size: 24)),
+          child: const Center(
+            child: Icon(
+              Icons.broken_image_rounded,
+              color: Colors.grey,
+              size: 24,
+            ),
+          ),
         ),
       );
     }
@@ -614,7 +764,13 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
             width: width,
             height: height,
             color: Colors.grey.shade200,
-            child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey, size: 24)),
+            child: const Center(
+              child: Icon(
+                Icons.broken_image_rounded,
+                color: Colors.grey,
+                size: 24,
+              ),
+            ),
           ),
         );
       }
@@ -626,7 +782,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       width: width,
       height: height,
       color: Colors.grey.shade200,
-      child: const Center(child: Icon(Icons.image_outlined, color: Colors.grey, size: 24)),
+      child: const Center(
+        child: Icon(Icons.image_outlined, color: Colors.grey, size: 24),
+      ),
     );
   }
 
@@ -638,11 +796,19 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.camera_alt_outlined, size: 48, color: Colors.grey.shade400),
+              Icon(
+                Icons.camera_alt_outlined,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
               const SizedBox(height: 12),
               const Text(
                 'No Portfolio Posts Yet',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 4),
               const Text(
@@ -703,11 +869,19 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              const Icon(Icons.storefront_rounded, size: 44, color: Colors.blue),
+              const Icon(
+                Icons.storefront_rounded,
+                size: 44,
+                color: Colors.blue,
+              ),
               const SizedBox(height: 12),
               const Text(
                 'No Catalog Products Yet',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -720,7 +894,6 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         ),
       );
     }
-
 
     return GridView.builder(
       padding: const EdgeInsets.all(12),
@@ -744,7 +917,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         return Card(
           elevation: 2,
           shadowColor: Colors.black26,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           clipBehavior: Clip.antiAlias,
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           child: InkWell(
@@ -762,14 +937,20 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                         fit: BoxFit.cover,
                         placeholder: Container(
                           color: Colors.grey.shade200,
-                          child: const Icon(Icons.inventory_2_outlined, color: Colors.grey),
+                          child: const Icon(
+                            Icons.inventory_2_outlined,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                       Positioned(
                         top: 8,
                         left: 8,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.blue.shade800,
                             borderRadius: BorderRadius.circular(6),
@@ -790,7 +971,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                 Expanded(
                   flex: 1,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -818,7 +1002,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     final imgUrl = (imgs != null && imgs.isNotEmpty)
         ? imgs[0] as String
         : 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=600';
-    
+
     final price = prod['price_per_unit'] ?? 0;
     final unit = prod['unit_type'] ?? 'Unit';
 
@@ -827,7 +1011,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       builder: (ctx) {
         return Dialog(
           backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           clipBehavior: Clip.antiAlias,
           child: SingleChildScrollView(
             child: Column(
@@ -835,14 +1021,20 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Text(
                           prod['name'] ?? 'Product Info',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -888,7 +1080,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     children: [
                       Text(
                         'Rate: ₹$price / $unit',
-                        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 15),
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -910,7 +1106,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        final businessName = _provider?['businessName'] ?? 'Provider';
+                        final businessName =
+                            _provider?['businessName'] ?? 'Provider';
                         final prodName = prod['name'] ?? 'Product';
                         final priceStr = '₹$price/$unit';
                         Navigator.push(
@@ -919,21 +1116,30 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             builder: (_) => ChatDetailScreen(
                               partnerId: widget.providerId,
                               partnerName: businessName,
-                              initialMessage: 'Hi, I am interested in your listed product: "$prodName" ($priceStr). Could you please share more details about its availability and delivery timeline?',
+                              initialMessage:
+                                  'Hi, I am interested in your listed product: "$prodName" ($priceStr). Could you please share more details about its availability and delivery timeline?',
                             ),
                           ),
                         );
                       },
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                      icon: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 18,
+                      ),
                       label: const Text(
                         'Inquire About Product',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade700,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
@@ -955,11 +1161,19 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.star_outline_rounded, size: 48, color: Colors.grey.shade400),
+              Icon(
+                Icons.star_outline_rounded,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
               const SizedBox(height: 12),
               const Text(
                 'No Reviews Yet',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 4),
               const Text(
@@ -983,13 +1197,20 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         final comment = r['comment'] ?? '';
         final reviewer = r['user']?['name'] ?? 'Anonymous';
         final date = r['createdAt'] != null
-            ? DateTime.tryParse(r['createdAt'])?.toLocal().toString().substring(0, 10) ?? ''
+            ? DateTime.tryParse(
+                    r['createdAt'],
+                  )?.toLocal().toString().substring(0, 10) ??
+                  ''
             : '';
 
         return Card(
           elevation: 0.5,
-          color: isDark ? const Color(0xFF1F2C34) : Colors.white.withValues(alpha: 0.9),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          color: isDark
+              ? const Color(0xFF1F2C34)
+              : Colors.white.withValues(alpha: 0.9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           margin: const EdgeInsets.only(bottom: 12),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -1001,7 +1222,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   children: [
                     Text(
                       reviewer,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     Text(
                       date,
@@ -1014,7 +1238,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   children: List.generate(5, (index) {
                     return Icon(
                       index < rating ? Icons.star : Icons.star_border,
-                      color: isDark ? const Color(0xFFF59E0B) : const Color(0xFF002E3B),
+                      color: isDark
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFF002E3B),
                       size: 16,
                     );
                   }),
@@ -1056,10 +1282,18 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildInfoRow(Icons.business_center_rounded, 'Experience', '$experience Years in Industry'),
+          _buildInfoRow(
+            Icons.business_center_rounded,
+            'Experience',
+            '$experience Years in Industry',
+          ),
           _buildInfoRow(Icons.email_rounded, 'Email Address', email),
           _buildInfoRow(Icons.location_on_rounded, 'Headquarters', address),
-          _buildInfoRow(Icons.task_alt_rounded, 'Completed Work Site Audits', '$completedCount Projects'),
+          _buildInfoRow(
+            Icons.task_alt_rounded,
+            'Completed Work Site Audits',
+            '$completedCount Projects',
+          ),
         ],
       ),
     );
@@ -1109,7 +1343,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
 
   void _showPostDetailModal(BuildContext context, dynamic img) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final dynamic rawImage = img['imageData'] ?? img['imageUrl'] ?? img['image'];
+    final dynamic rawImage =
+        img['imageData'] ?? img['imageUrl'] ?? img['image'];
     final profileImgStr = _provider?['profileImage']?.toString() ?? '';
     ImageProvider? avatarProvider;
     if (profileImgStr.isNotEmpty) {
@@ -1127,7 +1362,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       builder: (ctx) {
         return Dialog(
           backgroundColor: isDark ? const Color(0xFF1F2C34) : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           clipBehavior: Clip.antiAlias,
           child: SingleChildScrollView(
             child: Column(
@@ -1136,7 +1373,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
               children: [
                 // Post Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       CircleAvatar(
@@ -1145,8 +1385,12 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                         backgroundImage: avatarProvider,
                         child: avatarProvider == null
                             ? Text(
-                                (_provider?['businessName'] ?? 'P')[0].toUpperCase(),
-                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                (_provider?['businessName'] ?? 'P')[0]
+                                    .toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               )
                             : null,
                       ),
@@ -1157,14 +1401,20 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.close_rounded, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 20,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onPressed: () => Navigator.pop(ctx),
@@ -1198,7 +1448,10 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                       ),
                       Container(
                         margin: const EdgeInsets.all(10),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(20),
@@ -1206,11 +1459,19 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.zoom_in_rounded, color: Colors.white, size: 15),
+                            Icon(
+                              Icons.zoom_in_rounded,
+                              color: Colors.white,
+                              size: 15,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'Tap to zoom',
-                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -1229,15 +1490,20 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15.5,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
-                      if (img['description'] != null && img['description'].toString().trim().isNotEmpty) ...[
+                      if (img['description'] != null &&
+                          img['description'].toString().trim().isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
                           img['description'].toString().trim(),
                           style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.grey.shade700,
+                            color: isDark
+                                ? Colors.white70
+                                : Colors.grey.shade700,
                             fontSize: 13,
                             height: 1.45,
                           ),
@@ -1255,8 +1521,12 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => FullScreenImageViewer(
-                                    base64Image: str.startsWith('http') ? null : str,
-                                    imageUrl: str.startsWith('http') ? str : null,
+                                    base64Image: str.startsWith('http')
+                                        ? null
+                                        : str,
+                                    imageUrl: str.startsWith('http')
+                                        ? str
+                                        : null,
                                     title: img['title'] ?? 'Showcase Detail',
                                   ),
                                 ),
@@ -1266,12 +1536,19 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           icon: const Icon(Icons.fullscreen_rounded, size: 20),
                           label: const Text(
                             'View Fullscreen',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isDark ? const Color(0xFF0D9488) : const Color(0xFF002E3B),
+                            backgroundColor: isDark
+                                ? const Color(0xFF0D9488)
+                                : const Color(0xFF002E3B),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             elevation: 0,
                           ),
                         ),
@@ -1292,26 +1569,38 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
       context: context,
       isScrollControlled: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 24, right: 24, top: 24),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          left: 24,
+          right: 24,
+          top: 24,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Request Quote', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Request Quote',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             TextFormField(
               maxLines: 4,
               decoration: InputDecoration(
                 labelText: 'Describe your requirements',
                 alignLabelWithHint: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Quote request sent!')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Quote request sent!')),
+                );
               },
               child: const Text('Submit Request'),
             ),
@@ -1348,7 +1637,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                 children: [
                   Text(
                     'Write a Review',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -1364,7 +1655,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                       final starVal = index + 1;
                       return IconButton(
                         icon: Icon(
-                          starVal <= selectedRating ? Icons.star : Icons.star_border,
+                          starVal <= selectedRating
+                              ? Icons.star
+                              : Icons.star_border,
                           color: const Color(0xFFF59E0B),
                           size: 36,
                         ),
@@ -1382,7 +1675,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     maxLines: 4,
                     decoration: const InputDecoration(
                       labelText: 'Your review comments',
-                      hintText: 'Share your experience working with this provider...',
+                      hintText:
+                          'Share your experience working with this provider...',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -1391,12 +1685,17 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     onPressed: () async {
                       if (commentController.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please write a comment.')),
+                          const SnackBar(
+                            content: Text('Please write a comment.'),
+                          ),
                         );
                         return;
                       }
                       Navigator.pop(context);
-                      await _submitReview(selectedRating, commentController.text.trim());
+                      await _submitReview(
+                        selectedRating,
+                        commentController.text.trim(),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1441,7 +1740,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         _fetchProviderData();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to submit review. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to submit review. Please try again.'),
+          ),
         );
       }
     } catch (e) {
@@ -1467,13 +1768,19 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF121B22) : Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
             width: 1,
           ),
         ),
@@ -1487,5 +1794,3 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
     return oldDelegate.isDark != isDark || oldDelegate.tabBar != tabBar;
   }
 }
-
-

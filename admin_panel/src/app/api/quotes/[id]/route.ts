@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createNotification } from '@/lib/notifications';
+import { sendQuoteAcceptedNotification } from '@/lib/mail';
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -67,7 +68,6 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
               route: `/project-detail/${quote.projectId}`,
             });
 
-            const { sendQuoteAcceptedNotification } = require('@/lib/mail');
             sendQuoteAcceptedNotification(updatedQuote, project, project.user, provider).catch((err: any) => {
               console.error('Quote acceptance notification email error:', err);
             });
@@ -75,11 +75,6 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         } catch (notifErr) {
           console.error('Failed to dispatch quote acceptance notifications:', notifErr);
         }
-            });
-          }
-        }).catch(err => {
-          console.error('Failed to fetch details for quote acceptance notification:', err);
-        });
       }
     }
 

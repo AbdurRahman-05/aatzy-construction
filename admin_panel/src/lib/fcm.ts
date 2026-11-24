@@ -24,9 +24,9 @@ function initFirebaseAdmin() {
       }
     } else {
       const candidates = [
-        path.join(process.cwd(), 'firebase-service-account.json'),
-        path.join(process.cwd(), 'firebase-service-account.json.json'),
-        path.join(process.cwd(), 'admin_panel', 'firebase-service-account.json'),
+        path.join(/*turbopackIgnore: true*/ process.cwd(), 'firebase-service-account.json'),
+        path.join(/*turbopackIgnore: true*/ process.cwd(), 'firebase-service-account.json.json'),
+        path.join(/*turbopackIgnore: true*/ process.cwd(), 'admin_panel', 'firebase-service-account.json'),
       ];
 
       for (const p of candidates) {
