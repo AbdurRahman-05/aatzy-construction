@@ -73,12 +73,12 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
     // Instagram / Swiggy signature neutral tones
     final defaultBase = isDark
-        ? const Color(0xFF1E293B)
-        : const Color(0xFFE2E8F0);
+        ? const Color(0xFF181B22)
+        : const Color(0xFFECEAE6);
 
     final defaultHighlight = isDark
-        ? const Color(0xFF334155)
-        : const Color(0xFFF8FAFC);
+        ? const Color(0xFF2E333D)
+        : const Color(0xFFF6F5F2);
 
     final base = widget.baseColor ?? defaultBase;
     final highlight = widget.highlightColor ?? defaultHighlight;
@@ -134,8 +134,8 @@ class ShimmerBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultColor = isDark
-        ? const Color(0xFF1E293B)
-        : const Color(0xFFE2E8F0);
+        ? const Color(0xFF181B22)
+        : const Color(0xFFECEAE6);
 
     return Container(
       width: width,
@@ -166,8 +166,8 @@ class ShimmerCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultColor = isDark
-        ? const Color(0xFF1E293B)
-        : const Color(0xFFE2E8F0);
+        ? const Color(0xFF181B22)
+        : const Color(0xFFECEAE6);
 
     return Container(
       width: diameter,
@@ -225,7 +225,7 @@ class ShimmerProjectList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
     final border = isDark
         ? Border.all(color: Colors.white.withValues(alpha: 0.06))
         : Border.all(color: const Color(0xFFE5E7EB));
@@ -298,7 +298,7 @@ class ShimmerOrderList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
     final border = isDark
         ? Border.all(color: Colors.white.withValues(alpha: 0.06))
         : Border.all(color: const Color(0xFFE5E7EB));
@@ -364,7 +364,7 @@ class ShimmerSocialFeed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Shimmer(
       child: SizedBox(
@@ -435,7 +435,7 @@ class ShimmerProviderList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Shimmer(
       child: ListView.builder(
@@ -452,7 +452,7 @@ class ShimmerProviderList extends StatelessWidget {
               border: Border.all(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.06)
-                    : const Color(0xFFE2E8F0),
+                    : const Color(0xFFECEAE6),
               ),
             ),
             child: Row(
@@ -505,7 +505,7 @@ class ShimmerProductGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Shimmer(
       child: GridView.builder(
@@ -527,7 +527,7 @@ class ShimmerProductGrid extends StatelessWidget {
               border: Border.all(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.06)
-                    : const Color(0xFFE2E8F0),
+                    : const Color(0xFFECEAE6),
               ),
             ),
             child: Column(
@@ -584,7 +584,7 @@ class ShimmerLeadsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Shimmer(
       child: ListView.builder(
@@ -600,7 +600,7 @@ class ShimmerLeadsList extends StatelessWidget {
               border: Border.all(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.06)
-                    : const Color(0xFFE2E8F0),
+                    : const Color(0xFFECEAE6),
               ),
             ),
             child: Column(
@@ -641,7 +641,7 @@ class ShimmerStatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Shimmer(
       child: Column(
@@ -761,7 +761,7 @@ class ShimmerProjectDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
     final border = isDark
         ? Border.all(color: Colors.white.withValues(alpha: 0.06))
         : Border.all(color: const Color(0xFFE5E7EB));
@@ -878,7 +878,7 @@ class ShimmerCompareQuotes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
     final border = isDark
         ? Border.all(color: Colors.white.withValues(alpha: 0.06))
         : Border.all(color: const Color(0xFFE5E7EB));
@@ -959,7 +959,7 @@ class ShimmerProductDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Shimmer(
       child: Scaffold(
@@ -1027,7 +1027,7 @@ class ShimmerHomeOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Container(
       decoration: BoxDecoration(
@@ -1059,10 +1059,10 @@ class ShimmerHomeOverview extends StatelessWidget {
                   margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
                   padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 10 : 12, horizontal: 4),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF181B22) : const Color(0xFFF6F5F2),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
+                      color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFECEAE6),
                     ),
                   ),
                   child: Column(
@@ -1093,7 +1093,7 @@ class ShimmerUserProfile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? const Color(0xFF131F28) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
 
     return Shimmer(
       child: ListView(

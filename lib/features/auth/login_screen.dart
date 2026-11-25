@@ -433,7 +433,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : AppTheme.backgroundNeutral,
+      backgroundColor: isDark ? const Color(0xFF111318) : AppTheme.backgroundNeutral,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -484,7 +484,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   'Sign in to manage your construction projects',
                   style: TextStyle(
                     fontSize: 14,
-                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -494,7 +494,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF181B22) : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE8E8E5), width: 1.0),
                     boxShadow: [
@@ -512,7 +512,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F3),
+                          color: isDark ? const Color(0xFF111318) : const Color(0xFFF5F5F3),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Row(
@@ -533,7 +533,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
-                                      color: !isProvider ? Colors.white : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                                      color: !isProvider ? Colors.white : (isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600),
                                     ),
                                   ),
                                 ),
@@ -555,7 +555,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
-                                      color: isProvider ? Colors.white : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                                      color: isProvider ? Colors.white : (isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600),
                                     ),
                                   ),
                                 ),
@@ -569,13 +569,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       TextFormField(
                         controller: _emailController,
                         style: TextStyle(
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF111318),
                           fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
                           labelText: 'Email Address',
                           labelStyle: TextStyle(
-                            color: isDark ? Colors.white : const Color(0xFF64748B),
+                            color: isDark ? Colors.white : const Color(0xFF6B7280),
                             fontWeight: FontWeight.w600,
                           ),
                           floatingLabelStyle: TextStyle(
@@ -589,9 +589,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           prefixIcon: Icon(
                             Icons.email_outlined,
                             size: 20,
-                            color: isDark ? Colors.white : const Color(0xFF64748B),
+                            color: isDark ? Colors.white : const Color(0xFF6B7280),
                           ),
-                          fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          fillColor: isDark ? const Color(0xFF111318) : Colors.white,
                           filled: true,
                         ),
                       ),
@@ -600,13 +600,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         controller: _passwordController,
                         obscureText: true,
                         style: TextStyle(
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF111318),
                           fontWeight: FontWeight.w600,
                         ),
                         decoration: InputDecoration(
                           labelText: 'Password',
                           labelStyle: TextStyle(
-                            color: isDark ? Colors.white : const Color(0xFF64748B),
+                            color: isDark ? Colors.white : const Color(0xFF6B7280),
                             fontWeight: FontWeight.w600,
                           ),
                           floatingLabelStyle: TextStyle(
@@ -616,9 +616,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           prefixIcon: Icon(
                             Icons.lock_outline,
                             size: 20,
-                            color: isDark ? Colors.white : const Color(0xFF64748B),
+                            color: isDark ? Colors.white : const Color(0xFF6B7280),
                           ),
-                          fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          fillColor: isDark ? const Color(0xFF111318) : Colors.white,
                           filled: true,
                         ),
                       ),
@@ -643,7 +643,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            foregroundColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            foregroundColor: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                           ),
                           child: const Text(
                             'Forgot Password?',
@@ -715,7 +715,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: Text(
                               'or continue with',
                               style: TextStyle(
-                                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
+                                color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade500,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),

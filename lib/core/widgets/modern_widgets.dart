@@ -26,7 +26,7 @@ class ModernCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = backgroundColor ?? (isDark ? const Color(0xFF1B2730) : Colors.white);
+    final bg = backgroundColor ?? (isDark ? const Color(0xFF181B22) : Colors.white);
     final borderDecoration = border ??
         Border.all(
           color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE8E8E5),
@@ -104,7 +104,7 @@ class KpiCard extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373),
+                  color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF737373),
                 ),
               ),
               if (icon != null)
@@ -138,7 +138,7 @@ class KpiCard extends StatelessWidget {
               subtitle!,
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373),
+                color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF737373),
               ),
             ),
           ],
@@ -274,7 +274,7 @@ class SegmentedControl extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1B2730) : const Color(0xFFE8E8E5),
+        color: isDark ? const Color(0xFF181B22) : const Color(0xFFE8E8E5),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -310,7 +310,7 @@ class SegmentedControl extends StatelessWidget {
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected
                         ? (isDark ? const Color(0xFF111111) : Colors.white)
-                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373)),
+                        : (isDark ? const Color(0xFF9AA1AD) : const Color(0xFF737373)),
                   ),
                 ),
               ),
@@ -377,7 +377,7 @@ class EmptyStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF737373),
+                color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF737373),
                 height: 1.4,
               ),
             ),
@@ -422,7 +422,7 @@ class SkeletonCard extends StatelessWidget {
       width: width ?? double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1B2730) : const Color(0xFFE8E8E5),
+        color: isDark ? const Color(0xFF181B22) : const Color(0xFFE8E8E5),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );

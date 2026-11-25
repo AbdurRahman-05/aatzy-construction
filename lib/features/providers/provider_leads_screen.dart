@@ -222,10 +222,10 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
+                    color: isDark ? const Color(0xFF181B22) : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
+                      color: isDark ? const Color(0xFF2E333D) : Colors.grey.shade300,
                     ),
                   ),
                   child: Row(
@@ -721,9 +721,9 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
+        color: isDark ? const Color(0xFF181B22) : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+        border: Border.all(color: isDark ? const Color(0xFF2E333D) : Colors.grey.shade300),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -761,7 +761,7 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
               Text(
                 'Category: ${lead['type']}',
                 style: TextStyle(
-                  color: isDark ? const Color(0xFF94A3B8) : Colors.blueGrey.shade700,
+                  color: isDark ? const Color(0xFF9AA1AD) : Colors.blueGrey.shade700,
                   fontSize: 12,
                 ),
                 maxLines: 1,

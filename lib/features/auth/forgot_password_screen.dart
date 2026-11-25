@@ -97,7 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: const Color(0xFF064354),
+            backgroundColor: const Color(0xFF0F766E),
             content: Row(
               children: [
                 const Icon(Icons.mark_email_read_outlined, color: Colors.white),
@@ -229,7 +229,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : AppTheme.backgroundNeutral,
+      backgroundColor: isDark ? const Color(0xFF111318) : AppTheme.backgroundNeutral,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -291,7 +291,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
                     height: 1.4,
                   ),
                 ),
@@ -301,7 +301,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF181B22) : Colors.white,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE8E8E5), width: 1.0),
                     boxShadow: [
@@ -319,13 +319,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 // Back to Login link
                 TextButton.icon(
                   onPressed: () => context.go('/login'),
-                  icon: Icon(Icons.arrow_back_rounded, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
+                  icon: Icon(Icons.arrow_back_rounded, size: 18, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF4B5563)),
                   label: Text(
                     'Back to Sign In',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF4B5563)),
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                    foregroundColor: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF4B5563),
                   ),
                 ),
               ],
@@ -347,7 +347,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF5F5F3),
+              color: isDark ? const Color(0xFF111318) : const Color(0xFFF5F5F3),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Row(
@@ -368,7 +368,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
-                          color: !_isProvider ? Colors.white : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                          color: !_isProvider ? Colors.white : (isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600),
                         ),
                       ),
                     ),
@@ -390,7 +390,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
-                          color: _isProvider ? Colors.white : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                          color: _isProvider ? Colors.white : (isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600),
                         ),
                       ),
                     ),
@@ -406,13 +406,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF111318),
               fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
               labelText: 'Registered Email Address',
               labelStyle: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF64748B),
+                color: isDark ? Colors.white : const Color(0xFF6B7280),
                 fontWeight: FontWeight.w600,
               ),
               floatingLabelStyle: TextStyle(
@@ -420,8 +420,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 fontWeight: FontWeight.bold,
               ),
               hintText: 'name@example.com',
-              prefixIcon: Icon(Icons.email_outlined, size: 20, color: isDark ? Colors.white : const Color(0xFF64748B)),
-              fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+              prefixIcon: Icon(Icons.email_outlined, size: 20, color: isDark ? Colors.white : const Color(0xFF6B7280)),
+              fillColor: isDark ? const Color(0xFF111318) : Colors.white,
               filled: true,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             ),
@@ -484,12 +484,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               fontSize: 22,
               fontWeight: FontWeight.w800,
               letterSpacing: 6,
-              color: isDark ? Colors.white : const Color(0xFF064354),
+              color: isDark ? Colors.white : const Color(0xFF0F766E),
             ),
             decoration: InputDecoration(
               labelText: '6-Digit Verification Code',
               labelStyle: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF64748B),
+                color: isDark ? Colors.white : const Color(0xFF6B7280),
                 fontWeight: FontWeight.w600,
               ),
               floatingLabelStyle: TextStyle(
@@ -498,8 +498,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               hintText: '••••••',
               counterText: '',
-              prefixIcon: Icon(Icons.key_rounded, size: 20, color: isDark ? Colors.white : const Color(0xFF64748B)),
-              fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+              prefixIcon: Icon(Icons.key_rounded, size: 20, color: isDark ? Colors.white : const Color(0xFF6B7280)),
+              fillColor: isDark ? const Color(0xFF111318) : Colors.white,
               filled: true,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             ),
@@ -520,13 +520,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             controller: _newPasswordController,
             obscureText: _obscureNewPassword,
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF111318),
               fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
               labelText: 'New Password',
               labelStyle: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF64748B),
+                color: isDark ? Colors.white : const Color(0xFF6B7280),
                 fontWeight: FontWeight.w600,
               ),
               floatingLabelStyle: TextStyle(
@@ -534,16 +534,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 fontWeight: FontWeight.bold,
               ),
               hintText: 'At least 6 characters',
-              prefixIcon: Icon(Icons.lock_outline, size: 20, color: isDark ? Colors.white : const Color(0xFF64748B)),
+              prefixIcon: Icon(Icons.lock_outline, size: 20, color: isDark ? Colors.white : const Color(0xFF6B7280)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscureNewPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                   size: 20,
-                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                  color: isDark ? Colors.white70 : const Color(0xFF6B7280),
                 ),
                 onPressed: () => setState(() => _obscureNewPassword = !_obscureNewPassword),
               ),
-              fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+              fillColor: isDark ? const Color(0xFF111318) : Colors.white,
               filled: true,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             ),
@@ -564,13 +564,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             controller: _confirmPasswordController,
             obscureText: _obscureConfirmPassword,
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+              color: isDark ? Colors.white : const Color(0xFF111318),
               fontWeight: FontWeight.w600,
             ),
             decoration: InputDecoration(
               labelText: 'Confirm New Password',
               labelStyle: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF64748B),
+                color: isDark ? Colors.white : const Color(0xFF6B7280),
                 fontWeight: FontWeight.w600,
               ),
               floatingLabelStyle: TextStyle(
@@ -578,16 +578,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 fontWeight: FontWeight.bold,
               ),
               hintText: 'Re-enter new password',
-              prefixIcon: Icon(Icons.lock_reset_rounded, size: 20, color: isDark ? Colors.white : const Color(0xFF64748B)),
+              prefixIcon: Icon(Icons.lock_reset_rounded, size: 20, color: isDark ? Colors.white : const Color(0xFF6B7280)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                   size: 20,
-                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                  color: isDark ? Colors.white70 : const Color(0xFF6B7280),
                 ),
                 onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
               ),
-              fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+              fillColor: isDark ? const Color(0xFF111318) : Colors.white,
               filled: true,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             ),

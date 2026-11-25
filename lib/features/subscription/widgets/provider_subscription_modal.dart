@@ -194,12 +194,12 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
       type: MaterialType.transparency,
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          color: isDark ? const Color(0xFF111318) : Colors.white,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
             color: isDark
-                ? const Color(0xFF334155).withValues(alpha: 0.8)
-                : const Color(0xFFE2E8F0),
+                ? const Color(0xFF2E333D).withValues(alpha: 0.8)
+                : const Color(0xFFECEAE6),
             width: 1.5,
           ),
           boxShadow: [
@@ -336,7 +336,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
                         fontSize: 21,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF111318),
                         decoration: TextDecoration.none,
                       ),
                     ),
@@ -345,7 +345,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
                       'Direct client leads, zero-commission quote submissions, and bulk wholesale rates — all in one membership.',
                       style: GoogleFonts.inter(
                         fontSize: 12.5,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                         height: 1.4,
                         decoration: TextDecoration.none,
                       ),
@@ -359,7 +359,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
                           colors: isDark
                               ? [
                                   const Color(0xFF064E3B).withValues(alpha: 0.35),
-                                  const Color(0xFF0F172A),
+                                  const Color(0xFF111318),
                                 ]
                               : [
                                   const Color(0xFFECFDF5),
@@ -479,7 +479,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
                                       style: GoogleFonts.inter(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
-                                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                        color: isDark ? Colors.white : const Color(0xFF111318),
                                         decoration: TextDecoration.none,
                                       ),
                                     ),
@@ -507,7 +507,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
                                     style: GoogleFonts.inter(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                                      color: isDark ? const Color(0xFFECEAE6) : const Color(0xFF2E333D),
                                       decoration: TextDecoration.none,
                                     ),
                                   ),
@@ -695,7 +695,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
                   style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF111318),
                     decoration: TextDecoration.none,
                   ),
                 ),
@@ -704,7 +704,7 @@ class _ProviderSubscriptionCardState extends ConsumerState<ProviderSubscriptionC
                   subtitle,
                   style: GoogleFonts.inter(
                     fontSize: 10.5,
-                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                    color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                     height: 1.25,
                     decoration: TextDecoration.none,
                   ),

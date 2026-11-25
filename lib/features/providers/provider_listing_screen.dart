@@ -288,16 +288,16 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
         : cleanCat;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF6F5F2),
       appBar: AppBar(
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A)),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF111318)),
         ),
         elevation: 0,
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF1E293B), size: 28),
+          icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF181B22), size: 28),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -339,7 +339,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
               Text(
                 _errorMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 15, color: Color(0xFF181B22), fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
@@ -347,7 +347,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                 icon: const Icon(Icons.replay_rounded),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
+                  backgroundColor: const Color(0xFF0F766E),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -463,7 +463,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                    border: Border.all(color: const Color(0xFFECEAE6), width: 1.2),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.02),
@@ -477,14 +477,14 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                       _searchQuery = v;
                       _currentPage = 1;
                     }),
-                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF181B22)),
                     decoration: InputDecoration(
                       hintText: 'Search contractors, trades, or locations...',
-                      hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                      hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF9AA1AD)),
                       prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF6366F1)),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 16, color: Color(0xFF94A3B8)),
+                              icon: const Icon(Icons.clear_rounded, size: 16, color: Color(0xFF9AA1AD)),
                               onPressed: () => setState(() {
                                 _searchQuery = '';
                                 _currentPage = 1;
@@ -506,7 +506,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: _activeFiltersCount > 0 ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+                    color: _activeFiltersCount > 0 ? const Color(0xFF6366F1) : const Color(0xFFECEAE6),
                     width: _activeFiltersCount > 0 ? 1.6 : 1.2,
                   ),
                   boxShadow: [
@@ -523,7 +523,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                       child: IconButton(
                         icon: Icon(
                           Icons.tune_rounded,
-                          color: _activeFiltersCount > 0 ? const Color(0xFF6366F1) : const Color(0xFF64748B),
+                          color: _activeFiltersCount > 0 ? const Color(0xFF6366F1) : const Color(0xFF6B7280),
                           size: 20,
                         ),
                         onPressed: _showFilterModal,
@@ -571,14 +571,14 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
         if (_activeFiltersCount > 0 || _searchQuery.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            color: const Color(0xFFF1F5F9),
+            color: const Color(0xFFF0EEEA),
             child: Row(
               children: [
-                const Icon(Icons.filter_alt_outlined, size: 13, color: Color(0xFF64748B)),
+                const Icon(Icons.filter_alt_outlined, size: 13, color: Color(0xFF6B7280)),
                 const SizedBox(width: 4),
                 const Text(
                   'Active: ',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF6B7280)),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
@@ -639,7 +639,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
             ),
           ),
 
-        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+        const Divider(height: 1, color: Color(0xFFECEAE6)),
 
         // Results Count Header
         if (filteredProviders.isNotEmpty)
@@ -649,7 +649,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
               children: [
                 Text(
                   '${filteredProviders.length} contractor${filteredProviders.length == 1 ? '' : 's'} available',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF6B7280)),
                 ),
                 const Spacer(),
                 if (_sortBy != 'recommended')
@@ -674,7 +674,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                         const SizedBox(height: 14),
                         const Text(
                           'No Contractors Found',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF1E293B)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF181B22)),
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -684,7 +684,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                                   ? 'No verified contractors match your current search.'
                                   : 'No contractors registered under "$_activeCategoryFilter" yet.'),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
                         ),
                         if (_activeFiltersCount > 0 || _searchQuery.isNotEmpty || _activeCategoryFilter != 'All') ...[
                           const SizedBox(height: 18),
@@ -693,7 +693,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                             icon: const Icon(Icons.refresh_rounded, size: 16),
                             label: const Text('Reset All Filters', style: TextStyle(fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6366F1),
+                              backgroundColor: const Color(0xFF0F766E),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
@@ -759,7 +759,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
       style: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w700,
-        color: Color(0xFF1E293B),
+        color: Color(0xFF181B22),
         letterSpacing: -0.2,
       ),
     );
@@ -773,10 +773,10 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFF1F5F9),
+          color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFF0EEEA),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+            color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFECEAE6),
             width: 1.2,
           ),
         ),
@@ -785,7 +785,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF334155),
+            color: isSelected ? Colors.white : const Color(0xFF2E333D),
           ),
         ),
       ),
@@ -845,7 +845,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
             color: isSelected ? const Color(0xFF6366F1) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFE2E8F0),
+              color: isSelected ? const Color(0xFF6366F1) : const Color(0xFFECEAE6),
               width: 1.1,
             ),
             boxShadow: isSelected
@@ -876,7 +876,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : const Color(0xFF334155),
+                  color: isSelected ? Colors.white : const Color(0xFF2E333D),
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -1061,7 +1061,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFCBD5E1),
+                        color: const Color(0xFFD6D3CE),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1080,7 +1080,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                                color: Color(0xFF111318),
                               ),
                             ),
                             if (_activeFiltersCount > 0) ...[
@@ -1127,7 +1127,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                     ),
                   ),
 
-                  const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                  const Divider(height: 1, color: Color(0xFFECEAE6)),
 
                   // Scrollable Filter Sections
                   Expanded(
@@ -1166,9 +1166,9 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: const Color(0xFFF6F5F2),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(color: const Color(0xFFECEAE6)),
                             ),
                             child: Row(
                               children: [
@@ -1190,14 +1190,14 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                                         style: TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13.5,
-                                          color: Color(0xFF0F172A),
+                                          color: Color(0xFF111318),
                                         ),
                                       ),
                                       Text(
                                         'Show businesses with verified documents',
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: Color(0xFF64748B),
+                                          color: Color(0xFF6B7280),
                                         ),
                                       ),
                                     ],
@@ -1342,14 +1342,14 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                             },
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              side: const BorderSide(color: Color(0xFFD6D3CE)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
                             child: const Text(
                               'Clear All',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF475569),
+                                color: Color(0xFF4B5563),
                               ),
                             ),
                           ),
@@ -1366,7 +1366,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                               _fetchProviders();
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6366F1),
+                              backgroundColor: const Color(0xFF0F766E),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -1612,7 +1612,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF1E293B),
+                                  color: Color(0xFF181B22),
                                 ),
                               ),
                             ],
@@ -1621,7 +1621,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                             'Projects',
                             style: TextStyle(
                               fontSize: 8.5,
-                              color: Color(0xFF64748B),
+                              color: Color(0xFF6B7280),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1647,7 +1647,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 16,
-                                color: Color(0xFF0F172A),
+                                color: Color(0xFF111318),
                                 letterSpacing: -0.3,
                               ),
                               maxLines: 1,
@@ -1725,7 +1725,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                               style: const TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
+                                color: Color(0xFF6B7280),
                               ),
                             ),
                           ),
@@ -1736,14 +1736,14 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                       // Address / Location Row
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, color: Color(0xFF64748B), size: 13),
+                          const Icon(Icons.location_on_outlined, color: Color(0xFF6B7280), size: 13),
                           const SizedBox(width: 3),
                           Expanded(
                             child: Text(
                               address.isNotEmpty ? address : 'Tamil Nadu',
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF64748B),
+                                color: Color(0xFF6B7280),
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 1,
@@ -1759,7 +1759,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                         bio.isNotEmpty ? bio : 'none',
                         style: const TextStyle(
                           fontSize: 11,
-                          color: Color(0xFF475569),
+                          color: Color(0xFF4B5563),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1776,7 +1776,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                             style: const TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF0F172A),
+                              color: Color(0xFF111318),
                             ),
                           ),
                           const SizedBox(width: 4),
@@ -1866,7 +1866,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
             child: Icon(
               Icons.chevron_left_rounded,
               size: 18,
-              color: _currentPage > 1 ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+              color: _currentPage > 1 ? const Color(0xFF181B22) : const Color(0xFFD6D3CE),
             ),
             isEnabled: _currentPage > 1,
             onTap: () {
@@ -1889,7 +1889,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
                     style: TextStyle(
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                       fontSize: 12.5,
-                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                      color: isSelected ? Colors.white : const Color(0xFF2E333D),
                     ),
                   ),
                   isSelected: isSelected,
@@ -1899,7 +1899,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
             } else {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text('...', style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
+                child: Text('...', style: TextStyle(color: Color(0xFF9AA1AD), fontWeight: FontWeight.bold)),
               );
             }
           }),
@@ -1911,7 +1911,7 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
             child: Icon(
               Icons.chevron_right_rounded,
               size: 18,
-              color: _currentPage < totalPages ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+              color: _currentPage < totalPages ? const Color(0xFF181B22) : const Color(0xFFD6D3CE),
             ),
             isEnabled: _currentPage < totalPages,
             onTap: () {
@@ -1941,12 +1941,12 @@ class _ProviderListingScreenState extends State<ProviderListingScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF6366F1)
-              : (isEnabled ? Colors.white : const Color(0xFFF8FAFC)),
+              : (isEnabled ? Colors.white : const Color(0xFFF6F5F2)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF6366F1)
-                : (isEnabled ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9)),
+                : (isEnabled ? const Color(0xFFECEAE6) : const Color(0xFFF0EEEA)),
             width: 1.2,
           ),
           boxShadow: isSelected

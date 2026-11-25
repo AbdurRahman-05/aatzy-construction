@@ -10,9 +10,26 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const { id } = await context.params;
     const body = await request.json();
 
+    // Only allow known ad fields to be updated
+    const editable = [
+      'title', 'desc', 'badge', 'icon', 'gradient', 'imageUrl', 'mediaType',
+      'videoUrl', 'targetSide', 'placement', 'actionUrl', 'actionText', 'isActive',
+    ];
+    const data: Record<string, unknown> = {};
+    for (const key of editable) {
+      if (body[key] !== undefined) data[key] = body[key];
+    }
+    if (data.placement !== undefined) {
+      const p = String(data.placement).toUpperCase();
+      if (!['POPUP', 'HOME', 'BOTH'].includes(p)) {
+        return NextResponse.json({ error: 'placement must be POPUP, HOME or BOTH' }, { status: 400 });
+      }
+      data.placement = p;
+    }
+
     const ad = await (prisma as any).ad.update({
       where: { id },
-      data: body,
+      data,
     });
 
     return NextResponse.json({ success: true, ad });

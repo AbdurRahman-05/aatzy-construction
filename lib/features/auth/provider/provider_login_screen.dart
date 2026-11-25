@@ -119,7 +119,7 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: const Color(0xFF64748B),
+                  foregroundColor: const Color(0xFF6B7280),
                 ),
                 child: const Text(
                   'Forgot Password?',

@@ -39,9 +39,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFFAFAFA),
+      backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFFAFAFA),
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF111318) : Colors.white,
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
@@ -78,7 +78,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF181B22) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
               ),
@@ -86,9 +86,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.bar_chart, size: 64, color: isDark ? const Color(0xFF475569) : Colors.grey.shade300),
+                    Icon(Icons.bar_chart, size: 64, color: isDark ? const Color(0xFF4B5563) : Colors.grey.shade300),
                     const SizedBox(height: 16),
-                    Text('Not enough data to display charts.', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500)),
+                    Text('Not enough data to display charts.', style: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade500)),
                   ],
                 ),
               ),
@@ -103,7 +103,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
         boxShadow: [BoxShadow(color: isDark ? Colors.black.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
@@ -119,7 +119,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
+              Text(title, style: TextStyle(fontSize: 14, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
               Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
             ],
@@ -133,7 +133,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
       ),
@@ -144,7 +144,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 12),
           Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: isDark ? Colors.white : Colors.black87)),
           const SizedBox(height: 2),
-          Text(title, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
+          Text(title, style: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600, fontWeight: FontWeight.w600)),
         ],
       ),
     );

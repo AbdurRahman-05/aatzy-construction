@@ -502,7 +502,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
           children: [
             Text(
               'Are you sure you want to decline this quote proposal for "${widget.inq.productName}"?',
-              style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF181B22)),
             ),
             const SizedBox(height: 12),
             Container(
@@ -559,7 +559,7 @@ class _TimelineViewState extends ConsumerState<_TimelineView> {
           children: [
             const Text(
               'Before accepting this quote, please note:',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF181B22)),
             ),
             const SizedBox(height: 10),
             Container(

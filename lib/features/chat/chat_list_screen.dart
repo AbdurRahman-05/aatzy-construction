@@ -96,7 +96,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
@@ -453,7 +453,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                                               padding: EdgeInsets.zero,
                                               constraints: const BoxConstraints(),
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                              color: isDark ? const Color(0xFF181B22) : Colors.white,
                                               onSelected: (val) {
                                                 if (val == 'delete') {
                                                   _confirmDeleteConversation(partnerId, partnerName);

@@ -13,6 +13,7 @@ export interface Ad {
   mediaType?: string; // 'image' | 'video'
   videoUrl?: string | null;
   targetSide?: string; // 'ALL' | 'CLIENT' | 'PROVIDER'
+  placement?: string; // 'POPUP' | 'HOME' | 'BOTH'
   actionUrl?: string | null;
   actionText?: string | null;
   isActive?: boolean;
@@ -29,6 +30,7 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
   const [desc, setDesc] = useState('');
   const [badge, setBadge] = useState('SPECIAL PROMO');
   const [targetSide, setTargetSide] = useState<'ALL' | 'CLIENT' | 'PROVIDER'>('ALL');
+  const [placement, setPlacement] = useState<'POPUP' | 'HOME' | 'BOTH'>('BOTH');
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [imageUrl, setImageUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
@@ -115,6 +117,7 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
           mediaType,
           videoUrl: videoUrl.trim() || null,
           targetSide,
+          placement,
           actionUrl: actionUrl.trim() || null,
           actionText: actionText.trim() || 'Explore Now',
           isActive,
@@ -134,6 +137,7 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
         setActionUrl('');
         setActionText('Explore Now');
         setIsActive(true);
+        setPlacement('BOTH');
         if (fileInputRef.current) fileInputRef.current.value = '';
         if (videoFileInputRef.current) videoFileInputRef.current.value = '';
       } else {
@@ -165,6 +169,23 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
     }
   };
 
+  const handleChangePlacement = async (id: string, newPlacement: string) => {
+    try {
+      const res = await fetch(`/api/ads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ placement: newPlacement }),
+      });
+      if (res.ok) {
+        setAds(ads.map((ad) => (ad.id === id ? { ...ad, placement: newPlacement } : ad)));
+      } else {
+        alert('Failed to update ad placement.');
+      }
+    } catch {
+      alert('Network error while updating ad placement.');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this ad?')) return;
     try {
@@ -189,7 +210,7 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
           <div>
             <h2 className="text-xl font-bold text-gray-900">Run App Ads & Login Posters</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Upload promo posters displayed in a popup when clients or service providers log in or open the app.
+              Show promo posters as a popup when users open the app, as a banner on the home page, or both.
             </p>
           </div>
           {(imageUrl || videoUrl || title) && (
@@ -271,6 +292,45 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
                 </div>
               </button>
             </div>
+          </div>
+
+          {/* 1b. Placement Selection (where the ad appears) */}
+          <div>
+            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
+              Where to Show the Ad *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {(
+                [
+                  { value: 'BOTH', icon: '✨', title: 'Popup + Home Banner', sub: 'Maximum reach', active: 'border-teal-600 bg-teal-50/70 text-teal-950' },
+                  { value: 'HOME', icon: '🏠', title: 'Home Page Banner', sub: 'Ad slot on the home screen', active: 'border-teal-600 bg-teal-50/70 text-teal-950' },
+                  { value: 'POPUP', icon: '🪟', title: 'Popup Only', sub: 'Shown when the app opens', active: 'border-teal-600 bg-teal-50/70 text-teal-950' },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPlacement(opt.value)}
+                  className={`flex items-center p-3.5 rounded-2xl border-2 transition text-left cursor-pointer ${
+                    placement === opt.value
+                      ? `${opt.active} font-bold shadow-sm`
+                      : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700 font-medium'
+                  }`}
+                >
+                  <span className="text-xl mr-2.5">{opt.icon}</span>
+                  <div>
+                    <div className="text-sm font-bold">{opt.title}</div>
+                    <div className="text-xs text-gray-500">{opt.sub}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            {placement !== 'POPUP' && (
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Home banners look best with a wide image (about <strong>1200 × 600 px</strong>, 2:1). Title, text and button
+                are shown on top of the image.
+              </p>
+            )}
           </div>
 
           {/* 2. Media Type Selection (Image vs Video) */}
@@ -669,6 +729,21 @@ export default function AdsManager({ initialAds }: AdsManagerProps) {
                       >
                         {ad.isActive !== false ? '● Active' : '○ Paused'}
                       </button>
+                    </div>
+
+                    {/* Placement: where the ad appears (editable) */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-black tracking-wider uppercase text-gray-400">Shown as</span>
+                      <select
+                        value={(ad.placement || 'BOTH').toUpperCase()}
+                        onChange={(e) => handleChangePlacement(ad.id, e.target.value)}
+                        className="text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200 rounded-full px-2 py-0.5 cursor-pointer focus:outline-none"
+                        title="Change where this ad appears"
+                      >
+                        <option value="BOTH">✨ Popup + Home</option>
+                        <option value="HOME">🏠 Home banner</option>
+                        <option value="POPUP">🪟 Popup only</option>
+                      </select>
                     </div>
 
                     <h3 className="font-bold text-gray-900 text-sm leading-tight line-clamp-2">{ad.title}</h3>

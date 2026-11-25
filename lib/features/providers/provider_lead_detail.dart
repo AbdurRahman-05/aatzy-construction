@@ -306,10 +306,10 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
     final displayedServices = _showAllServices ? servicesList : servicesList.take(6).toList();
 
     // Theme tokens
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorder = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0);
-    final textColor = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
-    final subTextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
+    final cardBorder = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6);
+    final textColor = isDark ? const Color(0xFFF6F5F2) : const Color(0xFF111318);
+    final subTextColor = isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280);
     const primaryTeal = Color(0xFF0D9488);
     const deepTeal = Color(0xFF0F766E);
 
@@ -331,7 +331,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
         child: Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            backgroundColor: isDark ? const Color(0xFF121B22) : Colors.transparent,
+            backgroundColor: isDark ? const Color(0xFF0E1015) : Colors.transparent,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
@@ -442,7 +442,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                                color: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -640,10 +640,10 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                               return Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                 decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                  color: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
+                                    color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFECEAE6),
                                   ),
                                 ),
                                 child: Row(
@@ -657,7 +657,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
-                                          color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
+                                          color: isDark ? const Color(0xFFECEAE6) : const Color(0xFF2E333D),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -915,7 +915,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                             hintText: 'e.g. 4200000',
                             prefixIcon: const Icon(Icons.currency_rupee_rounded, size: 18, color: Color(0xFF10B981)),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                            fillColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(color: cardBorder),
@@ -996,7 +996,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                             hintText: 'e.g. 6 Months, 16 Weeks',
                             prefixIcon: const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFFF59E0B)),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                            fillColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(color: cardBorder),
@@ -1032,7 +1032,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                                   ),
                                   backgroundColor: isSel
                                       ? const Color(0xFFFEF3C7)
-                                      : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                                      : (isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA)),
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
@@ -1069,7 +1069,7 @@ class _ProviderLeadDetailState extends ConsumerState<ProviderLeadDetail> {
                             hintText: 'Describe your expertise, milestone payments, materials quality guarantee...',
                             hintStyle: TextStyle(fontSize: 12.5, color: subTextColor.withValues(alpha: 0.7)),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                            fillColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(color: cardBorder),

@@ -111,14 +111,14 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
   Widget _buildPortfolioImage(dynamic imageData) {
     if (imageData == null) {
       return Container(
-        color: const Color(0xFFF1F5F9),
+        color: const Color(0xFFF0EEEA),
         child: const Center(child: Icon(Icons.image, color: Colors.grey)),
       );
     }
     final str = imageData.toString().trim();
     if (str.isEmpty) {
       return Container(
-        color: const Color(0xFFF1F5F9),
+        color: const Color(0xFFF0EEEA),
         child: const Center(child: Icon(Icons.image, color: Colors.grey)),
       );
     }
@@ -127,7 +127,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
         str,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => Container(
-          color: const Color(0xFFF1F5F9),
+          color: const Color(0xFFF0EEEA),
           child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey)),
         ),
       );
@@ -140,14 +140,14 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           fit: BoxFit.cover,
           gaplessPlayback: true,
           errorBuilder: (context, error, stackTrace) => Container(
-            color: const Color(0xFFF1F5F9),
+            color: const Color(0xFFF0EEEA),
             child: const Center(child: Icon(Icons.broken_image_rounded, color: Colors.grey)),
           ),
         );
       }
     } catch (_) {}
     return Container(
-      color: const Color(0xFFF1F5F9),
+      color: const Color(0xFFF0EEEA),
       child: const Center(child: Icon(Icons.image, color: Colors.grey)),
     );
   }
@@ -305,16 +305,16 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                       width: double.infinity,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: const Color(0xFFF0EEEA),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFCBD5E1), style: BorderStyle.solid),
+                        border: Border.all(color: const Color(0xFFD6D3CE), style: BorderStyle.solid),
                       ),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.cloud_upload_outlined, size: 36, color: Color(0xFF2563EB)),
                           SizedBox(height: 6),
-                          Text('Select Project Photo', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                          Text('Select Project Photo', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF181B22))),
                           SizedBox(height: 2),
                           Text('PNG, JPG up to 10MB', style: TextStyle(fontSize: 11, color: Colors.grey)),
                         ],
@@ -403,7 +403,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
+                backgroundColor: const Color(0xFF0F766E),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -529,7 +529,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF6F5F2),
       appBar: AppBar(
         title: const Text(
           'Edit Profile',
@@ -541,7 +541,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
         surfaceTintColor: Colors.transparent,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+          child: Container(color: const Color(0xFFECEAE6), height: 1),
         ),
         actions: [
           Padding(
@@ -572,7 +572,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
               offset: const Offset(0, -4),
             ),
           ],
-          border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          border: const Border(top: BorderSide(color: Color(0xFFECEAE6))),
         ),
         child: SafeArea(
           child: SizedBox(
@@ -581,7 +581,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
             child: ElevatedButton(
               onPressed: _isLoading ? null : _saveProfile,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
+                backgroundColor: const Color(0xFF0F766E),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -761,7 +761,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                               decoration: InputDecoration(
                                 hintText: 'Search trades & services...',
                                 hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-                                prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF64748B)),
+                                prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF6B7280)),
                                 suffixIcon: _categorySearchQuery.isNotEmpty
                                     ? IconButton(
                                         icon: const Icon(Icons.clear, size: 18),
@@ -772,15 +772,15 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                                       )
                                     : null,
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFC),
+                                fillColor: const Color(0xFFF6F5F2),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: const BorderSide(color: Color(0xFFECEAE6)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: const BorderSide(color: Color(0xFFECEAE6)),
                                 ),
                               ),
                             ),
@@ -791,9 +791,9 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                               constraints: const BoxConstraints(maxHeight: 240),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
+                                color: const Color(0xFFF6F5F2),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(color: const Color(0xFFECEAE6)),
                               ),
                               child: SingleChildScrollView(
                                 child: Wrap(
@@ -807,7 +807,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                          color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFF334155),
+                                          color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFF2E333D),
                                         ),
                                       ),
                                       selected: isSelected,
@@ -817,7 +817,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                         side: BorderSide(
-                                          color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFCBD5E1),
+                                          color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFFD6D3CE),
                                         ),
                                       ),
                                       onSelected: (selected) {
@@ -877,9 +877,9 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: const Color(0xFFF6F5F2),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(color: const Color(0xFFECEAE6)),
                                 ),
                                 child: Column(
                                   children: [
@@ -887,7 +887,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                                     const SizedBox(height: 8),
                                     const Text(
                                       'No project photos added yet',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E333D)),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
@@ -914,7 +914,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                                   return Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      border: Border.all(color: const Color(0xFFECEAE6)),
                                     ),
                                     child: Stack(
                                       children: [
@@ -1031,7 +1031,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+          colors: [Color(0xFF181B22), Color(0xFF111318)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1064,7 +1064,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
                   ),
                   child: CircleAvatar(
                     radius: 46,
-                    backgroundColor: const Color(0xFF334155),
+                    backgroundColor: const Color(0xFF2E333D),
                     backgroundImage: _getProfileImage(),
                     child: _profileImageBase64 == null
                         ? Text(
@@ -1156,7 +1156,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFECEAE6)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -1192,12 +1192,12 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF181B22)),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -1224,7 +1224,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF334155),
+            color: Color(0xFF2E333D),
           ),
         ),
         const SizedBox(height: 6),
@@ -1234,21 +1234,21 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
           validator: validator,
-          style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF111318), fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.normal),
-            prefixIcon: Icon(prefixIcon, size: 19, color: const Color(0xFF64748B)),
+            prefixIcon: Icon(prefixIcon, size: 19, color: const Color(0xFF6B7280)),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: const Color(0xFFF6F5F2),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: const BorderSide(color: Color(0xFFECEAE6)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              borderSide: const BorderSide(color: Color(0xFFD6D3CE)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -1274,10 +1274,10 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: hasDoc ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+        color: hasDoc ? const Color(0xFFF0FDF4) : const Color(0xFFF6F5F2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: hasDoc ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
+          color: hasDoc ? const Color(0xFFBBF7D0) : const Color(0xFFECEAE6),
         ),
       ),
       child: Row(
@@ -1285,13 +1285,13 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: hasDoc ? const Color(0xFFDCFCE7) : const Color(0xFFE2E8F0),
+              color: hasDoc ? const Color(0xFFDCFCE7) : const Color(0xFFECEAE6),
               shape: BoxShape.circle,
             ),
             child: Icon(
               hasDoc ? Icons.check_circle_rounded : Icons.file_upload_outlined,
               size: 20,
-              color: hasDoc ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+              color: hasDoc ? const Color(0xFF16A34A) : const Color(0xFF6B7280),
             ),
           ),
           const SizedBox(width: 12),
@@ -1301,14 +1301,14 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF1E293B)),
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF181B22)),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   hasDoc ? 'Document Uploaded & Attached' : subtitle,
                   style: TextStyle(
                     fontSize: 11,
-                    color: hasDoc ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                    color: hasDoc ? const Color(0xFF15803D) : const Color(0xFF6B7280),
                     fontWeight: hasDoc ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),

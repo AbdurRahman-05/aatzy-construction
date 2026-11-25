@@ -238,6 +238,7 @@ model Ad {
   mediaType   String   @default("image") // "image" | "video"
   videoUrl    String?  // Video stream/MP4 URL or Base64 data
   targetSide  String   @default("ALL") // "ALL" | "CLIENT" | "PROVIDER"
+  placement   String   @default("BOTH") // "POPUP" | "HOME" | "BOTH" (where in the app the ad is shown)
   actionUrl   String?  // Click route or URL e.g. /b2b-materials or external link
   actionText  String?  @default("Explore Now")
   isActive    Boolean  @default(true)

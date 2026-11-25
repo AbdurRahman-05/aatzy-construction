@@ -78,7 +78,7 @@ class _UserTutorialDialogState extends State<UserTutorialDialog> with SingleTick
       description: 'Easily publish your building, renovation, or interior design projects and get competitive quotes from top pros.',
       icon: Icons.apartment_rounded,
       imageAsset: 'assets/tutorial_1.png',
-      gradientColors: [Color(0xFF0284C7), Color(0xFF0F172A)],
+      gradientColors: [Color(0xFF0284C7), Color(0xFF111318)],
       bulletPoints: [
         'Post custom project details with budget & timeline',
         'Receive itemized proposals from verified contractors',
@@ -183,7 +183,7 @@ class _UserTutorialDialogState extends State<UserTutorialDialog> with SingleTick
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF111318) : Colors.white,
       elevation: 20,
       clipBehavior: Clip.antiAlias,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -463,7 +463,7 @@ class _UserTutorialDialogState extends State<UserTutorialDialog> with SingleTick
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       height: 1.25,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      color: isDark ? Colors.white : const Color(0xFF111318),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -505,7 +505,7 @@ class _UserTutorialDialogState extends State<UserTutorialDialog> with SingleTick
               style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF111318),
               ),
             ),
             const SizedBox(height: 8),
@@ -551,7 +551,7 @@ class _UserTutorialDialogState extends State<UserTutorialDialog> with SingleTick
             radius: 0.85,
             colors: [
               slide.gradientColors[0].withValues(alpha: isDark ? 0.25 : 0.15),
-              isDark ? const Color(0xFF0F172A) : Colors.white,
+              isDark ? const Color(0xFF111318) : Colors.white,
             ],
           ),
           boxShadow: [
@@ -640,7 +640,7 @@ class _UserTutorialDialogState extends State<UserTutorialDialog> with SingleTick
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       height: 1.3,
-                      color: isDark ? Colors.grey.shade200 : const Color(0xFF1E293B),
+                      color: isDark ? Colors.grey.shade200 : const Color(0xFF181B22),
                     ),
                   ),
                 ),

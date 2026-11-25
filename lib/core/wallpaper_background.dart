@@ -10,14 +10,14 @@ class ConstructionDoodlePainter extends CustomPainter {
     final strokePaint = Paint()
       ..color = isDark
           ? const Color(0xFF0F9B8E).withValues(alpha: 0.10)
-          : const Color(0xFF064354).withValues(alpha: 0.06)
+          : const Color(0xFF0F766E).withValues(alpha: 0.06)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
     final dotPaint = Paint()
       ..color = isDark
           ? Colors.white.withValues(alpha: 0.04)
-          : const Color(0xFF064354).withValues(alpha: 0.03)
+          : const Color(0xFF0F766E).withValues(alpha: 0.03)
       ..style = PaintingStyle.fill;
 
     // Draw subtle architectural blueprint dot grid
@@ -137,7 +137,7 @@ class WallpaperBackground extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     final Color bgColor = backgroundColor ?? 
-        (isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC));
+        (isDark ? const Color(0xFF0E1015) : const Color(0xFFF6F5F2));
 
     return Container(
       color: bgColor,
@@ -158,7 +158,7 @@ class WallpaperBackground extends StatelessWidget {
                     colors: [
                       isDark
                           ? const Color(0xFF0F9B8E).withValues(alpha: 0.06)
-                          : const Color(0xFF064354).withValues(alpha: 0.03),
+                          : const Color(0xFF0F766E).withValues(alpha: 0.03),
                       isDark
                           ? const Color(0xFF0B6780).withValues(alpha: 0.02)
                           : const Color(0xFF0B6780).withValues(alpha: 0.01),
@@ -170,7 +170,7 @@ class WallpaperBackground extends StatelessWidget {
               ),
             ),
           ),
-          // Bottom-Right Warm Accent Glow (Subtle & Dimmed)
+          // Bottom-Right Teal Accent Glow (Subtle & Dimmed)
           Positioned(
             bottom: -120,
             right: -100,
@@ -183,8 +183,8 @@ class WallpaperBackground extends StatelessWidget {
                   gradient: RadialGradient(
                     colors: [
                       isDark
-                          ? const Color(0xFF1E88E5).withValues(alpha: 0.04)
-                          : const Color(0xFFFFB74D).withValues(alpha: 0.03),
+                          ? const Color(0xFF14B8A6).withValues(alpha: 0.05)
+                          : const Color(0xFF14B8A6).withValues(alpha: 0.04),
                       Colors.transparent,
                     ],
                   ),

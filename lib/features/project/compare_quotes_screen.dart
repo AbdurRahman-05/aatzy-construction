@@ -179,12 +179,12 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
               const SizedBox(height: 16),
               const Text(
                 'Switch Project',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF111318)),
               ),
               const SizedBox(height: 4),
               const Text(
                 'Select which project quotes you want to compare:',
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 14),
               Flexible(
@@ -202,10 +202,10 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                        color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF6F5F2),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFECEAE6),
                           width: isSelected ? 1.5 : 1,
                         ),
                       ),
@@ -215,14 +215,14 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
-                            color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                            color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF111318),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
                           location,
-                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
                         ),
                         trailing: isSelected
                             ? const Icon(Icons.check_circle_rounded, color: Color(0xFF4F46E5), size: 20)
@@ -298,12 +298,12 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0F172A),
+                                  color: Color(0xFF111318),
                                 ),
                               ),
                               Text(
                                 'Please review terms before proceeding',
-                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
                               ),
                             ],
                           ),
@@ -316,9 +316,9 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: const Color(0xFFF6F5F2),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: const Color(0xFFECEAE6)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -329,12 +329,12 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                               children: [
                                 const Text(
                                   'CONTRACTOR',
-                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF6B7280)),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   providerName,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF111318)),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -346,7 +346,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                             children: [
                               const Text(
                                 'ESTIMATED BID',
-                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF6B7280)),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -416,7 +416,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                             const Expanded(
                               child: Text(
                                 'I understand and acknowledge that the final amount may vary from the quoted price.',
-                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF2E333D)),
                               ),
                             ),
                           ],
@@ -432,8 +432,8 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(ctx),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF64748B),
-                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              foregroundColor: const Color(0xFF6B7280),
+                              side: const BorderSide(color: Color(0xFFD6D3CE)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 13),
                             ),
@@ -489,12 +489,12 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
         appBar: AppBar(
           title: const Text(
             'Compare Quotes',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF0F172A)),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF111318)),
           ),
           elevation: 0,
           backgroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF1E293B), size: 28),
+            icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF181B22), size: 28),
             onPressed: () => context.pop(),
           ),
           actions: [
@@ -518,9 +518,9 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: const Color(0xFFF6F5F2),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: const Color(0xFFECEAE6)),
                         ),
                         child: Row(
                           children: [
@@ -542,7 +542,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                                       Expanded(
                                         child: Text(
                                           projectTitle,
-                                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF111318)),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -551,7 +551,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                                   ),
                                   Text(
                                     '$projectLocation • Budget: ₹$projectBudget',
-                                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF6B7280)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -565,7 +565,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                                  border: Border.all(color: const Color(0xFFD6D3CE)),
                                 ),
                                 child: const Row(
                                   children: [
@@ -581,7 +581,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                     ),
                   ),
 
-                  const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                  const Divider(height: 1, color: Color(0xFFECEAE6)),
 
                   if (_quotes.isNotEmpty)
                     Container(
@@ -619,13 +619,13 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                                   const SizedBox(height: 14),
                                   const Text(
                                     'No Quotes Received Yet',
-                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF1E293B)),
+                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17, color: Color(0xFF181B22)),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     'No contractors have submitted bids for "$projectTitle" yet.\nExplore contractors or publish your project to receive bids.',
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.35),
+                                    style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13, height: 1.35),
                                   ),
                                   const SizedBox(height: 20),
                                   ElevatedButton.icon(
@@ -633,7 +633,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                                     icon: const Icon(Icons.search_rounded, size: 18),
                                     label: const Text('Find Contractors Now', style: TextStyle(fontWeight: FontWeight.bold)),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF4F46E5),
+                                      backgroundColor: const Color(0xFF0F766E),
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -677,7 +677,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isAccepted ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+          color: isAccepted ? const Color(0xFF10B981) : const Color(0xFFECEAE6),
           width: isAccepted ? 2 : 1,
         ),
         boxShadow: [
@@ -721,7 +721,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                           Expanded(
                             child: Text(
                               providerName,
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E293B)),
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF181B22)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -739,12 +739,12 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                           const SizedBox(width: 2),
                           Text(
                             rating.toString(),
-                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF181B22)),
                           ),
                           const SizedBox(width: 4),
                           const Text(
                             '• Verified Builder',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                            style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                           ),
                         ],
                       ),
@@ -772,7 +772,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
             ),
 
             const SizedBox(height: 14),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            const Divider(height: 1, color: Color(0xFFF0EEEA)),
             const SizedBox(height: 14),
 
             // Cost & Timeline Grid
@@ -782,14 +782,14 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: const Color(0xFFF6F5F2),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: const Color(0xFFECEAE6)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('ESTIMATED BID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.3)),
+                        const Text('ESTIMATED BID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF6B7280), letterSpacing: 0.3)),
                         const SizedBox(height: 3),
                         FittedBox(
                           fit: BoxFit.scaleDown,
@@ -805,19 +805,19 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: const Color(0xFFF6F5F2),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: const Color(0xFFECEAE6)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('TIMELINE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.3)),
+                        const Text('TIMELINE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF6B7280), letterSpacing: 0.3)),
                         const SizedBox(height: 3),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
-                          child: Text(timeline, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF1E293B))),
+                          child: Text(timeline, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF181B22))),
                         ),
                       ],
                     ),
@@ -832,17 +832,17 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: const Color(0xFFF6F5F2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Proposal Notes:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                    const Text('Proposal Notes:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF6B7280))),
                     const SizedBox(height: 2),
                     Text(
                       notes,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF334155), height: 1.3),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF2E333D), height: 1.3),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -934,8 +934,8 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                   OutlinedButton(
                     onPressed: () => context.push('/provider-profile/$providerId'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      foregroundColor: const Color(0xFF181B22),
+                      side: const BorderSide(color: Color(0xFFD6D3CE)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
@@ -947,7 +947,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
                   child: ElevatedButton(
                     onPressed: isAccepted || _isAccepting ? null : () => _showAcceptConfirmation(quoteId, providerName, cost),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isAccepted ? const Color(0xFF10B981) : const Color(0xFF0F172A),
+                      backgroundColor: isAccepted ? const Color(0xFF10B981) : const Color(0xFF111318),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),

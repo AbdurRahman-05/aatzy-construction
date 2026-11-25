@@ -67,13 +67,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF111318) : Colors.white,
           elevation: 0,
           titleSpacing: 0,
           leading: IconButton(
             icon: Icon(
               Icons.chevron_left_rounded,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF181B22),
               size: 28,
             ),
             onPressed: () => context.pop(),
@@ -85,7 +85,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 child: Text(
                   'Notifications',
                   style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF111318),
                     fontWeight: FontWeight.w900,
                     fontSize: 18,
                   ),
@@ -160,7 +160,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               PopupMenuButton<String>(
                 icon: Icon(
                   Icons.more_vert_rounded,
-                  color: isDark ? Colors.white70 : const Color(0xFF475569),
+                  color: isDark ? Colors.white70 : const Color(0xFF4B5563),
                 ),
                 onSelected: (value) {
                   if (value == 'clear_all') {
@@ -200,7 +200,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             // Filter Pills Row
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.9),
+              color: isDark ? const Color(0xFF181B22).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.9),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
@@ -263,7 +263,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF475569),
+            color: isSelected ? Colors.white : const Color(0xFF4B5563),
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
             fontSize: 12.5,
           ),
@@ -281,7 +281,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF181B22) : Colors.white,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
@@ -300,7 +300,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Text(
               'All Caught Up!',
               style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? Colors.white : const Color(0xFF181B22),
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
               ),
@@ -309,7 +309,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Text(
               'You have no unread notifications.',
               style: TextStyle(
-                color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
                 fontSize: 13,
               ),
             ),
@@ -337,7 +337,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF181B22) : Colors.white,
               shape: BoxShape.circle,
               border: Border.all(
                 color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
@@ -350,13 +350,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 ),
               ],
             ),
-            child: Icon(Icons.notifications_none_rounded, size: 54, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
+            child: Icon(Icons.notifications_none_rounded, size: 54, color: isDark ? const Color(0xFF6B7280) : Colors.grey.shade400),
           ),
           const SizedBox(height: 16),
           Text(
             'No Notifications',
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF181B22),
               fontSize: 17,
               fontWeight: FontWeight.w800,
             ),
@@ -365,7 +365,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           Text(
             'Updates about bids, leads, and orders will show here.',
             style: TextStyle(
-              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+              color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
               fontSize: 13,
             ),
           ),
@@ -446,12 +446,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF181B22) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: n.isUnread
                 ? n.color.withValues(alpha: 0.45)
-                : (isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+                : (isDark ? Colors.white10 : const Color(0xFFECEAE6)),
             width: n.isUnread ? 1.5 : 1,
           ),
           boxShadow: [
@@ -488,7 +488,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: n.isUnread ? FontWeight.w900 : FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF111318),
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -512,7 +512,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     n.body,
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                      color: isDark ? Colors.white70 : const Color(0xFF4B5563),
                       height: 1.35,
                     ),
                   ),
@@ -629,7 +629,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ),
         content: const Text(
           'Are you sure you want to delete all notifications? This action cannot be undone.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+          style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
         ),
         actions: [
           TextButton(
@@ -724,7 +724,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               const SizedBox(height: 16),
               Text(
                 n.body,
-                style: const TextStyle(fontSize: 13.5, color: Color(0xFF334155), height: 1.4),
+                style: const TextStyle(fontSize: 13.5, color: Color(0xFF2E333D), height: 1.4),
               ),
               const SizedBox(height: 24),
               Row(

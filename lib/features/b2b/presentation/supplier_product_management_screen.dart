@@ -279,11 +279,11 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
-    final scaffoldBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final cardBorder = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0);
-    final textDark = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
-    final textMuted = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final scaffoldBg = isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2);
+    final cardBg = isDark ? const Color(0xFF181B22) : Colors.white;
+    final cardBorder = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6);
+    final textDark = isDark ? const Color(0xFFF6F5F2) : const Color(0xFF111318);
+    final textMuted = isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280);
 
     return Scaffold(
       backgroundColor: scaffoldBg,

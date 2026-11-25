@@ -23,7 +23,7 @@ class AdPopupService {
       final targetParam = isProvider ? 'PROVIDER' : 'CLIENT';
 
       final response = await http
-          .get(Uri.parse('$apiBaseUrl/ads?target=$targetParam&activeOnly=true'))
+          .get(Uri.parse('$apiBaseUrl/ads?target=$targetParam&activeOnly=true&placement=POPUP'))
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {

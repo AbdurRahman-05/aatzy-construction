@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
@@ -17,6 +16,9 @@ import '../home/profile_screen.dart';
 import '../subscription/widgets/provider_membership_banner.dart';
 import '../../core/services/subscription_service.dart';
 import '../../core/widgets/shimmer_loading.dart';
+import '../../core/widgets/bento.dart';
+import '../../core/widgets/home_ad_slot.dart';
+import '../../core/utils/project_progress_helper.dart';
 
 class ProviderDashboard extends ConsumerStatefulWidget {
   const ProviderDashboard({super.key});
@@ -28,7 +30,6 @@ class ProviderDashboard extends ConsumerStatefulWidget {
 class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   Map<String, dynamic>? _stats;
   Map<String, dynamic>? _profileData;
-  Uint8List? _cachedProfileImageBytes;
   List<dynamic> _projects = [];
   List<dynamic> _materialLeads = [];
   List<dynamic> _supplierProducts = [];
@@ -56,6 +57,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
     try {
       ref.read(subscriptionProvider.notifier).fetchStatus(auth.id!);
+      ref.invalidate(homeAdsProvider('PROVIDER'));
       final responses = await Future.wait([
         http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/stats')),
         http.get(Uri.parse('$apiBaseUrl/providers/${auth.id}/projects')),
@@ -84,10 +86,8 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         }
 
         Map<String, dynamic>? profData;
-        String? profImg;
         if (res3.statusCode == 200) {
           profData = jsonDecode(res3.body)['provider'];
-          profImg = profData?['profileImage'];
 
           // If admin set provider status to Inactive (isVerified == false), immediately route to verification pending
           if (profData != null && profData['isVerified'] == false) {
@@ -106,15 +106,6 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           prodsList = resProds.data['products'] ?? [];
         }
 
-        Uint8List? cachedBytes;
-        if (profImg != null && profImg.isNotEmpty) {
-          try {
-            cachedBytes = base64Decode(profImg.split(',').last);
-          } catch (e) {
-            debugPrint('Error decoding profile image: $e');
-          }
-        }
-
         final decodedStats = jsonDecode(res0.body);
         if (decodedStats is Map && decodedStats['allLeads'] is List) {
           ref.read(providerLeadsProvider.notifier).setLeads(decodedStats['allLeads']);
@@ -126,7 +117,6 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             _projects = jsonDecode(res1.body);
             _materialLeads = matLeads;
             _profileData = profData;
-            _cachedProfileImageBytes = cachedBytes;
             _supplierProducts = prodsList;
             _isLoading = false;
           });
@@ -144,11 +134,9 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
-    final businessName = _profileData?['businessName'] ?? auth.businessName ?? 'local traders';
-    final ownerName = _profileData?['ownerName'] ?? auth.name ?? 'test';
-    final avgRating = (_profileData?['avgRating'] ?? 4.8) as num;
-    final reviewCount = (_profileData?['reviewCount'] ?? 120) as num;
+    final primaryColor = isDark ? Bento.accentLight : Bento.accentDeep;
+    final businessName = (_profileData?['businessName'] ?? auth.businessName ?? 'Your business').toString();
+    final ownerName = (_profileData?['ownerName'] ?? auth.name ?? '').toString();
 
     // Calculate financials accurately from account data (tasks, accepted quote amounts, or pipeline)
     double totalRevenue = 0.0;
@@ -192,14 +180,11 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     final totalExpenses = totalMaterialExpenses + totalLaborExpenses;
     final totalProfit = totalRevenue - totalExpenses;
 
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 360;
-    final isTabletOrLaptop = screenWidth >= 700;
-    final horizontalPadding = isTabletOrLaptop ? 24.0 : (isSmallScreen ? 12.0 : 16.0);
+    final hPad = screenWidth >= 700 ? 24.0 : (isSmallScreen ? 14.0 : 18.0);
 
-    final notifications = ref.watch(notificationsProvider);
-    final unreadNotifs = notifications.where((n) => n.isUnread).length;
+    final unreadNotifs = ref.watch(notificationsProvider).where((n) => n.isUnread).length;
 
     // Refresh dashboard stats when navigating back to Home tab
     ref.listen<int>(providerTabProvider, (prev, next) {
@@ -209,824 +194,313 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     });
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-      appBar: _isLoading ? null : AppBar(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: isDark
-            ? Stack(
-                alignment: Alignment.center,
-                clipBehavior: Clip.none,
-                children: [
-                  // Luminous ambient glow aura behind logo in dark mode
-                  Container(
-                    width: 146,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0D9488).withValues(alpha: 0.65),
-                          blurRadius: 20,
-                          spreadRadius: 2,
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF2DD4BF).withValues(alpha: 0.40),
-                          blurRadius: 36,
-                          spreadRadius: 6,
-                        ),
-                        BoxShadow(
-                          color: const Color(0xFF14B8A6).withValues(alpha: 0.20),
-                          blurRadius: 52,
-                          spreadRadius: 10,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Image.asset(
-                    'assets/partnerslogo.png',
-                    height: 38,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Text(
-                      'Connectzy Partner',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: Colors.white,
-                        letterSpacing: -0.4,
-                        shadows: [
-                          Shadow(
-                            color: const Color(0xFF2DD4BF).withValues(alpha: 0.8),
-                            blurRadius: 18,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+      backgroundColor: isDark ? const Color(0xFF0E1015) : const Color(0xFFF6F5F2),
+      body: SafeArea(
+        child: _isLoading
+            ? const SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: ShimmerStatsGrid(),
               )
-            : Image.asset(
-                'assets/partnerslogo.png',
-                height: 38,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Text(
-                  'Connectzy Partner',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                    color: Color(0xFF0F766E),
-                    letterSpacing: -0.4,
-                  ),
-                ),
-              ),
-        actions: [
-          // Notification Bell with dynamic unread counter badge
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: Icon(Icons.notifications_none_rounded, color: isDark ? Colors.white : const Color(0xFF0F172A), size: 24),
-                onPressed: () => context.push('/notifications'),
-              ),
-              if (unreadNotifs > 0)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.all(3.5),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEF4444),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$unreadNotifs',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          // User Avatar with green online dot
-          GestureDetector(
-            onTap: () => ref.read(providerTabProvider.notifier).setTab(4),
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16, left: 4),
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 17,
-                    backgroundColor: const Color(0xFFE2E8F0),
-                    backgroundImage: _cachedProfileImageBytes != null
-                        ? MemoryImage(_cachedProfileImageBytes!)
-                        : null,
-                    child: _cachedProfileImageBytes == null
-                        ? Text(
-                            businessName.isNotEmpty ? businessName[0].toUpperCase() : 'P',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F766E), fontSize: 14),
-                          )
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: ShimmerStatsGrid(),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchStats,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12.0),
-                      child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 1. Hero Provider Welcome Banner Card
-                      _buildHeroWelcomeCard(
-                        businessName: businessName,
-                        ownerName: ownerName,
-                        avgRating: avgRating,
-                        reviewCount: reviewCount,
-                        isSmallScreen: isSmallScreen,
-                      ),
-                      const SizedBox(height: 16),
+            : RefreshIndicator(
+                color: Bento.accent,
+                onRefresh: _fetchStats,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 40),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTopBar(businessName, unreadNotifs),
+                            const SizedBox(height: 18),
+                            _buildPartnerHero(
+                              businessName: businessName,
+                              ownerName: ownerName,
+                              pipeline: totalRevenue,
+                              profit: totalProfit,
+                            ),
+                            const SizedBox(height: Bento.gap),
 
-                      // 1.5. Annual Pro Membership Banner (Days left, Expiry, Renew CTA)
-                      ProviderMembershipBanner(isSmallScreen: isSmallScreen),
+                            // Sponsored banner slot (Admin Panel -> Ads Manager -> "Home Page Banner")
+                            const HomeAdSlot(side: 'PROVIDER', padding: EdgeInsets.only(bottom: Bento.gap)),
 
-                      // 2. Material Sourcing Sales Carousel Banner (Self-contained, smooth, zero re-render)
-                      MaterialSourcingCarouselWidget(isSmallScreen: isSmallScreen),
-                      const SizedBox(height: 16),
+                            // Annual Pro Membership Banner (Days left, Expiry, Renew CTA)
+                            ProviderMembershipBanner(isSmallScreen: isSmallScreen),
 
-                      // 3. Segmented Switcher (Overview vs Financials)
-                      _buildSegmentedPillSwitcher(isSmallScreen),
-                      const SizedBox(height: 16),
+                            // Material Sourcing Sales Carousel Banner
+                            MaterialSourcingCarouselWidget(isSmallScreen: isSmallScreen),
+                            const SizedBox(height: 18),
 
-                      // Overview Tab Content
-                      if (_dashboardTab == 0) ...[
-                        // 4. 3 Key Metrics Row (Active Leads, Active Jobs, Ongoing Deals)
-                        _buildKeyMetricsRow(isSmallScreen),
-                        const SizedBox(height: 20),
+                            BentoSegmented(
+                              labels: const ['Overview', 'Financials'],
+                              icons: const [Icons.space_dashboard_rounded, Icons.account_balance_wallet_rounded],
+                              index: _dashboardTab,
+                              onChanged: (i) => setState(() => _dashboardTab = i),
+                            ),
+                            const SizedBox(height: 16),
 
-                        // 5. Running Project Stages Timeline Card
-                        _buildRunningProjectStagesCard(isSmallScreen),
-                        const SizedBox(height: 20),
-
-                        // 6. Two Column Cards: Ongoing Deals & Hot Market Enquiries
-                        _buildDealsAndEnquiriesRow(isSmallScreen, screenWidth),
-                        const SizedBox(height: 20),
-
-                        // 7. Supplier Management Console
-                        _buildSupplierManagementConsole(isSmallScreen),
-                        const SizedBox(height: 32),
-                      ]
-                      // Financials Tab Content
-                      else ...[
-                        _buildFinanceStats(totalRevenue, totalExpenses, totalProfit),
-                        const SizedBox(height: 20),
-                        _buildFinanceChart(),
-                        const SizedBox(height: 24),
-                        _buildProjectProfitabilitySection(isDark, primaryColor),
-                        const SizedBox(height: 32),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-    );
-  }
-  // ==========================================
-  // 1. HERO PROVIDER WELCOME BANNER CARD
-  // ==========================================
-  Widget _buildHeroWelcomeCard({
-    required String businessName,
-    required String ownerName,
-    required num avgRating,
-    required num reviewCount,
-    required bool isSmallScreen,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0A5C67), Color(0xFF0D7A87), Color(0xFF0A5C67)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0A5C67).withValues(alpha: 0.35),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Left: Circular Team / Business Avatar with online green check badge
-          Stack(
-            children: [
-              Container(
-                width: isSmallScreen ? 56 : 68,
-                height: isSmallScreen ? 56 : 68,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 2),
-                ),
-                child: ClipOval(
-                  child: _cachedProfileImageBytes != null
-                      ? Image.memory(
-                          _cachedProfileImageBytes!,
-                          fit: BoxFit.cover,
-                          gaplessPlayback: true,
-                          errorBuilder: (context, error, stackTrace) => Image.asset(
-                            'assets/images/banner_building.jpg',
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : Image.asset(
-                          'assets/images/banner_building.jpg',
-                          fit: BoxFit.cover,
+                            if (_dashboardTab == 0) ...[
+                              _buildMetricsGrid(),
+                              const SizedBox(height: Bento.gap),
+                              _buildQuickActionsBento(),
+                              const SizedBox(height: 30),
+                              _buildRunningSites(),
+                              const SizedBox(height: 30),
+                              _buildDealsAndEnquiriesRow(isSmallScreen, screenWidth),
+                            ] else ...[
+                              _buildFinanceStats(totalRevenue, totalExpenses, totalProfit),
+                              const SizedBox(height: 20),
+                              _buildFinanceChart(),
+                              const SizedBox(height: 24),
+                              _buildProjectProfitabilitySection(isDark, primaryColor),
+                            ],
+                          ],
                         ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(2.5),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, size: 10, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(width: isSmallScreen ? 8 : 12),
-
-          // Center: Business details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      'PORTAL ACTIVE • VERIFIED PROVIDER',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 7.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.4,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  businessName,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: isSmallScreen ? 15 : 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  'User: $ownerName',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: isSmallScreen ? 10.5 : 11.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 2,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 12),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${avgRating.toStringAsFixed(1)} ($reviewCount)',
-                          style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.calendar_month_rounded, color: Colors.white70, size: 10),
-                        SizedBox(width: 2),
-                        Text(
-                          'Jan 2023',
-                          style: TextStyle(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 6),
-
-          // Right: Verified Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 13),
-                SizedBox(width: 3.5),
-                Text(
-                  'Verified',
-                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
       ),
     );
   }
 
   // ==========================================
-  // 3. SEGMENTED SWITCHER (Overview vs Financials)
+  // Bento helpers
   // ==========================================
-  Widget _buildSegmentedPillSwitcher(bool isSmallScreen) {
+
+  static const _activeLeadStatuses = ['New', 'Viewed', 'Contacted', 'Quote Sent'];
+  static const _closedStages = ['completed', 'finished', 'cancelled'];
+
+  int get _activeMaterialLeadsCount =>
+      _materialLeads.where((lead) => _activeLeadStatuses.contains(lead['status'] ?? 'New')).length;
+
+  int get _ongoingMaterialJobsCount => _materialLeads.where((lead) {
+        final status = lead['status'] ?? 'New';
+        final deliveryStatus = lead['delivery_status'] ?? 'Pending';
+        return status == 'Accepted' || (status == 'Closed' && deliveryStatus != 'Delivered');
+      }).length;
+
+  List<dynamic> get _runningProjects => _projects.where((p) {
+        final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+        return !_closedStages.contains(stage);
+      }).toList();
+
+  /// Material-only partners go to the materials console, everyone else to the Leads tab.
+  void _openLeads() {
+    if (_activeMaterialLeadsCount > 0 && (_stats?['activeLeads'] ?? 0) == 0) {
+      context.push('/b2b-materials');
+    } else {
+      ref.read(providerTabProvider.notifier).setTab(2);
+    }
+  }
+
+  String _formatRupees(num value) {
+    if (value <= 0) return '₹0';
+    return '₹${NumberFormat.decimalPattern('en_IN').format(value.round())}';
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h >= 5 && h < 12) return 'Good morning';
+    if (h >= 12 && h < 17) return 'Good afternoon';
+    if (h >= 17 && h < 22) return 'Good evening';
+    return 'Good night';
+  }
+
+  // ==========================================
+  // 1. TOP BAR
+  // ==========================================
+  Widget _buildTopBar(String businessName, int unreadNotifs) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.3 : 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _dashboardTab = 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: _dashboardTab == 0 ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.dashboard_customize_outlined,
-                      size: 16,
-                      color: _dashboardTab == 0 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Overview',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        color: _dashboardTab == 0 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _dashboardTab = 1),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: _dashboardTab == 1 ? (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.account_balance_wallet_outlined,
-                      size: 16,
-                      color: _dashboardTab == 1 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Financials',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        color: _dashboardTab == 1 ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E)) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+    final logo = Image.asset(
+      'assets/partnerslogo.png',
+      height: 30,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => Text(
+        'Connectzy Partner',
+        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Bento.text(isDark), letterSpacing: -0.4),
       ),
     );
-  }
-
-  // ==========================================
-  // 4. 3 KEY METRIC STAT CARDS
-  // ==========================================
-  Widget _buildKeyMetricsRow(bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeMaterialLeadsCount = _materialLeads.where((lead) {
-      final status = lead['status'] ?? 'New';
-      return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
-    }).length;
-    final activeLeadsCount = (_stats?['activeLeads'] ?? 0) + activeMaterialLeadsCount;
-
-    final ongoingMaterialJobsCount = _materialLeads.where((lead) {
-      final status = lead['status'] ?? 'New';
-      final deliveryStatus = lead['delivery_status'] ?? 'Pending';
-      return status == 'Accepted' || (status == 'Closed' && deliveryStatus != 'Delivered');
-    }).length;
-
-    final runningProjects = _projects.where((p) {
-      final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
-      return !['completed', 'finished', 'cancelled'].contains(stage);
-    }).length;
-    final activeJobsCount = runningProjects + ongoingMaterialJobsCount;
-
-    final ongoingDealsCount = ongoingMaterialJobsCount;
-    final metricCardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Row(
       children: [
-        Expanded(
-          child: _buildMetricTile(
-            title: 'ACTIVE LEADS',
-            value: '$activeLeadsCount',
-            subtitle: 'Inquiries listed',
-            icon: Icons.people_alt_outlined,
-            iconColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
-            iconBg: isDark ? const Color(0xFF0F766E).withValues(alpha: 0.25) : const Color(0xFFCCFBF1),
-            cardBg: metricCardBg,
-            onTap: () {
-              if (activeMaterialLeadsCount > 0 && (_stats?['activeLeads'] ?? 0) == 0) {
-                context.push('/b2b-materials');
-              } else {
-                ref.read(providerTabProvider.notifier).setTab(2);
-              }
-            },
-          ),
+        isDark
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                child: logo,
+              )
+            : logo,
+        const Spacer(),
+        BentoBadgeButton(
+          icon: Icons.notifications_none_rounded,
+          count: unreadNotifs,
+          onTap: () => context.push('/notifications'),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildMetricTile(
-            title: 'ACTIVE JOBS',
-            value: '$activeJobsCount',
-            subtitle: 'Sites under work',
-            icon: Icons.business_center_outlined,
-            iconColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
-            iconBg: isDark ? const Color(0xFF2563EB).withValues(alpha: 0.25) : const Color(0xFFDBEAFE),
-            cardBg: metricCardBg,
-            onTap: () => ref.read(providerTabProvider.notifier).setTab(1),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildMetricTile(
-            title: 'ONGOING DEALS',
-            value: '$ongoingDealsCount',
-            subtitle: 'Active orders',
-            icon: Icons.assignment_outlined,
-            iconColor: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
-            iconBg: isDark ? const Color(0xFFEA580C).withValues(alpha: 0.25) : const Color(0xFFFFEDD5),
-            cardBg: metricCardBg,
-            onTap: () => context.push('/b2b-materials'),
+        const SizedBox(width: 10),
+        BentoPressable(
+          onTap: () => ref.read(providerTabProvider.notifier).setTab(4),
+          child: BentoAvatar(
+            name: businessName,
+            image: _profileData?['profileImage']?.toString(),
+            size: 40,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildMetricTile({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required Color cardBg,
-    required VoidCallback onTap,
+  // ==========================================
+  // 2. HERO
+  // ==========================================
+  Widget _buildPartnerHero({
+    required String businessName,
+    required String ownerName,
+    required double pipeline,
+    required double profit,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.3 : 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 16),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 9.5, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.arrow_forward_rounded, size: 10, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    final reviews = _profileData?['reviews'];
+    final reviewCount = reviews is List ? reviews.length : 0;
+    final avgRating = (_profileData?['avgRating'] as num?)?.toDouble() ?? 0.0;
+    final createdAt = DateTime.tryParse(_profileData?['createdAt']?.toString() ?? '');
+    final isVerified = _profileData?['isVerified'] != false;
+    final firstName = ownerName.trim().split(' ').first;
 
-  // ==========================================
-  // 5. RUNNING PROJECT STAGES TIMELINE CARD
-  // ==========================================
-  Widget _buildRunningProjectStagesCard(bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return BentoCard(
+      gradient: Bento.inkGradient,
+      padding: EdgeInsets.zero,
+      child: Stack(
         children: [
-          Text(
-            'Running Project Stages',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Track site progress timeline',
-            style: TextStyle(
-              fontSize: 11,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Stepper Row with Building Illustration
-          Row(
-            children: [
-              // 4-Step Stepper
-              Expanded(
-                flex: 7,
-                child: Row(
-                  children: [
-                    _buildMilestoneItem('Planning', Icons.architecture_rounded, 'Completed', const Color(0xFF10B981), isSmallScreen),
-                    _buildMilestoneConnector(true),
-                    _buildMilestoneItem('Execution', Icons.apartment_rounded, 'Completed', const Color(0xFF10B981), isSmallScreen),
-                    _buildMilestoneConnector(true),
-                    _buildMilestoneItem('Finishing', Icons.person_outline_rounded, 'In Progress', const Color(0xFF2563EB), isSmallScreen),
-                    _buildMilestoneConnector(false),
-                    _buildMilestoneItem('Handover', Icons.flag_outlined, 'Upcoming', const Color(0xFF94A3B8), isSmallScreen),
-                  ],
-                ),
-              ),
-
-              // Right: Construction Site Graphic with Crane
-              Expanded(
-                flex: 3,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.asset(
-                    'assets/images/crane_3d.jpg',
-                    height: 70,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.apartment_rounded, size: 55, color: Color(0xFF3B82F6)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Bottom Project Status Sub-Card
-          Container(
-            padding: EdgeInsets.all(isSmallScreen ? 12 : 14),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.25) : const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? const Color(0xFF059669).withValues(alpha: 0.3) : const Color(0xFFDCFCE7),
-              ),
-            ),
+          const Positioned(right: -60, top: -70, child: BentoGlow(size: 220)),
+          Padding(
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF059669).withValues(alpha: 0.2) : const Color(0xFFDCFCE7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.celebration_rounded, color: Color(0xFF10B981), size: 20),
+                    BentoPill(
+                      label: 'CONNECTZY PARTNER',
+                      color: Bento.accentLight,
+                      background: Bento.accentLight.withValues(alpha: 0.16),
+                      icon: Icons.handshake_rounded,
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'All Projects Executed!',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13.5,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            'Great job! There are no outstanding works on site. Check customer inquiries to start new ones.',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
+                    const Spacer(),
+                    if (isVerified)
+                      BentoPill(
+                        label: 'Verified',
+                        color: const Color(0xFF34D399),
+                        background: const Color(0xFF10B981).withValues(alpha: 0.16),
+                        icon: Icons.verified_rounded,
                       ),
-                    ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  firstName.isEmpty ? _greeting() : '${_greeting()}, $firstName 👋',
+                  style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  businessName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    height: 1.15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.7,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      final activeMatLeads = _materialLeads.where((lead) {
-                        final status = lead['status'] ?? 'New';
-                        return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(status);
-                      }).length;
-                      if (activeMatLeads > 0 && (_stats?['activeLeads'] ?? 0) == 0) {
-                        context.push('/b2b-materials');
-                      } else {
-                        ref.read(providerTabProvider.notifier).setTab(2);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0A5C67),
-                        borderRadius: BorderRadius.circular(10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    BentoPill(
+                      label: reviewCount > 0
+                          ? '${avgRating.toStringAsFixed(1)} · $reviewCount review${reviewCount == 1 ? '' : 's'}'
+                          : 'New partner',
+                      color: const Color(0xFFFBBF24),
+                      background: Colors.white.withValues(alpha: 0.08),
+                      icon: Icons.star_rounded,
+                    ),
+                    if (createdAt != null)
+                      BentoPill(
+                        label: 'Since ${DateFormat('MMM yyyy').format(createdAt)}',
+                        color: Colors.white70,
+                        background: Colors.white.withValues(alpha: 0.08),
+                        icon: Icons.calendar_month_rounded,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Text(
-                            'Explore Client Leads',
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                BentoPressable(
+                  onTap: () => setState(() => _dashboardTab = 1),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(Bento.radiusSm),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Pipeline value', style: TextStyle(color: Colors.white54, fontSize: 11.5)),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  _formatRupees(pipeline),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.6,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: 4),
-                          Icon(Icons.arrow_forward_rounded, size: 12, color: Colors.white),
-                        ],
-                      ),
+                        ),
+                        Container(width: 1, height: 34, color: Colors.white.withValues(alpha: 0.1)),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Est. profit', style: TextStyle(color: Colors.white54, fontSize: 11.5)),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  _formatRupees(profit),
+                                  style: const TextStyle(
+                                    color: Bento.accentLight,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.6,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+                      ],
                     ),
                   ),
                 ),
@@ -1038,61 +512,311 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
     );
   }
 
-  Widget _buildMilestoneItem(String label, IconData icon, String status, Color statusColor, bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  // ==========================================
+  // 3. KEY METRICS (2 x 2 bento)
+  // ==========================================
+  Widget _buildMetricsGrid() {
+    final activeLeads = (_stats?['activeLeads'] ?? 0) + _activeMaterialLeadsCount;
+    final activeJobs = _runningProjects.length + _ongoingMaterialJobsCount;
+    final ongoingDeals = _ongoingMaterialJobsCount;
+
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: isSmallScreen ? 26 : 30,
-          height: isSmallScreen ? 26 : 30,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: statusColor.withValues(alpha: isDark ? 0.2 : 0.1),
-            border: Border.all(color: statusColor, width: 1.5),
-          ),
-          child: Icon(icon, size: isSmallScreen ? 13 : 15, color: statusColor),
-        ),
-        const SizedBox(height: 4),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: isSmallScreen ? 9 : 10,
-              fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : const Color(0xFF0F172A),
+        Row(
+          children: [
+            Expanded(
+              child: BentoStatTile(
+                value: '$activeLeads',
+                label: 'Active leads',
+                caption: 'Inquiries for you',
+                icon: Icons.person_search_rounded,
+                color: Bento.accent,
+                onTap: _openLeads,
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 1),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            status,
-            style: TextStyle(
-              fontSize: isSmallScreen ? 7.5 : 8.5,
-              fontWeight: FontWeight.bold,
-              color: statusColor,
+            const SizedBox(width: Bento.gap),
+            Expanded(
+              child: BentoStatTile(
+                value: '$activeJobs',
+                label: 'Active jobs',
+                caption: 'Sites under work',
+                icon: Icons.engineering_rounded,
+                color: Bento.blue,
+                onTap: () => ref.read(providerTabProvider.notifier).setTab(1),
+              ),
             ),
-          ),
+          ],
+        ),
+        const SizedBox(height: Bento.gap),
+        Row(
+          children: [
+            Expanded(
+              child: BentoStatTile(
+                value: '$ongoingDeals',
+                label: 'Ongoing deals',
+                caption: 'Material orders',
+                icon: Icons.local_shipping_rounded,
+                color: Bento.violet,
+                onTap: () => context.push('/b2b-materials'),
+              ),
+            ),
+            const SizedBox(width: Bento.gap),
+            Expanded(
+              child: BentoStatTile(
+                value: '${_supplierProducts.length}',
+                label: 'My products',
+                caption: 'Listed for sale',
+                icon: Icons.inventory_2_rounded,
+                color: Bento.green,
+                onTap: () => context.push('/supplier-products'),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildMilestoneConnector(bool isDone) {
+  // ==========================================
+  // 4. QUICK ACTIONS (bento)
+  // ==========================================
+  Widget _buildQuickActionsBento() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        height: 1.5,
-        margin: const EdgeInsets.only(bottom: 24),
-        color: isDone
-            ? const Color(0xFF10B981)
-            : (isDark ? Colors.white.withValues(alpha: 0.15) : const Color(0xFFCBD5E1)),
+    final newMaterialLeads = _materialLeads.where((l) => (l['status'] ?? 'New') == 'New').length;
+
+    Widget mini(IconData icon, Color color, String title, String caption, VoidCallback onTap) {
+      return BentoCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        onTap: onTap,
+        child: Row(
+          children: [
+            BentoIconBubble(icon: icon, color: color, size: 36),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Bento.text(isDark)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    caption,
+                    style: TextStyle(fontSize: 11, color: Bento.muted(isDark)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 164,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: BentoCard(
+              gradient: Bento.accentGradient,
+              padding: const EdgeInsets.all(18),
+              onTap: _openLeads,
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -16,
+                    bottom: -20,
+                    child: Icon(Icons.radar_rounded, size: 104, color: Colors.white.withValues(alpha: 0.18)),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: const Icon(Icons.travel_explore_rounded, color: Colors.white, size: 22),
+                      ),
+                      const Spacer(),
+                      const Text(
+                        'Find new\nleads',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 21,
+                          height: 1.05,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Quote on projects near you',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 11.5, fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: Bento.gap),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: mini(
+                    Icons.add_box_rounded,
+                    Bento.green,
+                    'Add product',
+                    'List a new item',
+                    () => context.push('/supplier-add-product'),
+                  ),
+                ),
+                const SizedBox(height: Bento.gap),
+                Expanded(
+                  child: mini(
+                    Icons.inventory_rounded,
+                    Bento.violet,
+                    'Material leads',
+                    newMaterialLeads > 0 ? '$newMaterialLeads new' : 'Buyer requests',
+                    () => context.push('/b2b-materials'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  // ==========================================
+  // 5. RUNNING SITES (real project data)
+  // ==========================================
+  Widget _buildRunningSites() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final running = _runningProjects;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        BentoSectionHeader(
+          title: 'Running sites',
+          subtitle: running.isEmpty ? 'No work in progress' : '${running.length} project${running.length == 1 ? '' : 's'} in progress',
+          actionLabel: 'All projects',
+          onAction: () => ref.read(providerTabProvider.notifier).setTab(1),
+        ),
+        if (running.isEmpty)
+          BentoCard(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                const BentoIconBubble(icon: Icons.celebration_rounded, color: Bento.green, size: 52),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'All caught up!',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Bento.text(isDark)),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'No sites are under work. Quote on new leads to win your next project.',
+                        style: TextStyle(fontSize: 11.5, color: Bento.muted(isDark), height: 1.35),
+                      ),
+                      const SizedBox(height: 10),
+                      BentoButton(label: 'Explore leads', onTap: _openLeads, compact: true),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ...running.take(3).map((p) {
+            final title = (p['title'] ?? 'Project').toString();
+            final stage = (p['currentStage'] ?? 'Tracking').toString();
+            final location = (p['location'] ?? '').toString();
+            final client = (p['user'] is Map ? p['user']['name'] : null)?.toString();
+            final isOnHold = stage.toLowerCase().trim() == 'on hold';
+            final progress = ProjectProgressHelper.calculateFromProject(p);
+            final percent = (progress.progressValue * 100).round();
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: Bento.gap),
+              child: BentoCard(
+                padding: const EdgeInsets.all(14),
+                onTap: () => context.push('/provider-job/${p['id']}'),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        BentoIconBubble(
+                          icon: isOnHold ? Icons.pause_circle_rounded : Icons.construction_rounded,
+                          color: isOnHold ? const Color(0xFFD97706) : Bento.accent,
+                          size: 44,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Bento.text(isDark), letterSpacing: -0.3),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                [if (client != null && client.isNotEmpty) client, if (location.isNotEmpty) location].join(' · '),
+                                style: TextStyle(fontSize: 11.5, color: Bento.muted(isDark)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        BentoPill(
+                          label: isOnHold ? 'On hold' : stage,
+                          color: isOnHold ? const Color(0xFFD97706) : Bento.accentText(isDark),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(child: BentoProgressBar(value: progress.progressValue, height: 7)),
+                        const SizedBox(width: 10),
+                        Text(
+                          '$percent%',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Bento.accentText(isDark)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
 
   // ==========================================
   // 6. TWO COLUMN CARDS: ONGOING DEALS & HOT MARKET ENQUIRIES (Equal Heights)
@@ -1150,14 +874,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
+            color: const Color(0xFF111318).withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1185,7 +909,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF111318),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1217,7 +941,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF),
+                                color: Bento.accentLight.withValues(alpha: isDark ? 0.16 : 0.12),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
@@ -1228,14 +952,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                                     style: TextStyle(
                                       fontSize: 8,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                      color: Bento.accentText(isDark),
                                     ),
                                   ),
                                   const SizedBox(width: 2),
                                   Icon(
                                     Icons.arrow_forward_rounded,
                                     size: 7.5,
-                                    color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                    color: Bento.accentText(isDark),
                                   ),
                                 ],
                               ),
@@ -1253,7 +977,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             : (hasNegotiation ? 'Quotes submitted to buyers' : 'Track in-progress processes and shipments'),
                         style: TextStyle(
                           fontSize: 9,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -1277,10 +1001,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       return Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                          color: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFECEAE6),
                           ),
                         ),
                         child: Column(
@@ -1324,7 +1048,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF111318),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1334,7 +1058,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                               'Qty: $qty $unit',
                               style: TextStyle(
                                 fontSize: 9.5,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1353,14 +1077,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                          color: Bento.accentText(isDark),
                         ),
                       ),
                       const SizedBox(width: 2),
                       Icon(
                         Icons.arrow_forward_rounded,
                         size: 9,
-                        color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                        color: Bento.accentText(isDark),
                       ),
                     ],
                   ),
@@ -1373,12 +1097,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                            color: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(
                             Icons.local_shipping_outlined,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                             size: 26,
                           ),
                         ),
@@ -1388,7 +1112,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF111318),
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
@@ -1402,7 +1126,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 9,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                               height: 1.25,
                             ),
                             maxLines: 2,
@@ -1426,14 +1150,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.2 : 0.03),
+            color: const Color(0xFF111318).withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1461,7 +1185,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark ? Colors.white : const Color(0xFF111318),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1484,7 +1208,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                                   style: TextStyle(
                                     fontSize: 8.5,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+                                    color: Bento.accentText(isDark),
                                   ),
                                 ),
                               ],
@@ -1494,7 +1218,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF),
+                              color: Bento.accentLight.withValues(alpha: isDark ? 0.16 : 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
@@ -1505,14 +1229,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                                   style: TextStyle(
                                     fontSize: 8,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                    color: Bento.accentText(isDark),
                                   ),
                                 ),
                                 const SizedBox(width: 2),
                                 Icon(
                                   Icons.arrow_forward_rounded,
                                   size: 7.5,
-                                  color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                                  color: Bento.accentText(isDark),
                                 ),
                               ],
                             ),
@@ -1529,7 +1253,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             : 'Opportunities in your service areas',
                         style: TextStyle(
                           fontSize: 9,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -1552,10 +1276,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                       return Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                          color: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFECEAE6),
                           ),
                         ),
                         child: Column(
@@ -1567,10 +1291,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                                 Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEA580C).withValues(alpha: 0.15),
+                                    color: Bento.accent.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: const Icon(Icons.flash_on_rounded, color: Color(0xFFEA580C), size: 13),
+                                  child: const Icon(Icons.flash_on_rounded, color: Bento.accent, size: 13),
                                 ),
                                 const SizedBox(width: 6),
                                 Expanded(
@@ -1579,7 +1303,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                                     style: const TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFFEA580C),
+                                      color: Bento.accentDeep,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -1593,7 +1317,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark ? Colors.white : const Color(0xFF111318),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1603,7 +1327,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                               'Qty: $qty $unit',
                               style: TextStyle(
                                 fontSize: 9.5,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1622,14 +1346,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+                          color: Bento.accentText(isDark),
                         ),
                       ),
                       const SizedBox(width: 2),
                       Icon(
                         Icons.arrow_forward_rounded,
                         size: 9,
-                        color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+                        color: Bento.accentText(isDark),
                       ),
                     ],
                   ),
@@ -1642,12 +1366,12 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : const Color(0xFFEFF6FF),
+                            color: Bento.accentLight.withValues(alpha: isDark ? 0.16 : 0.12),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(
                             Icons.saved_search_rounded,
-                            color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                            color: Bento.accentText(isDark),
                             size: 26,
                           ),
                         ),
@@ -1657,7 +1381,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF111318),
                           ),
                           textAlign: TextAlign.center,
                           maxLines: 1,
@@ -1671,7 +1395,7 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 9,
-                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                              color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                               height: 1.25,
                             ),
                             maxLines: 2,
@@ -1687,162 +1411,6 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           ),
         ),
       ),
-    );
-  }
-
-  // ==========================================
-  // 7. SUPPLIER MANAGEMENT CONSOLE
-  // ==========================================
-  Widget _buildSupplierManagementConsole(bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Supplier Management Console',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          'Utilities to update items and quotes',
-          style: TextStyle(
-            fontSize: 11,
-            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            // Card 1: My Products (Soft Blue)
-            Expanded(
-              child: GestureDetector(
-                onTap: () => context.push('/supplier-products'),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFDBEAFE),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 22),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _supplierProducts.isNotEmpty ? 'My Products (${_supplierProducts.length})' : 'My Products',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 13,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Update rates & items',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF1D4ED8),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-
-            // Card 2: Material Leads (Soft Green)
-            Expanded(
-              child: GestureDetector(
-                onTap: () => context.push('/b2b-materials'),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF10B981).withValues(alpha: 0.3) : const Color(0xFFA7F3D0),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF059669),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(Icons.description_outlined, color: Colors.white, size: 22),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Material Leads',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 13,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Submit B2B quotes',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF065F46),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -2413,7 +1981,7 @@ class _MaterialSourcingCarouselWidgetState extends ConsumerState<MaterialSourcin
       'desc': 'List materials on BuildMart and secure bulk wholesale orders directly.',
       'btn': 'Manage Materials',
       'route': '/supplier-products',
-      'colors': [Color(0xFFEA580C), Color(0xFFF59E0B)],
+      'colors': [Color(0xFF14B8A6), Color(0xFF0F766E)],
       'icon': Icons.shopping_cart_rounded,
     },
     {
@@ -2431,7 +1999,7 @@ class _MaterialSourcingCarouselWidgetState extends ConsumerState<MaterialSourcin
       'desc': 'Upload photos of completed sites and manage your contractor profile.',
       'btn': 'View Profile',
       'route': 'profile',
-      'colors': [Color(0xFF0F766E), Color(0xFF14B8A6)],
+      'colors': [Color(0xFF242833), Color(0xFF111318)],
       'icon': Icons.person_rounded,
     },
   ];
@@ -2581,13 +2149,13 @@ class _MaterialSourcingCarouselWidgetState extends ConsumerState<MaterialSourcin
                                   Text(
                                     slide['btn'] as String,
                                     style: const TextStyle(
-                                      color: Color(0xFF0F172A),
+                                      color: Color(0xFF111318),
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_forward_rounded, size: 10, color: Color(0xFF0F172A)),
+                                  const Icon(Icons.arrow_forward_rounded, size: 10, color: Color(0xFF111318)),
                                 ],
                               ),
                             ),
@@ -2660,7 +2228,7 @@ class _MaterialSourcingCarouselWidgetState extends ConsumerState<MaterialSourcin
               width: isSelected ? 16 : 5,
               height: 5,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF0F766E) : (Theme.of(context).brightness == Brightness.dark ? Colors.white24 : const Color(0xFFCBD5E1)),
+                color: isSelected ? Bento.accent : (Theme.of(context).brightness == Brightness.dark ? Colors.white24 : const Color(0xFFD6D3CE)),
                 borderRadius: BorderRadius.circular(4),
               ),
             );

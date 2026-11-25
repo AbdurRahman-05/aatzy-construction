@@ -426,7 +426,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         style: TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 14,
-          color: isDark ? Colors.white : const Color(0xFF475569),
+          color: isDark ? Colors.white : const Color(0xFF4B5563),
           letterSpacing: 0.2,
         ),
       ),

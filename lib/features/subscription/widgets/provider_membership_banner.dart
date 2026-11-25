@@ -48,10 +48,10 @@ class ProviderMembershipBanner extends ConsumerWidget {
                 colors: isDark
                     ? [
                         const Color(0xFF0F766E).withValues(alpha: 0.35),
-                        const Color(0xFF1E293B),
+                        const Color(0xFF181B22),
                       ]
                     : [
-                        const Color(0xFF064354),
+                        const Color(0xFF0F766E),
                         const Color(0xFF0B7C8E),
                       ],
                 begin: Alignment.topLeft,
@@ -60,7 +60,7 @@ class ProviderMembershipBanner extends ConsumerWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF064354).withValues(alpha: 0.18),
+                  color: const Color(0xFF0F766E).withValues(alpha: 0.18),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -274,7 +274,7 @@ class ProviderMembershipBanner extends ConsumerWidget {
           margin: const EdgeInsets.only(bottom: 16),
           padding: EdgeInsets.all(isNarrow ? 12 : 16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEF2F2),
+            color: isDark ? const Color(0xFF181B22) : const Color(0xFFFEF2F2),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: const Color(0xFFEF4444).withValues(alpha: 0.3),

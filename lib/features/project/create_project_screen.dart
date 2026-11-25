@@ -103,9 +103,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     {'name': 'Construction', 'category': 'Core Construction', 'icon': Icons.construction_rounded, 'color': Color(0xFF0284C7), 'bg': Color(0xFFF0F9FF)},
     {'name': 'Builder/General Contractor', 'category': 'Core Construction', 'icon': Icons.apartment_rounded, 'color': Color(0xFF1D4ED8), 'bg': Color(0xFFEFF6FF)},
     {'name': 'Commercial Builder', 'category': 'Core Construction', 'icon': Icons.domain_rounded, 'color': Color(0xFF0F766E), 'bg': Color(0xFFF0FDFA)},
-    {'name': 'Construction (Other)', 'category': 'Core Construction', 'icon': Icons.build_circle_rounded, 'color': Color(0xFF334155), 'bg': Color(0xFFF1F5F9)},
+    {'name': 'Construction (Other)', 'category': 'Core Construction', 'icon': Icons.build_circle_rounded, 'color': Color(0xFF2E333D), 'bg': Color(0xFFF0EEEA)},
     {'name': 'Construction Project Management', 'category': 'Core Construction', 'icon': Icons.assignment_turned_in_rounded, 'color': Color(0xFF4338CA), 'bg': Color(0xFFEEF2FF)},
-    {'name': 'Cement / Concrete', 'category': 'Core Construction', 'icon': Icons.foundation_rounded, 'color': Color(0xFF64748B), 'bg': Color(0xFFF8FAFC)},
+    {'name': 'Cement / Concrete', 'category': 'Core Construction', 'icon': Icons.foundation_rounded, 'color': Color(0xFF6B7280), 'bg': Color(0xFFF6F5F2)},
     {'name': 'Bricklayer/Stonemason', 'category': 'Core Construction', 'icon': Icons.view_module_rounded, 'color': Color(0xFFB45309), 'bg': Color(0xFFFEF3C7)},
     {'name': 'Ground Work', 'category': 'Core Construction', 'icon': Icons.terrain_rounded, 'color': Color(0xFF9A3412), 'bg': Color(0xFFFFEDD5)},
     {'name': 'Demolition Contractor', 'category': 'Core Construction', 'icon': Icons.delete_sweep_rounded, 'color': Color(0xFFB91C1C), 'bg': Color(0xFFFEF2F2)},
@@ -129,16 +129,16 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     {'name': 'Flooring', 'category': 'Interiors & Finishing', 'icon': Icons.layers_rounded, 'color': Color(0xFF7C3AED), 'bg': Color(0xFFEDE9FE)},
     {'name': 'Tile Worker', 'category': 'Interiors & Finishing', 'icon': Icons.grid_view_rounded, 'color': Color(0xFF4F46E5), 'bg': Color(0xFFEEF2FF)},
     {'name': 'Painter', 'category': 'Interiors & Finishing', 'icon': Icons.format_paint_rounded, 'color': Color(0xFFDB2777), 'bg': Color(0xFFFCE7F3)},
-    {'name': 'Plasterer', 'category': 'Interiors & Finishing', 'icon': Icons.imagesearch_roller_rounded, 'color': Color(0xFF64748B), 'bg': Color(0xFFF8FAFC)},
+    {'name': 'Plasterer', 'category': 'Interiors & Finishing', 'icon': Icons.imagesearch_roller_rounded, 'color': Color(0xFF6B7280), 'bg': Color(0xFFF6F5F2)},
     {'name': 'Carpenter', 'category': 'Interiors & Finishing', 'icon': Icons.carpenter_rounded, 'color': Color(0xFF92400E), 'bg': Color(0xFFFEF3C7)},
     {'name': 'Cabinet Maker', 'category': 'Interiors & Finishing', 'icon': Icons.kitchen_rounded, 'color': Color(0xFF78350F), 'bg': Color(0xFFFFFBEB)},
     {'name': 'Kitchen Construction', 'category': 'Interiors & Finishing', 'icon': Icons.soup_kitchen_rounded, 'color': Color(0xFFC2410C), 'bg': Color(0xFFFFEDD5)},
     {'name': 'Counter Top', 'category': 'Interiors & Finishing', 'icon': Icons.countertops_rounded, 'color': Color(0xFF0D9488), 'bg': Color(0xFFCCFBF1)},
-    {'name': 'Drywall', 'category': 'Interiors & Finishing', 'icon': Icons.grid_on_rounded, 'color': Color(0xFF475569), 'bg': Color(0xFFF1F5F9)},
-    {'name': 'Windows & Doors', 'category': 'Interiors & Finishing', 'icon': Icons.door_sliding_rounded, 'color': Color(0xFF64748B), 'bg': Color(0xFFF8FAFC)},
+    {'name': 'Drywall', 'category': 'Interiors & Finishing', 'icon': Icons.grid_on_rounded, 'color': Color(0xFF4B5563), 'bg': Color(0xFFF0EEEA)},
+    {'name': 'Windows & Doors', 'category': 'Interiors & Finishing', 'icon': Icons.door_sliding_rounded, 'color': Color(0xFF6B7280), 'bg': Color(0xFFF6F5F2)},
     {'name': 'Glass', 'category': 'Interiors & Finishing', 'icon': Icons.window_rounded, 'color': Color(0xFF0284C7), 'bg': Color(0xFFE0F2FE)},
-    {'name': 'Garage Doors', 'category': 'Interiors & Finishing', 'icon': Icons.garage_rounded, 'color': Color(0xFF1E293B), 'bg': Color(0xFFF1F5F9)},
-    {'name': 'Shutters & Awnings', 'category': 'Interiors & Finishing', 'icon': Icons.blinds_rounded, 'color': Color(0xFF475569), 'bg': Color(0xFFF1F5F9)},
+    {'name': 'Garage Doors', 'category': 'Interiors & Finishing', 'icon': Icons.garage_rounded, 'color': Color(0xFF181B22), 'bg': Color(0xFFF0EEEA)},
+    {'name': 'Shutters & Awnings', 'category': 'Interiors & Finishing', 'icon': Icons.blinds_rounded, 'color': Color(0xFF4B5563), 'bg': Color(0xFFF0EEEA)},
     {'name': 'Window Treatments', 'category': 'Interiors & Finishing', 'icon': Icons.curtains_rounded, 'color': Color(0xFF9333EA), 'bg': Color(0xFFFAF5FF)},
     {'name': 'LED Walls & Digital Displays', 'category': 'Interiors & Finishing', 'icon': Icons.smart_display_rounded, 'color': Color(0xFF0284C7), 'bg': Color(0xFFE0F2FE)},
 
@@ -169,8 +169,8 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     {'name': 'Pools, Spas & Saunas', 'category': 'Specialist Services', 'icon': Icons.pool_rounded, 'color': Color(0xFF0891B2), 'bg': Color(0xFFCFFAFE)},
     {'name': 'Fences', 'category': 'Specialist Services', 'icon': Icons.fence_rounded, 'color': Color(0xFF854D0E), 'bg': Color(0xFFFEF3C7)},
     {'name': 'Fireplace & Oven Builder', 'category': 'Specialist Services', 'icon': Icons.fireplace_rounded, 'color': Color(0xFFC2410C), 'bg': Color(0xFFFFEDD5)},
-    {'name': 'Blacksmith', 'category': 'Specialist Services', 'icon': Icons.hardware_rounded, 'color': Color(0xFF475569), 'bg': Color(0xFFF1F5F9)},
-    {'name': 'Metal Work', 'category': 'Specialist Services', 'icon': Icons.precision_manufacturing_rounded, 'color': Color(0xFF475569), 'bg': Color(0xFFF1F5F9)},
+    {'name': 'Blacksmith', 'category': 'Specialist Services', 'icon': Icons.hardware_rounded, 'color': Color(0xFF4B5563), 'bg': Color(0xFFF0EEEA)},
+    {'name': 'Metal Work', 'category': 'Specialist Services', 'icon': Icons.precision_manufacturing_rounded, 'color': Color(0xFF4B5563), 'bg': Color(0xFFF0EEEA)},
     {'name': 'Energy Services', 'category': 'Specialist Services', 'icon': Icons.energy_savings_leaf_rounded, 'color': Color(0xFF16A34A), 'bg': Color(0xFFDCFCE7)},
     {'name': 'Handyman', 'category': 'Specialist Services', 'icon': Icons.handyman_rounded, 'color': Color(0xFFEA580C), 'bg': Color(0xFFFFF7ED)},
     {'name': 'Power Washing', 'category': 'Specialist Services', 'icon': Icons.cleaning_services_rounded, 'color': Color(0xFF2563EB), 'bg': Color(0xFFDBEAFE)},
@@ -387,7 +387,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       barrierDismissible: false,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
             side: BorderSide(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.transparent),
@@ -415,7 +415,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF111318),
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -425,7 +425,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
                     height: 1.45,
                   ),
                 ),
@@ -476,7 +476,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             final bottomInset = MediaQuery.of(context).viewInsets.bottom;
             return Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF181B22) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: bottomInset + 20),
@@ -495,7 +495,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Edit Plot Size (sq ft)', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                      Text('Edit Plot Size (sq ft)', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF181B22))),
                       IconButton(icon: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : null), onPressed: () => Navigator.pop(context)),
                     ],
                   ),
@@ -503,25 +503,25 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   TextField(
                     controller: controller,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111318)),
                     decoration: InputDecoration(
                       labelText: 'Plot Area in sq ft',
-                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : null),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.square_foot_rounded, color: Color(0xFF0D9488)),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : Colors.grey)),
+                  Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
                     children: quickSizes.map((s) {
                       return ActionChip(
-                        label: Text('$s sq ft', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B), fontWeight: FontWeight.w600)),
+                        label: Text('$s sq ft', style: TextStyle(color: isDark ? Colors.white : const Color(0xFF181B22), fontWeight: FontWeight.w600)),
                         onPressed: () => setModalState(() => controller.text = s),
-                        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(color: isDark ? Colors.white12 : Colors.transparent),
@@ -578,7 +578,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             final bottomInset = MediaQuery.of(context).viewInsets.bottom;
             return Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF181B22) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: bottomInset + 20),
@@ -597,7 +597,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Edit Budget Limit', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                      Text('Edit Budget Limit', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF181B22))),
                       IconButton(icon: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : null), onPressed: () => Navigator.pop(context)),
                     ],
                   ),
@@ -605,10 +605,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   TextField(
                     controller: controller,
                     keyboardType: TextInputType.number,
-                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111318)),
                     decoration: InputDecoration(
                       labelText: 'Estimated Budget',
-                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : null),
                       prefixText: '₹ ',
                       prefixStyle: TextStyle(color: isDark ? const Color(0xFF34D399) : null),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -616,16 +616,16 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : Colors.grey)),
+                  Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
                     children: quickBudgets.map((b) {
                       return ActionChip(
-                        label: Text(b['label']!, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B), fontWeight: FontWeight.w600)),
+                        label: Text(b['label']!, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF181B22), fontWeight: FontWeight.w600)),
                         onPressed: () => setModalState(() => controller.text = b['val']!),
-                        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(color: isDark ? Colors.white12 : Colors.transparent),
@@ -676,7 +676,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             final bottomInset = MediaQuery.of(context).viewInsets.bottom;
             return Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF181B22) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: bottomInset + 20),
@@ -695,32 +695,32 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Edit Target Timeline', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                      Text('Edit Target Timeline', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF181B22))),
                       IconButton(icon: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : null), onPressed: () => Navigator.pop(context)),
                     ],
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: controller,
-                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111318)),
                     decoration: InputDecoration(
                       labelText: 'Expected Duration',
-                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : null),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.calendar_month_rounded, color: Color(0xFFF59E0B)),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : Colors.grey)),
+                  Text('Quick Select:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
                     children: quickTimelines.map((t) {
                       return ActionChip(
-                        label: Text(t, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B), fontWeight: FontWeight.w600)),
+                        label: Text(t, style: TextStyle(color: isDark ? Colors.white : const Color(0xFF181B22), fontWeight: FontWeight.w600)),
                         onPressed: () => setModalState(() => controller.text = t),
-                        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: BorderSide(color: isDark ? Colors.white12 : Colors.transparent),
@@ -771,7 +771,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             final bottomInset = MediaQuery.of(context).viewInsets.bottom;
             return Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF181B22) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: bottomInset + 20),
@@ -791,23 +791,23 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Edit Title & Property Type', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                        Text('Edit Title & Property Type', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF181B22))),
                         IconButton(icon: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : null), onPressed: () => Navigator.pop(context)),
                       ],
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: titleCtrl,
-                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                      style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111318)),
                       decoration: InputDecoration(
                         labelText: 'Project Title',
-                        labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                        labelStyle: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : null),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         prefixIcon: const Icon(Icons.title_rounded, color: Color(0xFF0D9488)),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text('Property Type:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                    Text('Property Type:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF181B22))),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -818,13 +818,13 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                           label: Text(
                             type['name'],
                             style: TextStyle(
-                              color: isSel ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488)) : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                              color: isSel ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488)) : (isDark ? Colors.white70 : const Color(0xFF2E333D)),
                               fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
                           selected: isSel,
                           selectedColor: isDark ? const Color(0xFF0D9488).withValues(alpha: 0.25) : const Color(0xFFCCFBF1),
-                          backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                          backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                           side: BorderSide(
                             color: isSel ? const Color(0xFF0D9488) : (isDark ? Colors.white12 : Colors.transparent),
                           ),
@@ -876,7 +876,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             final bottomInset = MediaQuery.of(context).viewInsets.bottom;
             return Container(
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                color: isDark ? const Color(0xFF181B22) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: EdgeInsets.only(left: 20, right: 20, top: 16, bottom: bottomInset + 20),
@@ -895,17 +895,17 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Edit Project City Location', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B))),
+                      Text('Edit Project City Location', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF181B22))),
                       IconButton(icon: Icon(Icons.close_rounded, color: isDark ? Colors.white70 : null), onPressed: () => Navigator.pop(context)),
                     ],
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: locCtrl,
-                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                    style: TextStyle(color: isDark ? Colors.white : const Color(0xFF111318)),
                     decoration: InputDecoration(
                       labelText: 'Project City Location',
-                      labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
+                      labelStyle: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : null),
                       hintText: 'e.g. Madurai, Tamil Nadu',
                       hintStyle: TextStyle(color: isDark ? Colors.white38 : null),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -923,7 +923,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text('Select City:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                  Text('Select City:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280))),
                   const SizedBox(height: 6),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -941,9 +941,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                             labelStyle: TextStyle(
                               fontSize: 11,
                               fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
-                              color: isSel ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                              color: isSel ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF2E333D)),
                             ),
-                            backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                            backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                             side: BorderSide(
                               color: isSel ? const Color(0xFF0D9488) : (isDark ? Colors.white12 : Colors.transparent),
                             ),
@@ -1003,13 +1003,13 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       },
       child: WallpaperBackground(
         child: Scaffold(
-          backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
           appBar: AppBar(
-            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
-              icon: Icon(Icons.chevron_left_rounded, color: isDark ? Colors.white : const Color(0xFF1E293B), size: 28),
+              icon: Icon(Icons.chevron_left_rounded, color: isDark ? Colors.white : const Color(0xFF181B22), size: 28),
               onPressed: _prevStep,
             ),
             centerTitle: true,
@@ -1018,7 +1018,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   ? 'Step 1: Select Services'
                   : (_currentStep == 1 ? 'Step 2: Project Details' : 'Step 3: Review & Launch'),
               style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                color: isDark ? Colors.white : const Color(0xFF111318),
                 fontWeight: FontWeight.w800,
                 fontSize: 17,
               ),
@@ -1056,7 +1056,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Initializing your project...',
-                        style: TextStyle(fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                        style: TextStyle(fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF111318)),
                       ),
                     ],
                   ),
@@ -1068,7 +1068,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       children: [
                         // Stepper Progress Indicator at top
                         Container(
-                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          color: isDark ? const Color(0xFF181B22) : Colors.white,
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
                           child: _buildStepperIndicator(isSmallScreen, isDark),
                         ),
@@ -1111,7 +1111,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               height: 2.5,
               margin: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
-                color: linePassed ? const Color(0xFF0D9488) : (isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
+                color: linePassed ? const Color(0xFF0D9488) : (isDark ? Colors.white24 : const Color(0xFFECEAE6)),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1141,11 +1141,11 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   shape: BoxShape.circle,
                   color: isActive
                       ? const Color(0xFF0D9488)
-                      : (isPassed ? const Color(0xFF0F766E) : (isDark ? Colors.white10 : const Color(0xFFF1F5F9))),
+                      : (isPassed ? const Color(0xFF0F766E) : (isDark ? Colors.white10 : const Color(0xFFF0EEEA))),
                   border: Border.all(
                     color: isActive
                         ? const Color(0xFF0D9488)
-                        : (isPassed ? const Color(0xFF0F766E) : (isDark ? Colors.white24 : const Color(0xFFCBD5E1))),
+                        : (isPassed ? const Color(0xFF0F766E) : (isDark ? Colors.white24 : const Color(0xFFD6D3CE))),
                     width: 1.5,
                   ),
                   boxShadow: isActive
@@ -1164,7 +1164,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       : Text(
                           step['num'] as String,
                           style: TextStyle(
-                            color: isActive ? Colors.white : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                            color: isActive ? Colors.white : (isDark ? Colors.white60 : const Color(0xFF6B7280)),
                             fontSize: isSmallScreen ? 11 : 12.5,
                             fontWeight: FontWeight.w900,
                           ),
@@ -1179,7 +1179,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   fontWeight: isActive ? FontWeight.w900 : (isPassed ? FontWeight.w700 : FontWeight.w500),
                   color: isActive
                       ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E))
-                      : (isPassed ? (isDark ? Colors.white : const Color(0xFF334155)) : const Color(0xFF94A3B8)),
+                      : (isPassed ? (isDark ? Colors.white : const Color(0xFF2E333D)) : const Color(0xFF9AA1AD)),
                 ),
               ),
             ],
@@ -1297,10 +1297,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         Container(
           height: 46,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6),
             ),
             boxShadow: [
               BoxShadow(
@@ -1316,15 +1316,15 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF181B22),
             ),
             decoration: InputDecoration(
               hintText: 'Search 40+ services (e.g. Plumbing, Solar, Design)...',
-              hintStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+              hintStyle: TextStyle(fontSize: 12, color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9AA1AD)),
               prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF0D9488)),
               suffixIcon: _serviceSearchQuery.isNotEmpty
                   ? IconButton(
-                      icon: Icon(Icons.clear_rounded, size: 16, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                      icon: Icon(Icons.clear_rounded, size: 16, color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9AA1AD)),
                       onPressed: () {
                         _serviceSearchController.clear();
                         setState(() => _serviceSearchQuery = '');
@@ -1351,14 +1351,14 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   label: Text(cat),
                   selected: isSel,
                   selectedColor: const Color(0xFF0D9488),
-                  backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
                   labelStyle: TextStyle(
                     fontSize: 11.5,
                     fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                    color: isSel ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                    color: isSel ? Colors.white : (isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280)),
                   ),
                   side: BorderSide(
-                    color: isSel ? const Color(0xFF0D9488) : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
+                    color: isSel ? const Color(0xFF0D9488) : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFECEAE6)),
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   onSelected: (_) => setState(() => _selectedCategory = cat),
@@ -1469,12 +1469,12 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? (isDark ? const Color(0xFF0F766E).withValues(alpha: 0.25) : const Color(0xFFF0FDFA))
-                            : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                            : (isDark ? const Color(0xFF181B22) : Colors.white),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFF0D9488)
-                              : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+                              : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6)),
                           width: isSelected ? 1.8 : 1.0,
                         ),
                         boxShadow: isSelected
@@ -1510,7 +1510,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                 color: isSelected
                                     ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E))
-                                    : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                    : (isDark ? Colors.white : const Color(0xFF181B22)),
                                 height: 1.15,
                               ),
                               maxLines: 2,
@@ -1615,24 +1615,24 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         // 1. Project Title
         const Text(
           'PROJECT TITLE',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF6B7280), letterSpacing: 0.8),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6),
             ),
           ),
           child: TextField(
             controller: _titleController,
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF181B22)),
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: 'e.g. My Modern Villa, Greenfield Residence',
-              hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+              hintStyle: TextStyle(color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9AA1AD)),
               prefixIcon: const Icon(Icons.home_work_rounded, color: Color(0xFF0D9488), size: 20),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             ),
@@ -1643,7 +1643,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         // 2. Residential / Property Type
         const Text(
           'RESIDENTIAL / PROPERTY TYPE',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF6B7280), letterSpacing: 0.8),
         ),
         const SizedBox(height: 8),
         LayoutBuilder(
@@ -1685,12 +1685,12 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? (isDark ? const Color(0xFF0F766E).withValues(alpha: 0.25) : const Color(0xFFF0FDFA))
-                          : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                          : (isDark ? const Color(0xFF181B22) : Colors.white),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
                             ? const Color(0xFF0D9488)
-                            : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+                            : (isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6)),
                         width: isSelected ? 2.0 : 1.0,
                       ),
                       boxShadow: isSelected
@@ -1709,7 +1709,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(icon, size: 20, color: isSelected ? const Color(0xFF0D9488) : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                            Icon(icon, size: 20, color: isSelected ? const Color(0xFF0D9488) : (isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280))),
                             const Spacer(),
                             if (isSelected)
                               const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF0D9488)),
@@ -1728,7 +1728,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                                   fontWeight: FontWeight.w900,
                                   color: isSelected
                                       ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E))
-                                      : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                      : (isDark ? Colors.white : const Color(0xFF181B22)),
                                   height: 1.15,
                                 ),
                                 maxLines: 1,
@@ -1739,7 +1739,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                                 desc,
                                 style: TextStyle(
                                   fontSize: isSmallScreen ? 9.0 : 9.5,
-                                  color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                                  color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
                                   height: 1.15,
                                 ),
                                 maxLines: 1,
@@ -1764,7 +1764,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           children: [
             const Text(
               'PROJECT CITY LOCATION',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF6B7280), letterSpacing: 0.8),
             ),
             InkWell(
               onTap: () async {
@@ -1810,10 +1810,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6),
             ),
           ),
           child: Row(
@@ -1821,11 +1821,11 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               Expanded(
                 child: TextField(
                   controller: _locationController,
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isDark ? Colors.white : const Color(0xFF181B22)),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'e.g. Madurai, Tamil Nadu',
-                    hintStyle: TextStyle(color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                    hintStyle: TextStyle(color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9AA1AD)),
                     prefixIcon: const Icon(Icons.location_city_rounded, color: Color(0xFF0D9488), size: 20),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                   ),
@@ -1868,7 +1868,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
             children: [
               const Text(
                 'Select City: ',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF6B7280)),
               ),
               ...[
                 'Madurai',
@@ -1890,11 +1890,11 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     labelStyle: TextStyle(
                       fontSize: 11,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      color: isSelected ? Colors.white : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
+                      color: isSelected ? Colors.white : (isDark ? const Color(0xFF9AA1AD) : const Color(0xFF2E333D)),
                     ),
                     selected: isSelected,
                     selectedColor: const Color(0xFF0D9488),
-                    backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                    backgroundColor: isDark ? const Color(0xFF181B22) : const Color(0xFFF0EEEA),
                     checkmarkColor: Colors.white,
                     showCheckmark: isSelected,
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
@@ -1902,7 +1902,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                       side: BorderSide(
-                        color: isSelected ? const Color(0xFF0D9488) : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                        color: isSelected ? const Color(0xFF0D9488) : (isDark ? Colors.white12 : const Color(0xFFECEAE6)),
                         width: 1,
                       ),
                     ),
@@ -1931,16 +1931,16 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         // 4. Plot Size, Budget & Timeline Specifications Card
         const Text(
           'PLOT SIZE, BUDGET & TIMELINE',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF64748B), letterSpacing: 0.8),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF6B7280), letterSpacing: 0.8),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6),
             ),
           ),
           child: Column(
@@ -1960,7 +1960,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   Expanded(
                     child: Text(
                       'Plot Area (sq ft)',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF181B22)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -1974,7 +1974,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF0F766E), fontSize: 13.5),
                       decoration: InputDecoration(
                         hintText: 'e.g. 1200',
-                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400, fontSize: 12),
+                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: isDark ? const Color(0xFF6B7280) : Colors.grey.shade400, fontSize: 12),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -1998,7 +1998,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     ),
                     backgroundColor: isSel
                         ? const Color(0xFFCCFBF1)
-                        : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                        : (isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA)),
                     onPressed: () => setState(() => _plotSizeController.text = s),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   );
@@ -2024,7 +2024,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       children: [
                         Text(
                           'Budget Limit',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF181B22)),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(_formatBudget(_budgetController.text), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
@@ -2042,7 +2042,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       decoration: InputDecoration(
                         prefixText: _budgetController.text.isNotEmpty ? '₹ ' : null,
                         hintText: 'e.g. 4500000',
-                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400, fontSize: 12),
+                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: isDark ? const Color(0xFF6B7280) : Colors.grey.shade400, fontSize: 12),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -2087,7 +2087,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       ),
                       backgroundColor: isSel
                           ? const Color(0xFFA7F3D0)
-                          : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                          : (isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA)),
                       onPressed: () => setState(() => _budgetController.text = b['v']!),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     );
@@ -2111,7 +2111,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   Expanded(
                     child: Text(
                       'Target Timeline',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF181B22)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -2124,7 +2124,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFFD97706), fontSize: 12.5),
                       decoration: InputDecoration(
                         hintText: 'e.g. 9 Months',
-                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400, fontSize: 12),
+                        hintStyle: TextStyle(fontWeight: FontWeight.w400, color: isDark ? const Color(0xFF6B7280) : Colors.grey.shade400, fontSize: 12),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -2148,7 +2148,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     ),
                     backgroundColor: isSel
                         ? const Color(0xFFFEF3C7)
-                        : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                        : (isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA)),
                     onPressed: () => setState(() => _timelineController.text = t),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   );
@@ -2176,7 +2176,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
+              colors: [Color(0xFF111318), Color(0xFF181B22), Color(0xFF2E333D)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -2255,7 +2255,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         // Section Title
         Text(
           'CONFIRM PROJECT BLUEPRINT (ALL EDITABLE)',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), letterSpacing: 0.8),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280), letterSpacing: 0.8),
         ),
         const SizedBox(height: 10),
 
@@ -2263,9 +2263,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
@@ -2293,7 +2293,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       const SizedBox(width: 8),
                       Text(
                         'Project Identity',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280)),
                       ),
                     ],
                   ),
@@ -2312,7 +2312,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               const SizedBox(height: 8),
               Text(
                 _titleController.text.trim().isNotEmpty ? _titleController.text.trim() : '$_selectedPropertyType Project',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF111318)),
               ),
               const SizedBox(height: 6),
               Container(
@@ -2343,9 +2343,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
@@ -2369,11 +2369,11 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Site Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                    Text('Site Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280))),
                     const SizedBox(height: 2),
                     Text(
                       _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : 'Location not set',
-                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: isDark ? Colors.white : const Color(0xFF111318)),
                     ),
                   ],
                 ),
@@ -2397,9 +2397,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
@@ -2414,8 +2414,8 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Core Specifications', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                  Text('(Tap tile to edit)', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8))),
+                  Text('Core Specifications', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280))),
+                  Text('(Tap tile to edit)', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9AA1AD))),
                 ],
               ),
               const SizedBox(height: 12),
@@ -2447,7 +2447,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                             Text(
                               '${_plotSizeController.text} sq ft',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF111318)),
                             ),
                             const SizedBox(height: 2),
                             Text('✏️ Edit', style: TextStyle(fontSize: 9.5, color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488), fontWeight: FontWeight.bold)),
@@ -2486,7 +2486,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                               child: Text(
                                 _formatBudget(_budgetController.text),
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF111318)),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -2526,7 +2526,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                               child: Text(
                                 _timelineController.text,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: isDark ? Colors.white : const Color(0xFF111318)),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -2552,9 +2552,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF181B22) : Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
@@ -2582,7 +2582,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                       const SizedBox(width: 8),
                       Text(
                         'Services Required (${_selectedServices.length})',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280)),
                       ),
                     ],
                   ),
@@ -2606,9 +2606,9 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      color: isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
+                      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -2617,7 +2617,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                         const SizedBox(width: 5),
                         Text(
                           serviceName,
-                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: isDark ? Colors.white : const Color(0xFF181B22)),
                         ),
                       ],
                     ),
@@ -2642,7 +2642,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  color: isDark ? const Color(0xFF181B22) : Colors.white,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.verified_user_rounded, color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488), size: 20),
@@ -2659,7 +2659,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'Only KYC-verified and rated contractors in your city will view your requirements and offer quotes.',
-                      style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF134E4A), height: 1.25),
+                      style: TextStyle(fontSize: 11, color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF134E4A), height: 1.25),
                     ),
                   ],
                 ),
@@ -2684,10 +2684,10 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
         vertical: 12,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         border: Border(
           top: BorderSide(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEAE6),
             width: 1,
           ),
         ),
@@ -2710,15 +2710,15 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                 child: OutlinedButton(
                   onPressed: _prevStep,
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: isDark ? Colors.white24 : const Color(0xFFCBD5E1), width: 1.2),
+                    side: BorderSide(color: isDark ? Colors.white24 : const Color(0xFFD6D3CE), width: 1.2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 10 : 14),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.chevron_left_rounded, size: 20, color: isDark ? Colors.white70 : const Color(0xFF475569)),
-                      Text('Back', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF475569))),
+                      Icon(Icons.chevron_left_rounded, size: 20, color: isDark ? Colors.white70 : const Color(0xFF4B5563)),
+                      Text('Back', style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF4B5563))),
                     ],
                   ),
                 ),
@@ -2875,7 +2875,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                   'Estimate construction budget, civil rate & timeline for your plot area.',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? const Color(0xFFC7D2FE) : const Color(0xFF475569),
+                    color: isDark ? const Color(0xFFC7D2FE) : const Color(0xFF4B5563),
                     height: 1.3,
                   ),
                 ),
@@ -2886,7 +2886,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           ElevatedButton(
             onPressed: _openCostEstimator,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFF0F766E),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -2954,7 +2954,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              color: isDark ? const Color(0xFF111318) : Colors.white,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -2979,7 +2979,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '₹${est.ratePerSqFt.toStringAsFixed(0)} / sq.ft',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF1E293B)),
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF181B22)),
                     ),
                   ],
                 ),
@@ -3010,7 +3010,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isDark ? const Color(0xFF6366F1).withValues(alpha: 0.3) : const Color(0xFFC7D2FE),
@@ -3060,7 +3060,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
           const SizedBox(height: 12),
           Text(
             'Based on ${est.areaSqFt.toStringAsFixed(0)} sq.ft at ₹${est.ratePerSqFt.toStringAsFixed(0)} / sq.ft across ${est.configuration} layout.',
-            style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
+            style: TextStyle(fontSize: 11.5, color: isDark ? Colors.white70 : const Color(0xFF6B7280)),
           ),
           const SizedBox(height: 10),
           if (est.categoryBreakdown.isNotEmpty) ...[

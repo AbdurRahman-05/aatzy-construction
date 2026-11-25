@@ -211,7 +211,7 @@ class _SupplierProfileScreenState extends ConsumerState<SupplierProfileScreen> {
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: isDark ? const Color(0xFF121B22) : Colors.white,
+                              color: isDark ? const Color(0xFF0E1015) : Colors.white,
                             ),
                             child: CircleAvatar(
                               radius: 38,
@@ -725,7 +725,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: isDark ? const Color(0xFF121B22) : Colors.white,
+      color: isDark ? const Color(0xFF0E1015) : Colors.white,
       child: tabBar,
     );
   }

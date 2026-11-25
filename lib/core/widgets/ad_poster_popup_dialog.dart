@@ -98,10 +98,10 @@ class _AdPosterPopupDialogState extends State<AdPosterPopupDialog> {
           constraints: const BoxConstraints(maxWidth: 390),
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            color: isDark ? const Color(0xFF111318) : Colors.white,
             borderRadius: BorderRadius.circular(26),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
               width: 1.2,
             ),
             boxShadow: [
@@ -372,7 +372,7 @@ class _AdPosterPopupDialogState extends State<AdPosterPopupDialog> {
                         style: GoogleFonts.inter(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          color: isDark ? Colors.white : const Color(0xFF111318),
                           letterSpacing: -0.3,
                           decoration: TextDecoration.none,
                         ),
@@ -384,7 +384,7 @@ class _AdPosterPopupDialogState extends State<AdPosterPopupDialog> {
                           desc,
                           style: GoogleFonts.inter(
                             fontSize: 12.5,
-                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isDark ? const Color(0xFF9AA1AD) : const Color(0xFF6B7280),
                             height: 1.35,
                             decoration: TextDecoration.none,
                           ),
@@ -463,7 +463,7 @@ class _ImageAdView extends StatelessWidget {
 
     if (trimmed.isEmpty) {
       return Container(
-        color: const Color(0xFF064354),
+        color: const Color(0xFF0F766E),
         child: const Center(
           child: Icon(Icons.campaign_rounded, size: 64, color: Colors.white70),
         ),
@@ -504,7 +504,7 @@ class _ImageAdView extends StatelessWidget {
 
   Widget _buildFallback() {
     return Container(
-      color: const Color(0xFF064354),
+      color: const Color(0xFF0F766E),
       child: const Center(
         child: Icon(Icons.broken_image_rounded, size: 48, color: Colors.white60),
       ),

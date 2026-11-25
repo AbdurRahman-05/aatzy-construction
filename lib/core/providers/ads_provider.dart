@@ -44,7 +44,7 @@ const List<Map<String, dynamic>> defaultPromoAds = [
     'title': 'Premium Construction Ads',
     'desc': 'Looking to scale? Post custom ads inside your Connectzy administrator dashboard.',
     'icon': Icons.campaign_rounded,
-    'gradient': [Color(0xFF064354), Color(0xFF0B7C8E)],
+    'gradient': [Color(0xFF0F766E), Color(0xFF0B7C8E)],
     'badge': 'SPONSORED',
   }
 ];
@@ -66,7 +66,7 @@ IconData parseAdIcon(String name) {
 }
 
 List<Color> parseAdGradient(String str) {
-  if (str.isEmpty) return const [Color(0xFF064354), Color(0xFF0B7C8E)];
+  if (str.isEmpty) return const [Color(0xFF0F766E), Color(0xFF0B7C8E)];
   final parts = str.split(',');
   if (parts.length >= 2) {
     try {
@@ -75,5 +75,5 @@ List<Color> parseAdGradient(String str) {
       return [c1, c2];
     } catch (_) {}
   }
-  return const [Color(0xFF064354), Color(0xFF0B7C8E)];
+  return const [Color(0xFF0F766E), Color(0xFF0B7C8E)];
 }

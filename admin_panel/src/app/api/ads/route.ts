@@ -7,10 +7,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const target = searchParams.get('target'); // 'CLIENT' | 'PROVIDER'
     const activeOnly = searchParams.get('activeOnly') === 'true';
+    const placement = searchParams.get('placement'); // 'POPUP' | 'HOME'
 
     const where: any = {};
     if (activeOnly) {
       where.isActive = true;
+    }
+
+    if (placement) {
+      const normalizedPlacement = placement.toUpperCase();
+      // An ad shows in a slot if it's placed there specifically or in BOTH slots
+      where.placement = { in: ['BOTH', normalizedPlacement] };
     }
 
     if (target) {
@@ -47,10 +54,17 @@ export async function POST(request: Request) {
       mediaType,
       videoUrl,
       targetSide,
+      placement,
       actionUrl,
       actionText,
       isActive,
     } = body;
+
+    const allowedPlacements = ['POPUP', 'HOME', 'BOTH'];
+    const normalizedPlacement = String(placement || 'BOTH').toUpperCase();
+    if (!allowedPlacements.includes(normalizedPlacement)) {
+      return NextResponse.json({ error: 'placement must be POPUP, HOME or BOTH' }, { status: 400 });
+    }
 
     if (!title) {
       return NextResponse.json({ error: 'Ad title is required' }, { status: 400 });
@@ -67,6 +81,7 @@ export async function POST(request: Request) {
         mediaType: mediaType || (videoUrl ? 'video' : 'image'),
         videoUrl: videoUrl || null,
         targetSide: targetSide || 'ALL',
+        placement: normalizedPlacement,
         actionUrl: actionUrl || null,
         actionText: actionText || 'Explore Now',
         isActive: isActive !== undefined ? Boolean(isActive) : true,

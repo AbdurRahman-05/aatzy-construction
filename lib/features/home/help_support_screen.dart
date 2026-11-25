@@ -74,7 +74,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         child: Text(
                           'Navigate to the provider\'s profile, tap on the "Request Quote" button at the bottom, enter your project details or description, and submit. The provider will view this quote request in their leads panel.',
                           style: TextStyle(
-                            color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+                            color: isDark ? const Color(0xFFD6D3CE) : Colors.black87,
                             height: 1.45,
                           ),
                         ),
@@ -97,7 +97,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         child: Text(
                           'Yes! All registration details, including PAN card, Aadhar card, and business verification documents, are manually reviewed by our admin panel team before a provider receives their verification badge.',
                           style: TextStyle(
-                            color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+                            color: isDark ? const Color(0xFFD6D3CE) : Colors.black87,
                             height: 1.45,
                           ),
                         ),
@@ -120,7 +120,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         child: Text(
                           'Our smart cost estimation calculator helps you project total material, labor, and compliance costs based on your plot size, building type, location, and structural configuration. Use it in the "Tools" panel.',
                           style: TextStyle(
-                            color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
+                            color: isDark ? const Color(0xFFD6D3CE) : Colors.black87,
                             height: 1.45,
                           ),
                         ),
@@ -216,7 +216,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             const SizedBox(height: 24),
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              color: isDark ? const Color(0xFF1E293B) : Colors.blue.shade50,
+              color: isDark ? const Color(0xFF181B22) : Colors.blue.shade50,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -242,7 +242,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         Text(
                           'Support Hours: Mon-Fri, 9AM-6PM',
                           style: TextStyle(
-                            color: isDark ? const Color(0xFF94A3B8) : Colors.blue.shade700,
+                            color: isDark ? const Color(0xFF9AA1AD) : Colors.blue.shade700,
                           ),
                         ),
                       ],

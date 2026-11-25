@@ -135,16 +135,16 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354);
+    final primaryColor = isDark ? const Color(0xFF0F9B8E) : const Color(0xFF0F766E);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121B22) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF0E1015) : Colors.white,
       appBar: AppBar(
         title: const Text('Verification Pending', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF064354),
+        foregroundColor: isDark ? Colors.white : const Color(0xFF0F766E),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -199,7 +199,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF064354),
+                  color: isDark ? Colors.white : const Color(0xFF0F766E),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -219,7 +219,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+                  color: isDark ? const Color(0xFF181B22) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200,
@@ -244,7 +244,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: isDark ? Colors.white : const Color(0xFF064354),
+                            color: isDark ? Colors.white : const Color(0xFF0F766E),
                           ),
                         ),
                       ],

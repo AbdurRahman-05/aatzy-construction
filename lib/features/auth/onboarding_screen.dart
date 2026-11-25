@@ -95,7 +95,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       return Scaffold(
         body: Container(
           decoration: const BoxDecoration(
-            color: Color(0xFF121B22),
+            color: Color(0xFF0E1015),
           ),
           child: const Center(
             child: Column(
@@ -146,7 +146,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1B2730), Color(0xFF121B22)],
+                        colors: [Color(0xFF181B22), Color(0xFF0E1015)],
                       ),
                     ),
                   );

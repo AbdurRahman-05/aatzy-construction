@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,8 +11,11 @@ import 'main_layout.dart';
 import 'widgets/user_tutorial_dialog.dart';
 import '../../core/utils/project_progress_helper.dart';
 import '../../core/constants.dart';
+import '../../core/widgets/bento.dart';
 import '../../core/widgets/shimmer_loading.dart';
+import '../../core/widgets/home_ad_slot.dart';
 
+/// Customer home — "Bento" layout (charcoal + brand teal).
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -29,9 +31,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isLoadingSocial = true;
   int _activeTabIndex = 0;
 
-  final Color _slateDark = const Color(
-    0xFF111827,
-  ); // Dark button color from design
+  static const _closedStages = ['completed', 'finished', 'cancelled'];
+
+  static const List<Map<String, dynamic>> _expertCategories = [
+    {
+      'title': 'Architects',
+      'subtitle': 'Floor plans, 3D elevations & Vastu',
+      'icon': Icons.architecture_rounded,
+      'color': Color(0xFF8B5CF6),
+      'route': '/providers/Design%20%26%20Planning',
+    },
+    {
+      'title': 'Builders',
+      'subtitle': 'Turnkey & civil work',
+      'icon': Icons.apartment_rounded,
+      'color': Color(0xFF3B82F6),
+      'route': '/providers/Builder%2FGeneral%20Contractor',
+    },
+    {
+      'title': 'Promoters',
+      'subtitle': 'Plots & layouts',
+      'icon': Icons.real_estate_agent_rounded,
+      'color': Color(0xFF10B981),
+      'route': '/providers/Commercial%20Builder',
+    },
+    {
+      'title': 'Interiors',
+      'subtitle': 'Kitchens & decor',
+      'icon': Icons.chair_rounded,
+      'color': Color(0xFFE11D48),
+      'route': '/providers/Interiors%20%26%20Finishing',
+    },
+    {
+      'title': 'LED Walls',
+      'subtitle': 'Digital displays',
+      'icon': Icons.smart_display_rounded,
+      'color': Color(0xFF06B6D4),
+      'route': '/providers/LED%20Walls%20%26%20Digital%20Displays',
+    },
+  ];
 
   @override
   void initState() {
@@ -66,6 +104,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         futures.add(ref.refresh(userProjectsProvider(auth.id!).future));
       }
       futures.add(ref.refresh(socialFeedProvider.future));
+      ref.invalidate(homeAdsProvider('CLIENT'));
       await Future.wait(futures);
     } catch (e) {
       debugPrint('HomeScreen fetch error: $e');
@@ -79,9 +118,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Future<void> _handleRefresh() async {
-    await _fetchProjects();
+  // ---------------------------------------------------------------------------
+  // Derived data
+  // ---------------------------------------------------------------------------
+
+  List<dynamic> get _activeProjects => _projects.where((p) {
+        final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
+        return !_closedStages.contains(stage);
+      }).toList();
+
+  int _quoteCountOf(dynamic p) {
+    final counted = p['_count']?['quotes'];
+    if (counted is int) return counted;
+    final list = p['quotes'];
+    return list is List ? list.length : 0;
   }
+
+  int get _totalQuotes => _projects.fold<int>(0, (sum, p) => sum + _quoteCountOf(p));
+
+  String _formatBudget(dynamic budget) {
+    final n = budget is num ? budget : num.tryParse(budget?.toString() ?? '');
+    if (n == null || n <= 0) return '—';
+    return '₹${NumberFormat.decimalPattern('en_IN').format(n.round())}';
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h >= 5 && h < 12) return 'Good morning';
+    if (h >= 12 && h < 17) return 'Good afternoon';
+    if (h >= 17 && h < 22) return 'Good evening';
+    return 'Good night';
+  }
+
+  String _greetingEmoji() {
+    final h = DateTime.now().hour;
+    if (h >= 5 && h < 12) return '☀️';
+    if (h >= 12 && h < 17) return '🌤️';
+    if (h >= 17 && h < 22) return '🌆';
+    return '🌙';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -118,52 +197,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _isLoadingSocial = true;
     }
 
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final isSmallScreen = screenWidth < 360;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isTabletOrLaptop = screenWidth >= 700;
-    final horizontalPadding = isTabletOrLaptop
-        ? 24.0
-        : (isSmallScreen ? 12.0 : 18.0);
+    final width = MediaQuery.of(context).size.width;
+    final hPad = width >= 700 ? 24.0 : (width < 360 ? 14.0 : 18.0);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: RefreshIndicator(
-          color: isDark ? const Color(0xFF60A5FA) : _slateDark,
-          onRefresh: _handleRefresh,
+          color: Bento.accent,
+          onRefresh: _fetchProjects,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
+                constraints: const BoxConstraints(maxWidth: 760),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding,
-                    vertical: 12.0,
-                  ),
+                  padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(
-                        auth.name ?? 'Guest',
-                        auth.profileImage,
-                        isSmallScreen,
-                      ),
+                      _buildHeader(auth.name ?? 'Guest', auth.profileImage),
                       const SizedBox(height: 20),
-                      _buildConstructionOverview(isSmallScreen, screenWidth),
-                      const SizedBox(height: 28),
-                      _buildWhatAreYouLookingFor(isSmallScreen, screenWidth),
-                      const SizedBox(height: 28),
-                      _buildBanner(isSmallScreen, screenWidth),
-                      const SizedBox(height: 28),
-                      _buildQuickActions(isSmallScreen, screenWidth),
-                      const SizedBox(height: 28),
-                      _buildMyActivity(isSmallScreen, screenWidth),
-                      const SizedBox(height: 28),
-                      _buildBuilderInspirations(isSmallScreen, screenWidth),
-                      const SizedBox(height: 48),
+                      _buildHero(),
+                      const SizedBox(height: Bento.gap),
+                      _buildActionGrid(),
+                      const SizedBox(height: Bento.gap),
+                      // Sponsored banner slot (Admin Panel -> Ads Manager -> "Home Page Banner")
+                      const HomeAdSlot(side: 'CLIENT', padding: EdgeInsets.only(bottom: Bento.gap)),
+                      _buildOverviewStrip(),
+                      const SizedBox(height: 30),
+                      _buildExperts(),
+                      const SizedBox(height: Bento.gap),
+                      _buildMaterialsTile(),
+                      const SizedBox(height: 30),
+                      _buildMyActivity(),
+                      const SizedBox(height: 30),
+                      _buildInspirations(),
                     ],
                   ),
                 ),
@@ -175,646 +244,206 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _getTimeGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) {
-      return 'Good Morning';
-    } else if (hour >= 12 && hour < 17) {
-      return 'Good Afternoon';
-    } else if (hour >= 17 && hour < 22) {
-      return 'Good Evening';
-    } else {
-      return 'Good Night';
-    }
-  }
+  // ---------------------------------------------------------------------------
+  // 1. Header
+  // ---------------------------------------------------------------------------
 
-  String _getTimeGreetingEmoji() {
-    final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) {
-      return '☀️';
-    } else if (hour >= 12 && hour < 17) {
-      return '🌤️';
-    } else if (hour >= 17 && hour < 22) {
-      return '🌆';
-    } else {
-      return '🌙';
-    }
-  }
+  Widget _buildHeader(String name, String? profileImage) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final unread = ref.watch(notificationsProvider).where((n) => n.isUnread).length;
+    final firstName = name.trim().split(' ').first;
+    final today = DateFormat('EEE, d MMM').format(DateTime.now());
 
-  String _getTimeGreetingSubtitle() {
-    final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) {
-      return 'Let\'s build something great today.';
-    } else if (hour >= 12 && hour < 17) {
-      return 'Keep tracking your active site progress.';
-    } else if (hour >= 17 && hour < 22) {
-      return 'Review your day\'s construction milestones.';
-    } else {
-      return 'Plan ahead for tomorrow\'s site milestones.';
-    }
-  }
-
-  Widget _buildHeader(String name, String? profileImage, bool isSmallScreen) {
-    final todayStr = DateFormat('EEEE, MMM d').format(DateTime.now());
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final notifications = ref.watch(notificationsProvider);
-    final unreadCount = notifications.where((n) => n.isUnread).length;
-
-    final greeting = _getTimeGreeting();
-    final greetingEmoji = _getTimeGreetingEmoji();
-    final subtitle = _getTimeGreetingSubtitle();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Row(
-          children: [
-            // Profile avatar — shows photo if available, else initials
-            GestureDetector(
-              onTap: () => ref.read(mainTabProvider.notifier).state =
-                  4, // go to Profile tab
-              child: _buildProfileAvatar(
-                name,
-                profileImage,
-                isSmallScreen ? 20.0 : 24.0,
-              ),
-            ),
-            SizedBox(width: isSmallScreen ? 10 : 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$greeting, $name $greetingEmoji',
-                    '$greeting, $name',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 18 : 22,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : Colors.black87,
-                      letterSpacing: -0.5,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 12 : 14,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : Colors.grey.shade500,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () => context.push('/notifications'),
-              child: Stack(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.grey.shade200,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.notifications_none_rounded,
-                      color: isDark ? Colors.white : Colors.black87,
-                      size: isSmallScreen ? 20 : 24,
-                    ),
-                  ),
-                  if (unreadCount > 0)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.redAccent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '$unreadCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+        BentoPressable(
+          onTap: () => ref.read(mainTabProvider.notifier).setTab(4),
+          child: BentoAvatar(name: name, image: profileImage, size: 46),
         ),
-        const SizedBox(height: 18),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: isSmallScreen ? 15 : 18,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : Colors.grey.shade600,
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      todayStr,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 12 : 14,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? const Color(0xFFCBD5E1)
-                            : Colors.grey.shade700,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$today · ${_greeting()} ${_greetingEmoji()}',
+                style: TextStyle(fontSize: 12.5, color: Bento.muted(dark), fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/create-project'),
-              icon: Icon(
-                Icons.add_rounded,
-                size: isSmallScreen ? 15 : 18,
-                color: Colors.white,
-              ),
-              label: Text(
-                isSmallScreen ? 'New Project' : 'Start New Project',
+              const SizedBox(height: 2),
+              Text(
+                firstName.isEmpty ? 'Welcome' : firstName,
                 style: TextStyle(
-                  fontSize: isSmallScreen ? 12 : 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 24,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.8,
+                  color: Bento.text(dark),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isDark ? const Color(0xFF2563EB) : _slateDark,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 10 : 16,
-                  vertical: isSmallScreen ? 8 : 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-            ),
-          ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        BentoBadgeButton(
+          icon: Icons.notifications_none_rounded,
+          count: unread,
+          onTap: () => context.push('/notifications'),
         ),
       ],
     );
   }
 
-  /// Renders the home-screen avatar: real photo when available, initials fallback otherwise.
-  Widget _buildProfileAvatar(String name, String? profileImage, double radius) {
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
-    final size = radius * 2;
+  // ---------------------------------------------------------------------------
+  // 2. Hero — active project, or "start your journey"
+  // ---------------------------------------------------------------------------
 
-    if (profileImage != null && profileImage.trim().isNotEmpty) {
-      final src = profileImage.trim();
-
-      if (src.startsWith('http://') || src.startsWith('https://')) {
-        return ClipOval(
-          child: Image.network(
-            src,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            gaplessPlayback: true,
-            errorBuilder: (context, error, stack) =>
-                _initialsCircle(initial, size),
-          ),
-        );
-      }
-
-      // Base64 image (supports data:image/... and raw base64)
-      final bytes = Base64ImageCache.decode(src);
-      if (bytes.isNotEmpty) {
-        return ClipOval(
-          child: Image.memory(
-            bytes,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            gaplessPlayback: true,
-            errorBuilder: (context, error, stack) =>
-                _initialsCircle(initial, size),
-          ),
-        );
-      }
-    }
-
-    return _initialsCircle(initial, size);
-  }
-
-  Widget _initialsCircle(String initial, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: _slateDark, shape: BoxShape.circle),
-      alignment: Alignment.center,
-      child: Text(
-        initial,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: size * 0.42,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConstructionOverview(bool isSmallScreen, double screenWidth) {
+  Widget _buildHero() {
     if (_isLoading) {
-      return ShimmerHomeOverview(isSmallScreen: isSmallScreen);
+      return ShimmerHomeOverview(isSmallScreen: MediaQuery.of(context).size.width < 360);
     }
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    int activeProjects = _projects.where((p) {
-      final stage = (p['currentStage'] as String? ?? '').toLowerCase();
-      return stage != 'completed' &&
-          stage != 'finished' &&
-          stage != 'cancelled';
-    }).length;
-
-    int estimatesCreated = _projects.length;
-    int quotesReceived = 0;
-    for (var p in _projects) {
-      quotesReceived += (p['_count']?['quotes'] as int? ?? 0);
-    }
-    int ordersPlaced = _materialOrders.length;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: isDark
-            ? Border.all(color: Colors.white.withValues(alpha: 0.08))
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(
-                  'Construction Overview',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14.5 : 16,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => context.push('/dashboard'),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Dashboard',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 11.5 : 12,
-                        color: isDark
-                            ? const Color(0xFF60A5FA)
-                            : Colors.grey.shade600,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 16,
-                      color: isDark
-                          ? const Color(0xFF60A5FA)
-                          : Colors.grey.shade600,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: isSmallScreen ? 12 : 18),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildOverviewCard(
-                'Projects',
-                'Active',
-                activeProjects.toString(),
-                Icons.business_rounded,
-                Colors.green,
-                isSmallScreen,
-              ),
-              _buildOverviewCard(
-                'Estimates',
-                'Created',
-                estimatesCreated.toString(),
-                Icons.calculate_outlined,
-                Colors.blue,
-                isSmallScreen,
-              ),
-              _buildOverviewCard(
-                'Quotes',
-                'Received',
-                quotesReceived.toString(),
-                Icons.assignment_outlined,
-                Colors.orange,
-                isSmallScreen,
-              ),
-              _buildOverviewCard(
-                'Orders',
-                'Placed',
-                ordersPlaced.toString(),
-                Icons.inventory_2_outlined,
-                Colors.purple,
-                isSmallScreen,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    final active = _activeProjects;
+    return active.isEmpty ? _buildJourneyHero() : _buildProjectHero(active.first, active.length);
   }
 
-  Widget _buildOverviewCard(
-    String title,
-    String subtitle,
-    String value,
-    IconData icon,
-    Color color,
-    bool isSmallScreen,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
-        padding: EdgeInsets.symmetric(
-          vertical: isSmallScreen ? 10 : 14,
-          horizontal: isSmallScreen ? 2 : 4,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF0F172A) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: color.withValues(alpha: isDark ? 0.35 : 0.15),
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: isSmallScreen ? 20 : 26),
-            SizedBox(height: isSmallScreen ? 4 : 6),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 16 : 19,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 8.5 : 10,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
-                ),
-              ),
-            ),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: isSmallScreen ? 8.5 : 10,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildProjectHero(dynamic project, int activeCount) {
+    final title = (project['title'] ?? 'My Project').toString();
+    final location = (project['location'] ?? '').toString();
+    final stage = (project['currentStage'] ?? 'Planning').toString();
+    final isOnHold = stage.toLowerCase().trim() == 'on hold';
+    final progress = ProjectProgressHelper.calculateFromProject(project);
+    final percent = (progress.progressValue * 100).round();
+    final quotes = _quoteCountOf(project);
 
-  Widget _buildBanner(bool isSmallScreen, double screenWidth) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: isDark
-            ? Border.all(color: Colors.white.withValues(alpha: 0.08))
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+    return BentoCard(
+      gradient: Bento.inkGradient,
+      padding: EdgeInsets.zero,
+      onTap: () => context.push('/project-detail/${project['id']}'),
       child: Stack(
         children: [
-          Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark
-                        ? [
-                            Colors.orange.shade900.withValues(alpha: 0.25),
-                            Colors.blue.shade900.withValues(alpha: 0.25),
-                          ]
-                        : [
-                            Colors.orange.shade50.withValues(alpha: 0.5),
-                            Colors.blue.shade50.withValues(alpha: 0.3),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          const Positioned(right: -60, top: -70, child: BentoGlow(size: 220)),
           Padding(
-            padding: EdgeInsets.all(isSmallScreen ? 14.0 : 20.0),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 6,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'YOUR NEXT STEP',
-                            style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.orange,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Start Your Construction Journey',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 17 : 20,
-                              fontWeight: FontWeight.w900,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
-                              height: 1.2,
-                              letterSpacing: -0.4,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Create estimate, get quotes and build your dream project.',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 11.5 : 13,
-                              color: isDark
-                                  ? const Color(0xFF94A3B8)
-                                  : Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          ElevatedButton(
-                            onPressed: () => context.push('/create-project'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isDark
-                                  ? const Color(0xFF2563EB)
-                                  : _slateDark,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isSmallScreen ? 12 : 18,
-                                vertical: isSmallScreen ? 8 : 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Create Estimate',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: isSmallScreen ? 12 : 13,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: isSmallScreen ? 14 : 16,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    BentoPill(
+                      label: 'ACTIVE PROJECT',
+                      color: Bento.accentLight,
+                      background: Bento.accentLight.withValues(alpha: 0.16),
+                      icon: Icons.bolt_rounded,
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      flex: 4,
-                      child: Image.asset(
-                        'assets/images/banner_building.jpg',
-                        height: isSmallScreen ? 90 : 115,
-                        fit: BoxFit.contain,
-                        color: isDark
-                            ? null
-                            : Colors.white.withValues(alpha: 0.01),
-                        colorBlendMode: isDark
-                            ? BlendMode.srcOver
-                            : BlendMode.darken,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.construction,
-                          size: isSmallScreen ? 65 : 85,
-                          color: Colors.grey,
-                        ),
-                      ),
+                    const Spacer(),
+                    BentoPill(
+                      label: isOnHold ? 'On hold' : stage,
+                      color: isOnHold ? const Color(0xFFFBBF24) : Colors.white,
+                      background: Colors.white.withValues(alpha: 0.1),
+                      icon: isOnHold ? Icons.pause_rounded : Icons.flag_rounded,
                     ),
                   ],
                 ),
-                SizedBox(height: isSmallScreen ? 16 : 20),
+                const SizedBox(height: 18),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    height: 1.15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.6,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (location.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.place_rounded, size: 14, color: Colors.white54),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          location,
+                          style: const TextStyle(color: Colors.white60, fontSize: 12.5),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 20),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _buildStepIcon(
-                      Icons.calculate_outlined,
-                      'Estimate',
-                      Colors.orange,
-                      isSmallScreen,
+                    Text(
+                      '$percent',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 48,
+                        height: 0.95,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -2,
+                      ),
                     ),
-                    _buildStepLine(isSmallScreen),
-                    _buildStepIcon(
-                      Icons.engineering_outlined,
-                      'Get Quotes',
-                      Colors.blue,
-                      isSmallScreen,
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 4, left: 2),
+                      child: Text('%', style: TextStyle(color: Bento.accentLight, fontSize: 22, fontWeight: FontWeight.w900)),
                     ),
-                    _buildStepLine(isSmallScreen),
-                    _buildStepIcon(
-                      Icons.handshake_outlined,
-                      'Select Builder',
-                      Colors.teal,
-                      isSmallScreen,
+                    const SizedBox(width: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 6),
+                      child: Text('complete', style: TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600)),
                     ),
-                    _buildStepLine(isSmallScreen),
-                    _buildStepIcon(
-                      Icons.foundation_outlined,
-                      'Start Project',
-                      Colors.purple,
-                      isSmallScreen,
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _formatBudget(project['budget']),
+                          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+                        ),
+                        const Text('budget', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                      ],
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                BentoProgressBar(
+                  value: progress.progressValue,
+                  trackColor: Colors.white.withValues(alpha: 0.12),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.request_quote_rounded, size: 15, color: Colors.white.withValues(alpha: 0.7)),
+                    const SizedBox(width: 6),
+                    Text(
+                      quotes == 1 ? '1 quote received' : '$quotes quotes received',
+                      style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ),
+                    const Spacer(),
+                    if (activeCount > 1)
+                      GestureDetector(
+                        onTap: () => ref.read(mainTabProvider.notifier).setTab(1),
+                        child: Text(
+                          '+${activeCount - 1} more',
+                          style: const TextStyle(color: Bento.accentLight, fontSize: 12.5, fontWeight: FontWeight.w800),
+                        ),
+                      )
+                    else
+                      const Row(
+                        children: [
+                          Text('Open', style: TextStyle(color: Bento.accentLight, fontSize: 12.5, fontWeight: FontWeight.w800)),
+                          SizedBox(width: 2),
+                          Icon(Icons.arrow_forward_rounded, color: Bento.accentLight, size: 15),
+                        ],
+                      ),
                   ],
                 ),
               ],
@@ -825,846 +454,909 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildStepIcon(
-    IconData icon,
-    String label,
-    Color color,
-    bool isSmallScreen,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: color.withValues(alpha: 0.5)),
-            color: isDark ? const Color(0xFF0F172A) : Colors.white,
-          ),
-          child: Icon(icon, color: color, size: isSmallScreen ? 15 : 18),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isSmallScreen ? 7.5 : 9,
-            fontWeight: FontWeight.bold,
-            color: isDark ? const Color(0xFFCBD5E1) : Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStepLine(bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        height: 1,
-        margin: EdgeInsets.symmetric(
-          horizontal: isSmallScreen ? 4 : 6,
-        ).copyWith(bottom: 14),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final count = (constraints.constrainWidth() / 4).floor();
-            return Flex(
-              direction: Axis.horizontal,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(
-                count > 0 ? count : 1,
-                (index) => SizedBox(
-                  width: 2,
-                  height: 1,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.grey,
+  Widget _buildJourneyHero() {
+    const steps = ['Estimate', 'Quotes', 'Builder', 'Build'];
+    return BentoCard(
+      gradient: Bento.inkGradient,
+      padding: EdgeInsets.zero,
+      child: Stack(
+        children: [
+          const Positioned(right: -50, top: -60, child: BentoGlow(size: 200)),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          BentoPill(
+                            label: 'YOUR NEXT STEP',
+                            color: Bento.accentLight,
+                            background: Bento.accentLight.withValues(alpha: 0.16),
+                            icon: Icons.auto_awesome_rounded,
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Build your\ndream project',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              height: 1.1,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Get an estimate, compare quotes from verified builders and track every stage.',
+                            style: TextStyle(color: Colors.white60, fontSize: 12.5, height: 1.4),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Image.asset(
+                        'assets/images/banner_building.jpg',
+                        width: 92,
+                        height: 112,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const SizedBox(width: 92, height: 112),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            );
-          },
-        ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    for (int i = 0; i < steps.length; i++) ...[
+                      Container(
+                        width: 22,
+                        height: 22,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          gradient: i == 0 ? Bento.accentGradient : null,
+                          color: i == 0 ? null : Colors.white.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${i + 1}',
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          steps[i],
+                          style: TextStyle(
+                            color: i == 0 ? Colors.white : Colors.white60,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (i < steps.length - 1)
+                        Expanded(
+                          child: Container(
+                            height: 1.5,
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            color: Colors.white.withValues(alpha: 0.15),
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 18),
+                BentoButton(label: 'Create estimate', onTap: () => context.push('/create-project')),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildWhatAreYouLookingFor(bool isSmallScreen, double screenWidth) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final categories = [
-      {
-        'title': 'Architecture',
-        'badge': 'Design & Plans',
-        'subtitle': '2D/3D Floor Plans, Elevations, Structural Layouts & Vastu',
-        'icon': Icons.architecture_rounded,
-        'gradient': const [Color(0xFF6F42C1), Color(0xFF8B5CF6)],
-        'accent': const Color(0xFF6F42C1),
-        'bg': const Color(0xFFF5F3FF),
-        'tags': ['3D Design', 'Vastu', 'Approvals'],
-        'route': '/providers/Design%20%26%20Planning',
-        'buttonText': 'Find Architects',
-      },
-      {
-        'title': 'Builders',
-        'badge': 'Turnkey & Civil',
-        'subtitle': 'Verified Residential & Commercial General Contractors',
-        'icon': Icons.apartment_rounded,
-        'gradient': const [Color(0xFF0284C7), Color(0xFF2563EB)],
-        'accent': const Color(0xFF0284C7),
-        'bg': const Color(0xFFF0F9FF),
-        'tags': ['Turnkey', 'Renovation', 'Civil Work'],
-        'route': '/providers/Builder%2FGeneral%20Contractor',
-        'buttonText': 'Find Builders',
-      },
-      {
-        'title': 'Promoters',
-        'badge': 'Land & Plots',
-        'subtitle': 'Approved Layouts, Gated Communities & Joint Ventures',
-        'icon': Icons.real_estate_agent_rounded,
-        'gradient': const [Color(0xFF059669), Color(0xFF10B981)],
-        'accent': const Color(0xFF059669),
-        'bg': const Color(0xFFECFDF5),
-        'tags': ['Plots', 'DTCP/RERA', 'Villas'],
-        'route': '/providers/Commercial%20Builder',
-        'buttonText': 'Find Promoters',
-      },
-      {
-        'title': 'Interiors',
-        'badge': 'Modular & Decor',
-        'subtitle': 'Modular Kitchens, Custom Woodwork, Lighting & Styling',
-        'icon': Icons.chair_rounded,
-        'gradient': const [Color(0xFFEA580C), Color(0xFFF97316)],
-        'accent': const Color(0xFFEA580C),
-        'bg': const Color(0xFFFFF7ED),
-        'tags': ['Modular Kitchen', 'Woodwork', 'Decor'],
-        'route': '/providers/Interiors%20%26%20Finishing',
-        'buttonText': 'Find Designers',
-      },
-      {
-        'title': 'LED Walls',
-        'badge': 'Digital Displays',
-        'subtitle':
-            'Commercial LED Walls, Digital Video Displays & Stage Screens',
-        'icon': Icons.smart_display_rounded,
-        'gradient': const [Color(0xFF0284C7), Color(0xFF06B6D4)],
-        'accent': const Color(0xFF0284C7),
-        'bg': const Color(0xFFE0F2FE),
-        'tags': ['LED Screens', 'Digital Signage', 'Stage Displays'],
-        'route': '/providers/LED%20Walls%20%26%20Digital%20Displays',
-        'buttonText': 'Find LED Experts',
-      },
-    ];
+  // ---------------------------------------------------------------------------
+  // 3. Action grid — New project (tall) + Compare quotes + Cost estimate
+  // ---------------------------------------------------------------------------
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 1. Top Pill Badge
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 10 : 11,
-            vertical: isSmallScreen ? 4 : 4.5,
-          ),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark
-                  ? const Color(0xFF3B82F6).withValues(alpha: 0.3)
-                  : const Color(0xFFC7D2FE),
-              width: 1,
+  Widget _buildActionGrid() {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final quotes = _totalQuotes;
+
+    return SizedBox(
+      height: 186,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: BentoCard(
+              gradient: Bento.accentGradient,
+              padding: const EdgeInsets.all(18),
+              onTap: () => context.push('/create-project'),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -18,
+                    bottom: -22,
+                    child: Icon(Icons.foundation_rounded, size: 110, color: Colors.white.withValues(alpha: 0.18)),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 26),
+                      ),
+                      const Spacer(),
+                      const Text(
+                        'New\nproject',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          height: 1.05,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Estimate in minutes',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.travel_explore_rounded,
-                size: isSmallScreen ? 13 : 15,
-                color: isDark
-                    ? const Color(0xFF60A5FA)
-                    : const Color(0xFF2563EB),
-              ),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  'NEED EXPERTS FOR YOUR PROJECT?',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 9 : 10.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                    color: isDark
-                        ? const Color(0xFF60A5FA)
-                        : const Color(0xFF2563EB),
+          const SizedBox(width: Bento.gap),
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(
+                  child: _miniActionTile(
+                    icon: Icons.compare_arrows_rounded,
+                    color: Bento.violet,
+                    title: 'Compare quotes',
+                    caption: quotes == 0 ? 'No quotes yet' : '$quotes received',
+                    badge: quotes > 0 ? '$quotes' : null,
+                    onTap: _handleCompareQuotesTap,
+                    dark: dark,
                   ),
+                ),
+                const SizedBox(height: Bento.gap),
+                Expanded(
+                  child: _miniActionTile(
+                    icon: Icons.calculate_rounded,
+                    color: Bento.green,
+                    title: 'Cost estimate',
+                    caption: 'Plan your budget',
+                    onTap: () => context.push('/cost-estimation'),
+                    dark: dark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniActionTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String caption,
+    required VoidCallback onTap,
+    required bool dark,
+    String? badge,
+  }) {
+    return BentoCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      onTap: onTap,
+      child: Row(
+        children: [
+          BentoIconBubble(icon: icon, color: color, size: 38),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Bento.text(dark), letterSpacing: -0.2),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  caption,
+                  style: TextStyle(fontSize: 11, color: Bento.muted(dark)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          if (badge != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(gradient: Bento.accentGradient, borderRadius: BorderRadius.circular(10)),
+              child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+            ),
+        ],
+      ),
+    );
+  }
 
-        // 2. Section Header: Title on Left, See More on Right
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+  // ---------------------------------------------------------------------------
+  // 4. Overview strip
+  // ---------------------------------------------------------------------------
+
+  Widget _buildOverviewStrip() {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final stats = [
+      (_activeProjects.length, 'Active', Bento.green),
+      (_projects.length, 'Estimates', Bento.blue),
+      (_totalQuotes, 'Quotes', Bento.accentLight),
+      (_materialOrders.length, 'Orders', Bento.violet),
+    ];
+
+    return BentoCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+      onTap: () => context.push('/dashboard'),
+      child: Row(
+        children: [
+          for (int i = 0; i < stats.length; i++) ...[
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'What do you look for?',
+                    _isLoading ? '–' : '${stats[i].$1}',
                     style: TextStyle(
-                      fontSize: isSmallScreen ? 19 : 24,
+                      fontSize: 22,
+                      height: 1,
                       fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
-                      letterSpacing: -0.5,
+                      letterSpacing: -0.8,
+                      color: Bento.text(dark),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Hire verified architects, builders, promoters & pros.',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 11.5 : 13,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(color: stats[i].$3, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          stats[i].$2,
+                          style: TextStyle(fontSize: 11, color: Bento.muted(dark), fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            // See More / Market Button
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 12 : 16,
-                  vertical: isSmallScreen ? 7 : 9,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.28),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'See More',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 11.5 : 13,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 14,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            if (i < stats.length - 1)
+              Container(width: 1, height: 30, margin: const EdgeInsets.only(right: 10), color: Bento.border(dark)),
           ],
-        ),
-        const SizedBox(height: 16),
-
-        // Cards layout: Horizontal scrollable carousel
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          clipBehavior: Clip.none,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...categories.map((cat) {
-                return Container(
-                  width: isSmallScreen ? 230 : 255,
-                  margin: const EdgeInsets.only(right: 12),
-                  child: _buildLookingForCard(cat, isSmallScreen, false),
-                );
-              }),
-              // "Explore 30+ More in Market" end card
-              _buildMarketEndCard(isSmallScreen),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLookingForCard(
-    Map<String, dynamic> cat,
-    bool isSmallScreen,
-    bool isExpanded,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final title = cat['title'] as String;
-    final badge = cat['badge'] as String;
-    final subtitle = cat['subtitle'] as String;
-    final icon = cat['icon'] as IconData;
-    final gradient = cat['gradient'] as List<Color>;
-    final accent = cat['accent'] as Color;
-    final bg = cat['bg'] as Color;
-    final tags = cat['tags'] as List<String>;
-    final route = cat['route'] as String;
-    final buttonText = cat['buttonText'] as String;
-
-    return GestureDetector(
-      onTap: () => context.push(route),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : const Color(0xFFE2E8F0),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: accent.withValues(alpha: isDark ? 0.04 : 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 5),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: Stack(
-            children: [
-              // Subtle background decoration glow
-              Positioned(
-                top: -24,
-                right: -24,
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        accent.withValues(alpha: isDark ? 0.18 : 0.12),
-                        accent.withValues(alpha: 0.0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(isSmallScreen ? 14 : 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Top Row: Icon + Badge
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(isSmallScreen ? 9 : 11),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: gradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: accent.withValues(alpha: 0.35),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            icon,
-                            color: Colors.white,
-                            size: isSmallScreen ? 20 : 22,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 4.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? accent.withValues(alpha: 0.18)
-                                  : bg,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: accent.withValues(
-                                  alpha: isDark ? 0.45 : 0.35,
-                                ),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              badge,
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 9.5 : 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : accent,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isSmallScreen ? 12 : 14),
-
-                    // Title
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 16.5 : 18,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        letterSpacing: -0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Subtitle / Description
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 11 : 12,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : const Color(0xFF64748B),
-                        height: 1.35,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: isSmallScreen ? 12 : 14),
-
-                    // Tags
-                    Wrap(
-                      spacing: 5,
-                      runSpacing: 5,
-                      children: tags.map((tag) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3.5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF0F172A)
-                                : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                          child: Text(
-                            tag,
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 9 : 10,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? const Color(0xFFCBD5E1)
-                                  : const Color(0xFF475569),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    SizedBox(height: isSmallScreen ? 14 : 16),
-
-                    // Bottom Action Button
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(
-                        vertical: isSmallScreen ? 8.5 : 9.5,
-                        horizontal: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : bg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: accent.withValues(alpha: isDark ? 0.5 : 0.3),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              buttonText,
-                              style: TextStyle(
-                                color: isDark ? Colors.white : accent,
-                                fontWeight: FontWeight.w800,
-                                fontSize: isSmallScreen ? 11.5 : 12.5,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 13,
-                            color: isDark ? Colors.white : accent,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+          Icon(Icons.chevron_right_rounded, color: Bento.muted(dark)),
+        ],
       ),
     );
   }
 
-  Widget _buildMarketEndCard(bool isSmallScreen) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
-      child: Container(
-        width: isSmallScreen ? 170 : 190,
-        margin: const EdgeInsets.only(right: 4),
-        padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: const Icon(
-                Icons.storefront_rounded,
-                color: Color(0xFF38BDF8),
-                size: 26,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Explore 30+\nMore Services',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 13.5,
-                height: 1.25,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Survey, MEP, Legal,\nBorewell, Materials',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 9.5,
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Material(
-              color: const Color(0xFF38BDF8),
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                splashColor: Colors.white.withValues(alpha: 0.35),
-                onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Go to Market',
-                        style: TextStyle(
-                          color: Color(0xFF0F172A),
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 11,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ---------------------------------------------------------------------------
+  // 5. Experts bento grid
+  // ---------------------------------------------------------------------------
 
-  Widget _buildQuickActions(bool isSmallScreen, double screenWidth) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildExperts() {
+    final cats = _expertCategories;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Quick Actions',
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 18 : 22,
-                          fontWeight: FontWeight.w900,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF1E1E2D),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.auto_awesome,
-                        size: isSmallScreen ? 15 : 18,
-                        color: Colors.purple.shade300,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Everything you need, right at your fingertips.',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 11 : 12,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : Colors.grey.shade500,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () => ref.read(mainTabProvider.notifier).state = 2,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 8 : 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.grey.shade200,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+        BentoSectionHeader(
+          title: 'Find experts',
+          subtitle: 'Verified architects, builders & pros',
+          actionLabel: 'See all',
+          onAction: () => ref.read(mainTabProvider.notifier).setTab(2),
+        ),
+        SizedBox(
+          height: 176,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 6, child: _expertTile(cats[0], large: true)),
+              const SizedBox(width: Bento.gap),
+              Expanded(
+                flex: 5,
+                child: Column(
                   children: [
-                    Text(
-                      'All Actions',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 10.5 : 12,
-                        color: isDark
-                            ? const Color(0xFF818CF8)
-                            : Colors.indigo.shade900,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 3),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 14,
-                      color: isDark
-                          ? const Color(0xFF818CF8)
-                          : Colors.indigo.shade900,
-                    ),
+                    Expanded(child: _expertTile(cats[1])),
+                    const SizedBox(height: Bento.gap),
+                    Expanded(child: _expertTile(cats[2])),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
-        if (screenWidth >= 1050)
-          Row(
+        const SizedBox(height: Bento.gap),
+        SizedBox(
+          height: 82,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildQuickActionCard(
-                'Cost Estimate',
-                'Calculate project\ncost in minutes',
-                'Get Started',
-                Icons.calculate_rounded,
-                Colors.green.shade500,
-                'assets/images/calc_3d.jpg',
-                () => context.push('/cost-estimation'),
-                isSmallScreen,
-              ),
-              const SizedBox(width: 14),
-              _buildQuickActionCard(
-                'Find Contractor',
-                'Connect with\nverified builders',
-                'Explore',
-                Icons.engineering_rounded,
-                Colors.blue.shade600,
-                'assets/images/crane_3d.jpg',
-                () => context.push('/providers/All'),
-                isSmallScreen,
-              ),
-              const SizedBox(width: 14),
-              _buildQuickActionCard(
-                'Compare Quotes',
-                'Review & compare\nbest quotes',
-                'Compare Now',
-                Icons.assignment_outlined,
-                Colors.orange.shade500,
-                'assets/images/quote_3d.jpg',
-                _handleCompareQuotesTap,
-                isSmallScreen,
-              ),
-              const SizedBox(width: 14),
-              _buildQuickActionCard(
-                'Buy Materials',
-                'Get materials at\nbest prices',
-                'Shop Now',
-                Icons.shopping_cart_outlined,
-                Colors.purple.shade500,
-                'assets/images/cart_3d.jpg',
-                () => context.push('/b2b-products'),
-                isSmallScreen,
-              ),
-            ],
-          )
-        else ...[
-          Row(
-            children: [
-              _buildQuickActionCard(
-                'Cost Estimate',
-                'Calculate project\ncost in minutes',
-                'Get Started',
-                Icons.calculate_rounded,
-                Colors.green.shade500,
-                'assets/images/calc_3d.jpg',
-                () => context.push('/cost-estimation'),
-                isSmallScreen,
-              ),
-              SizedBox(width: isSmallScreen ? 10 : 16),
-              _buildQuickActionCard(
-                'Find Contractor',
-                'Connect with\nverified builders',
-                'Explore',
-                Icons.engineering_rounded,
-                Colors.blue.shade600,
-                'assets/images/crane_3d.jpg',
-                () => context.push('/providers/All'),
-                isSmallScreen,
-              ),
+              Expanded(child: _expertTile(cats[3])),
+              const SizedBox(width: Bento.gap),
+              Expanded(child: _expertTile(cats[4])),
+              const SizedBox(width: Bento.gap),
+              Expanded(child: _allExpertsTile()),
             ],
           ),
-          SizedBox(height: isSmallScreen ? 10 : 16),
-          Row(
-            children: [
-              _buildQuickActionCard(
-                'Compare Quotes',
-                'Review & compare\nbest quotes',
-                'Compare Now',
-                Icons.assignment_outlined,
-                Colors.orange.shade500,
-                'assets/images/quote_3d.jpg',
-                _handleCompareQuotesTap,
-                isSmallScreen,
-              ),
-              SizedBox(width: isSmallScreen ? 10 : 16),
-              _buildQuickActionCard(
-                'Buy Materials',
-                'Get materials at\nbest prices',
-                'Shop Now',
-                Icons.shopping_cart_outlined,
-                Colors.purple.shade500,
-                'assets/images/cart_3d.jpg',
-                () => context.push('/b2b-products'),
-                isSmallScreen,
-              ),
-            ],
-          ),
-        ],
+        ),
       ],
     );
   }
 
+  Widget _expertTile(Map<String, dynamic> cat, {bool large = false}) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final color = cat['color'] as Color;
+    final icon = cat['icon'] as IconData;
+
+    return BentoCard(
+      color: dark ? Color.alphaBlend(color.withValues(alpha: 0.14), Bento.surface(true)) : Color.alphaBlend(color.withValues(alpha: 0.08), Colors.white),
+      padding: EdgeInsets.all(large ? 16 : 12),
+      onTap: () => context.push(cat['route'] as String),
+      child: Stack(
+        children: [
+          Positioned(
+            right: large ? -14 : -10,
+            bottom: large ? -16 : -14,
+            child: Icon(icon, size: large ? 96 : 54, color: color.withValues(alpha: 0.13)),
+          ),
+          if (large)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                BentoIconBubble(icon: icon, color: color, size: 40),
+                const Spacer(),
+                Text(
+                  cat['title'] as String,
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: Bento.text(dark)),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  cat['subtitle'] as String,
+                  style: TextStyle(fontSize: 11.5, color: Bento.muted(dark), height: 1.3),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                BentoIconBubble(icon: icon, color: color, size: 32),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    cat['title'] as String,
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Bento.text(dark), letterSpacing: -0.2),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _allExpertsTile() {
+    return BentoCard(
+      gradient: Bento.inkGradient,
+      padding: const EdgeInsets.all(12),
+      onTap: () => context.push('/providers/All'),
+      child: const Row(
+        children: [
+          Expanded(
+            child: Text(
+              'All\nexperts',
+              style: TextStyle(color: Colors.white, fontSize: 13, height: 1.15, fontWeight: FontWeight.w900),
+            ),
+          ),
+          Icon(Icons.arrow_forward_rounded, color: Bento.accentLight, size: 18),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 6. Materials tile
+  // ---------------------------------------------------------------------------
+
+  Widget _buildMaterialsTile() {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return BentoCard(
+      padding: EdgeInsets.zero,
+      color: dark ? const Color(0xFF0F2A27) : Bento.accentSoft,
+      showBorder: false,
+      onTap: () => context.push('/b2b-products'),
+      child: IntrinsicHeight(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 116),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 8, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Buy materials',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                          color: dark ? Colors.white : Bento.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Cement, steel & more at wholesale prices',
+                        style: TextStyle(fontSize: 12, color: dark ? Colors.white70 : const Color(0xFF134E4A)),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Shop now',
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: Bento.accentText(dark)),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(Icons.arrow_forward_rounded, size: 15, color: Bento.accentText(dark)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(Bento.radius),
+                  bottomRight: Radius.circular(Bento.radius),
+                ),
+                child: Image.asset(
+                  'assets/images/cart_3d.jpg',
+                  width: 118,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox(width: 118),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 7. My activity
+  // ---------------------------------------------------------------------------
+
+  Widget _buildMyActivity() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        BentoSectionHeader(
+          title: 'My activity',
+          actionLabel: 'View all',
+          onAction: () {
+            if (_activeTabIndex == 1) {
+              context.push('/b2b-materials?tab=2');
+            } else if (_activeTabIndex == 2) {
+              context.push('/b2b-my-inquiries');
+            } else {
+              ref.read(mainTabProvider.notifier).setTab(1);
+            }
+          },
+        ),
+        BentoSegmented(
+          labels: const ['Projects', 'Orders', 'Inquiries'],
+          icons: const [Icons.home_work_rounded, Icons.inventory_2_rounded, Icons.forum_rounded],
+          index: _activeTabIndex,
+          onChanged: (i) => setState(() => _activeTabIndex = i),
+        ),
+        const SizedBox(height: Bento.gap),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: KeyedSubtree(key: ValueKey(_activeTabIndex), child: _buildActivityContent()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActivityContent() {
+    if (_activeTabIndex == 0) {
+      if (_isLoading) return const ShimmerProjectList(itemCount: 2);
+      final list = _activeProjects;
+      if (list.isEmpty) {
+        return _emptyState(
+          title: 'No active projects yet',
+          subtitle: 'Start a project to track construction progress here.',
+          image: 'assets/images/construction_paused.png',
+          cta: 'Start new project',
+          onTap: () => context.push('/create-project'),
+        );
+      }
+      return Column(children: list.take(3).map(_projectItem).toList());
+    }
+
+    if (_activeTabIndex == 1) {
+      if (_isLoading) return const ShimmerOrderList(itemCount: 2);
+      if (_materialOrders.isEmpty) {
+        return _emptyState(
+          title: 'No orders yet',
+          subtitle: 'Buy materials at wholesale prices from verified suppliers.',
+          image: 'assets/images/no_materials_orders.png',
+          cta: 'Shop materials',
+          onTap: () => context.push('/b2b-products'),
+        );
+      }
+      return Column(children: _materialOrders.take(3).map(_orderItem).toList());
+    }
+
+    return _emptyState(
+      title: 'Your inquiries',
+      subtitle: 'See quotes from suppliers for the materials you asked about.',
+      image: 'assets/images/construction_paused.png',
+      cta: 'Open inquiries',
+      onTap: () => context.push('/b2b-my-inquiries'),
+    );
+  }
+
+  Widget _projectItem(dynamic project) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final title = (project['title'] ?? 'Project').toString();
+    final location = (project['location'] ?? '').toString();
+    final stage = (project['currentStage'] ?? 'Planning').toString();
+    final isOnHold = stage.toLowerCase().trim() == 'on hold';
+    final progress = ProjectProgressHelper.calculateFromProject(project);
+    final percent = (progress.progressValue * 100).round();
+    final icons = [Icons.home_rounded, Icons.business_rounded, Icons.storefront_rounded];
+    final icon = icons[(project['id']?.toString() ?? '').hashCode.abs() % icons.length];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Bento.gap),
+      child: BentoCard(
+        padding: const EdgeInsets.all(14),
+        onTap: () => context.push('/project-detail/${project['id']}'),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                BentoIconBubble(icon: icon, color: isOnHold ? const Color(0xFFF59E0B) : Bento.accent, size: 44),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Bento.text(dark), letterSpacing: -0.3),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        location.isEmpty ? stage : '$location · $stage',
+                        style: TextStyle(fontSize: 11.5, color: Bento.muted(dark)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _formatBudget(project['budget']),
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w900, color: Bento.text(dark)),
+                    ),
+                    if (isOnHold)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 3),
+                        child: BentoPill(label: 'On hold', color: Color(0xFFD97706), icon: Icons.pause_rounded),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(child: BentoProgressBar(value: progress.progressValue, height: 7)),
+                const SizedBox(width: 10),
+                Text(
+                  '$percent%',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Bento.accentText(dark)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _orderItem(dynamic order) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final title = (order['title'] ?? order['product_name'] ?? 'Material').toString();
+    final status = (order['status'] ?? 'New').toString();
+    final deliveryStatus = order['delivery_status'];
+    final isDelivered = status == 'Completed' || (status == 'Closed' && deliveryStatus == 'Delivered');
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Bento.gap),
+      child: BentoCard(
+        padding: const EdgeInsets.all(14),
+        onTap: () => context.push(isDelivered ? '/b2b-materials?tab=2' : '/b2b-materials'),
+        child: Row(
+          children: [
+            BentoIconBubble(
+              icon: isDelivered ? Icons.check_circle_rounded : Icons.local_shipping_rounded,
+              color: isDelivered ? Bento.green : Bento.violet,
+              size: 42,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Bento.text(dark)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 5),
+                  BentoPill(
+                    label: isDelivered ? 'Delivered' : status,
+                    color: isDelivered ? const Color(0xFF059669) : Bento.blue,
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: Bento.muted(dark)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState({
+    required String title,
+    required String subtitle,
+    required String image,
+    required String cta,
+    required VoidCallback onTap,
+  }) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return BentoCard(
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              image,
+              width: 78,
+              height: 78,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => BentoIconBubble(icon: Icons.inbox_rounded, color: Bento.accentLight, size: 78),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Bento.text(dark)),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 11.5, color: Bento.muted(dark), height: 1.35),
+                ),
+                const SizedBox(height: 10),
+                BentoButton(label: cta, onTap: onTap, compact: true),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 8. Builder inspirations
+  // ---------------------------------------------------------------------------
+
+  Widget _buildInspirations() {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        BentoSectionHeader(
+          title: 'Builder inspirations',
+          subtitle: 'Recent work from Connectzy partners',
+          actionLabel: 'Explore',
+          onAction: () => ref.read(mainTabProvider.notifier).setTab(2),
+        ),
+        if (_isLoadingSocial || _isLoading)
+          const ShimmerSocialFeed(itemCount: 3)
+        else if (_socialPosts.isEmpty)
+          BentoCard(
+            child: Center(
+              child: Text('No showcases yet.', style: TextStyle(color: Bento.muted(dark), fontSize: 12.5)),
+            ),
+          )
+        else
+          SizedBox(
+            height: 236,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              itemCount: _socialPosts.length > 6 ? 6 : _socialPosts.length,
+              separatorBuilder: (_, _) => const SizedBox(width: Bento.gap),
+              itemBuilder: (context, index) => _inspirationCard(_socialPosts[index]),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _inspirationCard(dynamic post) {
+    final provider = post['provider'] ?? {};
+    final builderName = (provider['businessName'] ?? provider['ownerName'] ?? 'Partner').toString();
+    final title = (post['title'] ?? 'Showcase').toString();
+    final rawCategory = (provider['category'] ?? 'Construction').toString();
+    final category = rawCategory.split(',').first.trim();
+    final providerId = (provider['id'] ?? '').toString();
+    final imageData = (post['imageData'] as String?)?.trim() ?? '';
+
+    Widget image;
+    if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
+      image = Image.network(imageData, fit: BoxFit.cover, errorBuilder: (_, _, _) => _imageFallback());
+    } else if (imageData.isNotEmpty) {
+      final bytes = Base64ImageCache.decode(imageData);
+      image = bytes.isEmpty
+          ? _imageFallback()
+          : Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true, errorBuilder: (_, _, _) => _imageFallback());
+    } else {
+      image = _imageFallback();
+    }
+
+    return SizedBox(
+      width: 210,
+      child: BentoCard(
+        padding: EdgeInsets.zero,
+        onTap: providerId.isEmpty
+            ? null
+            : () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ProviderProfileScreen(providerId: providerId)),
+                ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            image,
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xCC000000)],
+                  stops: [0.35, 1],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              top: 12,
+              right: 12,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: BentoPill(label: category, color: Colors.white, background: Colors.black.withValues(alpha: 0.45)),
+              ),
+            ),
+            Positioned(
+              left: 14,
+              right: 14,
+              bottom: 14,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          builderName,
+                          style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.verified_rounded, color: Bento.accentLight, size: 13),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _imageFallback() {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      color: Bento.surfaceAlt(dark),
+      alignment: Alignment.center,
+      child: Icon(Icons.image_outlined, color: Bento.muted(dark), size: 36),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Compare quotes flow (unchanged behaviour)
+  // ---------------------------------------------------------------------------
+
   void _handleCompareQuotesTap() {
-    final activeProjects = _projects.where((p) {
-      final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
-      return !['completed', 'finished', 'cancelled'].contains(stage);
-    }).toList();
+    final activeProjects = _activeProjects;
 
     if (activeProjects.isEmpty) {
       if (_projects.isEmpty) {
@@ -1673,7 +1365,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('No active projects available for quote comparison.'),
-            backgroundColor: Color(0xFF1E293B),
+            backgroundColor: Bento.ink,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1688,20 +1380,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showProjectPickerBottomSheet(List<dynamic> activeProjects) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => SafeArea(
         child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.75),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            color: Bento.surface(dark),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1711,1278 +1401,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  decoration: BoxDecoration(color: Bento.border(dark), borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               Text(
-                'Select Project to Compare Quotes',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
+                'Which project?',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: Bento.text(dark)),
               ),
               const SizedBox(height: 4),
               Text(
-                'Choose which construction project you want to review bids for:',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark
-                      ? const Color(0xFF94A3B8)
-                      : const Color(0xFF64748B),
-                ),
+                'Pick the project whose quotes you want to compare.',
+                style: TextStyle(fontSize: 12.5, color: Bento.muted(dark)),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Flexible(
-                child: ListView.builder(
+                child: ListView.separated(
                   shrinkWrap: true,
                   physics: const BouncingScrollPhysics(),
                   itemCount: activeProjects.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, idx) {
                     final p = activeProjects[idx];
                     final pid = p['id'] ?? '';
-                    final title = p['title'] ?? 'Project ${idx + 1}';
-                    final location = p['location'] ?? 'N/A';
-                    final quotes = p['quotes'] as List? ?? [];
+                    final title = (p['title'] ?? 'Project ${idx + 1}').toString();
+                    final location = (p['location'] ?? '').toString();
+                    final quotes = _quoteCountOf(p);
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF0F172A)
-                            : const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 4,
-                        ),
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? const Color(0xFF4F46E5).withValues(alpha: 0.2)
-                                : const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.assignment_outlined,
-                            color: Color(0xFF818CF8),
-                            size: 20,
-                          ),
-                        ),
-                        title: Text(
-                          title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                            color: isDark
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          location,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            color: isDark
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF64748B),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: quotes.isNotEmpty
-                                    ? (isDark
-                                          ? const Color(0xFF064E3B)
-                                          : const Color(0xFFECFDF5))
-                                    : (isDark
-                                          ? const Color(0xFF1E293B)
-                                          : const Color(0xFFF1F5F9)),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${quotes.length} ${quotes.length == 1 ? 'quote' : 'quotes'}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: quotes.isNotEmpty
-                                      ? (isDark
-                                            ? const Color(0xFF34D399)
-                                            : const Color(0xFF10B981))
-                                      : (isDark
-                                            ? const Color(0xFF94A3B8)
-                                            : const Color(0xFF64748B)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: isDark
-                                  ? Colors.grey.shade500
-                                  : const Color(0xFF94A3B8),
-                              size: 18,
-                            ),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          context.push('/compare-quotes/$pid');
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionCard(
-    String title,
-    String subtitle,
-    String buttonText,
-    IconData icon,
-    Color color,
-    String imagePath,
-    VoidCallback onTap,
-    bool isSmallScreen,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final imageSize = isSmallScreen ? 40.0 : 46.0;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: isDark ? 0.05 : 0.10),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-            border: Border.all(
-              color: color.withValues(alpha: isDark ? 0.3 : 0.15),
-              width: 1.2,
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(17),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    isDark ? const Color(0xFF1E293B) : Colors.white,
-                    color.withValues(alpha: 0.04),
-                    color.withValues(alpha: 0.08),
-                  ],
-                ),
-              ),
-              padding: EdgeInsets.all(isSmallScreen ? 11 : 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Top Row: Icon on left, 3D image on right
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(isSmallScreen ? 7 : 9),
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.35),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          icon,
-                          color: Colors.white,
-                          size: isSmallScreen ? 18 : 22,
-                        ),
-                      ),
-                      Image.asset(
-                        imagePath,
-                        width: imageSize,
-                        height: imageSize,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const SizedBox.shrink(),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: isSmallScreen ? 8 : 12),
-                  // Title
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: isSmallScreen ? 13.5 : 14.5,
-                      color: isDark ? Colors.white : const Color(0xFF1E1E2D),
-                      letterSpacing: -0.3,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Container(
-                    width: 18,
-                    height: 2.5,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  // Subtitle (pure high contrast without overlapping background)
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF4B5563),
-                      fontSize: isSmallScreen ? 10 : 11,
-                      height: 1.25,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: isSmallScreen ? 8 : 12),
-                  // Button
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          buttonText,
-                          style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.w900,
-                            fontSize: isSmallScreen ? 10.5 : 11.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Colors.white,
-                          size: 9,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMyActivity(bool isSmallScreen, double screenWidth) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'My Activity',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF0F172A),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    _buildActivityTab('Projects', 0, isSmallScreen),
-                    _buildActivityTab('Orders', 1, isSmallScreen),
-                    _buildActivityTab('Inquiries', 2, isSmallScreen),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 6),
-            GestureDetector(
-              onTap: () {
-                if (_activeTabIndex == 1) {
-                  context.push('/b2b-materials?tab=2');
-                } else if (_activeTabIndex == 2) {
-                  context.push('/b2b-my-inquiries');
-                } else {
-                  ref.read(mainTabProvider.notifier).state = 1;
-                }
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'View All',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 11 : 12,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : Colors.grey.shade700,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 16,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : Colors.grey.shade700,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        _buildActivityContent(isSmallScreen),
-      ],
-    );
-  }
-
-  Widget _buildActivityContent(bool isSmallScreen) {
-    if (_activeTabIndex == 0) {
-      final activeProjectsList = _projects.where((p) {
-        final stage = (p['currentStage'] as String? ?? '').toLowerCase();
-        return stage != 'completed' &&
-            stage != 'finished' &&
-            stage != 'cancelled';
-      }).toList();
-      if (activeProjectsList.isEmpty && !_isLoading) {
-        return _buildActivityEmptyState(
-          'No active projects yet',
-          'Start a new project to track your\nconstruction progress here.',
-          Icons.foundation,
-          'assets/images/construction_paused.png',
-          'Start New Project',
-          () => context.push('/create-project'),
-          isSmallScreen,
-        );
-      }
-      return _isLoading
-          ? const ShimmerProjectList(itemCount: 2)
-          : Column(
-              children: activeProjectsList
-                  .take(3)
-                  .map((p) => _buildProjectListItem(p, isSmallScreen))
-                  .toList(),
-            );
-    } else if (_activeTabIndex == 1) {
-      if (_materialOrders.isEmpty && !_isLoading) {
-        return _buildActivityEmptyState(
-          'No active orders',
-          'Purchase materials at wholesale prices.',
-          Icons.inventory_2,
-          'assets/images/no_materials_orders.png',
-          'Shop Materials',
-          () => context.push('/b2b-products'),
-          isSmallScreen,
-        );
-      }
-      return _isLoading
-          ? const ShimmerOrderList(itemCount: 2)
-          : Column(
-              children: _materialOrders
-                  .take(3)
-                  .map((o) => _buildOrderListItem(o, isSmallScreen))
-                  .toList(),
-            );
-    } else {
-      return _buildActivityEmptyState(
-        'No recent inquiries',
-        'Explore materials and suppliers to send inquiries.',
-        Icons.inbox,
-        'assets/images/construction_paused.png',
-        'Explore Inquiries',
-        () => context.push('/b2b-my-inquiries'),
-        isSmallScreen,
-      );
-    }
-  }
-
-  Widget _buildProjectListItem(dynamic project, bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final title = project['title'] ?? 'N/A';
-    final currentStage = project['currentStage'] ?? 'Planning';
-    final location = project['location'] ?? 'N/A';
-    final budget = project['budget']?.toString() ?? '10,000';
-    final projectId = project['id']?.toString() ?? '';
-
-    final isCompleted =
-        currentStage.toString().toLowerCase() == 'completed' ||
-        currentStage.toString().toLowerCase() == 'finished';
-    final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
-    final isOnHold = currentStage.toString().toLowerCase().trim() == 'on hold';
-
-    final int colorIndex = projectId.hashCode.abs() % 3;
-    final List<Color> colors = [Colors.green, Colors.blue, Colors.purple];
-    final Color cardColor = isCancelled
-        ? Colors.red
-        : (isOnHold
-              ? Colors.orange
-              : (isCompleted ? colors[colorIndex] : Colors.green));
-    final IconData icon = [
-      Icons.home_rounded,
-      Icons.business_rounded,
-      Icons.storefront_rounded,
-    ][colorIndex];
-
-    final progressResult = ProjectProgressHelper.calculateFromProject(project);
-    final progressText = progressResult.progressText;
-    final progressValue = progressResult.progressValue;
-
-    return GestureDetector(
-      onTap: () => context.push('/project-detail/${project['id']}'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: isDark
-              ? Border.all(color: Colors.white.withValues(alpha: 0.08))
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(left: BorderSide(color: cardColor, width: 4)),
-            ),
-            padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(isSmallScreen ? 8 : 11),
-                      decoration: BoxDecoration(
-                        color: cardColor.withValues(
-                          alpha: isDark ? 0.22 : 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: cardColor,
-                        size: isSmallScreen ? 20 : 24,
-                      ),
-                    ),
-                    SizedBox(width: isSmallScreen ? 8 : 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    return BentoCard(
+                      padding: const EdgeInsets.all(12),
+                      color: Bento.surfaceAlt(dark),
+                      showBorder: false,
+                      radius: Bento.radiusSm,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        context.push('/compare-quotes/$pid');
+                      },
+                      child: Row(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
+                          const BentoIconBubble(icon: Icons.compare_arrows_rounded, color: Bento.violet, size: 40),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
                                   title,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: isSmallScreen ? 13.5 : 15,
-                                    color: isDark
-                                        ? Colors.white
-                                        : const Color(0xFF1E1E2D),
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Bento.text(dark)),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              const SizedBox(width: 4),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  '₹ $budget',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: isSmallScreen ? 13 : 15,
-                                    color: isDark
-                                        ? const Color(0xFF34D399)
-                                        : Colors.green,
+                                if (location.isNotEmpty)
+                                  Text(
+                                    location,
+                                    style: TextStyle(fontSize: 11.5, color: Bento.muted(dark)),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 11,
-                                color: isDark
-                                    ? const Color(0xFF64748B)
-                                    : Colors.grey.shade500,
-                              ),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  location,
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? const Color(0xFF94A3B8)
-                                        : Colors.grey.shade600,
-                                    fontSize: isSmallScreen ? 10.5 : 11.5,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              if (isCompleted)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withValues(
-                                      alpha: isDark ? 0.25 : 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'Completed',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                )
-                              else if (isCancelled)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.withValues(
-                                      alpha: isDark ? 0.25 : 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'Cancelled',
-                                    style: TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                )
-                              else if (isOnHold)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.withValues(
-                                      alpha: isDark ? 0.25 : 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.orange.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.pause_circle_filled_rounded,
-                                        color: Colors.orange,
-                                        size: 9,
-                                      ),
-                                      SizedBox(width: 2),
-                                      Text(
-                                        'On Hold',
-                                        style: TextStyle(
-                                          color: Colors.orange,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            isCompleted
-                                ? 'Finished'
-                                : (isOnHold
-                                      ? 'Status: On Hold (Paused)'
-                                      : 'Stage: $currentStage'),
-                            style: TextStyle(
-                              color: isOnHold
-                                  ? Colors.orange
-                                  : (isCompleted
-                                        ? (isDark
-                                              ? const Color(0xFF34D399)
-                                              : Colors.green.shade700)
-                                        : (isDark
-                                              ? const Color(0xFF94A3B8)
-                                              : Colors.grey.shade600)),
-                              fontSize: 10.5,
-                              fontWeight: isOnHold
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
+                              ],
                             ),
+                          ),
+                          BentoPill(
+                            label: quotes == 1 ? '1 quote' : '$quotes quotes',
+                            color: quotes > 0 ? const Color(0xFF059669) : Bento.muted(dark),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: isSmallScreen ? 10 : 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isCompleted ? 'Progress: Completed' : 'Stage Progress',
-                      style: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : Colors.grey.shade600,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      progressText,
-                      style: TextStyle(
-                        color: cardColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: progressValue,
-                    backgroundColor: isDark
-                        ? const Color(0xFF334155)
-                        : Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation<Color>(cardColor),
-                    minHeight: 5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrderListItem(dynamic order, bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final title = order['title'] ?? order['product_name'] ?? 'Material';
-    final status = order['status'] ?? 'New';
-    final deliveryStatus = order['delivery_status'];
-    final isDelivered =
-        status == 'Completed' ||
-        (status == 'Closed' && deliveryStatus == 'Delivered');
-
-    return GestureDetector(
-      onTap: () =>
-          context.push(isDelivered ? '/b2b-materials?tab=2' : '/b2b-materials'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDelivered
-                ? (isDark
-                      ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                      : const Color(0xFFA7F3D0))
-                : (isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.grey.shade200),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
-              decoration: BoxDecoration(
-                color: isDelivered
-                    ? (isDark
-                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                          : const Color(0xFFECFDF5))
-                    : (isDark
-                          ? Colors.purple.shade900.withValues(alpha: 0.3)
-                          : Colors.purple.shade50),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                isDelivered
-                    ? Icons.check_circle_rounded
-                    : Icons.inventory_2_rounded,
-                color: isDelivered
-                    ? const Color(0xFF10B981)
-                    : (isDark
-                          ? const Color(0xFFC084FC)
-                          : Colors.purple.shade700),
-                size: isSmallScreen ? 18 : 22,
-              ),
-            ),
-            SizedBox(width: isSmallScreen ? 10 : 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: isSmallScreen ? 12.5 : 14,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 1.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDelivered
-                              ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                              : Colors.blue.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          isDelivered
-                              ? 'Purchased & Delivered'
-                              : 'Status: $status',
-                          style: TextStyle(
-                            color: isDelivered
-                                ? const Color(0xFF059669)
-                                : Colors.blue.shade700,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
-              size: 18,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityEmptyState(
-    String title,
-    String subtitle,
-    IconData fallbackIcon,
-    String imageAsset,
-    String actionText,
-    VoidCallback onTap,
-    bool isSmallScreen,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isSmallScreen ? 14 : 20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.grey.shade200,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 4,
-            child: Image.asset(
-              imageAsset,
-              height: isSmallScreen ? 70 : 90,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                fallbackIcon,
-                size: isSmallScreen ? 50 : 70,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 15,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 10.5 : 11.5,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : Colors.grey.shade600,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: onTap,
-                  icon: const Icon(
-                    Icons.add_rounded,
-                    size: 14,
-                    color: Colors.white,
-                  ),
-                  label: Text(
-                    actionText,
-                    style: TextStyle(fontSize: isSmallScreen ? 11 : 12),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? const Color(0xFF2563EB)
-                        : _slateDark,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 10 : 14,
-                      vertical: 6,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityTab(String label, int index, bool isSmallScreen) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    bool isSelected = _activeTabIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _activeTabIndex = index),
-      child: Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: EdgeInsets.symmetric(
-          horizontal: isSmallScreen ? 9 : 12,
-          vertical: 5,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? const Color(0xFF2563EB) : _slateDark)
-              : (isDark ? const Color(0xFF1E293B) : Colors.grey.shade100),
-          borderRadius: BorderRadius.circular(16),
-          border: isDark && !isSelected
-              ? Border.all(color: Colors.white.withValues(alpha: 0.08))
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: isSmallScreen ? 10 : 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected
-                ? Colors.white
-                : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBuilderInspirations(bool isSmallScreen, double screenWidth) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Builder Inspirations',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
-              ),
-            ),
-            GestureDetector(
-              onTap: () =>
-                  ref.read(mainTabProvider.notifier).state = 2, // feed tab
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Explore Feed',
-                    style: TextStyle(
-                      fontSize: isSmallScreen ? 11.5 : 13,
-                      color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : Colors.grey.shade700,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 16,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : Colors.grey.shade700,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        if (_isLoadingSocial || _isLoading)
-          const ShimmerSocialFeed(itemCount: 3)
-        else if (_socialPosts.isEmpty)
-          Center(
-            child: Text(
-              'No showcases found.',
-              style: TextStyle(
-                color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500,
-                fontSize: 12,
-              ),
-            ),
-          )
-        else
-          SizedBox(
-            height: 230,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _socialPosts.length > 5 ? 5 : _socialPosts.length,
-              itemBuilder: (context, index) {
-                final post = _socialPosts[index];
-                final provider = post['provider'] ?? {};
-                final builderName =
-                    provider['businessName'] ??
-                    provider['ownerName'] ??
-                    'Provider';
-                final location = provider['city'] ?? 'Location';
-                final title = post['title'] ?? 'Showcase';
-
-                final rawCategory = (provider['category'] ?? 'Construction')
-                    .toString();
-                final category = rawCategory.contains(',')
-                    ? rawCategory.split(',').first.trim()
-                    : rawCategory;
-                Color tagColor = Colors.green;
-                final lowerCat = rawCategory.toLowerCase();
-                if (lowerCat.contains('interior')) tagColor = Colors.orange;
-                if (lowerCat.contains('commercial')) tagColor = Colors.blue;
-
-                return _buildInspirationCard(
-                  title,
-                  builderName,
-                  location,
-                  'Contact for details',
-                  category,
-                  tagColor,
-                  post['imageData'] as String?,
-                  provider['id'] ?? '',
-                  isSmallScreen,
-                );
-              },
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildInspirationCard(
-    String title,
-    String builder,
-    String location,
-    String price,
-    String category,
-    Color tagColor,
-    String? imageData,
-    String providerId,
-    bool isSmallScreen,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: () {
-        if (providerId.isNotEmpty) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ProviderProfileScreen(providerId: providerId),
-            ),
-          );
-        }
-      },
-      child: Container(
-        width: isSmallScreen ? 220 : 250,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.grey.shade200,
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  Container(
-                    height: 100,
-                    width: double.infinity,
-                    color: isDark
-                        ? const Color(0xFF0F172A)
-                        : Colors.grey.shade300,
-                    child: Builder(
-                      builder: (context) {
-                        if (imageData == null || imageData.trim().isEmpty) {
-                          return Center(
-                            child: Icon(
-                              Icons.image_outlined,
-                              color: Colors.grey.shade500,
-                              size: 36,
-                            ),
-                          );
-                        }
-                        final trimmed = imageData.trim();
-                        if (trimmed.startsWith('http://') ||
-                            trimmed.startsWith('https://')) {
-                          return Image.network(
-                            trimmed,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.image, color: Colors.grey),
-                          );
-                        }
-                        try {
-                          final clean = trimmed.contains(',')
-                              ? trimmed.split(',').last
-                              : trimmed;
-                          return Image.memory(
-                            base64Decode(clean),
-                            fit: BoxFit.cover,
-                            gaplessPlayback: true,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.image, color: Colors.grey),
-                          );
-                        } catch (_) {
-                          return const Center(
-                            child: Icon(Icons.image, color: Colors.grey),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 160),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tagColor,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: isSmallScreen ? 12.5 : 13.5,
-                              color: isDark
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Icon(
-                          Icons.bookmark_border_rounded,
-                          size: 16,
-                          color: isDark
-                              ? const Color(0xFF64748B)
-                              : Colors.grey.shade500,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            builder,
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              color: isDark
-                                  ? const Color(0xFFCBD5E1)
-                                  : Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        const Icon(
-                          Icons.verified,
-                          color: Colors.blue,
-                          size: 11,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      location,
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        color: isDark
-                            ? const Color(0xFF94A3B8)
-                            : Colors.grey.shade500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      price,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 11 : 12,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? const Color(0xFF34D399) : Colors.green,
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ],

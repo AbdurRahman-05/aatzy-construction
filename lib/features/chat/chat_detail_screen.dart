@@ -238,7 +238,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -345,7 +345,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
@@ -443,7 +443,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
@@ -543,9 +543,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         _handleBack();
       },
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
         appBar: AppBar(
-          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
           elevation: 0.5,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
@@ -565,7 +565,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        color: isDark ? Colors.white : const Color(0xFF111318),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -587,10 +587,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             PopupMenuButton<String>(
               icon: Icon(
                 Icons.more_vert_rounded,
-                color: isDark ? Colors.white70 : const Color(0xFF0F172A),
+                color: isDark ? Colors.white70 : const Color(0xFF111318),
               ),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF181B22) : Colors.white,
               onSelected: (val) {
                 if (val == 'delete_conversation') {
                   _confirmDeleteConversation();
@@ -659,7 +659,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ),
             // Input bar
             Container(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              color: isDark ? const Color(0xFF181B22) : Colors.white,
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -668,7 +668,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                            color: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA),
                             borderRadius: BorderRadius.circular(28),
                           ),
                           child: TextField(
@@ -764,7 +764,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 decoration: BoxDecoration(
                   color: isMe
                       ? Theme.of(context).primaryColor
-                      : (isDark ? const Color(0xFF334155) : Colors.white),
+                      : (isDark ? const Color(0xFF2E333D) : Colors.white),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),

@@ -111,7 +111,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark
         ? const Color(0xFF0F9B8E)
-        : const Color(0xFF064354);
+        : const Color(0xFF0F766E);
 
     return WallpaperBackground(
       child: Scaffold(
@@ -137,7 +137,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   ),
                 ),
                 backgroundColor: isDark
-                    ? const Color(0xFF121B22)
+                    ? const Color(0xFF0E1015)
                     : Colors.transparent,
                 elevation: 0,
                 actions: [
@@ -174,9 +174,9 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               TabBar(
                                 isScrollable: true,
                                 tabAlignment: TabAlignment.center,
-                                indicatorColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                                indicatorColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
                                 indicatorSize: TabBarIndicatorSize.label,
-                                labelColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+                                labelColor: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
                                 unselectedLabelColor: isDark ? Colors.white54 : Colors.grey.shade600,
                                 dividerColor: Colors.transparent,
                                 tabs: const [
@@ -284,7 +284,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              ? [const Color(0xFF181B22), const Color(0xFF111318)]
               : [Colors.white, Colors.grey.shade50],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -316,7 +316,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   gradient: LinearGradient(
                     colors: isDark
                         ? [const Color(0xFF2DD4BF), const Color(0xFF0F9B8E)]
-                        : [const Color(0xFF002E3B), const Color(0xFF002E3B)],
+                        : [const Color(0xFF0F766E), const Color(0xFF0F766E)],
                   ),
                 ),
               ),
@@ -340,11 +340,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               border: Border.all(
                                 color: isDark
                                     ? const Color(0xFF2DD4BF)
-                                    : const Color(0xFF002E3B),
+                                    : const Color(0xFF0F766E),
                                 width: 2,
                               ),
                               color: isDark
-                                  ? const Color(0xFF334155)
+                                  ? const Color(0xFF2E333D)
                                   : Colors.grey.shade200,
                             ),
                             child: Padding(
@@ -384,7 +384,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? const Color(0xFF0D9488)
-                                    : const Color(0xFF002E3B),
+                                    : const Color(0xFF0F766E),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -428,8 +428,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF475569),
+                                    ? const Color(0xFF9AA1AD)
+                                    : const Color(0xFF4B5563),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -484,13 +484,13 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFF1F5F9),
+                          ? const Color(0xFF181B22)
+                          : const Color(0xFFF0EEEA),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
-                            ? const Color(0xFF334155)
-                            : const Color(0xFFE2E8F0),
+                            ? const Color(0xFF2E333D)
+                            : const Color(0xFFECEAE6),
                       ),
                     ),
                     child: Column(
@@ -512,8 +512,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
                                 color: isDark
-                                    ? const Color(0xFF94A3B8)
-                                    : const Color(0xFF475569),
+                                    ? const Color(0xFF9AA1AD)
+                                    : const Color(0xFF4B5563),
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -526,8 +526,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             fontSize: 12.5,
                             height: 1.4,
                             color: isDark
-                                ? const Color(0xFFF1F5F9)
-                                : const Color(0xFF1E293B),
+                                ? const Color(0xFFF0EEEA)
+                                : const Color(0xFF181B22),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -562,7 +562,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           value: rating.toStringAsFixed(1),
                           color: isDark
                               ? const Color(0xFFF59E0B)
-                              : const Color(0xFF002E3B),
+                              : const Color(0xFF0F766E),
                         ),
                       ),
                     ],
@@ -669,7 +669,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
@@ -924,7 +924,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           clipBehavior: Clip.antiAlias,
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF181B22) : Colors.white,
           child: InkWell(
             onTap: () => _showProductDetailsDialog(context, prod),
             child: Column(
@@ -978,7 +978,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                       horizontal: 10,
                       vertical: 6,
                     ),
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF181B22) : Colors.white,
                     alignment: Alignment.centerLeft,
                     child: Text(
                       prod['name'] ?? 'Product Name',
@@ -1245,7 +1245,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                       index < rating ? Icons.star : Icons.star_border,
                       color: isDark
                           ? const Color(0xFFF59E0B)
-                          : const Color(0xFF002E3B),
+                          : const Color(0xFF0F766E),
                       size: 16,
                     );
                   }),
@@ -1313,7 +1313,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         children: [
           Icon(
             icon,
-            color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF002E3B),
+            color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0F766E),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -1408,7 +1408,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                             fontSize: 13,
                             color: isDark
                                 ? Colors.white
-                                : const Color(0xFF0F172A),
+                                : const Color(0xFF111318),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1497,7 +1497,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           fontSize: 15.5,
                           color: isDark
                               ? Colors.white
-                              : const Color(0xFF0F172A),
+                              : const Color(0xFF111318),
                         ),
                       ),
                       if (img['description'] != null &&
@@ -1549,7 +1549,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isDark
                                 ? const Color(0xFF0D9488)
-                                : const Color(0xFF002E3B),
+                                : const Color(0xFF0F766E),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -1780,7 +1780,7 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF121B22) : Colors.white,
+        color: isDark ? const Color(0xFF0E1015) : Colors.white,
         border: Border(
           bottom: BorderSide(
             color: isDark

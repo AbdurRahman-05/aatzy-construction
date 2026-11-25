@@ -126,7 +126,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
           children: [
             Text(
               'Are you sure you want to reject the requirement for "${lead.requirementTitle.isNotEmpty ? lead.requirementTitle : 'this material'}" from ${lead.buyerName}?',
-              style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF181B22)),
             ),
             const SizedBox(height: 12),
             Container(
@@ -333,7 +333,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                       Container(
                         padding: const EdgeInsets.fromLTRB(20, 18, 16, 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: const Color(0xFFF6F5F2),
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                           border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
                         ),
@@ -361,13 +361,13 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFF0F172A),
+                                      color: Color(0xFF111318),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     'For ${lead.buyerName} • ${lead.location}',
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -376,7 +376,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                             ),
                             IconButton(
                               onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B), size: 20),
+                              icon: const Icon(Icons.close_rounded, color: Color(0xFF6B7280), size: 20),
                               splashRadius: 18,
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -421,7 +421,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                             style: const TextStyle(
                                               fontSize: 13.5,
                                               fontWeight: FontWeight.bold,
-                                              color: Color(0xFF1E293B),
+                                              color: Color(0xFF181B22),
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -456,7 +456,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
+                                  color: Color(0xFF2E333D),
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -464,7 +464,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 controller: quotedPriceController,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                 onChanged: (_) => setDialogState(() {}),
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111318)),
                                 decoration: InputDecoration(
                                   prefixIcon: const Padding(
                                     padding: EdgeInsets.symmetric(horizontal: 12),
@@ -475,19 +475,19 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                   ),
                                   prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
                                   suffixText: '/ ${lead.unit}',
-                                  suffixStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                                  suffixStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)),
                                   hintText: 'e.g. 350.00',
                                   hintStyle: TextStyle(fontSize: 13.5, color: Colors.grey.shade400, fontWeight: FontWeight.normal),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF6F5F2),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                    borderSide: const BorderSide(color: Color(0xFFECEAE6)),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                    borderSide: const BorderSide(color: Color(0xFFD6D3CE)),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -506,7 +506,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF334155),
+                                      color: Color(0xFF2E333D),
                                     ),
                                   ),
                                   Text(
@@ -533,10 +533,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                           duration: const Duration(milliseconds: 150),
                                           padding: const EdgeInsets.symmetric(vertical: 9),
                                           decoration: BoxDecoration(
-                                            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF1F5F9),
+                                            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF0EEEA),
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(
-                                              color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFFE2E8F0),
+                                              color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFFECEAE6),
                                               width: isSelected ? 1.5 : 1,
                                             ),
                                           ),
@@ -546,7 +546,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w800,
-                                                color: isSelected ? Colors.white : const Color(0xFF475569),
+                                                color: isSelected ? Colors.white : const Color(0xFF4B5563),
                                               ),
                                             ),
                                           ),
@@ -562,35 +562,35 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: const Color(0xFFF6F5F2),
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  border: Border.all(color: const Color(0xFFECEAE6)),
                                 ),
                                 child: Column(
                                   children: [
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text('Material Subtotal (${lead.quantity})', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                                        Text('₹${subtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF1E293B))),
+                                        Text('Material Subtotal (${lead.quantity})', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                                        Text('₹${subtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF181B22))),
                                       ],
                                     ),
                                     const SizedBox(height: 6),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text('GST (${selectedGstPercent.toStringAsFixed(0)}%)', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                        Text('GST (${selectedGstPercent.toStringAsFixed(0)}%)', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
                                         Text('+ ₹${gstAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF16A34A))),
                                       ],
                                     ),
                                     const Padding(
                                       padding: EdgeInsets.symmetric(vertical: 8),
-                                      child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                                      child: Divider(height: 1, color: Color(0xFFECEAE6)),
                                     ),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text('Estimated Billing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                                        const Text('Estimated Billing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF111318))),
                                         Text(
                                           '₹${totalAmount.toStringAsFixed(2)}',
                                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
@@ -608,27 +608,27 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
+                                  color: Color(0xFF2E333D),
                                 ),
                               ),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: notesController,
                                 maxLines: 2,
-                                style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+                                style: const TextStyle(fontSize: 13.5, color: Color(0xFF181B22)),
                                 decoration: InputDecoration(
                                   hintText: 'e.g. Ready for dispatch within 2 days. Valid for 7 days...',
                                   hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade400),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF6F5F2),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                    borderSide: const BorderSide(color: Color(0xFFECEAE6)),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                    borderSide: const BorderSide(color: Color(0xFFD6D3CE)),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -657,9 +657,9 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 onPressed: () => Navigator.pop(context),
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
-                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  side: const BorderSide(color: Color(0xFFD6D3CE)),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  foregroundColor: const Color(0xFF64748B),
+                                  foregroundColor: const Color(0xFF6B7280),
                                 ),
                                 child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
                               ),
@@ -688,7 +688,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 icon: const Icon(Icons.send_rounded, size: 16),
                                 label: const Text('Send Quote', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2563EB),
+                                  backgroundColor: const Color(0xFF0F766E),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -749,7 +749,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                       Container(
                         padding: const EdgeInsets.fromLTRB(20, 18, 16, 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: const Color(0xFFF6F5F2),
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                           border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
                         ),
@@ -777,13 +777,13 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFF0F172A),
+                                      color: Color(0xFF111318),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     'For ${lead.buyerName} • ${lead.requirementTitle}',
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -792,7 +792,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                             ),
                             IconButton(
                               onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B), size: 20),
+                              icon: const Icon(Icons.close_rounded, color: Color(0xFF6B7280), size: 20),
                               splashRadius: 18,
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -813,7 +813,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
+                                  color: Color(0xFF2E333D),
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -847,10 +847,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                           duration: const Duration(milliseconds: 150),
                                           padding: const EdgeInsets.symmetric(vertical: 9),
                                           decoration: BoxDecoration(
-                                            color: isSelected ? activeColor : const Color(0xFFF1F5F9),
+                                            color: isSelected ? activeColor : const Color(0xFFF0EEEA),
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(
-                                              color: isSelected ? activeColor : const Color(0xFFE2E8F0),
+                                              color: isSelected ? activeColor : const Color(0xFFECEAE6),
                                               width: isSelected ? 1.5 : 1,
                                             ),
                                           ),
@@ -860,7 +860,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w800,
-                                                color: isSelected ? Colors.white : const Color(0xFF475569),
+                                                color: isSelected ? Colors.white : const Color(0xFF4B5563),
                                               ),
                                             ),
                                           ),
@@ -876,27 +876,27 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
+                                  color: Color(0xFF2E333D),
                                 ),
                               ),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: notesController,
                                 maxLines: 2,
-                                style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+                                style: const TextStyle(fontSize: 13.5, color: Color(0xFF181B22)),
                                 decoration: InputDecoration(
                                   hintText: 'Enter dispatch, vehicle number, or receipt info...',
                                   hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade400),
                                   filled: true,
-                                  fillColor: const Color(0xFFF8FAFC),
+                                  fillColor: const Color(0xFFF6F5F2),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                    borderSide: const BorderSide(color: Color(0xFFECEAE6)),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                                    borderSide: const BorderSide(color: Color(0xFFD6D3CE)),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -925,9 +925,9 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                 onPressed: () => Navigator.pop(context),
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
-                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  side: const BorderSide(color: Color(0xFFD6D3CE)),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  foregroundColor: const Color(0xFF64748B),
+                                  foregroundColor: const Color(0xFF6B7280),
                                 ),
                                 child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
                               ),
@@ -951,7 +951,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: isDelivered ? Colors.green : const Color(0xFF2563EB),
+                                  backgroundColor: isDelivered ? Colors.green : const Color(0xFF0F766E),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1960,7 +1960,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
           children: [
             Text(
               'Are you sure you want to decline this quote proposal for "${widget.inq.productName}"?',
-              style: const TextStyle(fontSize: 13.5, color: Color(0xFF1E293B)),
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF181B22)),
             ),
             const SizedBox(height: 12),
             Container(
@@ -2017,7 +2017,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
           children: [
             const Text(
               'Before accepting this quote, please note:',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF181B22)),
             ),
             const SizedBox(height: 10),
             Container(

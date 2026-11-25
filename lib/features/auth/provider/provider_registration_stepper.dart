@@ -354,11 +354,11 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
       labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 14),
       filled: true,
       fillColor: Colors.grey.shade50,
-      prefixIcon: Icon(prefixIcon, color: const Color(0xFF064354), size: 20),
+      prefixIcon: Icon(prefixIcon, color: const Color(0xFF0F766E), size: 20),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF064354), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF0F766E), width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -407,7 +407,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF064354),
+                  color: Color(0xFF0F766E),
                 ),
               ),
             ],
@@ -418,7 +418,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
             child: LinearProgressIndicator(
               value: (_currentStep + 1) / 6,
               backgroundColor: Colors.grey.shade100,
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF064354)),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0F766E)),
               minHeight: 6,
             ),
           ),
@@ -471,7 +471,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: hasFile ? Colors.green.shade900 : const Color(0xFF064354),
+                      color: hasFile ? Colors.green.shade900 : const Color(0xFF0F766E),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -503,7 +503,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
           children: [
             const Text(
               'Account Details',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF064354)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -546,7 +546,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
           children: [
             const Text(
               'Verification Code',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF064354)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -579,7 +579,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
                 fillColor: Colors.grey.shade50,
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF064354), width: 1.5),
+                  borderSide: const BorderSide(color: Color(0xFF0F766E), width: 1.5),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -591,7 +591,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
             Center(
               child: TextButton(
                 onPressed: _sendOtp,
-                child: const Text('Resend Code', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF064354))),
+                child: const Text('Resend Code', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F766E))),
               ),
             ),
           ],
@@ -603,7 +603,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
           children: [
             const Text(
               'Select Categories',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF064354)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -626,11 +626,11 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
                   ),
                   selected: isSelected,
                   checkmarkColor: Colors.white,
-                  selectedColor: const Color(0xFF064354),
+                  selectedColor: const Color(0xFF0F766E),
                   backgroundColor: Colors.grey.shade100,
                   shadowColor: Colors.transparent,
                   side: BorderSide(
-                    color: isSelected ? const Color(0xFF064354) : Colors.grey.shade300,
+                    color: isSelected ? const Color(0xFF0F766E) : Colors.grey.shade300,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -656,7 +656,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
           children: [
             const Text(
               'Business Profile',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF064354)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -703,7 +703,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
           children: [
             const Text(
               'Upload Verification Files',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF064354)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -738,7 +738,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
           children: [
             const Text(
               'Pricing & Services',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF064354)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
             ),
             const SizedBox(height: 6),
             Text(
@@ -795,8 +795,8 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
                   setState(() => _currentStep -= 1);
                 },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF064354),
-                  side: const BorderSide(color: Color(0xFF064354), width: 1.5),
+                  foregroundColor: const Color(0xFF0F766E),
+                  side: const BorderSide(color: Color(0xFF0F766E), width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -824,7 +824,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF064354),
+                backgroundColor: const Color(0xFF0F766E),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -851,7 +851,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
         title: const Text('Provider Registration', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF064354),
+        foregroundColor: const Color(0xFF0F766E),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -869,11 +869,11 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF064354))),
+                CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F766E))),
                 SizedBox(height: 20),
                 Text(
                   'Creating your profile...',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF064354)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
                 ),
               ],
             ),

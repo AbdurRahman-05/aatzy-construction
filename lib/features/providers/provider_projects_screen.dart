@@ -179,7 +179,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
       child: Container(
         margin: isGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? const Color(0xFF181B22) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200, width: 1),
           boxShadow: [
@@ -261,21 +261,21 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 const SizedBox(height: 2),
                                 Row(
                                   children: [
-                                    Icon(Icons.person_outline_rounded, size: 12, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400),
+                                    Icon(Icons.person_outline_rounded, size: 12, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade400),
                                     const SizedBox(width: 3),
                                     Text(
                                       clientName,
-                                      style: TextStyle(color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade700, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w600),
+                                      style: TextStyle(color: isDark ? const Color(0xFFD6D3CE) : Colors.grey.shade700, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w600),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(width: 6),
-                                    Icon(Icons.location_on_rounded, size: 11, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade400),
+                                    Icon(Icons.location_on_rounded, size: 11, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade400),
                                     const SizedBox(width: 2),
                                     Expanded(
                                       child: Text(
                                         location,
-                                        style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
+                                        style: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600, fontSize: isSmallScreen ? 10 : 11, fontWeight: FontWeight.w500),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -379,7 +379,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                          color: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade200),
                         ),
@@ -392,7 +392,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 children: [
                                   Text('CONTRACT VALUE',
                                       style: TextStyle(
-                                          color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500,
+                                          color: isDark ? const Color(0xFF6B7280) : Colors.grey.shade500,
                                           fontSize: 7.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.3),
@@ -419,7 +419,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                 children: [
                                   Text('STAGE',
                                       style: TextStyle(
-                                          color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500,
+                                          color: isDark ? const Color(0xFF6B7280) : Colors.grey.shade500,
                                           fontSize: 7.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.3),
@@ -428,7 +428,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                   const SizedBox(height: 1),
                                   Row(
                                     children: [
-                                      Icon(Icons.calendar_month_rounded, size: 10, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+                                      Icon(Icons.calendar_month_rounded, size: 10, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600),
                                       const SizedBox(width: 3),
                                       Expanded(
                                         child: FittedBox(
@@ -437,7 +437,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                           child: Text(
                                             dateStr,
                                             style: TextStyle(
-                                                color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade800,
+                                                color: isDark ? const Color(0xFFD6D3CE) : Colors.grey.shade800,
                                                 fontSize: isSmallScreen ? 10 : 11,
                                                 fontWeight: FontWeight.w700),
                                           ),
@@ -479,11 +479,11 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.business_center_outlined, size: 64, color: isDark ? const Color(0xFF475569) : Colors.grey.shade400),
+              Icon(Icons.business_center_outlined, size: 64, color: isDark ? const Color(0xFF4B5563) : Colors.grey.shade400),
               const SizedBox(height: 16),
               Text(
                 'No projects found in this category',
-                style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
+                style: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -554,7 +554,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                         const Spacer(),
                         Text(
                           'Total: ',
-                          style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontSize: isSmall ? 10 : 11, fontWeight: FontWeight.w500),
+                          style: TextStyle(color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600, fontSize: isSmall ? 10 : 11, fontWeight: FontWeight.w500),
                         ),
                         Flexible(
                           child: FittedBox(
@@ -692,7 +692,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                                     const SizedBox(height: 4),
                                     Text(
                                       'Track and manage all your assigned construction jobs.',
-                                      style: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                      style: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600, fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
@@ -720,7 +720,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                             isScrollable: true,
                             tabAlignment: TabAlignment.start,
                             indicator: BoxDecoration(
-                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              color: isDark ? const Color(0xFF181B22) : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05), blurRadius: 4, offset: const Offset(0, 2)),
@@ -744,7 +744,7 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                           child: Container(
                             height: 42,
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                              color: isDark ? const Color(0xFF181B22) : Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200),
                             ),
@@ -757,8 +757,8 @@ class _ProviderProjectsScreenState extends ConsumerState<ProviderProjectsScreen>
                               style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                               decoration: InputDecoration(
                                 hintText: isSmallScreen ? 'Search jobs...' : 'Search jobs by title, client, or site...',
-                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
-                                prefixIcon: Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500),
+                                hintStyle: TextStyle(fontSize: isSmallScreen ? 11.5 : 13, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade500),
+                                prefixIcon: Icon(Icons.search, size: 18, color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade500),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               ),

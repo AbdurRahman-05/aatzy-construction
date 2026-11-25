@@ -172,18 +172,18 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
 
     return WallpaperBackground(
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+        backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : const Color(0xFF1E293B), size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : const Color(0xFF181B22), size: 20),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             'Cost Estimator',
             style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF181B22),
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -202,7 +202,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 ),
               ),
             IconButton(
-              icon: Icon(Icons.info_outline_rounded, color: isDark ? Colors.white70 : const Color(0xFF64748B)),
+              icon: Icon(Icons.info_outline_rounded, color: isDark ? Colors.white70 : const Color(0xFF6B7280)),
               onPressed: _showInfoDialog,
             )
           ],
@@ -322,7 +322,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF181B22),
                   letterSpacing: -0.2,
                 ),
               ),
@@ -337,7 +337,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
               subtitle,
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                color: isDark ? Colors.white54 : const Color(0xFF6B7280),
               ),
             ),
           ),
@@ -350,10 +350,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
   Widget _buildHeaderCard(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
           width: 1,
         ),
         boxShadow: [
@@ -397,7 +397,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    color: isDark ? Colors.white : const Color(0xFF111318),
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -406,7 +406,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                   'Estimate construction expenses, material choices, and room dimensions in real-time.',
                   style: TextStyle(
                     fontSize: 11.5,
-                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    color: isDark ? Colors.white60 : const Color(0xFF6B7280),
                     height: 1.3,
                   ),
                 ),
@@ -491,10 +491,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             decoration: BoxDecoration(
               color: isSelected
                   ? primaryPurple.withValues(alpha: isDark ? 0.15 : 0.06)
-                  : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                  : (isDark ? const Color(0xFF181B22) : Colors.white),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected ? primaryPurple : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                color: isSelected ? primaryPurple : (isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6)),
                 width: isSelected ? 2.0 : 1.0,
               ),
               boxShadow: [
@@ -543,7 +543,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: isSelected ? primaryPurple : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                          color: isSelected ? primaryPurple : (isDark ? Colors.white : const Color(0xFF181B22)),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -551,7 +551,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                         desc,
                         style: TextStyle(
                           fontSize: 9.5,
-                          color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                          color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                           height: 1.15,
                         ),
                         maxLines: 2,
@@ -626,12 +626,12 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? primaryPurple
-                      : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                      : (isDark ? const Color(0xFF181B22) : Colors.white),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
                         ? primaryPurple
-                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                        : (isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6)),
                     width: 1.2,
                   ),
                   boxShadow: [
@@ -650,7 +650,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                       const Icon(Icons.check_rounded, color: Colors.white, size: 16),
                       const SizedBox(width: 6),
                     ] else if (opt == 'Custom') ...[
-                      Icon(Icons.tune_rounded, color: isDark ? Colors.white60 : const Color(0xFF64748B), size: 15),
+                      Icon(Icons.tune_rounded, color: isDark ? Colors.white60 : const Color(0xFF6B7280), size: 15),
                       const SizedBox(width: 6),
                     ],
                     Text(
@@ -660,7 +660,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                         color: isSelected
                             ? Colors.white
-                            : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                            : (isDark ? Colors.white70 : const Color(0xFF2E333D)),
                       ),
                     ),
                   ],
@@ -679,10 +679,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
           width: 1,
         ),
         boxShadow: [
@@ -702,7 +702,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+              color: isDark ? Colors.white60 : const Color(0xFF6B7280),
             ),
           ),
           const SizedBox(height: 8),
@@ -711,10 +711,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
                 width: 1,
               ),
             ),
@@ -727,7 +727,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: isDark ? Colors.white : const Color(0xFF181B22),
                     ),
                     decoration: const InputDecoration(
                       border: InputBorder.none,
@@ -739,10 +739,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    color: isDark ? const Color(0xFF181B22) : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
                     ),
                   ),
                   child: Text(
@@ -750,7 +750,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                      color: isDark ? Colors.white70 : const Color(0xFF6B7280),
                     ),
                   ),
                 ),
@@ -789,7 +789,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
               children: [
                 Text(
                   '100 sq ft',
-                  style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : const Color(0xFF6B7280)),
                 ),
                 Text(
                   'Selected: ${_area.toStringAsFixed(0)} sq ft',
@@ -801,7 +801,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                 ),
                 Text(
                   '10,000 sq ft',
-                  style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : const Color(0xFF6B7280)),
                 ),
               ],
             ),
@@ -813,7 +813,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white70 : const Color(0xFF475569),
+              color: isDark ? Colors.white70 : const Color(0xFF4B5563),
             ),
           ),
           const SizedBox(height: 8),
@@ -841,12 +841,12 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? primaryPurple
-                            : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
+                            : (isDark ? const Color(0xFF111318) : const Color(0xFFF0EEEA)),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
                               ? primaryPurple
-                              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                              : (isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6)),
                         ),
                       ),
                       child: Text(
@@ -856,7 +856,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                           color: isSelected
                               ? Colors.white
-                              : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                              : (isDark ? Colors.white70 : const Color(0xFF2E333D)),
                         ),
                       ),
                     ),
@@ -931,12 +931,12 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? primaryPurple.withValues(alpha: isDark ? 0.15 : 0.05)
-                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                    : (isDark ? const Color(0xFF181B22) : Colors.white),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected
                       ? primaryPurple
-                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                      : (isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6)),
                   width: isSelected ? 1.8 : 1.0,
                 ),
                 boxShadow: [
@@ -959,7 +959,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? primaryPurple : (isDark ? Colors.white38 : const Color(0xFFCBD5E1)),
+                        color: isSelected ? primaryPurple : (isDark ? Colors.white38 : const Color(0xFFD6D3CE)),
                         width: 2,
                       ),
                     ),
@@ -989,7 +989,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: isSelected ? primaryPurple : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                                color: isSelected ? primaryPurple : (isDark ? Colors.white : const Color(0xFF181B22)),
                               ),
                             ),
                             Container(
@@ -1015,7 +1015,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : const Color(0xFF475569),
+                            color: isDark ? Colors.white70 : const Color(0xFF4B5563),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1023,7 +1023,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                           details,
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                            color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                             height: 1.25,
                           ),
                         ),
@@ -1048,7 +1048,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         width: double.infinity,
         decoration: BoxDecoration(
           border: Border.all(
-            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
           ),
           borderRadius: BorderRadius.circular(20),
         ),
@@ -1065,10 +1065,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
   Widget _buildAddonsCard(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
           width: 1,
         ),
         boxShadow: [
@@ -1092,7 +1092,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             isDark: isDark,
             onChanged: (v) => setState(() => _includeInterior = v),
           ),
-          Divider(height: 1, indent: 64, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, indent: 64, color: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA)),
           _buildAddonTile(
             title: 'Smart Home Automation',
             subtitle: 'Security cameras, smart locks, automated light controllers',
@@ -1104,7 +1104,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             isDark: isDark,
             onChanged: (v) => setState(() => _includeSmartHome = v),
           ),
-          Divider(height: 1, indent: 64, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, indent: 64, color: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA)),
           _buildAddonTile(
             title: 'Landscaping & Gardening',
             subtitle: 'External green lawn, perimeter planting, pathway tiles',
@@ -1116,7 +1116,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             isDark: isDark,
             onChanged: (v) => setState(() => _includeLandscaping = v),
           ),
-          Divider(height: 1, indent: 64, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+          Divider(height: 1, indent: 64, color: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA)),
           _buildAddonTile(
             title: 'Off-grid Solar Energy Setup',
             subtitle: 'Roof rooftop panel modules, inverter unit & backup battery',
@@ -1167,7 +1167,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF181B22),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1175,7 +1175,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                   subtitle,
                   style: TextStyle(
                     fontSize: 10.5,
-                    color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                    color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                   ),
                 ),
               ],
@@ -1393,10 +1393,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
           width: 1,
         ),
         boxShadow: [
@@ -1437,7 +1437,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
             itemCount: allocations.length,
             separatorBuilder: (context, index) => Divider(
               height: 14,
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA),
             ),
             itemBuilder: (context, index) {
               final alloc = allocations[index];
@@ -1465,14 +1465,14 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF1E293B),
+                            color: isDark ? Colors.white : const Color(0xFF181B22),
                           ),
                         ),
                         Text(
                           '${(alloc.percentage * 100).toStringAsFixed(0)}% of total layout',
                           style: TextStyle(
                             fontSize: 10.5,
-                            color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                            color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                           ),
                         ),
                       ],
@@ -1486,7 +1486,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                          color: isDark ? Colors.white : const Color(0xFF181B22),
                         ),
                       ),
                       Text(
@@ -1512,10 +1512,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
   Widget _buildCostCategoriesCard(List<CostCategory> categories, double totalCost, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? const Color(0xFF181B22) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF2E333D) : const Color(0xFFECEAE6),
           width: 1,
         ),
         boxShadow: [
@@ -1533,7 +1533,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
         itemCount: categories.length,
         separatorBuilder: (context, index) => Divider(
           height: 18,
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+          color: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA),
         ),
         itemBuilder: (context, index) {
           final cat = categories[index];
@@ -1559,7 +1559,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        color: isDark ? Colors.white : const Color(0xFF181B22),
                       ),
                     ),
                   ),
@@ -1568,7 +1568,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: isDark ? Colors.white : const Color(0xFF181B22),
                     ),
                   ),
                 ],
@@ -1582,7 +1582,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: cat.percentage,
-                        backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                        backgroundColor: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA),
                         valueColor: AlwaysStoppedAnimation<Color>(cat.color),
                         minHeight: 5,
                       ),
@@ -1594,7 +1594,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      color: isDark ? Colors.white60 : const Color(0xFF6B7280),
                     ),
                   ),
                 ],
@@ -1648,10 +1648,10 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
+        color: isDark ? const Color(0xFF181B22) : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF475569) : const Color(0xFFC7D2FE),
+          color: isDark ? const Color(0xFF4B5563) : const Color(0xFFC7D2FE),
           width: 1.2,
         ),
         boxShadow: [

@@ -257,7 +257,7 @@ class _ConstructionAppState extends ConsumerState<ConstructionApp> with WidgetsB
         // Ultra-wide Desktop displays (> 1200px):
         // Center with balanced side margins and subtle elevation.
         return Container(
-          color: isDark ? const Color(0xFF121B22) : Colors.grey.shade100,
+          color: isDark ? const Color(0xFF0E1015) : Colors.grey.shade100,
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1200),

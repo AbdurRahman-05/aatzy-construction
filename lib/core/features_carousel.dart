@@ -27,7 +27,7 @@ class _AppFeaturesCarouselState extends State<AppFeaturesCarousel> {
             'title': 'Smart Cost Estimator',
             'desc': 'Calculate precise foundation, structure, and labor costs in seconds.',
             'icon': Icons.calculate_rounded,
-            'gradient': [Color(0xFF064354), Color(0xFF0B7C8E)],
+            'gradient': [Color(0xFF0F766E), Color(0xFF0B7C8E)],
             'badge': 'PRO TOOLS',
           },
           {
@@ -50,7 +50,7 @@ class _AppFeaturesCarouselState extends State<AppFeaturesCarousel> {
             'title': 'Premium Quote Comparison',
             'desc': 'Compare contractor quotes side-by-side with full transparency.',
             'icon': Icons.compare_arrows_rounded,
-            'gradient': [Color(0xFF064354), Color(0xFF0B7C8E)],
+            'gradient': [Color(0xFF0F766E), Color(0xFF0B7C8E)],
             'badge': 'SMART CHOICE',
           },
           {
@@ -252,7 +252,7 @@ class _AppFeaturesCarouselState extends State<AppFeaturesCarousel> {
               width: _currentPage == index ? 16 : 6,
               decoration: BoxDecoration(
                 color: _currentPage == index
-                    ? (isDark ? const Color(0xFF0F9B8E) : const Color(0xFF064354))
+                    ? (isDark ? const Color(0xFF0F9B8E) : const Color(0xFF0F766E))
                     : (isDark ? Colors.white24 : Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(3),
               ),
