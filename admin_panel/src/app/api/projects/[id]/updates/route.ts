@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
+import { denyUnlessProjectParticipant } from '@/lib/projectAccess';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProjectId } = await context.params;
+    const denied = await denyUnlessProjectParticipant(guardProjectId, authResult.auth);
+    if (denied) return denied;
+
     const { id } = await context.params;
     const body = await request.json();
     const { title, status, notes, photoUrl, imageUrl } = body;

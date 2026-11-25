@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { calculateDaysLeft, YEARLY_MEMBERSHIP_FEE } from '@/lib/razorpay';
+import { calculateDaysLeft, isFreeAccessMode, YEARLY_MEMBERSHIP_FEE } from '@/lib/razorpay';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const notSelf = denyUnlessSelf(authResult.auth, new URL(request.url).searchParams.get('providerId'));
+    if (notSelf) return notSelf;
+
     const { searchParams } = new URL(request.url);
     const providerId = searchParams.get('providerId');
 
@@ -35,10 +41,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
 
-    // Payment integration disabled - full free access for all providers in production
-    const isActive = true;
-    const daysLeft = 365;
-    const currentStatus = 'ACTIVE';
+    const freeAccessMode = isFreeAccessMode();
+
+    // Real status from the database
+    const realDaysLeft = calculateDaysLeft(provider.subscriptionExpiresAt);
+    const realIsActive = provider.subscriptionStatus === 'ACTIVE' && realDaysLeft > 0;
+    const realStatus = realIsActive
+      ? 'ACTIVE'
+      : provider.subscriptionExpiresAt
+        ? 'EXPIRED'
+        : provider.subscriptionStatus || 'INACTIVE';
+
+    // FREE_ACCESS_MODE (default on while payments are disabled) grants everyone access
+    const isActive = freeAccessMode || realIsActive;
+    const daysLeft = freeAccessMode ? Math.max(realDaysLeft, 365) : realDaysLeft;
+    const currentStatus = freeAccessMode ? 'ACTIVE' : realStatus;
 
     return NextResponse.json({
       providerId: provider.id,
@@ -47,6 +64,7 @@ export async function GET(request: Request) {
       subscriptionStatus: currentStatus,
       isActive,
       daysLeft,
+      freeAccessMode,
       subscriptionExpiresAt: provider.subscriptionExpiresAt ? provider.subscriptionExpiresAt.toISOString() : null,
       subscriptionStartedAt: provider.subscriptionStartedAt ? provider.subscriptionStartedAt.toISOString() : null,
       plan: provider.subscriptionPlan || 'YEARLY_5999',

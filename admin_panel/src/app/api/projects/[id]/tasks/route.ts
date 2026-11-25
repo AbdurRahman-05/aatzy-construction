@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { notifyConsumerTaskCreated, notifyTaskProgressAndMilestones } from '@/lib/notifications';
+import { requireAuth } from '@/lib/auth';
+import { denyUnlessProjectParticipant } from '@/lib/projectAccess';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProjectId } = await context.params;
+    const denied = await denyUnlessProjectParticipant(guardProjectId, authResult.auth);
+    if (denied) return denied;
+
     const { id: projectId } = await context.params;
     const body = await request.json();
 
@@ -59,6 +67,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProjectId } = await context.params;
+    const denied = await denyUnlessProjectParticipant(guardProjectId, authResult.auth);
+    if (denied) return denied;
+
     const { id: projectId } = await context.params;
     const body = await request.json();
     const {
@@ -76,6 +90,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
     if (!taskId) {
       return NextResponse.json({ error: 'Missing taskId' }, { status: 400 });
+    }
+
+    // The task must belong to the project the caller has access to
+    const owned = await prisma.projectTask.findFirst({ where: { id: taskId, projectId }, select: { id: true } });
+    if (!owned) {
+      return NextResponse.json({ error: 'Task not found in this project' }, { status: 404 });
     }
 
     const updatedTask = await prisma.projectTask.update({
@@ -113,6 +133,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProjectId } = await context.params;
+    const denied = await denyUnlessProjectParticipant(guardProjectId, authResult.auth);
+    if (denied) return denied;
+
     const { searchParams } = new URL(request.url);
     const taskId = searchParams.get('taskId');
 
@@ -120,9 +146,13 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Missing taskId' }, { status: 400 });
     }
 
-    await prisma.projectTask.delete({
-      where: { id: taskId },
+    // Only delete the task if it belongs to this project
+    const removed = await prisma.projectTask.deleteMany({
+      where: { id: taskId, projectId: guardProjectId },
     });
+    if (removed.count === 0) {
+      return NextResponse.json({ error: 'Task not found in this project' }, { status: 404 });
+    }
 
     return NextResponse.json({ message: 'Task deleted successfully' });
   } catch (error) {

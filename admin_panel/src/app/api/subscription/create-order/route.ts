@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getRazorpayClient, getRazorpayKeyId, isRazorpayConfigured, YEARLY_MEMBERSHIP_FEE } from '@/lib/razorpay';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const guardBody = await request.clone().json().catch(() => ({}));
+    const notSelf = denyUnlessSelf(authResult.auth, guardBody?.providerId);
+    if (notSelf) return notSelf;
+
     const body = await request.json();
     const { providerId } = body;
 

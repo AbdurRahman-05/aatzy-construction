@@ -1,13 +1,21 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+
     const { userId, role, oldPassword, newPassword } = await request.json();
 
     if (!userId || !role || !oldPassword || !newPassword) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Only change your own password
+    const notSelf = denyUnlessSelf(authResult.auth, userId);
+    if (notSelf) return notSelf;
 
     if (role === 'PROVIDER') {
       const provider = await prisma.provider.findUnique({

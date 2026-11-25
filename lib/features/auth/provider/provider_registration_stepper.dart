@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/services/media_picker_service.dart';
@@ -42,6 +42,8 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
   final _otpController = TextEditingController();
 
   String _verificationId = '';
+  // Signed proof from /auth/verify-otp that the phone number was verified
+  String? _phoneVerificationToken;
 
   // Image Data (Base64)
   String? _aadharBase64;
@@ -55,7 +57,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
       _emailController.text = widget.email ?? '';
       _ownerNameController.text = widget.ownerName ?? '';
       _passwordController.text = 'google_oauth_placeholder_${DateTime.now().millisecondsSinceEpoch}';
-      _currentStep = 2;
+      // Google sign-ups also start at step 0 so the phone number gets OTP-verified
     }
   }
 
@@ -141,7 +143,11 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      // A new OTP request invalidates any earlier verification
+      _phoneVerificationToken = null;
+    });
     try {
       final response = await http.post(
         Uri.parse('$apiBaseUrl/auth/send-otp'),
@@ -203,6 +209,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
 
       if (response.statusCode == 200) {
         setState(() {
+          _phoneVerificationToken = data['phoneVerificationToken']?.toString();
           _currentStep = 2; // Proceed to step 2
         });
         if (!mounted) return;
@@ -242,8 +249,20 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
       return;
     }
 
+    if (_phoneVerificationToken == null || _phoneVerificationToken!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please verify your phone number with OTP before submitting.'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      setState(() => _currentStep = 0);
+      return;
+    }
+
     setState(() => _isLoading = true);
-    
+
     try {
       final payload = {
         'ownerName': _ownerNameController.text.trim(),
@@ -259,8 +278,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
         'aadharCard': _aadharBase64,
         'panCard': _panBase64,
         'profileCompletion': ((_currentStep + 1) / 6 * 100).toInt(),
-        'verificationId': _verificationId,
-        'otpCode': _otpController.text.trim(),
+        'phoneVerificationToken': _phoneVerificationToken,
         'isGoogleSignUp': widget.isGoogleSignUp,
       };
 
@@ -507,14 +525,18 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
+              // Google sign-ups keep the verified Google email
+              readOnly: widget.isGoogleSignUp,
               decoration: _buildInputDecoration(label: 'Email Address', prefixIcon: Icons.email_outlined),
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: _buildInputDecoration(label: 'Create Password', prefixIcon: Icons.lock_outline_rounded),
-            ),
+            if (!widget.isGoogleSignUp) ...[
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: _buildInputDecoration(label: 'Create Password', prefixIcon: Icons.lock_outline_rounded),
+              ),
+            ],
           ],
         );
 
@@ -642,14 +664,6 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 24),
-            if (widget.isGoogleSignUp) ...[
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: _buildInputDecoration(label: 'Phone Number', prefixIcon: Icons.phone_outlined),
-              ),
-              const SizedBox(height: 16),
-            ],
             TextFormField(
               controller: _businessNameController,
               decoration: _buildInputDecoration(label: 'Business Name', prefixIcon: Icons.business_outlined),
@@ -774,7 +788,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
       ),
       child: Row(
         children: [
-          if (_currentStep > (widget.isGoogleSignUp ? 2 : 0)) ...[
+          if (_currentStep > 0) ...[
             Expanded(
               child: OutlinedButton(
                 onPressed: () {
@@ -842,7 +856,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
-            if (_currentStep > (widget.isGoogleSignUp ? 2 : 0)) {
+            if (_currentStep > 0) {
               setState(() => _currentStep -= 1);
             } else {
               context.pop();

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -7,6 +8,14 @@ export async function POST(request: Request) {
     const { id, role, fcmToken, action } = body;
     const token = fcmToken || body.token || body.deviceToken;
     const normalizedRole = (role || '').toUpperCase();
+
+    // Tokens can only be attached to / removed from the caller's own account
+    if (id) {
+      const authResult = requireAuth(request);
+      if (!authResult.ok) return authResult.response;
+      const notSelf = denyUnlessSelf(authResult.auth, id);
+      if (notSelf) return notSelf;
+    }
 
     // 1. Handle Logout / Clear Token Request
     if (action === 'clear' || action === 'logout' || !token) {
@@ -108,6 +117,14 @@ export async function DELETE(request: Request) {
     }
 
     const normalizedRole = (role || '').toUpperCase();
+
+    // Tokens can only be attached to / removed from the caller's own account
+    if (id) {
+      const authResult = requireAuth(request);
+      if (!authResult.ok) return authResult.response;
+      const notSelf = denyUnlessSelf(authResult.auth, id);
+      if (notSelf) return notSelf;
+    }
 
     if (id) {
       if (normalizedRole === 'PROVIDER') {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -73,9 +74,15 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       : 0;
     const isSubscriptionActive = (provider as any).subscriptionStatus === 'ACTIVE' && daysLeft > 0;
 
-    return NextResponse.json({ 
+    // Aadhaar / PAN are private KYC documents: only the provider themselves may read them
+    const authResult = requireAuth(request);
+    const isSelf = authResult.ok && authResult.auth?.role === 'PROVIDER' && authResult.auth.id === id;
+    const { aadharCard, panCard, ...publicProfile } = provider as any;
+
+    return NextResponse.json({
       provider: {
-        ...provider,
+        ...publicProfile,
+        ...(isSelf ? { aadharCard, panCard } : {}),
         avgRating,
         daysLeft,
         isSubscriptionActive,
@@ -89,6 +96,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProviderId } = await context.params;
+    const notSelf = denyUnlessSelf(authResult.auth, guardProviderId);
+    if (notSelf) return notSelf;
+
     const { id } = await context.params;
     const body = await request.json();
 
@@ -102,8 +115,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         experience: body.experience ? parseInt(body.experience) : undefined,
         address: body.address,
         bio: body.bio,
-        aadharCard: body.aadharCard,
-        panCard: body.panCard,
+        // KYC documents: only replace when a new document is sent (never wipe with null/empty)
+        aadharCard: body.aadharCard ? body.aadharCard : undefined,
+        panCard: body.panCard ? body.panCard : undefined,
         profileImage: body.profileImage,
         profileCompletion: body.profileCompletion,
         businessType: body.businessType,

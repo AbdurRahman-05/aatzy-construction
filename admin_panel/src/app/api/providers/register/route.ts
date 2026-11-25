@@ -1,17 +1,38 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendProviderWelcomeEmail } from '@/lib/mail';
+import { isAuthEnforced, isValidPhoneVerificationToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { 
+    const {
       businessName, ownerName, email, password, phone, category, experience,
-      address, bio, aadharCard, panCard, profileCompletion, isGoogleSignUp
+      address, bio, aadharCard, panCard, profileCompletion, isGoogleSignUp,
+      phoneVerificationToken,
     } = body;
 
     if (!email || !password || !businessName || !phone) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Phone must be OTP-verified (same as consumer registration).
+    // The app gets `phoneVerificationToken` from /api/auth/verify-otp.
+    if (phoneVerificationToken) {
+      if (!isValidPhoneVerificationToken(phoneVerificationToken, phone)) {
+        return NextResponse.json(
+          { error: 'Phone verification expired or does not match this number. Please verify your phone again.', code: 'PHONE_NOT_VERIFIED' },
+          { status: 400 }
+        );
+      }
+    } else if (isAuthEnforced()) {
+      return NextResponse.json(
+        { error: 'Please verify your phone number with OTP before registering.', code: 'PHONE_NOT_VERIFIED' },
+        { status: 400 }
+      );
+    } else {
+      // Older app versions (no OTP proof) are still allowed until AUTH_ENFORCE=true
+      console.warn(`[providers/register] Legacy registration without phone verification for ${email}`);
     }
 
     // Check if provider already exists

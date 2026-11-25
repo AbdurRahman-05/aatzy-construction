@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendFCMNotification } from '@/lib/fcm';
+import { requireAdmin } from '@/lib/auth';
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const notAdmin = await requireAdmin();
+    if (notAdmin) return notAdmin;
+
     const { id } = await context.params;
     
     const provider = await prisma.provider.findUnique({

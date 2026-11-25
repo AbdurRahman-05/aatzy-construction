@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, forbidden } from '@/lib/auth';
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProductId } = await context.params;
+    if (authResult.auth) {
+      const owned = await prisma.product.findFirst({ where: { id: guardProductId, providerId: authResult.auth.id }, select: { id: true } });
+      if (!owned) return forbidden('You can only change your own products.');
+    }
+
     const { id } = await context.params;
     const body = await request.json();
     const {
@@ -41,6 +50,14 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProductId } = await context.params;
+    if (authResult.auth) {
+      const owned = await prisma.product.findFirst({ where: { id: guardProductId, providerId: authResult.auth.id }, select: { id: true } });
+      if (!owned) return forbidden('You can only change your own products.');
+    }
+
     const { id } = await context.params;
 
     // Soft delete product

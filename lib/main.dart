@@ -8,7 +8,7 @@ import 'core/router.dart';
 import 'core/constants.dart';
 import 'core/services/push_notification_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/http.dart' as http;
+import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';

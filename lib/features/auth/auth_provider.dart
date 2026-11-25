@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import 'package:construction_app/core/api_http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants.dart';
 import '../../core/router.dart';
@@ -67,6 +67,15 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     _activeInstance = this;
+    // Backend rejected our session token (expired / missing) -> log out so the user signs in again
+    http.AuthToken.onSessionRejected = () async {
+      if (state.id != null) {
+        await forceLogout(
+          reason: 'Your session has expired. Please log in again.',
+          title: 'Session Expired',
+        );
+      }
+    };
     ref.onDispose(() {
       _accountCheckTimer?.cancel();
       _accountCheckTimer = null;
@@ -183,7 +192,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   /// Immediately terminates the session, wipes credentials, and navigates to the login screen with a dialog
-  Future<void> forceLogout({String? reason}) async {
+  Future<void> forceLogout({String? reason, String title = 'Account Removed'}) async {
     if (_isForceLoggingOut) return;
     _isForceLoggingOut = true;
 
@@ -202,11 +211,11 @@ class AuthNotifier extends Notifier<AuthState> {
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.person_off_rounded, color: Colors.red, size: 28),
-                SizedBox(width: 10),
-                Text('Account Removed', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                const Icon(Icons.person_off_rounded, color: Colors.red, size: 28),
+                const SizedBox(width: 10),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               ],
             ),
             content: Text(
@@ -249,6 +258,7 @@ class AuthNotifier extends Notifier<AuthState> {
       await prefs.remove('auth_role');
       await prefs.remove('auth_gstNumber');
       await prefs.remove('auth_profileImage');
+      await http.AuthToken.set(null);
       final context = rootNavigatorKey.currentContext;
       if (context != null && context.mounted) {
         GoRouter.of(context).go('/login');
@@ -291,8 +301,11 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> login(Map<String, dynamic> data, String role) async {
     AdPopupService.resetSession();
-    final prefs = await SharedPreferences.getInstance();
-    final savedProfileImage = prefs.getString('auth_profileImage');
+
+    // IMPORTANT: everything up to the first `await` runs synchronously, so callers that
+    // navigate right after `login(...)` (without awaiting) already see the new session
+    // in the router guard and send the new token with their first API calls.
+    final tokenSaved = http.AuthToken.set(data['token']?.toString());
 
     final AuthState newState;
     if (role == 'PROVIDER') {
@@ -303,7 +316,7 @@ class AuthNotifier extends Notifier<AuthState> {
         email: data['email']?.toString(),
         role: 'PROVIDER',
         gstNumber: data['gstNumber']?.toString(),
-        profileImage: data['profileImage']?.toString() ?? savedProfileImage,
+        profileImage: data['profileImage']?.toString() ?? state.profileImage,
         isInitialized: true,
       );
     } else {
@@ -312,11 +325,20 @@ class AuthNotifier extends Notifier<AuthState> {
         name: data['name']?.toString(),
         email: data['email']?.toString(),
         role: 'CONSUMER',
-        profileImage: data['profileImage']?.toString() ?? savedProfileImage,
+        profileImage: data['profileImage']?.toString() ?? state.profileImage,
         isInitialized: true,
       );
     }
     state = newState;
+
+    await tokenSaved;
+    final prefs = await SharedPreferences.getInstance();
+
+    // Fall back to the locally saved profile image if the server did not send one
+    final savedProfileImage = prefs.getString('auth_profileImage');
+    if (newState.profileImage == null && savedProfileImage != null) {
+      state = state.copyWith(profileImage: savedProfileImage);
+    }
 
     try {
       if (newState.id != null) await prefs.setString('auth_id', newState.id!);
@@ -377,6 +399,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     // Explicitly unregister and clear device FCM token in database and local device
+    // (still authenticated here, so the backend accepts the request)
     try {
       await PushNotificationService().unregisterFCMToken(
         userId: oldId,
@@ -385,6 +408,9 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       debugPrint('Error unregistering FCM token on logout: $e');
     }
+
+    // Finally drop the session token
+    await http.AuthToken.set(null);
   }
 }
 

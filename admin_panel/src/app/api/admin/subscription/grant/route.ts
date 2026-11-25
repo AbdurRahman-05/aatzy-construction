@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { calculateDaysLeft, YEARLY_MEMBERSHIP_FEE } from '@/lib/razorpay';
+import { requireAdmin } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    const notAdmin = await requireAdmin();
+    if (notAdmin) return notAdmin;
+
     const body = await request.json();
     const { providerId, action, days = 365, note } = body;
 

@@ -29,7 +29,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isLoadingSocial = true;
   int _activeTabIndex = 0;
 
-  final Color _slateDark = const Color(0xFF111827); // Dark button color from design
+  final Color _slateDark = const Color(
+    0xFF111827,
+  ); // Dark button color from design
 
   @override
   void initState() {
@@ -97,7 +99,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final projData = projectsAsync.asData?.value ?? projectsAsync.value;
       if (projData != null) {
         _projects = projData.projects;
-        _materialOrders = [...projData.materialOrders, ...projData.purchasedHistory];
+        _materialOrders = [
+          ...projData.materialOrders,
+          ...projData.purchasedHistory,
+        ];
       }
       if (projectsAsync.isLoading && _projects.isEmpty) {
         _isLoading = true;
@@ -118,7 +123,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isSmallScreen = screenWidth < 360;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isTabletOrLaptop = screenWidth >= 700;
-    final horizontalPadding = isTabletOrLaptop ? 24.0 : (isSmallScreen ? 12.0 : 18.0);
+    final horizontalPadding = isTabletOrLaptop
+        ? 24.0
+        : (isSmallScreen ? 12.0 : 18.0);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -132,11 +139,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1200),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 12.0),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 12.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(auth.name ?? 'Guest', auth.profileImage, isSmallScreen),
+                      _buildHeader(
+                        auth.name ?? 'Guest',
+                        auth.profileImage,
+                        isSmallScreen,
+                      ),
                       const SizedBox(height: 20),
                       _buildConstructionOverview(isSmallScreen, screenWidth),
                       const SizedBox(height: 28),
@@ -203,14 +217,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildHeader(String name, String? profileImage, bool isSmallScreen) {
     final todayStr = DateFormat('EEEE, MMM d').format(DateTime.now());
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     final notifications = ref.watch(notificationsProvider);
     final unreadCount = notifications.where((n) => n.isUnread).length;
 
     final greeting = _getTimeGreeting();
     final greetingEmoji = _getTimeGreetingEmoji();
     final subtitle = _getTimeGreetingSubtitle();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -218,8 +232,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             // Profile avatar — shows photo if available, else initials
             GestureDetector(
-              onTap: () => ref.read(mainTabProvider.notifier).state = 4, // go to Profile tab
-              child: _buildProfileAvatar(name, profileImage, isSmallScreen ? 20.0 : 24.0),
+              onTap: () => ref.read(mainTabProvider.notifier).state =
+                  4, // go to Profile tab
+              child: _buildProfileAvatar(
+                name,
+                profileImage,
+                isSmallScreen ? 20.0 : 24.0,
+              ),
             ),
             SizedBox(width: isSmallScreen ? 10 : 16),
             Expanded(
@@ -228,6 +247,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   Text(
                     '$greeting, $name $greetingEmoji',
+                    '$greeting, $name',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 18 : 22,
                       fontWeight: FontWeight.w800,
@@ -242,7 +262,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     subtitle,
                     style: TextStyle(
                       fontSize: isSmallScreen ? 12 : 14,
-                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : Colors.grey.shade500,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -261,7 +283,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF1E293B) : Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.grey.shade200,
+                      ),
                     ),
                     child: Icon(
                       Icons.notifications_none_rounded,
@@ -279,7 +305,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           color: Colors.redAccent,
                           shape: BoxShape.circle,
                         ),
-                        child: Text('$unreadCount', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -298,7 +331,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Icon(
                     Icons.calendar_today_outlined,
                     size: isSmallScreen ? 15 : 18,
-                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.grey.shade600,
                   ),
                   const SizedBox(width: 6),
                   Flexible(
@@ -307,7 +342,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       style: TextStyle(
                         fontSize: isSmallScreen ? 12 : 14,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade700,
+                        color: isDark
+                            ? const Color(0xFFCBD5E1)
+                            : Colors.grey.shade700,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -318,16 +355,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: () => context.push('/create-project'),
-              icon: Icon(Icons.add_rounded, size: isSmallScreen ? 15 : 18, color: Colors.white),
+              icon: Icon(
+                Icons.add_rounded,
+                size: isSmallScreen ? 15 : 18,
+                color: Colors.white,
+              ),
               label: Text(
                 isSmallScreen ? 'New Project' : 'Start New Project',
-                style: TextStyle(fontSize: isSmallScreen ? 12 : 14, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 12 : 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: isDark ? const Color(0xFF2563EB) : _slateDark,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 10 : 16, vertical: isSmallScreen ? 8 : 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 10 : 16,
+                  vertical: isSmallScreen ? 8 : 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
             ),
@@ -353,7 +402,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             height: size,
             fit: BoxFit.cover,
             gaplessPlayback: true,
-            errorBuilder: (context, error, stack) => _initialsCircle(initial, size),
+            errorBuilder: (context, error, stack) =>
+                _initialsCircle(initial, size),
           ),
         );
       }
@@ -368,7 +418,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             height: size,
             fit: BoxFit.cover,
             gaplessPlayback: true,
-            errorBuilder: (context, error, stack) => _initialsCircle(initial, size),
+            errorBuilder: (context, error, stack) =>
+                _initialsCircle(initial, size),
           ),
         );
       }
@@ -401,7 +452,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     int activeProjects = _projects.where((p) {
       final stage = (p['currentStage'] as String? ?? '').toLowerCase();
-      return stage != 'completed' && stage != 'finished' && stage != 'cancelled';
+      return stage != 'completed' &&
+          stage != 'finished' &&
+          stage != 'cancelled';
     }).length;
 
     int estimatesCreated = _projects.length;
@@ -415,9 +468,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.08)) : null,
+        border: isDark
+            ? Border.all(color: Colors.white.withValues(alpha: 0.08))
+            : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02), blurRadius: 15, offset: const Offset(0, 5)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
         ],
       ),
       padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
@@ -447,41 +506,89 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       'Dashboard',
                       style: TextStyle(
                         fontSize: isSmallScreen ? 11.5 : 12,
-                        color: isDark ? const Color(0xFF60A5FA) : Colors.grey.shade600,
+                        color: isDark
+                            ? const Color(0xFF60A5FA)
+                            : Colors.grey.shade600,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? const Color(0xFF60A5FA) : Colors.grey.shade600),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: isDark
+                          ? const Color(0xFF60A5FA)
+                          : Colors.grey.shade600,
+                    ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
           SizedBox(height: isSmallScreen ? 12 : 18),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildOverviewCard('Projects', 'Active', activeProjects.toString(), Icons.business_rounded, Colors.green, isSmallScreen),
-              _buildOverviewCard('Estimates', 'Created', estimatesCreated.toString(), Icons.calculate_outlined, Colors.blue, isSmallScreen),
-              _buildOverviewCard('Quotes', 'Received', quotesReceived.toString(), Icons.assignment_outlined, Colors.orange, isSmallScreen),
-              _buildOverviewCard('Orders', 'Placed', ordersPlaced.toString(), Icons.inventory_2_outlined, Colors.purple, isSmallScreen),
+              _buildOverviewCard(
+                'Projects',
+                'Active',
+                activeProjects.toString(),
+                Icons.business_rounded,
+                Colors.green,
+                isSmallScreen,
+              ),
+              _buildOverviewCard(
+                'Estimates',
+                'Created',
+                estimatesCreated.toString(),
+                Icons.calculate_outlined,
+                Colors.blue,
+                isSmallScreen,
+              ),
+              _buildOverviewCard(
+                'Quotes',
+                'Received',
+                quotesReceived.toString(),
+                Icons.assignment_outlined,
+                Colors.orange,
+                isSmallScreen,
+              ),
+              _buildOverviewCard(
+                'Orders',
+                'Placed',
+                ordersPlaced.toString(),
+                Icons.inventory_2_outlined,
+                Colors.purple,
+                isSmallScreen,
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildOverviewCard(String title, String subtitle, String value, IconData icon, Color color, bool isSmallScreen) {
+  Widget _buildOverviewCard(
+    String title,
+    String subtitle,
+    String value,
+    IconData icon,
+    Color color,
+    bool isSmallScreen,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
-        padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 10 : 14, horizontal: isSmallScreen ? 2 : 4),
+        padding: EdgeInsets.symmetric(
+          vertical: isSmallScreen ? 10 : 14,
+          horizontal: isSmallScreen ? 2 : 4,
+        ),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF0F172A) : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: isDark ? 0.35 : 0.15)),
+          border: Border.all(
+            color: color.withValues(alpha: isDark ? 0.35 : 0.15),
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -535,9 +642,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.08)) : null,
+        border: isDark
+            ? Border.all(color: Colors.white.withValues(alpha: 0.08))
+            : null,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03), blurRadius: 15, offset: const Offset(0, 5)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
         ],
       ),
       child: Stack(
@@ -549,8 +662,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isDark
-                        ? [Colors.orange.shade900.withValues(alpha: 0.25), Colors.blue.shade900.withValues(alpha: 0.25)]
-                        : [Colors.orange.shade50.withValues(alpha: 0.5), Colors.blue.shade50.withValues(alpha: 0.3)],
+                        ? [
+                            Colors.orange.shade900.withValues(alpha: 0.25),
+                            Colors.blue.shade900.withValues(alpha: 0.25),
+                          ]
+                        : [
+                            Colors.orange.shade50.withValues(alpha: 0.5),
+                            Colors.blue.shade50.withValues(alpha: 0.3),
+                          ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -573,7 +692,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           const Text(
                             'YOUR NEXT STEP',
-                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.orange, letterSpacing: 1),
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                              letterSpacing: 1,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
@@ -581,7 +705,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: TextStyle(
                               fontSize: isSmallScreen ? 17 : 20,
                               fontWeight: FontWeight.w900,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                               height: 1.2,
                               letterSpacing: -0.4,
                             ),
@@ -591,7 +717,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             'Create estimate, get quotes and build your dream project.',
                             style: TextStyle(
                               fontSize: isSmallScreen ? 11.5 : 13,
-                              color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                              color: isDark
+                                  ? const Color(0xFF94A3B8)
+                                  : Colors.grey.shade600,
                               fontWeight: FontWeight.w500,
                               height: 1.3,
                             ),
@@ -600,10 +728,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ElevatedButton(
                             onPressed: () => context.push('/create-project'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isDark ? const Color(0xFF2563EB) : _slateDark,
+                              backgroundColor: isDark
+                                  ? const Color(0xFF2563EB)
+                                  : _slateDark,
                               foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 18, vertical: isSmallScreen ? 8 : 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSmallScreen ? 12 : 18,
+                                vertical: isSmallScreen ? 8 : 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               elevation: 0,
                             ),
                             child: Row(
@@ -611,10 +746,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               children: [
                                 Text(
                                   'Create Estimate',
-                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: isSmallScreen ? 12 : 13),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: isSmallScreen ? 12 : 13,
+                                  ),
                                 ),
                                 const SizedBox(width: 6),
-                                Icon(Icons.arrow_forward_rounded, size: isSmallScreen ? 14 : 16),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: isSmallScreen ? 14 : 16,
+                                ),
                               ],
                             ),
                           ),
@@ -628,9 +769,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         'assets/images/banner_building.jpg',
                         height: isSmallScreen ? 90 : 115,
                         fit: BoxFit.contain,
-                        color: isDark ? null : Colors.white.withValues(alpha: 0.01),
-                        colorBlendMode: isDark ? BlendMode.srcOver : BlendMode.darken,
-                        errorBuilder: (context, error, stackTrace) => Icon(Icons.construction, size: isSmallScreen ? 65 : 85, color: Colors.grey),
+                        color: isDark
+                            ? null
+                            : Colors.white.withValues(alpha: 0.01),
+                        colorBlendMode: isDark
+                            ? BlendMode.srcOver
+                            : BlendMode.darken,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.construction,
+                          size: isSmallScreen ? 65 : 85,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ],
@@ -639,15 +788,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStepIcon(Icons.calculate_outlined, 'Estimate', Colors.orange, isSmallScreen),
+                    _buildStepIcon(
+                      Icons.calculate_outlined,
+                      'Estimate',
+                      Colors.orange,
+                      isSmallScreen,
+                    ),
                     _buildStepLine(isSmallScreen),
-                    _buildStepIcon(Icons.engineering_outlined, 'Get Quotes', Colors.blue, isSmallScreen),
+                    _buildStepIcon(
+                      Icons.engineering_outlined,
+                      'Get Quotes',
+                      Colors.blue,
+                      isSmallScreen,
+                    ),
                     _buildStepLine(isSmallScreen),
-                    _buildStepIcon(Icons.handshake_outlined, 'Select Builder', Colors.teal, isSmallScreen),
+                    _buildStepIcon(
+                      Icons.handshake_outlined,
+                      'Select Builder',
+                      Colors.teal,
+                      isSmallScreen,
+                    ),
                     _buildStepLine(isSmallScreen),
-                    _buildStepIcon(Icons.foundation_outlined, 'Start Project', Colors.purple, isSmallScreen),
+                    _buildStepIcon(
+                      Icons.foundation_outlined,
+                      'Start Project',
+                      Colors.purple,
+                      isSmallScreen,
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           ),
@@ -656,7 +825,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildStepIcon(IconData icon, String label, Color color, bool isSmallScreen) {
+  Widget _buildStepIcon(
+    IconData icon,
+    String label,
+    Color color,
+    bool isSmallScreen,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -688,7 +862,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Expanded(
       child: Container(
         height: 1,
-        margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 4 : 6).copyWith(bottom: 14),
+        margin: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 4 : 6,
+        ).copyWith(bottom: 14),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final count = (constraints.constrainWidth() / 4).floor();
@@ -698,8 +874,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: List.generate(
                 count > 0 ? count : 1,
                 (index) => SizedBox(
-                  width: 2, height: 1,
-                  child: DecoratedBox(decoration: BoxDecoration(color: isDark ? Colors.white24 : Colors.grey)),
+                  width: 2,
+                  height: 1,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey,
+                    ),
+                  ),
                 ),
               ),
             );
@@ -763,7 +944,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       {
         'title': 'LED Walls',
         'badge': 'Digital Displays',
-        'subtitle': 'Commercial LED Walls, Digital Video Displays & Stage Screens',
+        'subtitle':
+            'Commercial LED Walls, Digital Video Displays & Stage Screens',
         'icon': Icons.smart_display_rounded,
         'gradient': const [Color(0xFF0284C7), Color(0xFF06B6D4)],
         'accent': const Color(0xFF0284C7),
@@ -787,7 +969,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2FF),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : const Color(0xFFC7D2FE),
+              color: isDark
+                  ? const Color(0xFF3B82F6).withValues(alpha: 0.3)
+                  : const Color(0xFFC7D2FE),
               width: 1,
             ),
           ),
@@ -797,7 +981,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Icon(
                 Icons.travel_explore_rounded,
                 size: isSmallScreen ? 13 : 15,
-                color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                color: isDark
+                    ? const Color(0xFF60A5FA)
+                    : const Color(0xFF2563EB),
               ),
               const SizedBox(width: 5),
               Flexible(
@@ -807,7 +993,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     fontSize: isSmallScreen ? 9 : 10.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.5,
-                    color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
+                    color: isDark
+                        ? const Color(0xFF60A5FA)
+                        : const Color(0xFF2563EB),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -841,7 +1029,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     'Hire verified architects, builders, promoters & pros.',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 11.5 : 13,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -920,15 +1110,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
-
-        const SizedBox(height: 14),
-        // Interactive "Go to Market" Banner
-        _buildMarketPromotionBanner(isSmallScreen),
       ],
     );
   }
 
-  Widget _buildLookingForCard(Map<String, dynamic> cat, bool isSmallScreen, bool isExpanded) {
+  Widget _buildLookingForCard(
+    Map<String, dynamic> cat,
+    bool isSmallScreen,
+    bool isExpanded,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final title = cat['title'] as String;
     final badge = cat['badge'] as String;
@@ -948,7 +1138,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : const Color(0xFFE2E8F0),
             width: 1.2,
           ),
           boxShadow: [
@@ -1023,12 +1215,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 4.5,
+                            ),
                             decoration: BoxDecoration(
-                              color: isDark ? accent.withValues(alpha: 0.18) : bg,
+                              color: isDark
+                                  ? accent.withValues(alpha: 0.18)
+                                  : bg,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: accent.withValues(alpha: isDark ? 0.45 : 0.35),
+                                color: accent.withValues(
+                                  alpha: isDark ? 0.45 : 0.35,
+                                ),
                                 width: 1,
                               ),
                             ),
@@ -1067,7 +1266,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       subtitle,
                       style: TextStyle(
                         fontSize: isSmallScreen ? 11 : 12,
-                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
                         height: 1.35,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1082,9 +1283,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       runSpacing: 5,
                       children: tags.map((tag) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3.5,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                            color: isDark
+                                ? const Color(0xFF0F172A)
+                                : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(7),
                           ),
                           child: Text(
@@ -1092,7 +1298,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: TextStyle(
                               fontSize: isSmallScreen ? 9 : 10,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                              color: isDark
+                                  ? const Color(0xFFCBD5E1)
+                                  : const Color(0xFF475569),
                             ),
                           ),
                         );
@@ -1252,150 +1460,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildMarketPromotionBanner(bool isSmallScreen) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0F172A), Color(0xFF1E1B4B)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF4F46E5).withValues(alpha: 0.18),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Background glow effect
-            Positioned(
-              right: -20,
-              bottom: -20,
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF6366F1).withValues(alpha: 0.35),
-                      const Color(0xFF6366F1).withValues(alpha: 0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isSmallScreen ? 12 : 16,
-                vertical: isSmallScreen ? 12 : 14,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.storefront_rounded,
-                      color: const Color(0xFF38BDF8),
-                      size: isSmallScreen ? 20 : 24,
-                    ),
-                  ),
-                  SizedBox(width: isSmallScreen ? 10 : 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                'Looking for materials or specialized services?',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: isSmallScreen ? 11.5 : 13,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Explore wholesale raw materials & 30+ service categories.',
-                          style: TextStyle(
-                            color: const Color(0xFF94A3B8),
-                            fontSize: isSmallScreen ? 9.5 : 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Material(
-                    color: const Color(0xFF38BDF8),
-                    borderRadius: BorderRadius.circular(20),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      splashColor: Colors.white.withValues(alpha: 0.35),
-                      highlightColor: Colors.white.withValues(alpha: 0.15),
-                      onTap: () => ref.read(mainTabProvider.notifier).setTab(2),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isSmallScreen ? 10 : 13,
-                          vertical: isSmallScreen ? 7 : 9,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              isSmallScreen ? 'Market' : 'Go to Market',
-                              style: TextStyle(
-                                color: const Color(0xFF0F172A),
-                                fontWeight: FontWeight.w900,
-                                fontSize: isSmallScreen ? 10.5 : 11.5,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 13,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildQuickActions(bool isSmallScreen, double screenWidth) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
@@ -1417,11 +1481,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         style: TextStyle(
                           fontSize: isSmallScreen ? 18 : 22,
                           fontWeight: FontWeight.w900,
-                          color: isDark ? Colors.white : const Color(0xFF1E1E2D),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF1E1E2D),
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.auto_awesome, size: isSmallScreen ? 15 : 18, color: Colors.purple.shade300),
+                      Icon(
+                        Icons.auto_awesome,
+                        size: isSmallScreen ? 15 : 18,
+                        color: Colors.purple.shade300,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 2),
@@ -1429,7 +1499,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     'Everything you need, right at your fingertips.',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 11 : 12,
-                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : Colors.grey.shade500,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -1442,11 +1514,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             GestureDetector(
               onTap: () => ref.read(mainTabProvider.notifier).state = 2,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 12, vertical: 6),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 8 : 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E293B) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade200),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.grey.shade200,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1455,7 +1534,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       'All Actions',
                       style: TextStyle(
                         fontSize: isSmallScreen ? 10.5 : 12,
-                        color: isDark ? const Color(0xFF818CF8) : Colors.indigo.shade900,
+                        color: isDark
+                            ? const Color(0xFF818CF8)
+                            : Colors.indigo.shade900,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1463,41 +1544,115 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Icon(
                       Icons.chevron_right_rounded,
                       size: 14,
-                      color: isDark ? const Color(0xFF818CF8) : Colors.indigo.shade900,
+                      color: isDark
+                          ? const Color(0xFF818CF8)
+                          : Colors.indigo.shade900,
                     ),
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
         const SizedBox(height: 16),
         if (screenWidth >= 1050)
           Row(
             children: [
-              _buildQuickActionCard('Cost Estimate', 'Calculate project\ncost in minutes', 'Get Started', Icons.calculate_rounded, Colors.green.shade500, 'assets/images/calc_3d.jpg', () => context.push('/cost-estimation'), isSmallScreen),
+              _buildQuickActionCard(
+                'Cost Estimate',
+                'Calculate project\ncost in minutes',
+                'Get Started',
+                Icons.calculate_rounded,
+                Colors.green.shade500,
+                'assets/images/calc_3d.jpg',
+                () => context.push('/cost-estimation'),
+                isSmallScreen,
+              ),
               const SizedBox(width: 14),
-              _buildQuickActionCard('Find Contractor', 'Connect with\nverified builders', 'Explore', Icons.engineering_rounded, Colors.blue.shade600, 'assets/images/crane_3d.jpg', () => context.push('/providers/All'), isSmallScreen),
+              _buildQuickActionCard(
+                'Find Contractor',
+                'Connect with\nverified builders',
+                'Explore',
+                Icons.engineering_rounded,
+                Colors.blue.shade600,
+                'assets/images/crane_3d.jpg',
+                () => context.push('/providers/All'),
+                isSmallScreen,
+              ),
               const SizedBox(width: 14),
-              _buildQuickActionCard('Compare Quotes', 'Review & compare\nbest quotes', 'Compare Now', Icons.assignment_outlined, Colors.orange.shade500, 'assets/images/quote_3d.jpg', _handleCompareQuotesTap, isSmallScreen),
+              _buildQuickActionCard(
+                'Compare Quotes',
+                'Review & compare\nbest quotes',
+                'Compare Now',
+                Icons.assignment_outlined,
+                Colors.orange.shade500,
+                'assets/images/quote_3d.jpg',
+                _handleCompareQuotesTap,
+                isSmallScreen,
+              ),
               const SizedBox(width: 14),
-              _buildQuickActionCard('Buy Materials', 'Get materials at\nbest prices', 'Shop Now', Icons.shopping_cart_outlined, Colors.purple.shade500, 'assets/images/cart_3d.jpg', () => context.push('/b2b-products'), isSmallScreen),
+              _buildQuickActionCard(
+                'Buy Materials',
+                'Get materials at\nbest prices',
+                'Shop Now',
+                Icons.shopping_cart_outlined,
+                Colors.purple.shade500,
+                'assets/images/cart_3d.jpg',
+                () => context.push('/b2b-products'),
+                isSmallScreen,
+              ),
             ],
           )
         else ...[
           Row(
             children: [
-              _buildQuickActionCard('Cost Estimate', 'Calculate project\ncost in minutes', 'Get Started', Icons.calculate_rounded, Colors.green.shade500, 'assets/images/calc_3d.jpg', () => context.push('/cost-estimation'), isSmallScreen),
+              _buildQuickActionCard(
+                'Cost Estimate',
+                'Calculate project\ncost in minutes',
+                'Get Started',
+                Icons.calculate_rounded,
+                Colors.green.shade500,
+                'assets/images/calc_3d.jpg',
+                () => context.push('/cost-estimation'),
+                isSmallScreen,
+              ),
               SizedBox(width: isSmallScreen ? 10 : 16),
-              _buildQuickActionCard('Find Contractor', 'Connect with\nverified builders', 'Explore', Icons.engineering_rounded, Colors.blue.shade600, 'assets/images/crane_3d.jpg', () => context.push('/providers/All'), isSmallScreen),
+              _buildQuickActionCard(
+                'Find Contractor',
+                'Connect with\nverified builders',
+                'Explore',
+                Icons.engineering_rounded,
+                Colors.blue.shade600,
+                'assets/images/crane_3d.jpg',
+                () => context.push('/providers/All'),
+                isSmallScreen,
+              ),
             ],
           ),
           SizedBox(height: isSmallScreen ? 10 : 16),
           Row(
             children: [
-              _buildQuickActionCard('Compare Quotes', 'Review & compare\nbest quotes', 'Compare Now', Icons.assignment_outlined, Colors.orange.shade500, 'assets/images/quote_3d.jpg', _handleCompareQuotesTap, isSmallScreen),
+              _buildQuickActionCard(
+                'Compare Quotes',
+                'Review & compare\nbest quotes',
+                'Compare Now',
+                Icons.assignment_outlined,
+                Colors.orange.shade500,
+                'assets/images/quote_3d.jpg',
+                _handleCompareQuotesTap,
+                isSmallScreen,
+              ),
               SizedBox(width: isSmallScreen ? 10 : 16),
-              _buildQuickActionCard('Buy Materials', 'Get materials at\nbest prices', 'Shop Now', Icons.shopping_cart_outlined, Colors.purple.shade500, 'assets/images/cart_3d.jpg', () => context.push('/b2b-products'), isSmallScreen),
+              _buildQuickActionCard(
+                'Buy Materials',
+                'Get materials at\nbest prices',
+                'Shop Now',
+                Icons.shopping_cart_outlined,
+                Colors.purple.shade500,
+                'assets/images/cart_3d.jpg',
+                () => context.push('/b2b-products'),
+                isSmallScreen,
+              ),
             ],
           ),
         ],
@@ -1576,7 +1731,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 'Choose which construction project you want to review bids for:',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 14),
@@ -1584,94 +1741,138 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: ListView.builder(
                   shrinkWrap: true,
                   physics: const BouncingScrollPhysics(),
-                itemCount: activeProjects.length,
-                itemBuilder: (context, idx) {
-                  final p = activeProjects[idx];
-                  final pid = p['id'] ?? '';
-                  final title = p['title'] ?? 'Project ${idx + 1}';
-                  final location = p['location'] ?? 'N/A';
-                  final quotes = p['quotes'] as List? ?? [];
+                  itemCount: activeProjects.length,
+                  itemBuilder: (context, idx) {
+                    final p = activeProjects[idx];
+                    final pid = p['id'] ?? '';
+                    final title = p['title'] ?? 'Project ${idx + 1}';
+                    final location = p['location'] ?? 'N/A';
+                    final quotes = p['quotes'] as List? ?? [];
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0)),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF4F46E5).withValues(alpha: 0.2) : const Color(0xFFEEF2FF),
-                          borderRadius: BorderRadius.circular(10),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF0F172A)
+                            : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : const Color(0xFFE2E8F0),
                         ),
-                        child: const Icon(Icons.assignment_outlined, color: Color(0xFF818CF8), size: 20),
                       ),
-                      title: Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        location,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF4F46E5).withValues(alpha: 0.2)
+                                : const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.assignment_outlined,
+                            color: Color(0xFF818CF8),
+                            size: 20,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: quotes.isNotEmpty
-                                  ? (isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5))
-                                  : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${quotes.length} ${quotes.length == 1 ? 'quote' : 'quotes'}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                        title: Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                            color: isDark
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          location,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: isDark
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
                                 color: quotes.isNotEmpty
-                                    ? (isDark ? const Color(0xFF34D399) : const Color(0xFF10B981))
-                                    : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                                    ? (isDark
+                                          ? const Color(0xFF064E3B)
+                                          : const Color(0xFFECFDF5))
+                                    : (isDark
+                                          ? const Color(0xFF1E293B)
+                                          : const Color(0xFFF1F5F9)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${quotes.length} ${quotes.length == 1 ? 'quote' : 'quotes'}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: quotes.isNotEmpty
+                                      ? (isDark
+                                            ? const Color(0xFF34D399)
+                                            : const Color(0xFF10B981))
+                                      : (isDark
+                                            ? const Color(0xFF94A3B8)
+                                            : const Color(0xFF64748B)),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.chevron_right_rounded, color: isDark ? Colors.grey.shade500 : const Color(0xFF94A3B8), size: 18),
-                        ],
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: isDark
+                                  ? Colors.grey.shade500
+                                  : const Color(0xFF94A3B8),
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          context.push('/compare-quotes/$pid');
+                        },
                       ),
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        context.push('/compare-quotes/$pid');
-                      },
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildQuickActionCard(
-      String title, String subtitle, String buttonText, IconData icon, Color color, String imagePath, VoidCallback onTap, bool isSmallScreen) {
+    String title,
+    String subtitle,
+    String buttonText,
+    IconData icon,
+    Color color,
+    String imagePath,
+    VoidCallback onTap,
+    bool isSmallScreen,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final imageSize = isSmallScreen ? 40.0 : 46.0;
 
@@ -1683,9 +1884,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
-              BoxShadow(color: color.withValues(alpha: isDark ? 0.05 : 0.10), blurRadius: 16, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: color.withValues(alpha: isDark ? 0.05 : 0.10),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
             ],
-            border: Border.all(color: color.withValues(alpha: isDark ? 0.3 : 0.15), width: 1.2),
+            border: Border.all(
+              color: color.withValues(alpha: isDark ? 0.3 : 0.15),
+              width: 1.2,
+            ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(17),
@@ -1717,17 +1925,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           color: color,
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
-                            BoxShadow(color: color.withValues(alpha: 0.35), blurRadius: 6, offset: const Offset(0, 3)),
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.35),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
                           ],
                         ),
-                        child: Icon(icon, color: Colors.white, size: isSmallScreen ? 18 : 22),
+                        child: Icon(
+                          icon,
+                          color: Colors.white,
+                          size: isSmallScreen ? 18 : 22,
+                        ),
                       ),
                       Image.asset(
                         imagePath,
                         width: imageSize,
                         height: imageSize,
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox.shrink(),
                       ),
                     ],
                   ),
@@ -1745,13 +1962,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 3),
-                  Container(width: 18, height: 2.5, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+                  Container(
+                    width: 18,
+                    height: 2.5,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                   const SizedBox(height: 5),
                   // Subtitle (pure high contrast without overlapping background)
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563),
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF4B5563),
                       fontSize: isSmallScreen ? 10 : 11,
                       height: 1.25,
                       fontWeight: FontWeight.w600,
@@ -1767,7 +1993,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Flexible(
                         child: Text(
                           buttonText,
-                          style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: isSmallScreen ? 10.5 : 11.5),
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w900,
+                            fontSize: isSmallScreen ? 10.5 : 11.5,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1775,11 +2005,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(width: 4),
                       Container(
                         padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                        child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 9),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 9,
+                        ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -1836,14 +2073,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     'View All',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 11 : 12,
-                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : Colors.grey.shade700,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.grey.shade700,
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -1856,23 +2101,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_activeTabIndex == 0) {
       final activeProjectsList = _projects.where((p) {
         final stage = (p['currentStage'] as String? ?? '').toLowerCase();
-        return stage != 'completed' && stage != 'finished' && stage != 'cancelled';
+        return stage != 'completed' &&
+            stage != 'finished' &&
+            stage != 'cancelled';
       }).toList();
       if (activeProjectsList.isEmpty && !_isLoading) {
-        return _buildActivityEmptyState('No active projects yet', 'Start a new project to track your\nconstruction progress here.', Icons.foundation, 'assets/images/construction_paused.png', 'Start New Project', () => context.push('/create-project'), isSmallScreen);
+        return _buildActivityEmptyState(
+          'No active projects yet',
+          'Start a new project to track your\nconstruction progress here.',
+          Icons.foundation,
+          'assets/images/construction_paused.png',
+          'Start New Project',
+          () => context.push('/create-project'),
+          isSmallScreen,
+        );
       }
       return _isLoading
           ? const ShimmerProjectList(itemCount: 2)
-          : Column(children: activeProjectsList.take(3).map((p) => _buildProjectListItem(p, isSmallScreen)).toList());
+          : Column(
+              children: activeProjectsList
+                  .take(3)
+                  .map((p) => _buildProjectListItem(p, isSmallScreen))
+                  .toList(),
+            );
     } else if (_activeTabIndex == 1) {
       if (_materialOrders.isEmpty && !_isLoading) {
-        return _buildActivityEmptyState('No active orders', 'Purchase materials at wholesale prices.', Icons.inventory_2, 'assets/images/no_materials_orders.png', 'Shop Materials', () => context.push('/b2b-products'), isSmallScreen);
+        return _buildActivityEmptyState(
+          'No active orders',
+          'Purchase materials at wholesale prices.',
+          Icons.inventory_2,
+          'assets/images/no_materials_orders.png',
+          'Shop Materials',
+          () => context.push('/b2b-products'),
+          isSmallScreen,
+        );
       }
       return _isLoading
           ? const ShimmerOrderList(itemCount: 2)
-          : Column(children: _materialOrders.take(3).map((o) => _buildOrderListItem(o, isSmallScreen)).toList());
+          : Column(
+              children: _materialOrders
+                  .take(3)
+                  .map((o) => _buildOrderListItem(o, isSmallScreen))
+                  .toList(),
+            );
     } else {
-      return _buildActivityEmptyState('No recent inquiries', 'Explore materials and suppliers to send inquiries.', Icons.inbox, 'assets/images/construction_paused.png', 'Explore Inquiries', () => context.push('/b2b-my-inquiries'), isSmallScreen);
+      return _buildActivityEmptyState(
+        'No recent inquiries',
+        'Explore materials and suppliers to send inquiries.',
+        Icons.inbox,
+        'assets/images/construction_paused.png',
+        'Explore Inquiries',
+        () => context.push('/b2b-my-inquiries'),
+        isSmallScreen,
+      );
     }
   }
 
@@ -1883,15 +2164,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final location = project['location'] ?? 'N/A';
     final budget = project['budget']?.toString() ?? '10,000';
     final projectId = project['id']?.toString() ?? '';
-    
-    final isCompleted = currentStage.toString().toLowerCase() == 'completed' || currentStage.toString().toLowerCase() == 'finished';
+
+    final isCompleted =
+        currentStage.toString().toLowerCase() == 'completed' ||
+        currentStage.toString().toLowerCase() == 'finished';
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';
     final isOnHold = currentStage.toString().toLowerCase().trim() == 'on hold';
-    
+
     final int colorIndex = projectId.hashCode.abs() % 3;
     final List<Color> colors = [Colors.green, Colors.blue, Colors.purple];
-    final Color cardColor = isCancelled ? Colors.red : (isOnHold ? Colors.orange : (isCompleted ? colors[colorIndex] : Colors.green));
-    final IconData icon = [Icons.home_rounded, Icons.business_rounded, Icons.storefront_rounded][colorIndex];
+    final Color cardColor = isCancelled
+        ? Colors.red
+        : (isOnHold
+              ? Colors.orange
+              : (isCompleted ? colors[colorIndex] : Colors.green));
+    final IconData icon = [
+      Icons.home_rounded,
+      Icons.business_rounded,
+      Icons.storefront_rounded,
+    ][colorIndex];
 
     final progressResult = ProjectProgressHelper.calculateFromProject(project);
     final progressText = progressResult.progressText;
@@ -1904,9 +2195,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.08)) : null,
+          border: isDark
+              ? Border.all(color: Colors.white.withValues(alpha: 0.08))
+              : null,
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: ClipRRect(
@@ -1924,10 +2221,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Container(
                       padding: EdgeInsets.all(isSmallScreen ? 8 : 11),
                       decoration: BoxDecoration(
-                        color: cardColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                        color: cardColor.withValues(
+                          alpha: isDark ? 0.22 : 0.12,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(icon, color: cardColor, size: isSmallScreen ? 20 : 24),
+                      child: Icon(
+                        icon,
+                        color: cardColor,
+                        size: isSmallScreen ? 20 : 24,
+                      ),
                     ),
                     SizedBox(width: isSmallScreen ? 8 : 12),
                     Expanded(
@@ -1942,7 +2245,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: isSmallScreen ? 13.5 : 15,
-                                    color: isDark ? Colors.white : const Color(0xFF1E1E2D),
+                                    color: isDark
+                                        ? Colors.white
+                                        : const Color(0xFF1E1E2D),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1956,7 +2261,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: isSmallScreen ? 13 : 15,
-                                    color: isDark ? const Color(0xFF34D399) : Colors.green,
+                                    color: isDark
+                                        ? const Color(0xFF34D399)
+                                        : Colors.green,
                                   ),
                                 ),
                               ),
@@ -1965,13 +2272,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.location_on, size: 11, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500),
+                              Icon(
+                                Icons.location_on,
+                                size: 11,
+                                color: isDark
+                                    ? const Color(0xFF64748B)
+                                    : Colors.grey.shade500,
+                              ),
                               const SizedBox(width: 3),
                               Expanded(
                                 child: Text(
                                   location,
                                   style: TextStyle(
-                                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                                    color: isDark
+                                        ? const Color(0xFF94A3B8)
+                                        : Colors.grey.shade600,
                                     fontSize: isSmallScreen ? 10.5 : 11.5,
                                   ),
                                   maxLines: 1,
@@ -1981,36 +2296,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               const SizedBox(width: 4),
                               if (isCompleted)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: isDark ? 0.25 : 0.1),
+                                    color: Colors.green.withValues(
+                                      alpha: isDark ? 0.25 : 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Text('Completed', style: TextStyle(color: Colors.green, fontSize: 9, fontWeight: FontWeight.bold)),
+                                  child: const Text(
+                                    'Completed',
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 )
                               else if (isCancelled)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Colors.red.withValues(alpha: isDark ? 0.25 : 0.1),
+                                    color: Colors.red.withValues(
+                                      alpha: isDark ? 0.25 : 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Text('Cancelled', style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold)),
+                                  child: const Text(
+                                    'Cancelled',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 )
                               else if (isOnHold)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange.withValues(alpha: isDark ? 0.25 : 0.1),
+                                    color: Colors.orange.withValues(
+                                      alpha: isDark ? 0.25 : 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.orange.withValues(alpha: 0.4), width: 0.8),
+                                    border: Border.all(
+                                      color: Colors.orange.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      width: 0.8,
+                                    ),
                                   ),
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.pause_circle_filled_rounded, color: Colors.orange, size: 9),
+                                      Icon(
+                                        Icons.pause_circle_filled_rounded,
+                                        color: Colors.orange,
+                                        size: 9,
+                                      ),
                                       SizedBox(width: 2),
-                                      Text('On Hold', style: TextStyle(color: Colors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
+                                      Text(
+                                        'On Hold',
+                                        style: TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -2018,15 +2378,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            isCompleted ? 'Finished' : (isOnHold ? 'Status: On Hold (Paused)' : 'Stage: $currentStage'),
+                            isCompleted
+                                ? 'Finished'
+                                : (isOnHold
+                                      ? 'Status: On Hold (Paused)'
+                                      : 'Stage: $currentStage'),
                             style: TextStyle(
                               color: isOnHold
                                   ? Colors.orange
                                   : (isCompleted
-                                      ? (isDark ? const Color(0xFF34D399) : Colors.green.shade700)
-                                      : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600)),
+                                        ? (isDark
+                                              ? const Color(0xFF34D399)
+                                              : Colors.green.shade700)
+                                        : (isDark
+                                              ? const Color(0xFF94A3B8)
+                                              : Colors.grey.shade600)),
                               fontSize: 10.5,
-                              fontWeight: isOnHold ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight: isOnHold
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                             ),
                           ),
                         ],
@@ -2041,12 +2411,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       isCompleted ? 'Progress: Completed' : 'Stage Progress',
                       style: TextStyle(
-                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : Colors.grey.shade600,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Text(progressText, style: TextStyle(color: cardColor, fontSize: 10, fontWeight: FontWeight.w900)),
+                    Text(
+                      progressText,
+                      style: TextStyle(
+                        color: cardColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -2054,7 +2433,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(3),
                   child: LinearProgressIndicator(
                     value: progressValue,
-                    backgroundColor: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                    backgroundColor: isDark
+                        ? const Color(0xFF334155)
+                        : Colors.grey.shade200,
                     valueColor: AlwaysStoppedAnimation<Color>(cardColor),
                     minHeight: 5,
                   ),
@@ -2072,10 +2453,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final title = order['title'] ?? order['product_name'] ?? 'Material';
     final status = order['status'] ?? 'New';
     final deliveryStatus = order['delivery_status'];
-    final isDelivered = status == 'Completed' || (status == 'Closed' && deliveryStatus == 'Delivered');
+    final isDelivered =
+        status == 'Completed' ||
+        (status == 'Closed' && deliveryStatus == 'Delivered');
 
     return GestureDetector(
-      onTap: () => context.push(isDelivered ? '/b2b-materials?tab=2' : '/b2b-materials'),
+      onTap: () =>
+          context.push(isDelivered ? '/b2b-materials?tab=2' : '/b2b-materials'),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
@@ -2084,8 +2468,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isDelivered
-                ? (isDark ? const Color(0xFF10B981).withValues(alpha: 0.3) : const Color(0xFFA7F3D0))
-                : (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
+                ? (isDark
+                      ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                      : const Color(0xFFA7F3D0))
+                : (isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.grey.shade200),
           ),
         ),
         child: Row(
@@ -2094,15 +2482,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
               decoration: BoxDecoration(
                 color: isDelivered
-                    ? (isDark ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFECFDF5))
-                    : (isDark ? Colors.purple.shade900.withValues(alpha: 0.3) : Colors.purple.shade50),
+                    ? (isDark
+                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                          : const Color(0xFFECFDF5))
+                    : (isDark
+                          ? Colors.purple.shade900.withValues(alpha: 0.3)
+                          : Colors.purple.shade50),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                isDelivered ? Icons.check_circle_rounded : Icons.inventory_2_rounded,
+                isDelivered
+                    ? Icons.check_circle_rounded
+                    : Icons.inventory_2_rounded,
                 color: isDelivered
                     ? const Color(0xFF10B981)
-                    : (isDark ? const Color(0xFFC084FC) : Colors.purple.shade700),
+                    : (isDark
+                          ? const Color(0xFFC084FC)
+                          : Colors.purple.shade700),
                 size: isSmallScreen ? 18 : 22,
               ),
             ),
@@ -2123,7 +2519,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1.5,
+                        ),
                         decoration: BoxDecoration(
                           color: isDelivered
                               ? const Color(0xFF10B981).withValues(alpha: 0.15)
@@ -2131,9 +2530,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          isDelivered ? 'Purchased & Delivered' : 'Status: $status',
+                          isDelivered
+                              ? 'Purchased & Delivered'
+                              : 'Status: $status',
                           style: TextStyle(
-                            color: isDelivered ? const Color(0xFF059669) : Colors.blue.shade700,
+                            color: isDelivered
+                                ? const Color(0xFF059669)
+                                : Colors.blue.shade700,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -2144,14 +2547,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: isDark ? Colors.grey.shade500 : Colors.grey.shade400, size: 18),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
+              size: 18,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActivityEmptyState(String title, String subtitle, IconData fallbackIcon, String imageAsset, String actionText, VoidCallback onTap, bool isSmallScreen) {
+  Widget _buildActivityEmptyState(
+    String title,
+    String subtitle,
+    IconData fallbackIcon,
+    String imageAsset,
+    String actionText,
+    VoidCallback onTap,
+    bool isSmallScreen,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
@@ -2159,7 +2574,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.grey.shade200,
+        ),
       ),
       child: Row(
         children: [
@@ -2169,7 +2588,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               imageAsset,
               height: isSmallScreen ? 70 : 90,
               fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(fallbackIcon, size: isSmallScreen ? 50 : 70, color: Colors.grey),
+              errorBuilder: (context, error, stackTrace) => Icon(
+                fallbackIcon,
+                size: isSmallScreen ? 50 : 70,
+                color: Colors.grey,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -2191,26 +2614,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   subtitle,
                   style: TextStyle(
                     fontSize: isSmallScreen ? 10.5 : 11.5,
-                    color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.grey.shade600,
                     height: 1.3,
                   ),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: onTap,
-                  icon: const Icon(Icons.add_rounded, size: 14, color: Colors.white),
-                  label: Text(actionText, style: TextStyle(fontSize: isSmallScreen ? 11 : 12)),
+                  icon: const Icon(
+                    Icons.add_rounded,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    actionText,
+                    style: TextStyle(fontSize: isSmallScreen ? 11 : 12),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? const Color(0xFF2563EB) : _slateDark,
+                    backgroundColor: isDark
+                        ? const Color(0xFF2563EB)
+                        : _slateDark,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 10 : 14, vertical: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 10 : 14,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     elevation: 0,
                   ),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -2223,20 +2662,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       onTap: () => setState(() => _activeTabIndex = index),
       child: Container(
         margin: const EdgeInsets.only(right: 6),
-        padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 9 : 12, vertical: 5),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 9 : 12,
+          vertical: 5,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? (isDark ? const Color(0xFF2563EB) : _slateDark)
               : (isDark ? const Color(0xFF1E293B) : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(16),
-          border: isDark && !isSelected ? Border.all(color: Colors.white.withValues(alpha: 0.08)) : null,
+          border: isDark && !isSelected
+              ? Border.all(color: Colors.white.withValues(alpha: 0.08))
+              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: isSmallScreen ? 10 : 11,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? Colors.white : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
+            color: isSelected
+                ? Colors.white
+                : (isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600),
           ),
         ),
       ),
@@ -2260,7 +2706,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             GestureDetector(
-              onTap: () => ref.read(mainTabProvider.notifier).state = 2, // feed tab
+              onTap: () =>
+                  ref.read(mainTabProvider.notifier).state = 2, // feed tab
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -2268,14 +2715,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     'Explore Feed',
                     style: TextStyle(
                       fontSize: isSmallScreen ? 11.5 : 13,
-                      color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
+                      color: isDark
+                          ? const Color(0xFF94A3B8)
+                          : Colors.grey.shade700,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: isDark
+                        ? const Color(0xFF94A3B8)
+                        : Colors.grey.shade700,
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -2285,7 +2740,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Center(
             child: Text(
               'No showcases found.',
-              style: TextStyle(color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500, fontSize: 12),
+              style: TextStyle(
+                color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500,
+                fontSize: 12,
+              ),
             ),
           )
         else
@@ -2297,23 +2755,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               itemBuilder: (context, index) {
                 final post = _socialPosts[index];
                 final provider = post['provider'] ?? {};
-                final builderName = provider['businessName'] ?? provider['ownerName'] ?? 'Provider';
+                final builderName =
+                    provider['businessName'] ??
+                    provider['ownerName'] ??
+                    'Provider';
                 final location = provider['city'] ?? 'Location';
                 final title = post['title'] ?? 'Showcase';
-                
-                final rawCategory = (provider['category'] ?? 'Construction').toString();
-                final category = rawCategory.contains(',') ? rawCategory.split(',').first.trim() : rawCategory;
+
+                final rawCategory = (provider['category'] ?? 'Construction')
+                    .toString();
+                final category = rawCategory.contains(',')
+                    ? rawCategory.split(',').first.trim()
+                    : rawCategory;
                 Color tagColor = Colors.green;
                 final lowerCat = rawCategory.toLowerCase();
                 if (lowerCat.contains('interior')) tagColor = Colors.orange;
                 if (lowerCat.contains('commercial')) tagColor = Colors.blue;
 
                 return _buildInspirationCard(
-                  title, 
-                  builderName, 
-                  location, 
-                  'Contact for details', 
-                  category, 
+                  title,
+                  builderName,
+                  location,
+                  'Contact for details',
+                  category,
                   tagColor,
                   post['imageData'] as String?,
                   provider['id'] ?? '',
@@ -2326,12 +2790,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildInspirationCard(String title, String builder, String location, String price, String category, Color tagColor, String? imageData, String providerId, bool isSmallScreen) {
+  Widget _buildInspirationCard(
+    String title,
+    String builder,
+    String location,
+    String price,
+    String category,
+    Color tagColor,
+    String? imageData,
+    String providerId,
+    bool isSmallScreen,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
         if (providerId.isNotEmpty) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ProviderProfileScreen(providerId: providerId)));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ProviderProfileScreen(providerId: providerId),
+            ),
+          );
         }
       },
       child: Container(
@@ -2340,7 +2820,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.shade200),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.grey.shade200,
+          ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
@@ -2352,30 +2836,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Container(
                     height: 100,
                     width: double.infinity,
-                    color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade300,
+                    color: isDark
+                        ? const Color(0xFF0F172A)
+                        : Colors.grey.shade300,
                     child: Builder(
                       builder: (context) {
                         if (imageData == null || imageData.trim().isEmpty) {
-                          return Center(child: Icon(Icons.image_outlined, color: Colors.grey.shade500, size: 36));
+                          return Center(
+                            child: Icon(
+                              Icons.image_outlined,
+                              color: Colors.grey.shade500,
+                              size: 36,
+                            ),
+                          );
                         }
                         final trimmed = imageData.trim();
-                        if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+                        if (trimmed.startsWith('http://') ||
+                            trimmed.startsWith('https://')) {
                           return Image.network(
                             trimmed,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.grey),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.image, color: Colors.grey),
                           );
                         }
                         try {
-                          final clean = trimmed.contains(',') ? trimmed.split(',').last : trimmed;
+                          final clean = trimmed.contains(',')
+                              ? trimmed.split(',').last
+                              : trimmed;
                           return Image.memory(
                             base64Decode(clean),
                             fit: BoxFit.cover,
                             gaplessPlayback: true,
-                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.grey),
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.image, color: Colors.grey),
                           );
                         } catch (_) {
-                          return const Center(child: Icon(Icons.image, color: Colors.grey));
+                          return const Center(
+                            child: Icon(Icons.image, color: Colors.grey),
+                          );
                         }
                       },
                     ),
@@ -2385,19 +2884,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     left: 8,
                     child: Container(
                       constraints: const BoxConstraints(maxWidth: 160),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: tagColor,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         category,
-                        style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
               Padding(
@@ -2414,13 +2920,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: isSmallScreen ? 12.5 : 13.5,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Icon(Icons.bookmark_border_rounded, size: 16, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade500),
+                        Icon(
+                          Icons.bookmark_border_rounded,
+                          size: 16,
+                          color: isDark
+                              ? const Color(0xFF64748B)
+                              : Colors.grey.shade500,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 3),
@@ -2431,7 +2945,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             builder,
                             style: TextStyle(
                               fontSize: 10.5,
-                              color: isDark ? const Color(0xFFCBD5E1) : Colors.grey.shade700,
+                              color: isDark
+                                  ? const Color(0xFFCBD5E1)
+                                  : Colors.grey.shade700,
                               fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
@@ -2439,14 +2955,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 3),
-                        const Icon(Icons.verified, color: Colors.blue, size: 11),
+                        const Icon(
+                          Icons.verified,
+                          color: Colors.blue,
+                          size: 11,
+                        ),
                       ],
                     ),
                     Text(
                       location,
                       style: TextStyle(
                         fontSize: 9.5,
-                        color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade500,
+                        color: isDark
+                            ? const Color(0xFF94A3B8)
+                            : Colors.grey.shade500,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -2462,7 +2984,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -2470,4 +2992,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 }
-

@@ -94,9 +94,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final imagesList = p['images'] as List?;
     final images = (imagesList != null && imagesList.isNotEmpty)
         ? imagesList
-        : ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=600'];
+        : [
+            'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=600',
+          ];
 
-    final double price = p['price_per_unit'] != null ? double.parse(p['price_per_unit'].toString()) : 0.0;
+    final double price = p['price_per_unit'] != null
+        ? double.parse(p['price_per_unit'].toString())
+        : 0.0;
     final String unit = p['unit_type'] ?? 'Bag';
 
     return Scaffold(
@@ -115,7 +119,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             onPressed: () {
               setState(() => _isSaved = !_isSaved);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(_isSaved ? 'Saved to favorites' : 'Removed from favorites')),
+                SnackBar(
+                  content: Text(
+                    _isSaved ? 'Saved to favorites' : 'Removed from favorites',
+                  ),
+                ),
               );
             },
           ),
@@ -130,7 +138,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: PageView.builder(
                 itemCount: images.length,
                 itemBuilder: (context, index) {
-                  return BuildMartImage(imageUrl: images[index], fit: BoxFit.cover, width: double.infinity);
+                  return BuildMartImage(
+                    imageUrl: images[index],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  );
                 },
               ),
             ),
@@ -143,50 +155,97 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(50),
                         ),
                         child: Text(
                           p['business_type'] ?? 'Verified Supplier',
-                          style: const TextStyle(color: Colors.blue, fontSize: 11, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${p['avg_rating'] ?? "0.0"} (${p['total_reviews'] ?? 0} reviews)',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     p['name'] ?? '',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.black87),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Estimated Rate: ₹${price.toStringAsFixed(0)} / $unit',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.blue),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.blue,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Divider(color: Colors.grey),
 
                   const SizedBox(height: 12),
-                  const Text('Product Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const Text(
+                    'Product Description',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(p['description'] ?? 'No description provided.', style: TextStyle(fontSize: 13.5, color: Colors.grey.shade700, height: 1.5)),
+                  Text(
+                    p['description'] ?? 'No description provided.',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   const Divider(color: Colors.grey),
 
                   const SizedBox(height: 12),
-                  const Text('Specifications', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const Text(
+                    'Specifications',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Table(
-                    border: TableBorder.all(color: Colors.grey.shade300, width: 1, borderRadius: BorderRadius.circular(8)),
+                    border: TableBorder.all(
+                      color: Colors.grey.shade300,
+                      width: 1,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     columnWidths: const {
                       0: FlexColumnWidth(2),
                       1: FlexColumnWidth(3),
@@ -196,11 +255,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Text(entry.key, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+                            child: Text(
+                              entry.key,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Text(entry.value, style: const TextStyle(fontSize: 12.5, color: Colors.black87)),
+                            child: Text(
+                              entry.value,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.black87,
+                              ),
+                            ),
                           ),
                         ],
                       );
@@ -210,7 +282,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const Divider(color: Colors.grey),
 
                   const SizedBox(height: 12),
-                  const Text('Supplier Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  const Text(
+                    'Supplier Details',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -224,31 +303,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: BuildMartImage(imageUrl: p['logo_url'] ?? '', width: 52, height: 52, fit: BoxFit.cover),
+                          child: BuildMartImage(
+                            imageUrl: p['logo_url'] ?? '',
+                            width: 52,
+                            height: 52,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(p['company_name'] ?? 'BuildMart Supplier', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87)),
+                              Text(
+                                p['company_name'] ?? 'BuildMart Supplier',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    color: Colors.amber,
+                                    size: 14,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '${p['avg_rating'] ?? "0.0"} (${p['total_reviews'] ?? 0} Reviews)',
-                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.location_on_rounded, size: 12, color: Colors.red),
+                                  const Icon(
+                                    Icons.location_on_rounded,
+                                    size: 12,
+                                    color: Colors.red,
+                                  ),
                                   const SizedBox(width: 4),
-                                  Text(p['supplier_location'] ?? 'All India', style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600)),
+                                  Text(
+                                    p['supplier_location'] ?? 'All India',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -262,7 +370,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     const SizedBox(height: 24),
                     const Divider(color: Colors.grey),
                     const SizedBox(height: 12),
-                    const Text('Related Products', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    const Text(
+                      'Related Products',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 150,
@@ -272,10 +387,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         itemBuilder: (context, idx) {
                           final rel = _relatedProducts[idx];
                           final relImages = rel['images'] as List?;
-                          final relImage = (relImages != null && relImages.isNotEmpty) ? relImages[0] as String : '';
+                          final relImage =
+                              (relImages != null && relImages.isNotEmpty)
+                              ? relImages[0] as String
+                              : '';
                           return GestureDetector(
                             onTap: () {
-                              context.pushReplacement('/b2b-product-detail/${rel['id']}');
+                              context.pushReplacement(
+                                '/b2b-product-detail/${rel['id']}',
+                              );
                             },
                             child: Container(
                               width: 130,
@@ -285,18 +405,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: BuildMartImage(imageUrl: relImage, width: 130, height: 90, fit: BoxFit.cover),
+                                    child: BuildMartImage(
+                                      imageUrl: relImage,
+                                      width: 130,
+                                      height: 90,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     rel['name'] ?? '',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                   Text(
                                     '₹${rel['price_per_unit']} / ${rel['unit_type']}',
-                                    style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 11),
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -319,7 +451,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border(top: BorderSide(color: Colors.grey.shade200, width: 1)),
+            border: Border(
+              top: BorderSide(color: Colors.grey.shade200, width: 1),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
@@ -341,7 +475,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

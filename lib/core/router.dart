@@ -33,15 +33,56 @@ import '../features/b2b/presentation/lead_management_screen.dart';
 import '../features/b2b/presentation/materials_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/chat/chat_detail_screen.dart';
+import '../features/auth/auth_provider.dart';
 
 import 'package:flutter/material.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Screens only a partner (PROVIDER) may open.
+const _providerOnlyRoutes = [
+  '/provider-home',
+  '/provider-lead',
+  '/provider-job',
+  '/provider-profile-edit',
+  '/provider-chat',
+  '/supplier-products',
+  '/supplier-add-product',
+  '/supplier-leads',
+];
+
+/// Screens only a customer (CONSUMER) may open.
+const _consumerOnlyRoutes = [
+  '/create-project',
+  '/project-detail',
+  '/compare-quotes',
+];
+
+bool _matchesAny(String path, List<String> routes) =>
+    routes.any((r) => path == r || path.startsWith('$r/'));
+
+/// Keeps each role on its own screens (deep links, notifications, back stack).
+/// The backend enforces the same rules; this only avoids broken screens.
+String? _roleGuard(Ref ref, GoRouterState state) {
+  final auth = ref.read(authProvider);
+  if (!auth.isInitialized) return null; // splash decides once auth is loaded
+
+  final path = state.uri.path;
+  final providerOnly = _matchesAny(path, _providerOnlyRoutes);
+  final consumerOnly = _matchesAny(path, _consumerOnlyRoutes);
+  if (!providerOnly && !consumerOnly) return null;
+
+  if (auth.id == null) return '/login';
+  if (providerOnly && auth.role != 'PROVIDER') return '/';
+  if (consumerOnly && auth.role == 'PROVIDER') return '/provider-home';
+  return null;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
+    redirect: (context, state) => _roleGuard(ref, state),
     routes: [
       GoRoute(
         path: '/splash',

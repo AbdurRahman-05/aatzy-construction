@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { sendOtp, verifyOtp } from '@/lib/messageCentral';
+import { issueSessionToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -26,9 +26,15 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Login successful',
-      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        token: issueSessionToken(user.id, 'CONSUMER'),
+      }
     }, { status: 200 });
 
   } catch (error) {

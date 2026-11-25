@@ -3,6 +3,15 @@ import crypto from 'crypto';
 
 export const YEARLY_MEMBERSHIP_FEE = Number(process.env.PROVIDER_YEARLY_MEMBERSHIP_FEE) || 5999;
 
+/**
+ * While payments are switched off, every partner gets full access.
+ * Defaults to ON (current behaviour). Set FREE_ACCESS_MODE=false in .env once the
+ * Razorpay checkout is re-enabled in the app, and real subscription status is used.
+ */
+export function isFreeAccessMode(): boolean {
+  return process.env.FREE_ACCESS_MODE !== 'false';
+}
+
 export function getRazorpayClient(): Razorpay | null {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;

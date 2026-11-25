@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import 'package:construction_app/core/api_http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/services/media_picker_service.dart';
@@ -67,7 +67,8 @@ class ProviderJobDetail extends ConsumerStatefulWidget {
 class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
   Map<String, dynamic>? _project;
   bool _isLoading = true;
-  int _selectedTab = 0; // 0: Pending, 1: Ongoing, 2: Finished, 3: Financials, 4: Workers, 5: Daily Logs
+  int _selectedTab =
+      0; // 0: Pending, 1: Ongoing, 2: Finished, 3: Financials, 4: Workers, 5: Daily Logs
   final ImagePicker _picker = ImagePicker();
   List<Worker> _workers = [];
 
@@ -87,9 +88,16 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         // Exclude legacy mock worker IDs and names so only user-added workers are loaded
         final loaded = list
             .map((item) => Worker.fromJson(item))
-            .where((w) =>
-                !['w1', 'w2', 'w3', 'w4'].contains(w.id) &&
-                !['Rajesh Kumar', 'Amit Singh', 'Sunil Verma', 'Vijay Yadav'].contains(w.name))
+            .where(
+              (w) =>
+                  !['w1', 'w2', 'w3', 'w4'].contains(w.id) &&
+                  ![
+                    'Rajesh Kumar',
+                    'Amit Singh',
+                    'Sunil Verma',
+                    'Vijay Yadav',
+                  ].contains(w.name),
+            )
             .toList();
         if (mounted) {
           setState(() {
@@ -126,7 +134,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
   Future<void> _fetchProjectDetails() async {
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/projects/${widget.projectId}'));
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/projects/${widget.projectId}'),
+      );
       if (response.statusCode == 200) {
         if (mounted) {
           setState(() {
@@ -145,7 +155,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
   Future<void> _generateTemplateTasks() async {
     final typeString = _project?['type'] as String? ?? '';
-    final services = typeString.split(',').map((s) => s.trim().toLowerCase()).toList();
+    final services = typeString
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .toList();
 
     List<Map<String, dynamic>> templateTasks = [];
 
@@ -169,7 +182,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           'duration': 14,
         });
       }
-      if (service.contains('design') || service.contains('planning') || service.contains('planing')) {
+      if (service.contains('design') ||
+          service.contains('planning') ||
+          service.contains('planing')) {
         templateTasks.add({
           'stage': 'Design & Planning',
           'title': 'Architectural Concept & 2D Floor Plans',
@@ -210,7 +225,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           'duration': 2,
         });
       }
-      if (service.contains('structure') || service.contains('civil') || service.contains('foundation')) {
+      if (service.contains('structure') ||
+          service.contains('civil') ||
+          service.contains('foundation')) {
         templateTasks.add({
           'stage': 'Structure & Civil',
           'title': 'Excavation, Levelling, and Soil Compaction',
@@ -248,10 +265,26 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
     if (templateTasks.length <= 1) {
       templateTasks.addAll([
-        {'stage': 'Civil Works', 'title': 'Excavation & Ground Preparation', 'duration': 5},
-        {'stage': 'Civil Works', 'title': 'Foundation & Columns Casting', 'duration': 10},
-        {'stage': 'Civil Works', 'title': 'Brickwork & Wall Plastering', 'duration': 15},
-        {'stage': 'Finishing', 'title': 'Flooring, Plumbing, and Electrical Fitouts', 'duration': 12},
+        {
+          'stage': 'Civil Works',
+          'title': 'Excavation & Ground Preparation',
+          'duration': 5,
+        },
+        {
+          'stage': 'Civil Works',
+          'title': 'Foundation & Columns Casting',
+          'duration': 10,
+        },
+        {
+          'stage': 'Civil Works',
+          'title': 'Brickwork & Wall Plastering',
+          'duration': 15,
+        },
+        {
+          'stage': 'Finishing',
+          'title': 'Flooring, Plumbing, and Electrical Fitouts',
+          'duration': 12,
+        },
       ]);
     }
 
@@ -271,18 +304,21 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         _fetchProjectDetails();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to generate template. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to generate template. Please try again.'),
+          ),
         );
         setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint('Error generating template tasks: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Connection error.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Connection error.')));
       setState(() => _isLoading = false);
     }
   }
+
   void _showTaskStatusSheet(Map<String, dynamic> task) {
     final taskId = task['id'];
     final title = task['title'] ?? 'Task Details';
@@ -292,17 +328,29 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
     // Detect if we already have other expense or material expense
     String expenseType = 'Material';
-    if (task['materialName'] != null && (task['materialName'] as String).isNotEmpty) {
-      if (task['materialQuantity'] == null && task['materialUnitCost'] == null) {
+    if (task['materialName'] != null &&
+        (task['materialName'] as String).isNotEmpty) {
+      if (task['materialQuantity'] == null &&
+          task['materialUnitCost'] == null) {
         expenseType = 'Other';
       }
     }
 
-    final quotedCostController = TextEditingController(text: (task['quotedCost'] ?? 0.0).toString());
-    final materialNameController = TextEditingController(text: task['materialName'] ?? '');
-    final quantityController = TextEditingController(text: task['materialQuantity']?.toString() ?? '');
-    final unitCostController = TextEditingController(text: task['materialUnitCost']?.toString() ?? '');
-    final otherCostController = TextEditingController(text: (task['taskCost'] ?? 0.0).toString());
+    final quotedCostController = TextEditingController(
+      text: (task['quotedCost'] ?? 0.0).toString(),
+    );
+    final materialNameController = TextEditingController(
+      text: task['materialName'] ?? '',
+    );
+    final quantityController = TextEditingController(
+      text: task['materialQuantity']?.toString() ?? '',
+    );
+    final unitCostController = TextEditingController(
+      text: task['materialUnitCost']?.toString() ?? '',
+    );
+    final otherCostController = TextEditingController(
+      text: (task['taskCost'] ?? 0.0).toString(),
+    );
 
     showModalBottomSheet(
       context: context,
@@ -338,17 +386,26 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     const SizedBox(height: 16),
                     Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Update status, material logs, or attach completion picture.',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
                       'Select Status:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -360,17 +417,27 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                             },
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: selectedStatus == 'Todo' ? Theme.of(context).primaryColor : Colors.grey.shade300,
+                                color: selectedStatus == 'Todo'
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.grey.shade300,
                                 width: selectedStatus == 'Todo' ? 2 : 1,
                               ),
-                              backgroundColor: selectedStatus == 'Todo' ? Theme.of(context).primaryColor.withValues(alpha: 0.08) : null,
+                              backgroundColor: selectedStatus == 'Todo'
+                                  ? Theme.of(
+                                      context,
+                                    ).primaryColor.withValues(alpha: 0.08)
+                                  : null,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                             child: Text(
                               'Not Started',
                               style: TextStyle(
-                                color: selectedStatus == 'Todo' ? Theme.of(context).primaryColor : Colors.grey.shade700,
+                                color: selectedStatus == 'Todo'
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.grey.shade700,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
@@ -381,16 +448,24 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () {
-                              setModalState(() => selectedStatus = 'In Progress');
+                              setModalState(
+                                () => selectedStatus = 'In Progress',
+                              );
                             },
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: selectedStatus == 'In Progress' ? Colors.blue : Colors.grey.shade300,
+                                color: selectedStatus == 'In Progress'
+                                    ? Colors.blue
+                                    : Colors.grey.shade300,
                                 width: selectedStatus == 'In Progress' ? 2 : 1,
                               ),
-                              backgroundColor: selectedStatus == 'In Progress' ? Colors.blue.withValues(alpha: 0.08) : null,
+                              backgroundColor: selectedStatus == 'In Progress'
+                                  ? Colors.blue.withValues(alpha: 0.08)
+                                  : null,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                             child: const Text(
                               'In Progress',
@@ -410,12 +485,18 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                             },
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: selectedStatus == 'Completed' ? Colors.green : Colors.grey.shade300,
+                                color: selectedStatus == 'Completed'
+                                    ? Colors.green
+                                    : Colors.grey.shade300,
                                 width: selectedStatus == 'Completed' ? 2 : 1,
                               ),
-                              backgroundColor: selectedStatus == 'Completed' ? Colors.green.withValues(alpha: 0.08) : null,
+                              backgroundColor: selectedStatus == 'Completed'
+                                  ? Colors.green.withValues(alpha: 0.08)
+                                  : null,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                             child: const Text(
                               'Completed',
@@ -432,7 +513,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     const SizedBox(height: 20),
                     const Text(
                       'Quoted Cost for Client:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -441,7 +525,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                       decoration: InputDecoration(
                         labelText: 'Quoted Price (₹)',
                         hintText: 'e.g. 1500',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         prefixIcon: const Icon(Icons.request_quote_outlined),
                       ),
                       onChanged: (_) => setModalState(() {}),
@@ -449,14 +535,19 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     const SizedBox(height: 20),
                     const Text(
                       'Expense Category / Log Details:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: expenseType,
                       decoration: InputDecoration(
                         labelText: 'Expense Type',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         prefixIcon: const Icon(Icons.category_outlined),
                       ),
                       items: const [
@@ -464,10 +555,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                           value: 'Material',
                           child: Text('Material Expenses'),
                         ),
-                        DropdownMenuItem(
-                          value: 'Other',
-                          child: Text('Others'),
-                        ),
+                        DropdownMenuItem(value: 'Other', child: Text('Others')),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -484,7 +572,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                         decoration: InputDecoration(
                           labelText: 'Material Item Name',
                           hintText: 'e.g. Cement, Bricks, Sand',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           prefixIcon: const Icon(Icons.build_circle_outlined),
                         ),
                       ),
@@ -498,7 +588,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                               decoration: InputDecoration(
                                 labelText: 'Quantity Used',
                                 hintText: 'e.g. 5',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                               onChanged: (_) => setModalState(() {}),
                             ),
@@ -511,7 +603,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                               decoration: InputDecoration(
                                 labelText: 'Unit Cost (₹)',
                                 hintText: 'e.g. 250',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                               onChanged: (_) => setModalState(() {}),
                             ),
@@ -524,7 +618,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                         decoration: InputDecoration(
                           labelText: 'Expense Reason / Description',
                           hintText: 'e.g. Legal Approval, Logistics, Tax',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           prefixIcon: const Icon(Icons.info_outline),
                         ),
                       ),
@@ -535,7 +631,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                         decoration: InputDecoration(
                           labelText: 'Expense Cost (₹)',
                           hintText: 'e.g. 1500',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           prefixIcon: const Icon(Icons.currency_rupee),
                         ),
                         onChanged: (_) => setModalState(() {}),
@@ -544,14 +642,18 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     const SizedBox(height: 16),
                     Builder(
                       builder: (context) {
-                        final quoted = double.tryParse(quotedCostController.text) ?? 0.0;
+                        final quoted =
+                            double.tryParse(quotedCostController.text) ?? 0.0;
                         double spent = 0.0;
                         if (expenseType == 'Material') {
-                          final qty = double.tryParse(quantityController.text) ?? 0.0;
-                          final unit = double.tryParse(unitCostController.text) ?? 0.0;
+                          final qty =
+                              double.tryParse(quantityController.text) ?? 0.0;
+                          final unit =
+                              double.tryParse(unitCostController.text) ?? 0.0;
                           spent = qty * unit;
                         } else {
-                          spent = double.tryParse(otherCostController.text) ?? 0.0;
+                          spent =
+                              double.tryParse(otherCostController.text) ?? 0.0;
                         }
                         final profit = quoted - spent;
                         final isProfit = profit >= 0;
@@ -562,7 +664,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               'Quoted Task Price: ₹${quoted.toStringAsFixed(2)}',
-                              style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           );
                         }
@@ -570,37 +676,76 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                         return Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: isProfit ? Colors.green.shade50 : Colors.red.shade50,
+                            color: isProfit
+                                ? Colors.green.shade50
+                                : Colors.red.shade50,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isProfit ? Colors.green.shade200 : Colors.red.shade200),
+                            border: Border.all(
+                              color: isProfit
+                                  ? Colors.green.shade200
+                                  : Colors.red.shade200,
+                            ),
                           ),
                           child: Column(
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Quoted Cost (Client Charge):', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                                  Text('₹${quoted.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue)),
+                                  const Text(
+                                    'Quoted Cost (Client Charge):',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${quoted.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 6),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Actual Spent Cost:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                                  Text('₹${spent.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange)),
+                                  const Text(
+                                    'Actual Spent Cost:',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${spent.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const Divider(height: 14),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    isProfit ? 'Estimated Profit:' : 'Estimated Loss:',
+                                    isProfit
+                                        ? 'Estimated Profit:'
+                                        : 'Estimated Loss:',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13,
-                                      color: isProfit ? Colors.green.shade800 : Colors.red.shade800,
+                                      color: isProfit
+                                          ? Colors.green.shade800
+                                          : Colors.red.shade800,
                                     ),
                                   ),
                                   Text(
@@ -608,7 +753,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
-                                      color: isProfit ? Colors.green.shade800 : Colors.red.shade800,
+                                      color: isProfit
+                                          ? Colors.green.shade800
+                                          : Colors.red.shade800,
                                     ),
                                   ),
                                 ],
@@ -622,7 +769,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     if (selectedStatus == 'Completed') ...[
                       const Text(
                         'Attach Completion Picture:',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       if (base64Image != null && base64Image!.isNotEmpty) ...[
@@ -635,10 +785,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => FullScreenImageViewer(
-                                        base64Image: base64Image!,
-                                        title: title,
-                                      ),
+                                      builder: (context) =>
+                                          FullScreenImageViewer(
+                                            base64Image: base64Image!,
+                                            title: title,
+                                          ),
                                     ),
                                   );
                                 },
@@ -662,7 +813,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                       color: Colors.black54,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -688,11 +843,17 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                           }
                         },
                         style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         icon: const Icon(Icons.add_a_photo),
-                        label: Text(base64Image != null ? 'Change Photo' : 'Select Photo from Gallery'),
+                        label: Text(
+                          base64Image != null
+                              ? 'Change Photo'
+                              : 'Select Photo from Gallery',
+                        ),
                       ),
                       const SizedBox(height: 24),
                     ],
@@ -711,30 +872,54 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                 ? null
                                 : () async {
                                     setModalState(() => isSaving = true);
-                                    final quotedVal = double.tryParse(quotedCostController.text) ?? 0.0;
+                                    final quotedVal =
+                                        double.tryParse(
+                                          quotedCostController.text,
+                                        ) ??
+                                        0.0;
                                     int? qtyVal;
                                     double? costVal;
                                     double totalCost = 0.0;
 
                                     if (expenseType == 'Material') {
-                                      qtyVal = int.tryParse(quantityController.text);
-                                      costVal = double.tryParse(unitCostController.text);
-                                      totalCost = (qtyVal != null && costVal != null) ? (qtyVal * costVal) : 0.0;
+                                      qtyVal = int.tryParse(
+                                        quantityController.text,
+                                      );
+                                      costVal = double.tryParse(
+                                        unitCostController.text,
+                                      );
+                                      totalCost =
+                                          (qtyVal != null && costVal != null)
+                                          ? (qtyVal * costVal)
+                                          : 0.0;
                                     } else {
                                       qtyVal = null;
                                       costVal = null;
-                                      totalCost = double.tryParse(otherCostController.text) ?? 0.0;
+                                      totalCost =
+                                          double.tryParse(
+                                            otherCostController.text,
+                                          ) ??
+                                          0.0;
                                     }
 
                                     try {
                                       final response = await http.patch(
-                                        Uri.parse('$apiBaseUrl/projects/${widget.projectId}/tasks'),
-                                        headers: {'Content-Type': 'application/json'},
+                                        Uri.parse(
+                                          '$apiBaseUrl/projects/${widget.projectId}/tasks',
+                                        ),
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
                                         body: jsonEncode({
                                           'taskId': taskId,
                                           'status': selectedStatus,
-                                          'photoUrl': selectedStatus == 'Completed' ? base64Image : null,
-                                          'materialName': materialNameController.text.trim(),
+                                          'photoUrl':
+                                              selectedStatus == 'Completed'
+                                              ? base64Image
+                                              : null,
+                                          'materialName': materialNameController
+                                              .text
+                                              .trim(),
                                           'materialQuantity': qtyVal,
                                           'materialUnitCost': costVal,
                                           'taskCost': totalCost,
@@ -742,58 +927,102 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                         }),
                                       );
                                       if (response.statusCode == 200) {
-                                        final taskTitle = task['title'] ?? 'Task';
-                                        final projTitle = _project?['title'] ?? 'Project';
+                                        final taskTitle =
+                                            task['title'] ?? 'Task';
+                                        final projTitle =
+                                            _project?['title'] ?? 'Project';
                                         if (selectedStatus == 'Completed') {
                                           PushNotificationService().showNotification(
-                                            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-                                            title: '✅ Task Finished: $taskTitle',
-                                            body: 'Milestone marked as finished on "$projTitle"!',
-                                            payload: '/provider-job/${widget.projectId}',
+                                            id:
+                                                DateTime.now()
+                                                    .millisecondsSinceEpoch ~/
+                                                1000,
+                                            title:
+                                                '✅ Task Finished: $taskTitle',
+                                            body:
+                                                'Milestone marked as finished on "$projTitle"!',
+                                            payload:
+                                                '/provider-job/${widget.projectId}',
                                             channelId: 'buildzy_leads_v2',
                                             channelName: 'Tasks & Milestones',
                                           );
-                                        } else if (selectedStatus == 'In Progress') {
+                                        } else if (selectedStatus ==
+                                            'In Progress') {
                                           PushNotificationService().showNotification(
-                                            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-                                            title: '🚀 Task Started: $taskTitle',
-                                            body: 'Work is now ongoing for "$projTitle".',
-                                            payload: '/provider-job/${widget.projectId}',
+                                            id:
+                                                DateTime.now()
+                                                    .millisecondsSinceEpoch ~/
+                                                1000,
+                                            title:
+                                                '🚀 Task Started: $taskTitle',
+                                            body:
+                                                'Work is now ongoing for "$projTitle".',
+                                            payload:
+                                                '/provider-job/${widget.projectId}',
                                             channelId: 'buildzy_leads_v2',
                                             channelName: 'Tasks & Milestones',
                                           );
                                         }
 
-                                        if (expenseType == 'Material' && materialNameController.text.trim().isNotEmpty) {
+                                        if (expenseType == 'Material' &&
+                                            materialNameController.text
+                                                .trim()
+                                                .isNotEmpty) {
                                           PushNotificationService().showNotification(
-                                            id: DateTime.now().millisecondsSinceEpoch ~/ 1000 + 1,
-                                            title: '🧱 Material Logged: ${materialNameController.text.trim()}',
-                                            body: 'Site material updated: ${qtyVal?.toStringAsFixed(0) ?? ''} units @ ₹${costVal?.toStringAsFixed(0) ?? ''} on "${_project?['title'] ?? 'Project'}".',
-                                            payload: '/provider-job/${widget.projectId}',
+                                            id:
+                                                DateTime.now()
+                                                        .millisecondsSinceEpoch ~/
+                                                    1000 +
+                                                1,
+                                            title:
+                                                '🧱 Material Logged: ${materialNameController.text.trim()}',
+                                            body:
+                                                'Site material updated: ${qtyVal?.toStringAsFixed(0) ?? ''} units @ ₹${costVal?.toStringAsFixed(0) ?? ''} on "${_project?['title'] ?? 'Project'}".',
+                                            payload:
+                                                '/provider-job/${widget.projectId}',
                                             channelId: 'buildzy_orders_v2',
-                                            channelName: 'Material Inquiries & Orders',
+                                            channelName:
+                                                'Material Inquiries & Orders',
                                           );
                                         }
 
                                         if (sheetContext.mounted) {
                                           Navigator.pop(sheetContext);
-                                          ScaffoldMessenger.of(sheetContext).showSnackBar(
-                                            const SnackBar(content: Text('Task status updated!')),
+                                          ScaffoldMessenger.of(
+                                            sheetContext,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Task status updated!',
+                                              ),
+                                            ),
                                           );
                                         }
                                         _fetchProjectDetails();
                                       } else {
                                         if (sheetContext.mounted) {
-                                          ScaffoldMessenger.of(sheetContext).showSnackBar(
-                                            const SnackBar(content: Text('Failed to update task.')),
+                                          ScaffoldMessenger.of(
+                                            sheetContext,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Failed to update task.',
+                                              ),
+                                            ),
                                           );
                                         }
                                       }
                                     } catch (e) {
                                       debugPrint('Error: $e');
                                       if (sheetContext.mounted) {
-                                        ScaffoldMessenger.of(sheetContext).showSnackBar(
-                                          const SnackBar(content: Text('Network error updating task.')),
+                                        ScaffoldMessenger.of(
+                                          sheetContext,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Network error updating task.',
+                                            ),
+                                          ),
                                         );
                                       }
                                     } finally {
@@ -804,15 +1033,25 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                               backgroundColor: Theme.of(context).primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                             child: isSaving
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
-                                : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                                : const Text(
+                                    'Save Changes',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
@@ -828,7 +1067,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     );
   }
 
-  Future<void> _createCustomTask(String stage, String title, String durationStr) async {
+  Future<void> _createCustomTask(
+    String stage,
+    String title,
+    String durationStr,
+  ) async {
     final duration = int.tryParse(durationStr) ?? 1;
     setState(() => _isLoading = true);
     try {
@@ -853,10 +1096,14 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           channelId: 'buildzy_leads_v2',
           channelName: 'Tasks & Milestones',
         );
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Custom task added to plan!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Custom task added to plan!')),
+        );
         _fetchProjectDetails();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to add task.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to add task.')));
         setState(() => _isLoading = false);
       }
     } catch (e) {
@@ -870,10 +1117,18 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Task?'),
-        content: const Text('Are you sure you want to remove this task from the schedule?'),
+        content: const Text(
+          'Are you sure you want to remove this task from the schedule?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('DELETE', style: TextStyle(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('DELETE', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -882,11 +1137,15 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       setState(() => _isLoading = true);
       try {
         final response = await http.delete(
-          Uri.parse('$apiBaseUrl/projects/${widget.projectId}/tasks?taskId=$taskId'),
+          Uri.parse(
+            '$apiBaseUrl/projects/${widget.projectId}/tasks?taskId=$taskId',
+          ),
         );
         if (!mounted) return;
         if (response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Task deleted.')));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Task deleted.')));
           _fetchProjectDetails();
         } else {
           setState(() => _isLoading = false);
@@ -904,22 +1163,19 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       final response = await http.patch(
         Uri.parse('$apiBaseUrl/projects/${widget.projectId}/tasks'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'taskId': taskId,
-          'status': 'In Progress',
-        }),
+        body: jsonEncode({'taskId': taskId, 'status': 'In Progress'}),
       );
       if (!mounted) return;
       if (response.statusCode == 200) {
         _fetchProjectDetails();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Task started!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Task started!')));
       } else {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to start task.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to start task.')));
       }
     } catch (e) {
       debugPrint('Error starting task: $e');
@@ -927,7 +1183,12 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     }
   }
 
-  Future<void> _addDailyUpdate(String title, String status, String notes, [String? photoUrl]) async {
+  Future<void> _addDailyUpdate(
+    String title,
+    String status,
+    String notes, [
+    String? photoUrl,
+  ]) async {
     try {
       final effectiveNotes = (photoUrl != null && photoUrl.isNotEmpty)
           ? '$notes\n[PHOTO:$photoUrl]'.trim()
@@ -952,7 +1213,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         _fetchProjectDetails();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to post update. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to post update. Please try again.'),
+          ),
         );
       }
     } catch (e) {
@@ -994,14 +1257,17 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   children: [
                     Text(
                       'Post Daily Update',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: titleController,
                       decoration: const InputDecoration(
                         labelText: 'Update Title',
-                        hintText: 'e.g. Concrete pouring finished, Bricks delivery',
+                        hintText:
+                            'e.g. Concrete pouring finished, Bricks delivery',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -1013,7 +1279,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                         border: OutlineInputBorder(),
                       ),
                       items: ['In Progress', 'Completed', 'Milestone Reached']
-                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .map(
+                            (s) => DropdownMenuItem(value: s, child: Text(s)),
+                          )
                           .toList(),
                       onChanged: (val) {
                         if (val != null) {
@@ -1043,11 +1311,14 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                             child: Builder(
                               builder: (context) {
                                 try {
-                                  final cleanB64 = updatePhotoBase64!.contains(',')
+                                  final cleanB64 =
+                                      updatePhotoBase64!.contains(',')
                                       ? updatePhotoBase64!.split(',').last
                                       : updatePhotoBase64!;
                                   return Image.memory(
-                                    base64Decode(cleanB64.replaceAll(RegExp(r'\s+'), '')),
+                                    base64Decode(
+                                      cleanB64.replaceAll(RegExp(r'\s+'), ''),
+                                    ),
                                     height: 140,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
@@ -1057,7 +1328,12 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                     height: 140,
                                     width: double.infinity,
                                     color: Colors.grey.shade200,
-                                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                                   );
                                 }
                               },
@@ -1078,7 +1354,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                                   color: Colors.red,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                               ),
                             ),
                           ),
@@ -1093,30 +1373,47 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                               onPressed: isPickingImage
                                   ? null
                                   : () async {
-                                      setModalState(() => isPickingImage = true);
+                                      setModalState(
+                                        () => isPickingImage = true,
+                                      );
                                       try {
-                                        final XFile? photo = await MediaPickerService.pickImage(
-                                          source: ImageSource.camera,
-                                          context: context,
-                                          maxWidth: 1000,
-                                          maxHeight: 1000,
-                                          imageQuality: 75,
-                                        );
+                                        final XFile? photo =
+                                            await MediaPickerService.pickImage(
+                                              source: ImageSource.camera,
+                                              context: context,
+                                              maxWidth: 1000,
+                                              maxHeight: 1000,
+                                              imageQuality: 75,
+                                            );
                                         if (photo != null) {
-                                          final bytes = await photo.readAsBytes();
+                                          final bytes = await photo
+                                              .readAsBytes();
                                           setModalState(() {
-                                            updatePhotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                            updatePhotoBase64 =
+                                                'data:image/jpeg;base64,${base64Encode(bytes)}';
                                           });
                                         }
                                       } finally {
-                                        setModalState(() => isPickingImage = false);
+                                        setModalState(
+                                          () => isPickingImage = false,
+                                        );
                                       }
                                     },
-                              icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                              label: const Text('Camera', style: TextStyle(fontSize: 13)),
+                              icon: const Icon(
+                                Icons.camera_alt_outlined,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Camera',
+                                style: TextStyle(fontSize: 13),
+                              ),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                           ),
@@ -1126,30 +1423,47 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                               onPressed: isPickingImage
                                   ? null
                                   : () async {
-                                      setModalState(() => isPickingImage = true);
+                                      setModalState(
+                                        () => isPickingImage = true,
+                                      );
                                       try {
-                                        final XFile? photo = await MediaPickerService.pickImage(
-                                          source: ImageSource.gallery,
-                                          context: context,
-                                          maxWidth: 1000,
-                                          maxHeight: 1000,
-                                          imageQuality: 75,
-                                        );
+                                        final XFile? photo =
+                                            await MediaPickerService.pickImage(
+                                              source: ImageSource.gallery,
+                                              context: context,
+                                              maxWidth: 1000,
+                                              maxHeight: 1000,
+                                              imageQuality: 75,
+                                            );
                                         if (photo != null) {
-                                          final bytes = await photo.readAsBytes();
+                                          final bytes = await photo
+                                              .readAsBytes();
                                           setModalState(() {
-                                            updatePhotoBase64 = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                                            updatePhotoBase64 =
+                                                'data:image/jpeg;base64,${base64Encode(bytes)}';
                                           });
                                         }
                                       } finally {
-                                        setModalState(() => isPickingImage = false);
+                                        setModalState(
+                                          () => isPickingImage = false,
+                                        );
                                       }
                                     },
-                              icon: const Icon(Icons.photo_library_outlined, size: 18),
-                              label: const Text('Gallery', style: TextStyle(fontSize: 13)),
+                              icon: const Icon(
+                                Icons.photo_library_outlined,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Gallery',
+                                style: TextStyle(fontSize: 13),
+                              ),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                           ),
@@ -1164,7 +1478,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                         onPressed: () {
                           if (titleController.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please enter a title for the update.')),
+                              const SnackBar(
+                                content: Text(
+                                  'Please enter a title for the update.',
+                                ),
+                              ),
                             );
                             return;
                           }
@@ -1202,7 +1520,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.red),
             SizedBox(width: 8),
-            Text('Delete Project', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Delete Project',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: const Text(
@@ -1211,16 +1532,24 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            child: const Text('Delete Permanently', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Delete Permanently',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -1229,11 +1558,16 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     if (confirm == true) {
       setState(() => _isLoading = true);
       try {
-        final response = await http.delete(Uri.parse('$apiBaseUrl/projects/${widget.projectId}'));
+        final response = await http.delete(
+          Uri.parse('$apiBaseUrl/projects/${widget.projectId}'),
+        );
         if (response.statusCode == 200) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Project deleted successfully'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Project deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
           );
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
@@ -1244,7 +1578,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           final data = jsonDecode(response.body);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['error'] ?? 'Failed to delete project'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(data['error'] ?? 'Failed to delete project'),
+              backgroundColor: Colors.red,
+            ),
           );
           setState(() => _isLoading = false);
         }
@@ -1252,7 +1589,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         debugPrint('Error deleting project: $e');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error deleting project. Connection failed.'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Error deleting project. Connection failed.'),
+            backgroundColor: Colors.red,
+          ),
         );
         setState(() => _isLoading = false);
       }
@@ -1262,14 +1602,15 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
   void _showAddTaskDialog() {
     final titleController = TextEditingController();
     final durationController = TextEditingController(text: '5');
-    
+
     final typeString = _project?['type'] as String? ?? '';
-    final List<String> services = typeString.split(',')
+    final List<String> services = typeString
+        .split(',')
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .toList();
     if (services.isEmpty) services.add('General Planning');
-    
+
     String selectedStage = services.first;
 
     showModalBottomSheet(
@@ -1294,13 +1635,20 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                 children: [
                   Text(
                     'Add Custom Task',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: selectedStage,
-                    decoration: const InputDecoration(labelText: 'Project Stage / Service', border: OutlineInputBorder()),
-                    items: services.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                    decoration: const InputDecoration(
+                      labelText: 'Project Stage / Service',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: services
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
                     onChanged: (val) {
                       if (val != null) {
                         setModalState(() {
@@ -1312,23 +1660,37 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Task Title (e.g. Concrete Pouring)', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Task Title (e.g. Concrete Pouring)',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: durationController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Duration (Days)', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Duration (Days)',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () async {
                       if (titleController.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter task title')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter task title'),
+                          ),
+                        );
                         return;
                       }
                       Navigator.pop(context);
-                      await _createCustomTask(selectedStage, titleController.text.trim(), durationController.text.trim());
+                      await _createCustomTask(
+                        selectedStage,
+                        titleController.text.trim(),
+                        durationController.text.trim(),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
@@ -1357,14 +1719,20 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       if (response.statusCode == 200) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Project status updated to: $stage'), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text('Project status updated to: $stage'),
+            backgroundColor: Colors.green,
+          ),
         );
         _fetchProjectDetails();
       } else {
         final data = jsonDecode(response.body);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? 'Failed to update status'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(data['error'] ?? 'Failed to update status'),
+            backgroundColor: Colors.red,
+          ),
         );
         setState(() => _isLoading = false);
       }
@@ -1372,7 +1740,10 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       debugPrint('Error updating project stage: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Connection failed. Could not update project.'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Connection failed. Could not update project.'),
+          backgroundColor: Colors.red,
+        ),
       );
       setState(() => _isLoading = false);
     }
@@ -1388,14 +1759,17 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     final clientName = _project?['user']?['name'] ?? 'Client';
     final clientEmail = _project?['user']?['email'] ?? '';
     final updates = _project?['updates'] as List? ?? [];
-    
+
     final tasks = _project?['tasks'] as List? ?? [];
-    final completedCount = tasks.where((t) => t['status'] == 'Completed').length;
+    final completedCount = tasks
+        .where((t) => t['status'] == 'Completed')
+        .length;
     final totalCount = tasks.length;
 
     final currentStage = _project?['currentStage'] ?? 'Tracking';
     final stageLower = currentStage.toString().toLowerCase().trim();
-    final bool isCompleted = stageLower == 'completed' || stageLower == 'finished';
+    final bool isCompleted =
+        stageLower == 'completed' || stageLower == 'finished';
     final bool isCancelled = stageLower == 'cancelled';
     final bool isReadOnly = isCompleted || isCancelled;
 
@@ -1405,7 +1779,13 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       totalQuoted += (t['quotedCost'] as num? ?? 0.0).toDouble();
       totalSpent += (t['taskCost'] as num? ?? 0.0).toDouble();
     }
-    final materialTasks = tasks.where((t) => t['materialName'] != null && (t['materialName'] as String).isNotEmpty).toList();
+    final materialTasks = tasks
+        .where(
+          (t) =>
+              t['materialName'] != null &&
+              (t['materialName'] as String).isNotEmpty,
+        )
+        .toList();
 
     final Map<String, List<dynamic>> groupedTasks = {};
     for (final task in tasks) {
@@ -1438,1451 +1818,2332 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _fetchProjectDetails,
-            )
+            ),
           ],
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _project == null
-                ? const Center(child: Text('Project details not found.'))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 85),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Completed or Cancelled View-Only Banner
-                        if (isCompleted) ...[
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFECFDF5),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFA7F3D0)),
+            ? const Center(child: Text('Project details not found.'))
+            : SingleChildScrollView(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: 85,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Completed or Cancelled View-Only Banner
+                    if (isCompleted) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(
+                              Icons.verified_rounded,
+                              color: Color(0xFF059669),
+                              size: 20,
                             ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 20),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'Project Completed (View-Only Mode) — All milestones and tasks finalized.',
-                                    style: TextStyle(color: Color(0xFF065F46), fontWeight: FontWeight.w700, fontSize: 12),
-                                  ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Project Completed (View-Only Mode) — All milestones and tasks finalized.',
+                                style: TextStyle(
+                                  color: Color(0xFF065F46),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ] else if (isCancelled) ...[
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF2F2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFECACA)),
+                          ],
+                        ),
+                      ),
+                    ] else if (isCancelled) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFECACA)),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(
+                              Icons.cancel_rounded,
+                              color: Color(0xFFDC2626),
+                              size: 20,
                             ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.cancel_rounded, color: Color(0xFFDC2626), size: 20),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'Project Cancelled — Work has stopped. You can permanently delete this project below.',
-                                    style: TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.w700, fontSize: 12),
-                                  ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Project Cancelled — Work has stopped. You can permanently delete this project below.',
+                                style: TextStyle(
+                                  color: Color(0xFF991B1B),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ],
 
-                        // Client details card
-                        Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    // Client details card
+                    Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.1),
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        clientName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      if (clientEmail.isNotEmpty)
+                                        Text(
+                                          clientEmail,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Text(
+                                    'Hired',
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 24),
+                            _buildDetailRow(
+                              Icons.location_on,
+                              'Location',
+                              location,
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDetailRow(
+                              Icons.square_foot,
+                              'Plot Size',
+                              '$plotSize sq ft',
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDetailRow(
+                              Icons.calendar_today,
+                              'Timeline',
+                              timeline,
+                            ),
+                            const SizedBox(height: 8),
+                            _buildDetailRow(
+                              Icons.currency_rupee,
+                              'Budget',
+                              '₹$budget',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        final currentStage =
+                            _project?['currentStage'] ?? 'Tracking';
+                        final bool allCompleted =
+                            totalCount > 0 && completedCount == totalCount;
+
+                        if (currentStage == 'Cancelled') {
+                          return Card(
+                            color: Colors.red.shade50,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: const [
+                                      Icon(
+                                        Icons.cancel,
+                                        color: Colors.red,
+                                        size: 28,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Project has been Cancelled.',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.red,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    'This project was cancelled. You can permanently delete this project and all its records.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.redAccent,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  ElevatedButton.icon(
+                                    onPressed: _showDeleteConfirmationDialog,
+                                    icon: const Icon(
+                                      Icons.delete_forever,
+                                      size: 18,
+                                    ),
+                                    label: const Text('Delete Project Data'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red.shade700,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        if (currentStage == 'Completed' ||
+                            currentStage == 'Finished') {
+                          return Card(
+                            color: Colors.green.shade50,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    child: Text(
+                                      'Project Completed successfully!',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        if (currentStage == 'Finished Pending Approval') {
+                          return Card(
+                            color: Colors.blue.shade50,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.hourglass_empty,
+                                    color: Colors.blue,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    child: Text(
+                                      'Project Submitted. Waiting for client\'s approval & review.',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        final bool isOnHold = currentStage == 'On Hold';
+
+                        return Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           elevation: 2,
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                const Text(
+                                  'Project Management Actions',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
                                 Row(
                                   children: [
-                                    CircleAvatar(
-                                      backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                                      child: Icon(Icons.person, color: Theme.of(context).primaryColor),
+                                    // Hold/Resume Button
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        onPressed: () => _updateProjectStage(
+                                          isOnHold ? 'Tracking' : 'On Hold',
+                                        ),
+                                        icon: Icon(
+                                          isOnHold
+                                              ? Icons.play_arrow
+                                              : Icons.pause,
+                                        ),
+                                        label: Text(
+                                          isOnHold
+                                              ? 'Resume Job'
+                                              : 'Hold Project',
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isOnHold
+                                              ? Colors.orange
+                                              : Colors.grey.shade700,
+                                          foregroundColor: Colors.white,
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
+                                    // Finish Button
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            clientName,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                          ),
-                                          if (clientEmail.isNotEmpty)
-                                            Text(
-                                              clientEmail,
-                                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Text(
-                                        'Hired',
-                                        style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12),
+                                      child: ElevatedButton.icon(
+                                        onPressed: allCompleted && !isOnHold
+                                            ? () => _updateProjectStage(
+                                                'Finished Pending Approval',
+                                              )
+                                            : null,
+                                        icon: const Icon(Icons.done_all),
+                                        label: const Text('Finish Project'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.green,
+                                          foregroundColor: Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                                const Divider(height: 24),
-                                _buildDetailRow(Icons.location_on, 'Location', location),
+                                if (!allCompleted) ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.info_outline,
+                                        size: 14,
+                                        color: Colors.red,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          'Finish Project requires all tasks ($completedCount/$totalCount completed) to be done.',
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    // Tab / Segment Selector
+                    SizedBox(
+                      height: 48,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        children: [
+                          _buildCategoryTab(
+                            0,
+                            Icons.hourglass_empty,
+                            'Pending',
+                            tasks.where((t) => t['status'] == 'Todo').length,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildCategoryTab(
+                            1,
+                            Icons.play_arrow,
+                            'Ongoing',
+                            tasks
+                                .where(
+                                  (t) =>
+                                      (t['status'] == 'In Progress' ||
+                                      t['status'] == 'Ongoing'),
+                                )
+                                .length,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildCategoryTab(
+                            2,
+                            Icons.check_circle,
+                            'Finished',
+                            tasks
+                                .where((t) => t['status'] == 'Completed')
+                                .length,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildCategoryTab(
+                            3,
+                            Icons.account_balance_wallet,
+                            'Financials',
+                            null,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildCategoryTab(
+                            4,
+                            Icons.people,
+                            'Workers',
+                            _workers.length,
+                          ),
+                          const SizedBox(width: 8),
+                          _buildCategoryTab(
+                            5,
+                            Icons.description,
+                            'Daily Logs',
+                            updates.length,
+                          ),
+                          const SizedBox(width: 12),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    if (_selectedTab == 0) ...[
+                      if (tasks.isEmpty) ...[
+                        Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.assignment,
+                                  size: 64,
+                                  color: Colors.grey.shade400,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'No Execution Plan Created Yet',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
                                 const SizedBox(height: 8),
-                                _buildDetailRow(Icons.square_foot, 'Plot Size', '$plotSize sq ft'),
-                                const SizedBox(height: 8),
-                                _buildDetailRow(Icons.calendar_today, 'Timeline', timeline),
-                                const SizedBox(height: 8),
-                                _buildDetailRow(Icons.currency_rupee, 'Budget', '₹$budget'),
+                                Text(
+                                  'Create a custom plan or generate a schedule template based on the client\'s selected services (${_project?['type'] ?? ''}).',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 13,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                if (!isReadOnly) ...[
+                                  const SizedBox(height: 24),
+                                  ElevatedButton.icon(
+                                    onPressed: _generateTemplateTasks,
+                                    icon: const Icon(Icons.auto_awesome),
+                                    label: const Text(
+                                      'Generate Smart Plan Template',
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextButton(
+                                    onPressed: _showAddTaskDialog,
+                                    child: const Text('Create Custom Step'),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                      ] else ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              Text(
+                                'Pending Project Steps',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              if (!isReadOnly)
+                                ElevatedButton.icon(
+                                  onPressed: _showAddTaskDialog,
+                                  icon: const Icon(Icons.add_task, size: 16),
+                                  label: const Text('Add Step'),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         Builder(
                           builder: (context) {
-                            final currentStage = _project?['currentStage'] ?? 'Tracking';
-                            final bool allCompleted = totalCount > 0 && completedCount == totalCount;
-
-                            if (currentStage == 'Cancelled') {
+                            final pendingList = tasks
+                                .where((t) => t['status'] == 'Todo')
+                                .toList();
+                            if (pendingList.isEmpty) {
                               return Card(
-                                color: Colors.red.shade50,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: const [
-                                          Icon(Icons.cancel, color: Colors.red, size: 28),
-                                          SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              'Project has been Cancelled.',
-                                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 16),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 10),
-                                      const Text(
-                                        'This project was cancelled. You can permanently delete this project and all its records.',
-                                        style: TextStyle(fontSize: 12, color: Colors.redAccent),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      ElevatedButton.icon(
-                                        onPressed: _showDeleteConfirmationDialog,
-                                        icon: const Icon(Icons.delete_forever, size: 18),
-                                        label: const Text('Delete Project Data'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red.shade700,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                              );
-                            }
-
-                            if (currentStage == 'Completed' || currentStage == 'Finished') {
-                              return Card(
-                                color: Colors.green.shade50,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.check_circle, color: Colors.green, size: 28),
-                                      const SizedBox(width: 12),
-                                      const Expanded(
-                                        child: Text(
-                                          'Project Completed successfully!',
-                                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-
-                            if (currentStage == 'Finished Pending Approval') {
-                              return Card(
-                                color: Colors.blue.shade50,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.hourglass_empty, color: Colors.blue, size: 28),
-                                      const SizedBox(width: 12),
-                                      const Expanded(
-                                        child: Text(
-                                          'Project Submitted. Waiting for client\'s approval & review.',
-                                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue, fontSize: 15),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }
-
-                            final bool isOnHold = currentStage == 'On Hold';
-
-                            return Card(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              elevation: 2,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Project Management Actions',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        // Hold/Resume Button
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            onPressed: () => _updateProjectStage(isOnHold ? 'Tracking' : 'On Hold'),
-                                            icon: Icon(isOnHold ? Icons.play_arrow : Icons.pause),
-                                            label: Text(isOnHold ? 'Resume Job' : 'Hold Project'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: isOnHold ? Colors.orange : Colors.grey.shade700,
-                                              foregroundColor: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        // Finish Button
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            onPressed: allCompleted && !isOnHold
-                                                ? () => _updateProjectStage('Finished Pending Approval')
-                                                : null,
-                                            icon: const Icon(Icons.done_all),
-                                            label: const Text('Finish Project'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.green,
-                                              foregroundColor: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (!allCompleted) ...[
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.info_outline, size: 14, color: Colors.red),
-                                          const SizedBox(width: 4),
-                                          Expanded(
-                                            child: Text(
-                                              'Finish Project requires all tasks ($completedCount/$totalCount completed) to be done.',
-                                              style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.w500),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        // Tab / Segment Selector
-                        SizedBox(
-                          height: 48,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            children: [
-                              _buildCategoryTab(0, Icons.hourglass_empty, 'Pending', tasks.where((t) => t['status'] == 'Todo').length),
-                              const SizedBox(width: 8),
-                              _buildCategoryTab(1, Icons.play_arrow, 'Ongoing', tasks.where((t) => (t['status'] == 'In Progress' || t['status'] == 'Ongoing')).length),
-                              const SizedBox(width: 8),
-                              _buildCategoryTab(2, Icons.check_circle, 'Finished', tasks.where((t) => t['status'] == 'Completed').length),
-                              const SizedBox(width: 8),
-                              _buildCategoryTab(3, Icons.account_balance_wallet, 'Financials', null),
-                              const SizedBox(width: 8),
-                              _buildCategoryTab(4, Icons.people, 'Workers', _workers.length),
-                              const SizedBox(width: 8),
-                              _buildCategoryTab(5, Icons.description, 'Daily Logs', updates.length),
-                              const SizedBox(width: 12),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        if (_selectedTab == 0) ...[
-                          if (tasks.isEmpty) ...[
-                            Card(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  children: [
-                                    Icon(Icons.assignment, size: 64, color: Colors.grey.shade400),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      'No Execution Plan Created Yet',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Create a custom plan or generate a schedule template based on the client\'s selected services (${_project?['type'] ?? ''}).',
-                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    if (!isReadOnly) ...[
-                                      const SizedBox(height: 24),
-                                      ElevatedButton.icon(
-                                        onPressed: _generateTemplateTasks,
-                                        icon: const Icon(Icons.auto_awesome),
-                                        label: const Text('Generate Smart Plan Template'),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      TextButton(
-                                        onPressed: _showAddTaskDialog,
-                                        child: const Text('Create Custom Step'),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            )
-                          ] else ...[
-                            SizedBox(
-                              width: double.infinity,
-                              child: Wrap(
-                                alignment: WrapAlignment.spaceBetween,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  Text(
-                                    'Pending Project Steps',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  if (!isReadOnly)
-                                    ElevatedButton.icon(
-                                      onPressed: _showAddTaskDialog,
-                                      icon: const Icon(Icons.add_task, size: 16),
-                                      label: const Text('Add Step'),
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Builder(
-                              builder: (context) {
-                                final pendingList = tasks.where((t) => t['status'] == 'Todo').toList();
-                                if (pendingList.isEmpty) {
-                                  return Card(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(24),
-                                      child: Center(
-                                        child: Column(
-                                          children: [
-                                            Icon(Icons.check_circle_outline, size: 48, color: Colors.green),
-                                            SizedBox(height: 12),
-                                            Text(
-                                              'No Pending Tasks!',
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                            ),
-                                            SizedBox(height: 4),
-                                            Text(
-                                              'All steps have either been started or completed.',
-                                              style: TextStyle(fontSize: 12, color: Colors.grey),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return ListView.separated(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: pendingList.length,
-                                  separatorBuilder: (context, idx) => const SizedBox(height: 10),
-                                  itemBuilder: (context, idx) {
-                                    final task = pendingList[idx];
-                                    final taskId = task['id'];
-                                    final tTitle = task['title'] ?? 'Untitled Step';
-                                    final tDuration = task['duration'] ?? 1;
-                                    final tStage = task['stage'] ?? 'General Planning';
-
-                                    return Card(
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      child: ListTile(
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                        title: Text(tTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                        subtitle: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Stage: $tStage'),
-                                            Text('Est. Duration: $tDuration days'),
-                                          ],
-                                        ),
-                                        trailing: isReadOnly
-                                            ? null
-                                            : Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  IconButton(
-                                                    icon: const Icon(Icons.play_arrow, color: Colors.blue),
-                                                    tooltip: 'Start Task',
-                                                    onPressed: () => _startTask(taskId),
-                                                  ),
-                                                  IconButton(
-                                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                                    onPressed: () => _deleteTask(taskId),
-                                                  ),
-                                                ],
-                                              ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              }
-                            ),
-                          ],
-                        ],
-
-                        // Tab 1: Ongoing Tasks
-                        if (_selectedTab == 1) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Ongoing Tasks / In Progress',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Builder(
-                            builder: (context) {
-                              final ongoingList = tasks.where((t) => (t['status'] == 'In Progress' || t['status'] == 'Ongoing')).toList();
-                              if (ongoingList.isEmpty) {
-                                return Card(
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(24),
-                                    child: Center(
-                                      child: Column(
-                                        children: [
-                                          Icon(Icons.hourglass_empty, size: 48, color: Colors.orange),
-                                          SizedBox(height: 12),
-                                          Text(
-                                            'No Ongoing Tasks!',
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            'Start a pending task from the Pending tab.',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              return ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: ongoingList.length,
-                                separatorBuilder: (context, idx) => const SizedBox(height: 10),
-                                itemBuilder: (context, idx) {
-                                  final task = ongoingList[idx];
-                                  final tTitle = task['title'] ?? 'Untitled Step';
-                                  final tDuration = task['duration'] ?? 1;
-                                  final tStage = task['stage'] ?? 'General Planning';
-
-                                  return Card(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    child: ListTile(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      title: Text(tTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                      subtitle: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text('Stage: $tStage'),
-                                          Text('Duration: $tDuration days in progress'),
-                                        ],
-                                      ),
-                                      trailing: isReadOnly
-                                          ? null
-                                          : ElevatedButton.icon(
-                                              icon: const Icon(Icons.check, size: 16),
-                                              label: const Text('Complete'),
-                                              onPressed: () => _showTaskStatusSheet(task),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.green,
-                                                foregroundColor: Colors.white,
-                                              ),
-                                            ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          ),
-                        ],
-
-                        // Tab 2: Finished Tasks
-                        if (_selectedTab == 2) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Finished / Completed Tasks',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Builder(
-                            builder: (context) {
-                              final completedList = tasks.where((t) => t['status'] == 'Completed').toList();
-                              if (completedList.isEmpty) {
-                                return Card(
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(24),
-                                    child: Center(
-                                      child: Column(
-                                        children: [
-                                          Icon(Icons.assignment_turned_in_outlined, size: 48, color: Colors.grey),
-                                          SizedBox(height: 12),
-                                          Text(
-                                            'No Finished Tasks Yet',
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            'Complete active tasks to see them here.',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              return ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: completedList.length,
-                                separatorBuilder: (context, idx) => const SizedBox(height: 10),
-                                itemBuilder: (context, idx) {
-                                  final task = completedList[idx];
-                                  final tTitle = task['title'] ?? 'Untitled Step';
-                                  final tStage = task['stage'] ?? 'General Planning';
-                                  final quoted = (task['quotedCost'] as num? ?? 0.0).toDouble();
-                                  final spent = (task['taskCost'] as num? ?? 0.0).toDouble();
-                                  final profit = quoted - spent;
-                                  final isProfit = profit >= 0;
-
-                                  return Card(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  tTitle,
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                                                ),
-                                              ),
-                                              const Icon(Icons.check_circle, color: Colors.green),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text('Stage: $tStage', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                          if (task['materialName'] != null && (task['materialName'] as String).isNotEmpty) ...[
-                                            const SizedBox(height: 8),
-                                            Builder(
-                                              builder: (context) {
-                                                final isMaterial = task['materialQuantity'] != null && task['materialUnitCost'] != null;
-                                                if (isMaterial) {
-                                                  return Text(
-                                                    'Material: ${task['materialName']} (Qty: ${task['materialQuantity']} @ ₹${(task['materialUnitCost'] as num).toStringAsFixed(0)}/unit)',
-                                                    style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade800, fontStyle: FontStyle.italic),
-                                                  );
-                                                } else {
-                                                  return Text(
-                                                    'Other Expense: ${task['materialName']} (Cost: ₹${(task['taskCost'] ?? 0.0).toStringAsFixed(0)})',
-                                                    style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade800, fontStyle: FontStyle.italic),
-                                                  );
-                                                }
-                                              }
-                                            ),
-                                          ],
-                                          const Divider(height: 20),
-                                          Wrap(
-                                            spacing: 8,
-                                            runSpacing: 4,
-                                            alignment: WrapAlignment.spaceBetween,
-                                            children: [
-                                              Text('Quoted Cost: ₹${quoted.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12)),
-                                              Text('Spent Cost: ₹${spent.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12)),
-                                              Text(
-                                                'Profit: ₹${profit.toStringAsFixed(2)}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: isProfit ? Colors.green : Colors.red,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          if (task['photoUrl'] != null && (task['photoUrl'] as String).isNotEmpty) ...[
-                                            const SizedBox(height: 12),
-                                            GestureDetector(
-                                              onTap: () {
-                                                final rawPhoto = task['photoUrl'] as String;
-                                                final isNet = rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://');
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => FullScreenImageViewer(
-                                                      base64Image: isNet ? null : rawPhoto,
-                                                      imageUrl: isNet ? rawPhoto : null,
-                                                      title: task['title'] ?? 'Task Photo',
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                              child: ClipRRect(
-                                                borderRadius: BorderRadius.circular(8),
-                                                child: Builder(
-                                                  builder: (context) {
-                                                    final rawPhoto = (task['photoUrl'] as String).trim();
-                                                    if (rawPhoto.startsWith('http://') || rawPhoto.startsWith('https://')) {
-                                                      return Image.network(
-                                                        rawPhoto,
-                                                        height: 120,
-                                                        width: double.infinity,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder: (context, error, stackTrace) => Container(
-                                                          height: 120,
-                                                          color: Colors.grey.shade200,
-                                                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                                                        ),
-                                                      );
-                                                    }
-                                                    try {
-                                                      final cleanB64 = (rawPhoto.contains(',') ? rawPhoto.split(',').last : rawPhoto).replaceAll(RegExp(r'\\s+'), '');
-                                                      return Image.memory(
-                                                        base64Decode(cleanB64),
-                                                        height: 120,
-                                                        width: double.infinity,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder: (context, error, stackTrace) => Container(
-                                                          height: 120,
-                                                          color: Colors.grey.shade200,
-                                                          child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                                                        ),
-                                                      );
-                                                    } catch (_) {
-                                                      return Container(
-                                                        height: 120,
-                                                        color: Colors.grey.shade200,
-                                                        child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
-                                                      );
-                                                    }
-                                                  },
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          ),
-                        ],
-
-                        // Tab 3: Finance Summary
-                        if (_selectedTab == 3) ...[
-                          Builder(
-                            builder: (context) {
-                              final double totalWorkersWage = _workers.fold<double>(0.0, (sum, w) => sum + w.totalEarned);
-                              final double totalWorkersPaid = _workers.fold<double>(0.0, (sum, w) => sum + w.amountPaid);
-                              final double totalProjectExpenses = totalSpent + totalWorkersWage;
-                              final double actualProfit = totalQuoted - totalProjectExpenses;
-                              final bool isActualProfit = actualProfit >= 0;
-
-                              // Cash Flow calculations
-                              final double cashIn = totalQuoted;
-                              final double cashOut = totalSpent + totalWorkersPaid;
-                              final double netCashFlow = cashIn - cashOut;
-                              final bool isPositiveCashFlow = netCashFlow >= 0;
-
-                              return Column(
-                                children: [
-                                  Card(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    elevation: 2,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Icon(Icons.analytics_outlined, color: Theme.of(context).primaryColor, size: 22),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                'Project Financials Summary',
-                                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Text('Quoted Revenue', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                                                    const SizedBox(height: 4),
-                                                    Text('₹${totalQuoted.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.blue)),
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(width: 1, height: 35, color: Colors.grey.shade300),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    const Text('Total Expenses', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                                                    const SizedBox(height: 4),
-                                                    Text('₹${totalProjectExpenses.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.orange)),
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(width: 1, height: 35, color: Colors.grey.shade300),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(isActualProfit ? 'Net Profit' : 'Net Loss', style: TextStyle(fontSize: 10, color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      '${isActualProfit ? "+" : ""}₹${actualProfit.toStringAsFixed(0)}',
-                                                      style: TextStyle(
-                                                        fontWeight: FontWeight.w900,
-                                                        fontSize: 16,
-                                                        color: isActualProfit ? Colors.green.shade700 : Colors.red.shade700,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 16),
-                                          const Divider(),
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text('Contract Budget:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                              Text('₹${budget.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text('Material Expenses:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                              Text('₹${totalSpent.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange)),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text('Labor Wages (Workers):', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                              Text('₹${totalWorkersWage.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  
-                                  // Visual Chart Card (PieChart)
-                                  if (totalQuoted > 0)
-                                    Card(
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                      elevation: 2,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Budget Allocation & Margins',
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            SizedBox(
-                                              height: 180,
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    flex: 4,
-                                                    child: PieChart(
-                                                      PieChartData(
-                                                        sectionsSpace: 2,
-                                                        centerSpaceRadius: 35,
-                                                        sections: [
-                                                          if (totalSpent > 0)
-                                                            PieChartSectionData(
-                                                              color: Colors.orange.shade400,
-                                                              value: totalSpent,
-                                                              title: '${((totalSpent / totalQuoted) * 100).toStringAsFixed(0)}%',
-                                                              radius: 40,
-                                                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                                                            ),
-                                                          if (totalWorkersWage > 0)
-                                                            PieChartSectionData(
-                                                              color: Colors.red.shade400,
-                                                              value: totalWorkersWage,
-                                                              title: '${((totalWorkersWage / totalQuoted) * 100).toStringAsFixed(0)}%',
-                                                              radius: 40,
-                                                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                                                            ),
-                                                          if (actualProfit > 0)
-                                                            PieChartSectionData(
-                                                              color: Colors.green.shade400,
-                                                              value: actualProfit,
-                                                              title: '${((actualProfit / totalQuoted) * 100).toStringAsFixed(0)}%',
-                                                              radius: 45,
-                                                              titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    flex: 5,
-                                                    child: Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        _buildLegendItem(Colors.orange.shade400, 'Materials', totalSpent),
-                                                        const SizedBox(height: 8),
-                                                        _buildLegendItem(Colors.red.shade400, 'Labor / Wages', totalWorkersWage),
-                                                        const SizedBox(height: 8),
-                                                        _buildLegendItem(Colors.green.shade400, isActualProfit ? 'Profit Margin' : 'Loss', actualProfit),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  const SizedBox(height: 16),
-
-                                  // Cash Flow Card
-                                  Card(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                    elevation: 2,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Project Cash Flow',
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          _buildCashFlowRow('Cash In (Revenue Generated)', cashIn, Colors.blue),
-                                          const SizedBox(height: 8),
-                                          _buildCashFlowRow('Cash Out (Wages Paid + Materials)', cashOut, Colors.orange),
-                                          const Divider(height: 24),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text('Net Cash Flow:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                              Text(
-                                                '${isPositiveCashFlow ? "+" : ""}₹${netCashFlow.toStringAsFixed(0)}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w900,
-                                                  fontSize: 14,
-                                                  color: isPositiveCashFlow ? Colors.green : Colors.red,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
-                                  if (materialTasks.isNotEmpty) ...[
-                                    const SizedBox(height: 16),
-                                    const Padding(
-                                      padding: EdgeInsets.symmetric(horizontal: 4),
-                                      child: Text(
-                                        'Material Expenses Breakdown',
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueGrey),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    ...materialTasks.map((t) {
-                                      final mName = t['materialName'] ?? '';
-                                      final mQty = t['materialQuantity'] ?? 1;
-                                      final mUnit = (t['materialUnitCost'] as num? ?? 0.0).toDouble();
-                                      final spent = (t['taskCost'] as num? ?? 0.0).toDouble();
-                                      final quoted = (t['quotedCost'] as num? ?? 0.0).toDouble();
-                                      final profit = quoted - spent;
-                                      final isProfit = profit >= 0;
-                                      return Container(
-                                        margin: const EdgeInsets.only(bottom: 8),
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: Colors.grey.shade200),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    mName,
-                                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '${isProfit ? "+" : ""}₹${profit.toStringAsFixed(0)}',
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: isProfit ? Colors.green.shade700 : Colors.red.shade700,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Builder(
-                                                  builder: (context) {
-                                                    final isMaterial = t['materialQuantity'] != null && t['materialUnitCost'] != null;
-                                                    if (isMaterial) {
-                                                      return Text(
-                                                        'Qty: $mQty • Unit: ₹${mUnit.toStringAsFixed(0)}',
-                                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                                                      );
-                                                    } else {
-                                                      return Text(
-                                                        'Other Expense',
-                                                        style: TextStyle(fontSize: 11, color: Colors.blueGrey, fontWeight: FontWeight.bold),
-                                                      );
-                                                    }
-                                                  }
-                                                ),
-                                                Text(
-                                                  'Quoted: ₹${quoted.toStringAsFixed(0)} • Spent: ₹${spent.toStringAsFixed(0)}',
-                                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }),
-                                  ],
-                                ],
-                              );
-                            }
-                          ),
-                        ],
-
-                        // Tab 4: Workers Attendance & Salary
-                        if (_selectedTab == 4) ...[
-                          SizedBox(
-                            width: double.infinity,
-                            child: Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                Text(
-                                  'Labor & Wage Management',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                if (!isReadOnly)
-                                  ElevatedButton.icon(
-                                    onPressed: _showAddWorkerDialog,
-                                    icon: const Icon(Icons.person_add, size: 16),
-                                    label: const Text('Add Worker'),
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Card(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        const Text('Active Workers', style: TextStyle(color: Colors.grey, fontSize: 11), textAlign: TextAlign.center),
-                                        const SizedBox(height: 4),
-                                        Text('${_workers.length}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18), textAlign: TextAlign.center),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(width: 1, height: 32, color: Colors.grey.shade300),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        const Text('Paid Salary', style: TextStyle(color: Colors.grey, fontSize: 11), textAlign: TextAlign.center),
-                                        const SizedBox(height: 4),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.amountPaid).toStringAsFixed(0)}',
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(width: 1, height: 32, color: Colors.grey.shade300),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        const Text('Unpaid Salary', style: TextStyle(color: Colors.grey, fontSize: 11), textAlign: TextAlign.center),
-                                        const SizedBox(height: 4),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.remainingSalary).toStringAsFixed(0)}',
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          if (_workers.isEmpty)
-                            Card(
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-                                child: Center(
-                                  child: Column(
-                                    children: [
-                                      Icon(Icons.engineering_outlined, size: 48, color: Colors.grey.shade400),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'No workers added yet',
-                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Colors.grey.shade700),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Add your workers to track daily attendance, daily wages, and payouts.',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      if (!isReadOnly) ...[
-                                        const SizedBox(height: 16),
-                                        ElevatedButton.icon(
-                                          onPressed: _showAddWorkerDialog,
-                                          icon: const Icon(Icons.person_add, size: 16),
-                                          label: const Text('Add First Worker'),
-                                          style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _workers.length,
-                              separatorBuilder: (context, idx) => const SizedBox(height: 10),
-                              itemBuilder: (context, idx) {
-                                final worker = _workers[idx];
-                                return Card(
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            CircleAvatar(
-                                              backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                                              child: Text(
-                                                worker.name.isNotEmpty ? worker.name.substring(0, 1).toUpperCase() : 'W',
-                                                style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(worker.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                                  Text(worker.role, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    'Wage: ₹${worker.dailyWage.toStringAsFixed(0)} / day • Worked: ${worker.daysPresent} days',
-                                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.end,
-                                              children: [
-                                                Text('Earned: ₹${worker.totalEarned.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                                Text('Paid: ₹${worker.amountPaid.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.green)),
-                                                Text('Unpaid: ₹${worker.remainingSalary.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        const Divider(height: 16),
-                                        SizedBox(
-                                          width: double.infinity,
-                                          child: Wrap(
-                                            alignment: WrapAlignment.spaceBetween,
-                                            crossAxisAlignment: WrapCrossAlignment.center,
-                                            spacing: 8,
-                                            runSpacing: 4,
-                                            children: [
-                                              InkWell(
-                                                onTap: isReadOnly
-                                                    ? null
-                                                    : () {
-                                                        setState(() {
-                                                          worker.isPresentToday = !worker.isPresentToday;
-                                                          if (worker.isPresentToday) {
-                                                            worker.daysPresent += 1;
-                                                          } else {
-                                                            worker.daysPresent = (worker.daysPresent - 1).clamp(0, 999);
-                                                          }
-                                                        });
-                                                        _saveWorkers();
-                                                      },
-                                                borderRadius: BorderRadius.circular(4),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Checkbox(
-                                                      value: worker.isPresentToday,
-                                                      activeColor: Theme.of(context).primaryColor,
-                                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                      visualDensity: VisualDensity.compact,
-                                                      onChanged: isReadOnly
-                                                          ? null
-                                                          : (val) {
-                                                              if (val != null) {
-                                                                setState(() {
-                                                                  worker.isPresentToday = val;
-                                                                  if (val) {
-                                                                    worker.daysPresent += 1;
-                                                                  } else {
-                                                                    worker.daysPresent = (worker.daysPresent - 1).clamp(0, 999);
-                                                                  }
-                                                                });
-                                                                _saveWorkers();
-                                                              }
-                                                            },
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    const Text('Present Today', style: TextStyle(fontSize: 12)),
-                                                  ],
-                                                ),
-                                              ),
-                                              if (!isReadOnly)
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    TextButton.icon(
-                                                      onPressed: () => _showEditWorkerDialog(worker),
-                                                      icon: const Icon(Icons.edit, size: 14),
-                                                      label: const Text('Edit', style: TextStyle(fontSize: 12)),
-                                                      style: TextButton.styleFrom(
-                                                        foregroundColor: Colors.blue,
-                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                                        visualDensity: VisualDensity.compact,
-                                                      ),
-                                                    ),
-                                                    IconButton(
-                                                      onPressed: () => _deleteWorker(worker),
-                                                      icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                                                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                                                      constraints: const BoxConstraints(),
-                                                      tooltip: 'Delete Worker',
-                                                    ),
-                                                    const SizedBox(width: 2),
-                                                    TextButton.icon(
-                                                      onPressed: () => _showPayWagesDialog(worker),
-                                                      icon: const Icon(Icons.payment, size: 14),
-                                                      label: const Text('Pay Wages', style: TextStyle(fontSize: 12)),
-                                                      style: TextButton.styleFrom(
-                                                        foregroundColor: Theme.of(context).primaryColor,
-                                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                                        visualDensity: VisualDensity.compact,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                        ],
-
-                        // Tab 5: Daily Logs
-                        if (_selectedTab == 5) ...[
-                          SizedBox(
-                            width: double.infinity,
-                            child: Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                Text(
-                                  'Daily Progress Logs',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                if (!isReadOnly)
-                                  ElevatedButton.icon(
-                                    onPressed: _showAddUpdateDialog,
-                                    icon: const Icon(Icons.add, size: 18),
-                                    label: const Text('Add Log'),
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                            const SizedBox(height: 16),
-                            if (updates.isEmpty)
-                              Card(
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 child: const Padding(
                                   padding: EdgeInsets.all(24),
                                   child: Center(
                                     child: Column(
                                       children: [
-                                        Icon(Icons.history, size: 48, color: Colors.grey),
+                                        Icon(
+                                          Icons.check_circle_outline,
+                                          size: 48,
+                                          color: Colors.green,
+                                        ),
                                         SizedBox(height: 12),
                                         Text(
-                                          'No updates posted yet.',
-                                          style: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey),
+                                          'No Pending Tasks!',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
                                         ),
                                         SizedBox(height: 4),
                                         Text(
-                                          'Post daily updates so the client can follow progress.',
-                                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                                          'All steps have either been started or completed.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                          ),
                                           textAlign: TextAlign.center,
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
-                              )
-                            else
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: updates.length,
-                                itemBuilder: (context, index) {
-                                  final update = updates[index];
-                                  final upTitle = update['title'] ?? 'Update';
-                                  final upStatus = update['status'] ?? 'In Progress';
-                                  final rawNotes = (update['notes'] ?? '').toString();
-                                  String upNotes = rawNotes;
-                                  String? updatePhoto = (update['photoUrl'] as String?)?.trim();
+                              );
+                            }
+                            return ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: pendingList.length,
+                              separatorBuilder: (context, idx) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, idx) {
+                                final task = pendingList[idx];
+                                final taskId = task['id'];
+                                final tTitle = task['title'] ?? 'Untitled Step';
+                                final tDuration = task['duration'] ?? 1;
+                                final tStage =
+                                    task['stage'] ?? 'General Planning';
 
-                                  // Extract embedded photo tag if present
-                                  final photoMatch = RegExp(r'\[PHOTO:(.+?)\]').firstMatch(rawNotes);
-                                  if (photoMatch != null) {
-                                    if (updatePhoto == null || updatePhoto.isEmpty) {
-                                      updatePhoto = photoMatch.group(1)?.trim();
-                                    }
-                                    upNotes = upNotes.replaceAll(RegExp(r'\[PHOTO:.+?\]'), '').trim();
-                                  }
-
-                                  final upTime = update['createdAt'] != null
-                                      ? DateTime.tryParse(update['createdAt'])?.toLocal().toString().substring(0, 16) ?? ''
-                                      : '';
-
-                                  Color statusColor = Colors.blue;
-                                  if (upStatus == 'Completed') statusColor = Colors.green;
-                                  if (upStatus == 'Milestone Reached') statusColor = Colors.orange;
-
-                                  return Card(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                return Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    title: Text(
+                                      tTitle,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Stage: $tStage'),
+                                        Text('Est. Duration: $tDuration days'),
+                                      ],
+                                    ),
+                                    trailing: isReadOnly
+                                        ? null
+                                        : Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Expanded(
-                                                child: Text(
-                                                  upTitle,
-                                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.play_arrow,
+                                                  color: Colors.blue,
                                                 ),
+                                                tooltip: 'Start Task',
+                                                onPressed: () =>
+                                                    _startTask(taskId),
                                               ),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: statusColor.withValues(alpha: 0.12),
-                                                  borderRadius: BorderRadius.circular(4),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.redAccent,
                                                 ),
-                                                child: Text(
-                                                  upStatus,
-                                                  style: TextStyle(
-                                                    color: statusColor,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 11,
-                                                  ),
-                                                ),
+                                                onPressed: () =>
+                                                    _deleteTask(taskId),
                                               ),
                                             ],
                                           ),
-                                          if (upNotes.isNotEmpty) ...[
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              upNotes,
-                                              style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ],
+
+                    // Tab 1: Ongoing Tasks
+                    if (_selectedTab == 1) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Ongoing Tasks / In Progress',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Builder(
+                        builder: (context) {
+                          final ongoingList = tasks
+                              .where(
+                                (t) =>
+                                    (t['status'] == 'In Progress' ||
+                                    t['status'] == 'Ongoing'),
+                              )
+                              .toList();
+                          if (ongoingList.isEmpty) {
+                            return Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.hourglass_empty,
+                                        size: 48,
+                                        color: Colors.orange,
+                                      ),
+                                      SizedBox(height: 12),
+                                      Text(
+                                        'No Ongoing Tasks!',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Start a pending task from the Pending tab.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: ongoingList.length,
+                            separatorBuilder: (context, idx) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (context, idx) {
+                              final task = ongoingList[idx];
+                              final tTitle = task['title'] ?? 'Untitled Step';
+                              final tDuration = task['duration'] ?? 1;
+                              final tStage =
+                                  task['stage'] ?? 'General Planning';
+
+                              return Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  title: Text(
+                                    tTitle,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Stage: $tStage'),
+                                      Text(
+                                        'Duration: $tDuration days in progress',
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: isReadOnly
+                                      ? null
+                                      : ElevatedButton.icon(
+                                          icon: const Icon(
+                                            Icons.check,
+                                            size: 16,
+                                          ),
+                                          label: const Text('Complete'),
+                                          onPressed: () =>
+                                              _showTaskStatusSheet(task),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                            foregroundColor: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+
+                    // Tab 2: Finished Tasks
+                    if (_selectedTab == 2) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Finished / Completed Tasks',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Builder(
+                        builder: (context) {
+                          final completedList = tasks
+                              .where((t) => t['status'] == 'Completed')
+                              .toList();
+                          if (completedList.isEmpty) {
+                            return Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(24),
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.assignment_turned_in_outlined,
+                                        size: 48,
+                                        color: Colors.grey,
+                                      ),
+                                      SizedBox(height: 12),
+                                      Text(
+                                        'No Finished Tasks Yet',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Complete active tasks to see them here.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: completedList.length,
+                            separatorBuilder: (context, idx) =>
+                                const SizedBox(height: 10),
+                            itemBuilder: (context, idx) {
+                              final task = completedList[idx];
+                              final tTitle = task['title'] ?? 'Untitled Step';
+                              final tStage =
+                                  task['stage'] ?? 'General Planning';
+                              final quoted = (task['quotedCost'] as num? ?? 0.0)
+                                  .toDouble();
+                              final spent = (task['taskCost'] as num? ?? 0.0)
+                                  .toDouble();
+                              final profit = quoted - spent;
+                              final isProfit = profit >= 0;
+
+                              return Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              tTitle,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                              ),
                                             ),
-                                          ],
-                                          if (updatePhoto != null && updatePhoto.isNotEmpty) ...[
-                                            const SizedBox(height: 10),
-                                            _buildDailyLogPhotoPreview(context, updatePhoto, upTitle),
-                                          ],
-                                          const Divider(height: 20),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                'Posted by assigned provider',
-                                                style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-                                              ),
-                                              Text(
-                                                upTime,
-                                                style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-                                              ),
-                                            ],
+                                          ),
+                                          const Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green,
                                           ),
                                         ],
                                       ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Stage: $tStage',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      if (task['materialName'] != null &&
+                                          (task['materialName'] as String)
+                                              .isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        Builder(
+                                          builder: (context) {
+                                            final isMaterial =
+                                                task['materialQuantity'] !=
+                                                    null &&
+                                                task['materialUnitCost'] !=
+                                                    null;
+                                            if (isMaterial) {
+                                              return Text(
+                                                'Material: ${task['materialName']} (Qty: ${task['materialQuantity']} @ ₹${(task['materialUnitCost'] as num).toStringAsFixed(0)}/unit)',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color:
+                                                      Colors.blueGrey.shade800,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                              );
+                                            } else {
+                                              return Text(
+                                                'Other Expense: ${task['materialName']} (Cost: ₹${(task['taskCost'] ?? 0.0).toStringAsFixed(0)})',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color:
+                                                      Colors.blueGrey.shade800,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                      const Divider(height: 20),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        alignment: WrapAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Quoted Cost: ₹${quoted.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Spent Cost: ₹${spent.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Profit: ₹${profit.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: isProfit
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (task['photoUrl'] != null &&
+                                          (task['photoUrl'] as String)
+                                              .isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        GestureDetector(
+                                          onTap: () {
+                                            final rawPhoto =
+                                                task['photoUrl'] as String;
+                                            final isNet =
+                                                rawPhoto.startsWith(
+                                                  'http://',
+                                                ) ||
+                                                rawPhoto.startsWith('https://');
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    FullScreenImageViewer(
+                                                      base64Image: isNet
+                                                          ? null
+                                                          : rawPhoto,
+                                                      imageUrl: isNet
+                                                          ? rawPhoto
+                                                          : null,
+                                                      title:
+                                                          task['title'] ??
+                                                          'Task Photo',
+                                                    ),
+                                              ),
+                                            );
+                                          },
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: Builder(
+                                              builder: (context) {
+                                                final rawPhoto =
+                                                    (task['photoUrl'] as String)
+                                                        .trim();
+                                                if (rawPhoto.startsWith(
+                                                      'http://',
+                                                    ) ||
+                                                    rawPhoto.startsWith(
+                                                      'https://',
+                                                    )) {
+                                                  return Image.network(
+                                                    rawPhoto,
+                                                    height: 120,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) => Container(
+                                                          height: 120,
+                                                          color: Colors
+                                                              .grey
+                                                              .shade200,
+                                                          child: const Center(
+                                                            child: Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              color:
+                                                                  Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                  );
+                                                }
+                                                try {
+                                                  final cleanB64 =
+                                                      (rawPhoto.contains(',')
+                                                              ? rawPhoto
+                                                                    .split(',')
+                                                                    .last
+                                                              : rawPhoto)
+                                                          .replaceAll(
+                                                            RegExp(r'\\s+'),
+                                                            '',
+                                                          );
+                                                  return Image.memory(
+                                                    base64Decode(cleanB64),
+                                                    height: 120,
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) => Container(
+                                                          height: 120,
+                                                          color: Colors
+                                                              .grey
+                                                              .shade200,
+                                                          child: const Center(
+                                                            child: Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              color:
+                                                                  Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                  );
+                                                } catch (_) {
+                                                  return Container(
+                                                    height: 120,
+                                                    color: Colors.grey.shade200,
+                                                    child: const Center(
+                                                      child: Icon(
+                                                        Icons.broken_image,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+
+                    // Tab 3: Finance Summary
+                    if (_selectedTab == 3) ...[
+                      Builder(
+                        builder: (context) {
+                          final double totalWorkersWage = _workers.fold<double>(
+                            0.0,
+                            (sum, w) => sum + w.totalEarned,
+                          );
+                          final double totalWorkersPaid = _workers.fold<double>(
+                            0.0,
+                            (sum, w) => sum + w.amountPaid,
+                          );
+                          final double totalProjectExpenses =
+                              totalSpent + totalWorkersWage;
+                          final double actualProfit =
+                              totalQuoted - totalProjectExpenses;
+                          final bool isActualProfit = actualProfit >= 0;
+
+                          // Cash Flow calculations
+                          final double cashIn = totalQuoted;
+                          final double cashOut = totalSpent + totalWorkersPaid;
+                          final double netCashFlow = cashIn - cashOut;
+                          final bool isPositiveCashFlow = netCashFlow >= 0;
+
+                          return Column(
+                            children: [
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.analytics_outlined,
+                                            color: Theme.of(
+                                              context,
+                                            ).primaryColor,
+                                            size: 22,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Project Financials Summary',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Quoted Revenue',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.grey,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '₹${totalQuoted.toStringAsFixed(0)}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 16,
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 1,
+                                            height: 35,
+                                            color: Colors.grey.shade300,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Total Expenses',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.grey,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '₹${totalProjectExpenses.toStringAsFixed(0)}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 16,
+                                                    color: Colors.orange,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            width: 1,
+                                            height: 35,
+                                            color: Colors.grey.shade300,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  isActualProfit
+                                                      ? 'Net Profit'
+                                                      : 'Net Loss',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.grey.shade700,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '${isActualProfit ? "+" : ""}₹${actualProfit.toStringAsFixed(0)}',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 16,
+                                                    color: isActualProfit
+                                                        ? Colors.green.shade700
+                                                        : Colors.red.shade700,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Divider(),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Contract Budget:',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          Text(
+                                            '₹${budget.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Material Expenses:',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          Text(
+                                            '₹${totalSpent.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.orange,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Labor Wages (Workers):',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          Text(
+                                            '₹${totalWorkersWage.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Visual Chart Card (PieChart)
+                              if (totalQuoted > 0)
+                                Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 2,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Budget Allocation & Margins',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        SizedBox(
+                                          height: 180,
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                flex: 4,
+                                                child: PieChart(
+                                                  PieChartData(
+                                                    sectionsSpace: 2,
+                                                    centerSpaceRadius: 35,
+                                                    sections: [
+                                                      if (totalSpent > 0)
+                                                        PieChartSectionData(
+                                                          color: Colors
+                                                              .orange
+                                                              .shade400,
+                                                          value: totalSpent,
+                                                          title:
+                                                              '${((totalSpent / totalQuoted) * 100).toStringAsFixed(0)}%',
+                                                          radius: 40,
+                                                          titleStyle:
+                                                              const TextStyle(
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        ),
+                                                      if (totalWorkersWage > 0)
+                                                        PieChartSectionData(
+                                                          color: Colors
+                                                              .red
+                                                              .shade400,
+                                                          value:
+                                                              totalWorkersWage,
+                                                          title:
+                                                              '${((totalWorkersWage / totalQuoted) * 100).toStringAsFixed(0)}%',
+                                                          radius: 40,
+                                                          titleStyle:
+                                                              const TextStyle(
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        ),
+                                                      if (actualProfit > 0)
+                                                        PieChartSectionData(
+                                                          color: Colors
+                                                              .green
+                                                              .shade400,
+                                                          value: actualProfit,
+                                                          title:
+                                                              '${((actualProfit / totalQuoted) * 100).toStringAsFixed(0)}%',
+                                                          radius: 45,
+                                                          titleStyle:
+                                                              const TextStyle(
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 5,
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    _buildLegendItem(
+                                                      Colors.orange.shade400,
+                                                      'Materials',
+                                                      totalSpent,
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    _buildLegendItem(
+                                                      Colors.red.shade400,
+                                                      'Labor / Wages',
+                                                      totalWorkersWage,
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    _buildLegendItem(
+                                                      Colors.green.shade400,
+                                                      isActualProfit
+                                                          ? 'Profit Margin'
+                                                          : 'Loss',
+                                                      actualProfit,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 16),
+
+                              // Cash Flow Card
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Project Cash Flow',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildCashFlowRow(
+                                        'Cash In (Revenue Generated)',
+                                        cashIn,
+                                        Colors.blue,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      _buildCashFlowRow(
+                                        'Cash Out (Wages Paid + Materials)',
+                                        cashOut,
+                                        Colors.orange,
+                                      ),
+                                      const Divider(height: 24),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'Net Cash Flow:',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${isPositiveCashFlow ? "+" : ""}₹${netCashFlow.toStringAsFixed(0)}',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: 14,
+                                              color: isPositiveCashFlow
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              if (materialTasks.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4),
+                                  child: Text(
+                                    'Material Expenses Breakdown',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Colors.blueGrey,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                ...materialTasks.map((t) {
+                                  final mName = t['materialName'] ?? '';
+                                  final mQty = t['materialQuantity'] ?? 1;
+                                  final mUnit =
+                                      (t['materialUnitCost'] as num? ?? 0.0)
+                                          .toDouble();
+                                  final spent = (t['taskCost'] as num? ?? 0.0)
+                                      .toDouble();
+                                  final quoted =
+                                      (t['quotedCost'] as num? ?? 0.0)
+                                          .toDouble();
+                                  final profit = quoted - spent;
+                                  final isProfit = profit >= 0;
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                mName,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black87,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              '${isProfit ? "+" : ""}₹${profit.toStringAsFixed(0)}',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: isProfit
+                                                    ? Colors.green.shade700
+                                                    : Colors.red.shade700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Builder(
+                                              builder: (context) {
+                                                final isMaterial =
+                                                    t['materialQuantity'] !=
+                                                        null &&
+                                                    t['materialUnitCost'] !=
+                                                        null;
+                                                if (isMaterial) {
+                                                  return Text(
+                                                    'Qty: $mQty • Unit: ₹${mUnit.toStringAsFixed(0)}',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    ),
+                                                  );
+                                                } else {
+                                                  return Text(
+                                                    'Other Expense',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      color: Colors.blueGrey,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                            Text(
+                                              'Quoted: ₹${quoted.toStringAsFixed(0)} • Spent: ₹${spent.toStringAsFixed(0)}',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   );
-                                },
+                                }),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+
+                    // Tab 4: Workers Attendance & Salary
+                    if (_selectedTab == 4) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Text(
+                              'Labor & Wage Management',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            if (!isReadOnly)
+                              ElevatedButton.icon(
+                                onPressed: _showAddWorkerDialog,
+                                icon: const Icon(Icons.person_add, size: 16),
+                                label: const Text('Add Worker'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
                               ),
                           ],
-                      ],
-                    ),
-                  ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Active Workers',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 11,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${_workers.length}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 32,
+                                color: Colors.grey.shade300,
+                              ),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Paid Salary',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 11,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.amountPaid).toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 1,
+                                height: 32,
+                                color: Colors.grey.shade300,
+                              ),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Unpaid Salary',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 11,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        '₹${_workers.fold<double>(0.0, (sum, w) => sum + w.remainingSalary).toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_workers.isEmpty)
+                        Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 28,
+                            ),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.engineering_outlined,
+                                    size: 48,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No workers added yet',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Add your workers to track daily attendance, daily wages, and payouts.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (!isReadOnly) ...[
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: _showAddWorkerDialog,
+                                      icon: const Icon(
+                                        Icons.person_add,
+                                        size: 16,
+                                      ),
+                                      label: const Text('Add First Worker'),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _workers.length,
+                          separatorBuilder: (context, idx) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, idx) {
+                            final worker = _workers[idx];
+                            return Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: Theme.of(
+                                            context,
+                                          ).primaryColor.withValues(alpha: 0.1),
+                                          child: Text(
+                                            worker.name.isNotEmpty
+                                                ? worker.name
+                                                      .substring(0, 1)
+                                                      .toUpperCase()
+                                                : 'W',
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).primaryColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                worker.name,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                              Text(
+                                                worker.role,
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'Wage: ₹${worker.dailyWage.toStringAsFixed(0)} / day • Worked: ${worker.daysPresent} days',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              'Earned: ₹${worker.totalEarned.toStringAsFixed(0)}',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Paid: ₹${worker.amountPaid.toStringAsFixed(0)}',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.green,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Unpaid: ₹${worker.remainingSalary.toStringAsFixed(0)}',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.red,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const Divider(height: 16),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: Wrap(
+                                        alignment: WrapAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        children: [
+                                          InkWell(
+                                            onTap: isReadOnly
+                                                ? null
+                                                : () {
+                                                    setState(() {
+                                                      worker.isPresentToday =
+                                                          !worker
+                                                              .isPresentToday;
+                                                      if (worker
+                                                          .isPresentToday) {
+                                                        worker.daysPresent += 1;
+                                                      } else {
+                                                        worker.daysPresent =
+                                                            (worker.daysPresent -
+                                                                    1)
+                                                                .clamp(0, 999);
+                                                      }
+                                                    });
+                                                    _saveWorkers();
+                                                  },
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Checkbox(
+                                                  value: worker.isPresentToday,
+                                                  activeColor: Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                                  materialTapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  onChanged: isReadOnly
+                                                      ? null
+                                                      : (val) {
+                                                          if (val != null) {
+                                                            setState(() {
+                                                              worker.isPresentToday =
+                                                                  val;
+                                                              if (val) {
+                                                                worker.daysPresent +=
+                                                                    1;
+                                                              } else {
+                                                                worker.daysPresent =
+                                                                    (worker.daysPresent -
+                                                                            1)
+                                                                        .clamp(
+                                                                          0,
+                                                                          999,
+                                                                        );
+                                                              }
+                                                            });
+                                                            _saveWorkers();
+                                                          }
+                                                        },
+                                                ),
+                                                const SizedBox(width: 4),
+                                                const Text(
+                                                  'Present Today',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (!isReadOnly)
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                TextButton.icon(
+                                                  onPressed: () =>
+                                                      _showEditWorkerDialog(
+                                                        worker,
+                                                      ),
+                                                  icon: const Icon(
+                                                    Icons.edit,
+                                                    size: 14,
+                                                  ),
+                                                  label: const Text(
+                                                    'Edit',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor:
+                                                        Colors.blue,
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 4,
+                                                        ),
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  onPressed: () =>
+                                                      _deleteWorker(worker),
+                                                  icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    size: 18,
+                                                    color: Colors.red,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 4,
+                                                      ),
+                                                  constraints:
+                                                      const BoxConstraints(),
+                                                  tooltip: 'Delete Worker',
+                                                ),
+                                                const SizedBox(width: 2),
+                                                TextButton.icon(
+                                                  onPressed: () =>
+                                                      _showPayWagesDialog(
+                                                        worker,
+                                                      ),
+                                                  icon: const Icon(
+                                                    Icons.payment,
+                                                    size: 14,
+                                                  ),
+                                                  label: const Text(
+                                                    'Pay Wages',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor: Theme.of(
+                                                      context,
+                                                    ).primaryColor,
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 4,
+                                                        ),
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+
+                    // Tab 5: Daily Logs
+                    if (_selectedTab == 5) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            Text(
+                              'Daily Progress Logs',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            if (!isReadOnly)
+                              ElevatedButton.icon(
+                                onPressed: _showAddUpdateDialog,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('Add Log'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (updates.isEmpty)
+                        Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.history,
+                                    size: 48,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'No updates posted yet.',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Post daily updates so the client can follow progress.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: updates.length,
+                          itemBuilder: (context, index) {
+                            final update = updates[index];
+                            final upTitle = update['title'] ?? 'Update';
+                            final upStatus = update['status'] ?? 'In Progress';
+                            final rawNotes = (update['notes'] ?? '').toString();
+                            String upNotes = rawNotes;
+                            String? updatePhoto =
+                                (update['photoUrl'] as String?)?.trim();
+
+                            // Extract embedded photo tag if present
+                            final photoMatch = RegExp(
+                              r'\[PHOTO:(.+?)\]',
+                            ).firstMatch(rawNotes);
+                            if (photoMatch != null) {
+                              if (updatePhoto == null || updatePhoto.isEmpty) {
+                                updatePhoto = photoMatch.group(1)?.trim();
+                              }
+                              upNotes = upNotes
+                                  .replaceAll(RegExp(r'\[PHOTO:.+?\]'), '')
+                                  .trim();
+                            }
+
+                            final upTime = update['createdAt'] != null
+                                ? DateTime.tryParse(update['createdAt'])
+                                          ?.toLocal()
+                                          .toString()
+                                          .substring(0, 16) ??
+                                      ''
+                                : '';
+
+                            Color statusColor = Colors.blue;
+                            if (upStatus == 'Completed') {
+                              statusColor = Colors.green;
+                            }
+                            if (upStatus == 'Milestone Reached') {
+                              statusColor = Colors.orange;
+                            }
+
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            upTitle,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: statusColor.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            upStatus,
+                                            style: TextStyle(
+                                              color: statusColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (upNotes.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        upNotes,
+                                        style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                    if (updatePhoto != null &&
+                                        updatePhoto.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      _buildDailyLogPhotoPreview(
+                                        context,
+                                        updatePhoto,
+                                        upTitle,
+                                      ),
+                                    ],
+                                    const Divider(height: 20),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Posted by assigned provider',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade500,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                        Text(
+                                          upTime,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade500,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ],
+                ),
+              ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
             final clientId = _project?['user']?['id'] ?? '';
@@ -2905,6 +4166,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       ),
     );
   }
+
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
@@ -2936,13 +4198,21 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
         Text(
           '₹${value.toStringAsFixed(0)}',
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
       ],
     );
@@ -2955,7 +4225,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         Text(
           '₹${value.toStringAsFixed(0)}',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
       ],
     );
@@ -2969,18 +4243,24 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.white.withValues(alpha: 0.9),
+          color: isSelected
+              ? Theme.of(context).primaryColor
+              : Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
+            color: isSelected
+                ? Theme.of(context).primaryColor
+                : Colors.grey.shade300,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).primaryColor.withValues(alpha: 0.3),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -3006,7 +4286,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.grey.shade200,
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -3079,12 +4361,14 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
 
               if (name.isNotEmpty && role.isNotEmpty && wage > 0) {
                 setState(() {
-                  _workers.add(Worker(
-                    id: 'w_${DateTime.now().millisecondsSinceEpoch}',
-                    name: name,
-                    role: role,
-                    dailyWage: wage,
-                  ));
+                  _workers.add(
+                    Worker(
+                      id: 'w_${DateTime.now().millisecondsSinceEpoch}',
+                      name: name,
+                      role: role,
+                      dailyWage: wage,
+                    ),
+                  );
                 });
                 _saveWorkers();
                 Navigator.pop(dialogContext);
@@ -3101,7 +4385,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
   }
 
   void _showPayWagesDialog(Worker worker) {
-    final amountController = TextEditingController(text: worker.remainingSalary.toStringAsFixed(2));
+    final amountController = TextEditingController(
+      text: worker.remainingSalary.toStringAsFixed(2),
+    );
 
     showDialog(
       context: context,
@@ -3139,7 +4425,8 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
           ),
           ElevatedButton(
             onPressed: () {
-              final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
+              final amount =
+                  double.tryParse(amountController.text.trim()) ?? 0.0;
               if (amount > 0) {
                 setState(() {
                   worker.amountPaid += amount;
@@ -3147,7 +4434,11 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                 _saveWorkers();
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Paid ₹${amount.toStringAsFixed(2)} to ${worker.name}!')),
+                  SnackBar(
+                    content: Text(
+                      'Paid ₹${amount.toStringAsFixed(2)} to ${worker.name}!',
+                    ),
+                  ),
                 );
               }
             },
@@ -3161,9 +4452,15 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
   void _showEditWorkerDialog(Worker worker) {
     final nameController = TextEditingController(text: worker.name);
     final roleController = TextEditingController(text: worker.role);
-    final wageController = TextEditingController(text: worker.dailyWage.toString());
-    final daysController = TextEditingController(text: worker.daysPresent.toString());
-    final paidController = TextEditingController(text: worker.amountPaid.toString());
+    final wageController = TextEditingController(
+      text: worker.dailyWage.toString(),
+    );
+    final daysController = TextEditingController(
+      text: worker.daysPresent.toString(),
+    );
+    final paidController = TextEditingController(
+      text: worker.amountPaid.toString(),
+    );
 
     showDialog(
       context: context,
@@ -3176,9 +4473,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Worker Name',
-                ),
+                decoration: const InputDecoration(labelText: 'Worker Name'),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -3191,25 +4486,19 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
               TextField(
                 controller: wageController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Daily Wage (₹)',
-                ),
+                decoration: const InputDecoration(labelText: 'Daily Wage (₹)'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: daysController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Days Worked',
-                ),
+                decoration: const InputDecoration(labelText: 'Days Worked'),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: paidController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Wages Paid (₹)',
-                ),
+                decoration: const InputDecoration(labelText: 'Wages Paid (₹)'),
               ),
             ],
           ),
@@ -3238,7 +4527,9 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                 _saveWorkers();
                 Navigator.pop(dialogContext);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Worker details updated successfully!')),
+                  const SnackBar(
+                    content: Text('Worker details updated successfully!'),
+                  ),
                 );
               }
             },
@@ -3261,16 +4552,19 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
             child: const Text('CANCEL'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               setState(() {
                 _workers.removeWhere((w) => w.id == worker.id);
               });
               _saveWorkers();
               Navigator.pop(dialogContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Worker removed.')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Worker removed.')));
             },
             child: const Text('DELETE'),
           ),
@@ -3279,8 +4573,13 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     );
   }
 
-  Widget _buildDailyLogPhotoPreview(BuildContext context, String photoUrl, String title) {
-    final isNet = photoUrl.startsWith('http://') || photoUrl.startsWith('https://');
+  Widget _buildDailyLogPhotoPreview(
+    BuildContext context,
+    String photoUrl,
+    String title,
+  ) {
+    final isNet =
+        photoUrl.startsWith('http://') || photoUrl.startsWith('https://');
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -3309,12 +4608,18 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     errorBuilder: (context, error, stackTrace) => Container(
                       height: 140,
                       color: Colors.grey.shade200,
-                      child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.grey),
+                      ),
                     ),
                   );
                 }
                 try {
-                  final cleanB64 = (photoUrl.contains(',') ? photoUrl.split(',').last : photoUrl).replaceAll(RegExp(r'\s+'), '');
+                  final cleanB64 =
+                      (photoUrl.contains(',')
+                              ? photoUrl.split(',').last
+                              : photoUrl)
+                          .replaceAll(RegExp(r'\s+'), '');
                   return Image.memory(
                     base64Decode(cleanB64),
                     height: 140,
@@ -3323,14 +4628,18 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                     errorBuilder: (context, error, stackTrace) => Container(
                       height: 140,
                       color: Colors.grey.shade200,
-                      child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.grey),
+                      ),
                     ),
                   );
                 } catch (_) {
                   return Container(
                     height: 140,
                     color: Colors.grey.shade200,
-                    child: const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                    child: const Center(
+                      child: Icon(Icons.broken_image, color: Colors.grey),
+                    ),
                   );
                 }
               },
@@ -3349,7 +4658,14 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   children: [
                     Icon(Icons.zoom_in, color: Colors.white, size: 14),
                     SizedBox(width: 4),
-                    Text('Tap to expand', style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Tap to expand',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),

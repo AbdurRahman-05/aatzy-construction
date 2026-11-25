@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const notSelf = denyUnlessSelf(authResult.auth, new URL(request.url).searchParams.get('userId'));
+    if (notSelf) return notSelf;
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const partnerId = searchParams.get('partnerId');
@@ -32,6 +38,11 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const notSelf = denyUnlessSelf(authResult.auth, new URL(request.url).searchParams.get('userId'));
+    if (notSelf) return notSelf;
+
     const { searchParams } = new URL(request.url);
     const messageId = searchParams.get('messageId');
     const userId = searchParams.get('userId');

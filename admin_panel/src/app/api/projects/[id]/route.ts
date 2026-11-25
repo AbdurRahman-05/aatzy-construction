@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth } from '@/lib/auth';
+import { denyUnlessProjectParticipant } from '@/lib/projectAccess';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    // Any logged-in user may view a project (partners browse open projects as leads)
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+
     const { id } = await context.params;
 
     let project: any = null;
@@ -94,7 +100,13 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+
     const { id } = await context.params;
+    const denied = await denyUnlessProjectParticipant(id, authResult.auth);
+    if (denied) return denied;
+
     const body = await request.json();
     const { title, type, location, plotSize, budget, timeline, currentStage } = body;
 
@@ -170,7 +182,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+
     const { id } = await context.params;
+    const denied = await denyUnlessProjectParticipant(id, authResult.auth);
+    if (denied) return denied;
 
     // Delete related records in quotes, tasks, and updates first, then delete project
     await prisma.$transaction([

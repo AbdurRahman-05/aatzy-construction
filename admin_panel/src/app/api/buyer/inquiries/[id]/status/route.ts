@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, forbidden } from '@/lib/auth';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request, { roles: ['CONSUMER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardInquiryId } = await context.params;
+    if (authResult.auth) {
+      const owned = await prisma.inquiry.findFirst({ where: { id: guardInquiryId, buyerId: authResult.auth.id }, select: { id: true } });
+      if (!owned) return forbidden('You can only update your own inquiries.');
+    }
+
     const { id } = await context.params;
     const body = await request.json();
     const { status, notes, rating, reviewText, buyerId, images } = body;

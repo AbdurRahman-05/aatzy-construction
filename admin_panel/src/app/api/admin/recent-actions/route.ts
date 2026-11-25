@@ -1,18 +1,13 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { requireAdmin } from '@/lib/auth';
 import { getRecentActions } from '@/lib/recentActions';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const adminSession = cookieStore.get('admin_session')?.value;
-    const correctPassword = process.env.ADMIN_PASSWORD || 'admin123';
-
-    if (adminSession !== correctPassword) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const notAdmin = await requireAdmin();
+    if (notAdmin) return notAdmin;
 
     const { searchParams } = new URL(req.url);
     const limitParam = searchParams.get('limit');

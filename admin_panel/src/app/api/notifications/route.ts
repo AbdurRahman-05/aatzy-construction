@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+
     const { searchParams } = new URL(request.url);
     const recipientId = searchParams.get('recipientId') || searchParams.get('userId');
     const role = searchParams.get('role');
@@ -11,6 +15,10 @@ export async function GET(request: Request) {
     if (!recipientId) {
       return NextResponse.json({ error: 'recipientId or userId is required' }, { status: 400 });
     }
+
+    // Users can only read their own notifications
+    const notSelf = denyUnlessSelf(authResult.auth, recipientId);
+    if (notSelf) return notSelf;
 
     const where: any = {
       recipientId,
@@ -39,10 +47,17 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const auth = authResult.auth;
+
     const body = await request.json();
     const { id, recipientId, all } = body;
 
     if (all && recipientId) {
+      const notSelf = denyUnlessSelf(auth, recipientId);
+      if (notSelf) return notSelf;
+
       await prisma.notification.updateMany({
         where: { recipientId, isRead: false },
         data: { isRead: true },
@@ -51,11 +66,15 @@ export async function PATCH(request: Request) {
     }
 
     if (id) {
-      const updated = await prisma.notification.update({
-        where: { id },
+      // Scope to the caller's own notifications when authenticated
+      const result = await prisma.notification.updateMany({
+        where: auth ? { id, recipientId: auth.id } : { id },
         data: { isRead: true },
       });
-      return NextResponse.json(updated);
+      if (result.count === 0) {
+        return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+      }
+      return NextResponse.json({ message: 'Notification marked as read' });
     }
 
     return NextResponse.json({ error: 'Provide either id or recipientId with all: true' }, { status: 400 });
@@ -67,12 +86,19 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const auth = authResult.auth;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const recipientId = searchParams.get('recipientId');
     const all = searchParams.get('all') === 'true';
 
     if (all && recipientId) {
+      const notSelf = denyUnlessSelf(auth, recipientId);
+      if (notSelf) return notSelf;
+
       await prisma.notification.deleteMany({
         where: { recipientId },
       });
@@ -83,9 +109,12 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Notification id is required' }, { status: 400 });
     }
 
-    await prisma.notification.delete({
-      where: { id },
+    const removed = await prisma.notification.deleteMany({
+      where: auth ? { id, recipientId: auth.id } : { id },
     });
+    if (removed.count === 0) {
+      return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ message: 'Notification deleted' });
   } catch (error) {

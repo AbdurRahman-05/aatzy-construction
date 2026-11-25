@@ -199,7 +199,7 @@ export interface CreateNotificationParams {
   role: 'CONSUMER' | 'PROVIDER';
   title: string;
   body: string;
-  type: 'NEW_LEAD' | 'QUOTE_ACCEPTED' | 'TASK_CREATED' | 'TASK_COMPLETED' | 'STAGE_COMPLETED' | 'CHAT_MESSAGE';
+  type: 'NEW_LEAD' | 'NEW_QUOTE' | 'QUOTE_ACCEPTED' | 'TASK_CREATED' | 'TASK_COMPLETED' | 'STAGE_COMPLETED' | 'CHAT_MESSAGE';
   entityId?: string;
   route?: string;
   senderId?: string; // Optional: used for chat notification suppression on device

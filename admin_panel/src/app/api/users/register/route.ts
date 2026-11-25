@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendWelcomeEmail } from '@/lib/mail';
+import { issueSessionToken, normalizePhone } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
 
     // Verify OTP first
     const { verifyOtp } = require('@/lib/messageCentral');
-    const otpResult = await verifyOtp(phone, verificationId, otpCode);
+    const otpResult = await verifyOtp(normalizePhone(phone), verificationId, otpCode);
     if (!otpResult.success) {
       return NextResponse.json({ error: otpResult.error || 'Invalid OTP code' }, { status: 400 });
     }
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
         email: user.email,
         role: user.role,
         isApproved: user.isApproved,
+        token: issueSessionToken(user.id, 'CONSUMER'),
       }
     }, { status: 201 });
     

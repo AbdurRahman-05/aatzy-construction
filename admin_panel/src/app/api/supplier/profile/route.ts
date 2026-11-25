@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function PUT(request: Request) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const guardBody = await request.clone().json().catch(() => ({}));
+    const notSelf = denyUnlessSelf(authResult.auth, guardBody?.supplierId);
+    if (notSelf) return notSelf;
+
     const body = await request.json();
     const {
       supplierId,

@@ -7,16 +7,22 @@ import {
   calculateDaysLeft,
 } from '@/lib/razorpay';
 import { sendFCMNotification } from '@/lib/fcm';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const guardBody = await request.clone().json().catch(() => ({}));
+    const notSelf = denyUnlessSelf(authResult.auth, guardBody?.providerId);
+    if (notSelf) return notSelf;
+
     const body = await request.json();
     const {
       providerId,
       razorpayOrderId,
       razorpayPaymentId,
       razorpaySignature,
-      isSandbox,
     } = body;
 
     if (!providerId || !razorpayOrderId || !razorpayPaymentId) {
@@ -36,8 +42,16 @@ export async function POST(request: Request) {
 
     const isLive = isRazorpayConfigured();
 
-    // Verify cryptographic signature if live mode
-    if (isLive && !isSandbox) {
+    // When Razorpay is configured the signature is ALWAYS required (client `isSandbox` is ignored).
+    // Without Razorpay keys, simulated payments are only allowed outside production.
+    if (!isLive && process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { error: 'Online payments are not configured on the server.', code: 'PAYMENTS_DISABLED' },
+        { status: 503 }
+      );
+    }
+
+    if (isLive) {
       if (!razorpaySignature) {
         return NextResponse.json({ error: 'razorpaySignature is required' }, { status: 400 });
       }
@@ -66,10 +80,10 @@ export async function POST(request: Request) {
         status: 'SUCCESS',
         razorpayOrderId,
         razorpayPaymentId,
-        razorpaySignature: razorpaySignature || (isSandbox ? 'sandbox_mock_signature' : null),
+        razorpaySignature: razorpaySignature || (!isLive ? 'sandbox_mock_signature' : null),
         startedAt: now,
         expiresAt,
-        notes: isSandbox ? 'Sandbox / Test Mode Subscription' : 'Razorpay Verified Payment',
+        notes: !isLive ? 'Sandbox / Test Mode Subscription' : 'Razorpay Verified Payment',
       },
     });
 

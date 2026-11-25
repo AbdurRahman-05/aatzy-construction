@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:construction_app/core/api_http.dart' as http;
 // import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../constants.dart';
 
@@ -134,14 +134,15 @@ class SubscriptionNotifier extends Notifier<SubscriptionState> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // final isActive = data['isActive'] == true;
-        final daysLeft = (data['daysLeft'] as num?)?.toInt() ?? 365;
+        // Server decides access (FREE_ACCESS_MODE or real subscription status)
+        final isActive = data['isActive'] == true;
+        final daysLeft = (data['daysLeft'] as num?)?.toInt() ?? 0;
         final expiresAt = data['subscriptionExpiresAt'] as String?;
         final startedAt = data['subscriptionStartedAt'] as String?;
 
         state = state.copyWith(
-          isSubscribed: true,
-          daysLeft: daysLeft > 0 ? daysLeft : 365,
+          isSubscribed: isActive,
+          daysLeft: daysLeft > 0 ? daysLeft : 0,
           subscriptionExpiresAt: expiresAt,
           subscriptionStartedAt: startedAt,
           isLoading: false,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -19,6 +20,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProviderId } = await context.params;
+    const notSelf = denyUnlessSelf(authResult.auth, guardProviderId);
+    if (notSelf) return notSelf;
+
     const { id } = await context.params;
     const body = await request.json();
     const { title, description, imageData } = body;
@@ -43,8 +50,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProviderId } = await context.params;
+    const notSelf = denyUnlessSelf(authResult.auth, guardProviderId);
+    if (notSelf) return notSelf;
+
     const { searchParams } = new URL(request.url);
     const imageId = searchParams.get('imageId');
 
@@ -52,9 +65,13 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Image ID is required' }, { status: 400 });
     }
 
-    await prisma.portfolioImage.delete({
-      where: { id: imageId },
+    // Only delete images that belong to this provider
+    const removed = await prisma.portfolioImage.deleteMany({
+      where: { id: imageId, providerId: guardProviderId },
     });
+    if (removed.count === 0) {
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ message: 'Image deleted successfully' });
   } catch (error) {

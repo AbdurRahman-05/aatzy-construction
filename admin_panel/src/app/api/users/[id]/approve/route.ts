@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendApprovalEmail } from '@/lib/mail';
+import { requireAdmin } from '@/lib/auth';
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const notAdmin = await requireAdmin();
+    if (notAdmin) return notAdmin;
+
     const { id } = await context.params;
     
     // In Next.js 15, route segment params are Promises

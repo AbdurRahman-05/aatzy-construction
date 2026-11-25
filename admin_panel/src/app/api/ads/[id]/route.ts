@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth';
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const notAdmin = await requireAdmin();
+    if (notAdmin) return notAdmin;
+
     const { id } = await context.params;
     const body = await request.json();
 
@@ -20,6 +24,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const notAdmin = await requireAdmin();
+    if (notAdmin) return notAdmin;
+
     const { id } = await context.params;
 
     await (prisma as any).ad.delete({

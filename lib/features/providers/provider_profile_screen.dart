@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
+import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
 import '../../core/constants.dart';
 import '../auth/auth_provider.dart';
@@ -789,19 +789,21 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
 
   Widget _buildPortfolioTab(bool isDark) {
     if (_portfolio.isEmpty) {
-      return Center(
+      return const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.all(40),
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.camera_alt_outlined,
                 size: 48,
-                color: Colors.grey.shade400,
+                color: Colors.grey,
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'No Portfolio Posts Yet',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -809,8 +811,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   color: Colors.grey,
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
+              SizedBox(height: 4),
+              Text(
                 'This provider hasn\'t added project images to their showcase yet.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
                 textAlign: TextAlign.center,
@@ -862,9 +864,11 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   Widget _buildSupplierProductsTab(bool isDark) {
     if (_supplierProducts.isEmpty) {
       return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
@@ -1154,19 +1158,21 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
   Widget _buildReviewsTab(bool isDark) {
     final reviews = _provider!['reviews'] as List? ?? [];
     if (reviews.isEmpty) {
-      return Center(
+      return const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.all(40),
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.star_outline_rounded,
                 size: 48,
-                color: Colors.grey.shade400,
+                color: Colors.grey,
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'No Reviews Yet',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -1174,8 +1180,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
                   color: Colors.grey,
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
+              SizedBox(height: 4),
+              Text(
                 'Be the first to leave a feedback rating for this provider.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
                 textAlign: TextAlign.center,

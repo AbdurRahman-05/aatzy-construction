@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { sendOtp, verifyOtp } from '@/lib/messageCentral';
+import { issueSessionToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +32,9 @@ export async function POST(request: Request) {
         id: provider.id, 
         businessName: provider.businessName, 
         ownerName: provider.ownerName,
-        email: provider.email 
+        email: provider.email,
+        gstNumber: provider.gstNumber,
+        token: issueSessionToken(provider.id, 'PROVIDER'),
       }
     }, { status: 200 });
 

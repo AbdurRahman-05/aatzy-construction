@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { OAuth2Client } from 'google-auth-library';
+import { issueSessionToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -13,8 +14,8 @@ export async function POST(request: Request) {
     let email: string | undefined;
     let name: string | undefined;
 
-    // Handle mock token for web testing and development simulator
-    if (idToken === 'mock_development_google_id_token' || idToken.startsWith('mock_')) {
+    // Handle mock token for local development only (never in production)
+    if (process.env.NODE_ENV !== 'production' && idToken.startsWith('mock_')) {
       email = 'mock.provider@gmail.com';
       name = 'Mock Google Provider';
     }
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
           ownerName: provider.ownerName,
           email: provider.email,
           gstNumber: provider.gstNumber,
+          token: issueSessionToken(provider.id, 'PROVIDER'),
         },
       }, { status: 200 });
     } else {

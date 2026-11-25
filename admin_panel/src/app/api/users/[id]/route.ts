@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendFCMNotification } from '@/lib/fcm';
+import { requireAdmin, requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -32,6 +33,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request, { roles: ['CONSUMER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardUserId } = await context.params;
+    const notSelf = denyUnlessSelf(authResult.auth, guardUserId);
+    if (notSelf) return notSelf;
+
     const { id } = await context.params;
     const body = await request.json();
     const { name, phone, profileImage } = body;
@@ -63,6 +70,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const notAdmin = await requireAdmin();
+    if (notAdmin) return notAdmin;
+
     const { id } = await context.params;
     
     const user = await prisma.user.findUnique({

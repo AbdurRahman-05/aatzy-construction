@@ -7,6 +7,7 @@ import DashboardAnalytics from '../components/DashboardAnalytics';
 import RecentActionsFeed from '../components/RecentActionsFeed';
 import { getRecentActions } from '@/lib/recentActions';
 import { cookies } from 'next/headers';
+import { ADMIN_COOKIE_NAME, isValidAdminToken } from '@/lib/auth';
 import LoginForm from './LoginForm';
 import AdsManager from '../components/AdsManager';
 import SubscriptionManager from '../components/SubscriptionManager';
@@ -23,10 +24,9 @@ export default async function AdminDashboard({
   const { view = 'dashboard' } = await searchParams;
 
   const cookieStore = await cookies();
-  const adminSession = cookieStore.get('admin_session')?.value;
-  const correctPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminSession = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
 
-  if (adminSession !== correctPassword) {
+  if (!isValidAdminToken(adminSession)) {
     return <LoginForm />;
   }
 

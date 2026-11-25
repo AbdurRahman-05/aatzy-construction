@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, forbidden } from '@/lib/auth';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const { id: guardInquiryId } = await context.params;
+    if (authResult.auth) {
+      const callerId = authResult.auth.id;
+      const visible = await prisma.inquiry.findFirst({ where: { id: guardInquiryId, OR: [{ buyerId: callerId }, { providerId: callerId }] }, select: { id: true } });
+      if (!visible) return forbidden('You do not have access to this inquiry.');
+    }
+
     const { id } = await context.params;
 
     const inquiry = await prisma.inquiry.findUnique({

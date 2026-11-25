@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string; productId: string }> }
 ) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProviderId } = await context.params;
+    const notSelf = denyUnlessSelf(authResult.auth, guardProviderId);
+    if (notSelf) return notSelf;
+
     const { id, productId } = await context.params;
     const body = await request.json();
     const {
@@ -57,6 +64,12 @@ export async function DELETE(
   context: { params: Promise<{ id: string; productId: string }> }
 ) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProviderId } = await context.params;
+    const notSelf = denyUnlessSelf(authResult.auth, guardProviderId);
+    if (notSelf) return notSelf;
+
     const { id, productId } = await context.params;
 
     const check = await prisma.product.findFirst({

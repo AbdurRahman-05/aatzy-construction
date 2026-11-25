@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    // Only customers can review, and only as themselves
+    const authResult = requireAuth(request, { roles: ['CONSUMER'] });
+    if (!authResult.ok) return authResult.response;
+
     const { id: providerId } = await context.params;
     const body = await request.json();
     const { userId, rating, comment, projectId } = body;
@@ -10,6 +15,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!userId || rating === undefined || rating === null) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    const notSelf = denyUnlessSelf(authResult.auth, userId);
+    if (notSelf) return notSelf;
 
     const numericRating = parseInt(rating);
     if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {

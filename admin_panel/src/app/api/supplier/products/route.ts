@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const notSelf = denyUnlessSelf(authResult.auth, new URL(request.url).searchParams.get('supplierId'));
+    if (notSelf) return notSelf;
+
     const { searchParams } = new URL(request.url);
     const supplierId = searchParams.get('supplierId');
 
@@ -41,6 +47,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const guardBody = await request.clone().json().catch(() => ({}));
+    const notSelf = denyUnlessSelf(authResult.auth, guardBody?.supplierId);
+    if (notSelf) return notSelf;
+
     const body = await request.json();
     const {
       supplierId,

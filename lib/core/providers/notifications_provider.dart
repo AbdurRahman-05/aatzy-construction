@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:construction_app/core/api_http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -175,6 +175,9 @@ class NotificationsNotifier extends Notifier<List<NotificationModel>> {
             if (type == 'NEW_LEAD') {
               icon = Icons.apartment_rounded;
               color = const Color(0xFF0F766E);
+            } else if (type == 'NEW_QUOTE') {
+              icon = Icons.request_quote_rounded;
+              color = const Color(0xFF7C3AED);
             } else if (type == 'QUOTE_ACCEPTED') {
               icon = Icons.handshake_rounded;
               color = const Color(0xFF4F46E5);

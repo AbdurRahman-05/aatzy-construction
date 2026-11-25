@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
     const { id } = await context.params;
+    // A customer can only list their own projects
+    const notSelf = denyUnlessSelf(authResult.auth, id);
+    if (notSelf) return notSelf;
 
     const projects = await prisma.project.findMany({
       where: { userId: id },

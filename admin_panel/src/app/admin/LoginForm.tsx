@@ -31,8 +31,7 @@ export default function LoginForm() {
       }
 
       if (data.success) {
-        // Set cookie for 1 day
-        document.cookie = `admin_session=${password}; path=/; max-age=86400; SameSite=Lax`;
+        // The server sets a signed HttpOnly session cookie
         window.location.reload();
       }
     } catch (err) {

@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAuth, denyUnlessSelf } from '@/lib/auth';
 
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string; leadId: string }> }
 ) {
   try {
+    const authResult = requireAuth(request, { roles: ['PROVIDER'] });
+    if (!authResult.ok) return authResult.response;
+    const { id: guardProviderId } = await context.params;
+    const notSelf = denyUnlessSelf(authResult.auth, guardProviderId);
+    if (notSelf) return notSelf;
+
     const { id, leadId } = await context.params;
     const body = await request.json();
     const { status, notes, quotedPrice, deliveryStatus, gstPercent } = body;
