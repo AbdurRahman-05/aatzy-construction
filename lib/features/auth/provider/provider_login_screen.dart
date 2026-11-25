@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
@@ -72,7 +73,7 @@ class _ProviderLoginScreenState extends ConsumerState<ProviderLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BentoAppBar(
         title: const Text('Connectzy Partner Login'),
         actions: [
           if (kDebugMode)

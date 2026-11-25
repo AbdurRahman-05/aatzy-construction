@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
@@ -277,6 +278,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
         'gstNumber': _gstController.text.trim(),
         'aadharCard': _aadharBase64,
         'panCard': _panBase64,
+        if (_portfolioBase64 != null && _portfolioBase64!.isNotEmpty) 'portfolioImage': _portfolioBase64,
         'profileCompletion': ((_currentStep + 1) / 6 * 100).toInt(),
         'phoneVerificationToken': _phoneVerificationToken,
         'isGoogleSignUp': widget.isGoogleSignUp,
@@ -847,7 +849,7 @@ class _ProviderRegistrationStepperState extends ConsumerState<ProviderRegistrati
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: BentoAppBar(
         title: const Text('Provider Registration', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         backgroundColor: Colors.white,

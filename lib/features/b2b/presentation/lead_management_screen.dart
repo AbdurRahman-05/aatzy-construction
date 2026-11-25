@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
@@ -972,7 +973,7 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BentoAppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),
@@ -1154,22 +1155,6 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
-                );
-              },
-              icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
-              label: const Text('Call Buyer'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-            ),
-          ),
         ],
       );
     }
@@ -1221,36 +1206,18 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
     }
 
     if (lead.status == 'Accepted' || (lead.status == 'Closed' && lead.deliveryStatus != 'Delivered')) {
-      return Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => _showCloseDealDialog(lead),
-              icon: const Icon(Icons.local_shipping_outlined, size: 18),
-              label: const Text('Update Status'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-            ),
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _showCloseDealDialog(lead),
+          icon: const Icon(Icons.local_shipping_outlined, size: 18),
+          label: const Text('Update Status'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 10),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
-                );
-              },
-              icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
-              label: const Text('Call Buyer'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-            ),
-          ),
-        ],
+        ),
       );
     }
 
@@ -1287,52 +1254,20 @@ class _LeadManagementScreenState extends ConsumerState<LeadManagementScreen> {
     }
 
     if (lead.status == 'Closed') {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
-            );
-          },
-          icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
-          label: const Text('Call Buyer'),
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => _showQuoteDialog(lead),
-            icon: const Icon(Icons.send_rounded, size: 18),
-            label: const Text('Send Quote'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              side: const BorderSide(color: Colors.blue),
-            ),
-          ),
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showQuoteDialog(lead),
+        icon: const Icon(Icons.send_rounded, size: 18),
+        label: const Text('Send Quote'),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          side: const BorderSide(color: Colors.blue),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Calling Buyer ${lead.buyerName}: ${lead.buyerPhone}...')),
-              );
-            },
-            icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
-            label: const Text('Call Buyer'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 

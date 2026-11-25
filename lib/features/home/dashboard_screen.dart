@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/projects_provider.dart';
 import '../auth/auth_provider.dart';
@@ -40,7 +41,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BentoAppBar(
         backgroundColor: isDark ? const Color(0xFF111318) : Colors.white,
         elevation: 0,
         centerTitle: true,

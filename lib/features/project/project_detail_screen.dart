@@ -446,7 +446,6 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
     final title = _project?['title'] ?? 'My Home';
     final location = _project?['location'] ?? 'Royapram, Chennai';
     final plotSize = _project?['plotSize']?.toString() ?? '2000';
-    final double budget = (_project?['budget'] as num? ?? 300000.0).toDouble();
     final timeline = _project?['timeline'] ?? '9 months (Mar 2025 – Dec 2025)';
     final currentStage = _project?['currentStage'] ?? 'Design & Planning';
     final projectIdFormatted = 'PRJ-${widget.projectId.length > 8 ? widget.projectId.substring(0, 8).toUpperCase() : widget.projectId.toUpperCase()}';
@@ -456,6 +455,10 @@ class _ProjectDetailScreenState extends ConsumerState<ProjectDetailScreen> {
       (q) => q['isAccepted'] == true,
       orElse: () => null,
     );
+    final double acceptedBudget = (acceptedQuote?['estimatedCost'] as num?)?.toDouble() ?? 0.0;
+    final double budget = acceptedBudget > 0
+        ? acceptedBudget
+        : (_project?['budget'] as num? ?? 300000.0).toDouble();
     final tasksList = _project?['tasks'] as List? ?? [];
 
     final isCancelled = currentStage.toString().toLowerCase() == 'cancelled';

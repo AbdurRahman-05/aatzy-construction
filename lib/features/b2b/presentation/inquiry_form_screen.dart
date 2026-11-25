@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
@@ -133,7 +134,7 @@ class _InquiryFormScreenState extends ConsumerState<InquiryFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BentoAppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => context.pop(),

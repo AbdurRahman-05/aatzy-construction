@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
@@ -6,11 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import 'auth_provider.dart';
-import '../../core/api_settings_dialog.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../core/google_sign_in_helper.dart';
 import '../../core/services/location_service.dart';
 
@@ -408,6 +408,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // this authenticate() call will be executed on mobile platforms).
       final googleUser = await GoogleSignIn.instance.authenticate();
       await _handleGoogleUser(googleUser);
+    } on GoogleSignInException catch (e) {
+      // e.g. "[16] Account reauth failed" = this build's signing key (SHA-1) is not
+      // registered as an Android OAuth client in Google Cloud.
+      debugPrint('Google Sign-In error: code=${e.code} description=${e.description}');
+      if (!mounted) return;
+      final userCancelled = e.code == GoogleSignInExceptionCode.canceled &&
+          !(e.description ?? '').contains('[16]');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userCancelled
+                ? 'Google sign-in was cancelled.'
+                : 'Google sign-in is unavailable right now. Please sign in with your email and password.',
+          ),
+        ),
+      );
     } catch (e) {
       debugPrint('Google Sign-In error: $e');
       if (!mounted) return;
@@ -435,17 +451,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF111318) : AppTheme.backgroundNeutral,
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
+      appBar: const BentoAppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          if (kDebugMode)
-            IconButton(
-              icon: Icon(Icons.wifi_tethering, color: isDark ? const Color(0xFF2DD4BF) : AppTheme.primaryOrange),
-              tooltip: 'Network Settings',
-              onPressed: () => showApiSettingsDialog(context),
-            ),
-        ],
       ),
       body: Center(
         child: SingleChildScrollView(

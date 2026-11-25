@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { denyUnlessProjectParticipant } from '@/lib/projectAccess';
+import { createNotification } from '@/lib/notifications';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -170,6 +171,43 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         });
       } catch (e) {
         console.error('Failed to log resume event:', e);
+      }
+    } else if (currentStage === 'Cancelled') {
+      try {
+        const quotes = await prisma.quote.findMany({
+          where: { projectId: id },
+          select: { providerId: true, isAccepted: true },
+        });
+
+        const acceptedProviderIds = quotes.filter(q => q.isAccepted).map(q => q.providerId);
+        const targetProviderIds = Array.from(
+          new Set(acceptedProviderIds.length > 0 ? acceptedProviderIds : quotes.map(q => q.providerId))
+        );
+
+        await Promise.all(
+          targetProviderIds.map(providerId =>
+            createNotification({
+              recipientId: providerId,
+              role: 'PROVIDER',
+              title: '❌ Project Cancelled',
+              body: `The client has cancelled the project "${updatedProject.title}".`,
+              type: 'PROJECT_CANCELLED',
+              entityId: id,
+              route: `/provider-job/${id}`,
+            })
+          )
+        );
+
+        await prisma.projectUpdate.create({
+          data: {
+            projectId: id,
+            title: 'Project Status: Cancelled',
+            status: 'Cancelled',
+            notes: 'Client cancelled this project.',
+          },
+        });
+      } catch (e) {
+        console.error('Failed to log project cancellation event:', e);
       }
     }
 

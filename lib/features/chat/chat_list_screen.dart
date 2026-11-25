@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../core/widgets/bento.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/auth_provider.dart';
@@ -26,7 +27,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   String _searchQuery = '';
   Timer? _pollTimer;
   String _lastRawResponse = '';
-  final Map<String, Uint8List> _avatarBytesCache = {};
 
   @override
   void initState() {
@@ -179,6 +179,28 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     }
   }
 
+
+  String _formatTime(dynamic raw) {
+    final dt = DateTime.tryParse(raw?.toString() ?? '')?.toLocal();
+    if (dt == null) return '';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return DateFormat('h:mm a').format(dt);
+    if (diff == 1) return 'Yesterday';
+    if (diff < 7) return DateFormat('EEE').format(dt);
+    return DateFormat('d MMM').format(dt);
+  }
+
+  void _openChat(String partnerId, String partnerName) {
+    final isProvider = (ref.read(authProvider).role ?? '').toUpperCase() == 'PROVIDER';
+    final route = isProvider
+        ? '/provider-chat/$partnerId?name=${Uri.encodeComponent(partnerName)}'
+        : '/chat/$partnerId?name=${Uri.encodeComponent(partnerName)}';
+    context.push(route);
+  }
+
   @override
   Widget build(BuildContext context) {
     // Refresh when auth state becomes ready (e.g. cold start)
@@ -190,24 +212,24 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
     // Instantly refresh when the user navigates to the Chat tab
     ref.listen<int>(mainTabProvider, (prev, next) {
-      if (next == 3) {
-        _fetchConversations(silent: true);
-      }
+      if (next == 3) _fetchConversations(silent: true);
     });
     ref.listen<int>(providerTabProvider, (prev, next) {
-      if (next == 3) {
-        _fetchConversations(silent: true);
-      }
+      if (next == 3) _fetchConversations(silent: true);
     });
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final width = MediaQuery.of(context).size.width;
+    final hPad = width >= 700 ? 24.0 : (width < 380 ? 14.0 : 18.0);
 
-    final displayedConversations = _conversations.where((conv) {
+    final shown = _conversations.where((conv) {
       if (_searchQuery.isEmpty) return true;
-      final partnerName = (conv['partnerName'] ?? '').toString().toLowerCase();
-      final lastMsg = (conv['lastMessage'] ?? '').toString().toLowerCase();
-      return partnerName.contains(_searchQuery) || lastMsg.contains(_searchQuery);
+      final name = (conv['partnerName'] ?? '').toString().toLowerCase();
+      final last = (conv['lastMessage'] ?? '').toString().toLowerCase();
+      return name.contains(_searchQuery) || last.contains(_searchQuery);
     }).toList();
+
+    final unreadTotal = _conversations.fold<int>(0, (sum, c) => sum + ((c['unreadCount'] as int?) ?? 0));
 
     return WallpaperBackground(
       child: Scaffold(
@@ -215,323 +237,175 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1000),
+              constraints: const BoxConstraints(maxWidth: 900),
               child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Messages',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.white : const Color(0xFF1E1E2D),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'You have ${_conversations.length} active chats',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? Colors.white70 : Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Search Bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
-                  ),
-                  child: TextField(
-                    onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
-                    decoration: InputDecoration(
-                      hintText: 'Search messages...',
-                      hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade500),
-                      prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey.shade400),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Messages',
+                          style: TextStyle(fontSize: 28, height: 1.1, fontWeight: FontWeight.w900, letterSpacing: -1, color: Bento.text(dark)),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          _isLoading
+                              ? 'Loading chats…'
+                              : unreadTotal > 0
+                                  ? '$unreadTotal unread · ${_conversations.length} chats'
+                                  : '${_conversations.length} chat${_conversations.length == 1 ? '' : 's'}',
+                          style: TextStyle(fontSize: 13, color: Bento.muted(dark), fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Unified Panel
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E2D) : Colors.white,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(32),
-                      topRight: Radius.circular(32),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
+                    child: BentoSearchField(
+                      hint: 'Search people or messages',
+                      onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
                   ),
-                  child: _isLoading
-                      ? const ShimmerChatList(itemCount: 6)
-                      : RefreshIndicator(
-                          onRefresh: _fetchConversations,
-                          child: displayedConversations.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                  const SizedBox(height: 14),
+                  Expanded(
+                    child: _isLoading
+                        ? const ShimmerChatList(itemCount: 6)
+                        : RefreshIndicator(
+                            color: Bento.accent,
+                            onRefresh: _fetchConversations,
+                            child: shown.isEmpty
+                                ? ListView(
+                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    padding: EdgeInsets.fromLTRB(hPad, 8, hPad, 110),
                                     children: [
-                                      Icon(Icons.chat_bubble_outline_rounded, size: 72, color: Colors.grey.withValues(alpha: 0.4)),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        _searchQuery.isNotEmpty ? 'No matching chats found' : 'No messages yet',
-                                        style: TextStyle(fontSize: 18, color: isDark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        _searchQuery.isNotEmpty
-                                            ? 'Try searching with another keyword.'
-                                            : 'Your conversations will appear here.',
-                                        style: TextStyle(color: isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                                      BentoEmptyState(
+                                        icon: Icons.chat_bubble_rounded,
+                                        title: _searchQuery.isNotEmpty ? 'No matching chats' : 'No messages yet',
+                                        subtitle: _searchQuery.isNotEmpty
+                                            ? 'Try searching with another name or word.'
+                                            : 'When you chat with a partner or client, it shows up here.',
                                       ),
                                     ],
+                                  )
+                                : ListView.separated(
+                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 110),
+                                    itemCount: shown.length,
+                                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                                    itemBuilder: (context, i) => _conversationTile(shown[i], dark),
                                   ),
-                                )
-                              : ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(0, 24, 0, 90),
-                                  itemCount: displayedConversations.length,
-                                  separatorBuilder: (context, index) => Padding(
-                                    padding: const EdgeInsets.only(left: 88, right: 24),
-                                    child: Divider(height: 1, color: isDark ? Colors.white10 : Colors.grey.shade100),
-                                  ),
-                                  itemBuilder: (context, index) {
-                                    final conv = displayedConversations[index];
-                                    final partnerId = conv['partnerId'];
-                                    final partnerName = conv['partnerName'];
-                                    final partnerImage = conv['partnerImage'] as String? ?? '';
-                                    final lastMsg = conv['lastMessage'] ?? '';
-                                    final timeStr = conv['createdAt'] != null
-                                        ? DateTime.parse(conv['createdAt']).toLocal().toString().substring(11, 16)
-                                        : '';
-
-                                    // Genuine unread status from data
-                                    final unreadCount = conv['unreadCount'] as int? ?? 0;
-                                    final isUnread = unreadCount > 0;
-
-                                    return InkWell(
-                                      onTap: () {
-                                        final auth = ref.read(authProvider);
-                                        final isProvider = (auth.role ?? '').toUpperCase() == 'PROVIDER';
-                                        final route = isProvider
-                                            ? '/provider-chat/$partnerId?name=${Uri.encodeComponent(partnerName)}'
-                                            : '/chat/$partnerId?name=${Uri.encodeComponent(partnerName)}';
-                                        context.push(route);
-                                      },
-                                      onLongPress: () => _confirmDeleteConversation(partnerId, partnerName),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                        child: Row(
-                                          children: [
-                                            // Avatar
-                                            Stack(
-                                              children: [
-                                                Container(
-                                                  width: 56,
-                                                  height: 56,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.indigo.shade50,
-                                                    border: Border.all(color: Colors.white, width: 2),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Colors.black.withValues(alpha: 0.05),
-                                                        blurRadius: 10,
-                                                        offset: const Offset(0, 4),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: _buildPartnerAvatar(partnerId, partnerImage, partnerName),
-                                                ),
-                                                Positioned(
-                                                  right: 2,
-                                                  bottom: 2,
-                                                  child: Container(
-                                                    width: 14,
-                                                    height: 14,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.green.shade400,
-                                                      shape: BoxShape.circle,
-                                                      border: Border.all(color: Colors.white, width: 2),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(width: 16),
-                                            // Content
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                    children: [
-                                                      Expanded(
-                                                        child: Text(
-                                                          partnerName,
-                                                          style: TextStyle(
-                                                            fontWeight: isUnread ? FontWeight.w900 : FontWeight.w700,
-                                                            fontSize: 16,
-                                                            color: isDark ? Colors.white : const Color(0xFF1E1E2D),
-                                                            letterSpacing: -0.3,
-                                                         ),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        timeStr,
-                                                        style: TextStyle(
-                                                          color: isUnread ? Colors.indigo.shade600 : (isDark ? Colors.grey.shade500 : Colors.grey.shade400),
-                                                          fontSize: 12,
-                                                          fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 6),
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: Text(
-                                                          lastMsg,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: TextStyle(
-                                                            color: isUnread ? (isDark ? Colors.white70 : Colors.black87) : (isDark ? Colors.grey.shade500 : Colors.grey.shade600),
-                                                            fontSize: 14,
-                                                            fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      if (isUnread)
-                                                        Container(
-                                                          margin: const EdgeInsets.only(left: 8),
-                                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.indigo.shade600,
-                                                            borderRadius: BorderRadius.circular(10),
-                                                          ),
-                                                          child: Text('$unreadCount', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            PopupMenuButton<String>(
-                                              icon: Icon(
-                                                Icons.more_vert_rounded,
-                                                size: 20,
-                                                color: isDark ? Colors.white38 : Colors.grey.shade400,
-                                              ),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                              color: isDark ? const Color(0xFF181B22) : Colors.white,
-                                              onSelected: (val) {
-                                                if (val == 'delete') {
-                                                  _confirmDeleteConversation(partnerId, partnerName);
-                                                }
-                                              },
-                                              itemBuilder: (context) => [
-                                                PopupMenuItem(
-                                                  value: 'delete',
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 18),
-                                                      const SizedBox(width: 8),
-                                                      Text(
-                                                        'Delete Chat',
-                                                        style: TextStyle(
-                                                          color: Colors.red.shade400,
-                                                          fontWeight: FontWeight.w600,
-                                                          fontSize: 14,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                ),
+                          ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 
-  Widget _buildPartnerAvatar(String? partnerId, String partnerImage, String partnerName) {
-    if (partnerImage.isNotEmpty) {
-      try {
-        final cacheKey = partnerId ?? partnerName;
-        Uint8List? bytes = _avatarBytesCache[cacheKey];
-        if (bytes == null) {
-          final cleanB64 = partnerImage.contains(',') ? partnerImage.split(',').last : partnerImage;
-          bytes = base64Decode(cleanB64.trim());
-          _avatarBytesCache[cacheKey] = bytes;
-        }
-        return ClipOval(
-          child: Image.memory(
-            bytes,
-            fit: BoxFit.cover,
-            width: 56,
-            height: 56,
-            gaplessPlayback: true,
-            errorBuilder: (context, error, stackTrace) => _fallbackAvatar(partnerName),
-          ),
-        );
-      } catch (_) {
-        return _fallbackAvatar(partnerName);
-      }
-    }
-    return _fallbackAvatar(partnerName);
-  }
+  Widget _conversationTile(dynamic conv, bool dark) {
+    final partnerId = (conv['partnerId'] ?? '').toString();
+    final partnerName = (conv['partnerName'] ?? 'User').toString();
+    final partnerImage = conv['partnerImage'] as String? ?? '';
+    final lastMsg = (conv['lastMessage'] ?? '').toString();
+    final unread = conv['unreadCount'] as int? ?? 0;
+    final isUnread = unread > 0;
 
-  Widget _fallbackAvatar(String partnerName) {
-    return Center(
-      child: Text(
-        partnerName.isNotEmpty ? partnerName[0].toUpperCase() : '?',
-        style: TextStyle(
-          fontWeight: FontWeight.w900,
-          fontSize: 22,
-          color: Colors.indigo.shade700,
+    return GestureDetector(
+      onLongPress: () => _confirmDeleteConversation(partnerId, partnerName),
+      child: BentoCard(
+        padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+        onTap: () => _openChat(partnerId, partnerName),
+        child: Row(
+          children: [
+            BentoAvatar(name: partnerName, image: partnerImage, size: 50, ring: isUnread),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          partnerName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: isUnread ? FontWeight.w900 : FontWeight.w800,
+                            letterSpacing: -0.3,
+                            color: Bento.text(dark),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _formatTime(conv['createdAt']),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: isUnread ? FontWeight.w800 : FontWeight.w600,
+                          color: isUnread ? Bento.accentText(dark) : Bento.muted(dark),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          lastMsg,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
+                            color: isUnread ? Bento.text(dark) : Bento.muted(dark),
+                          ),
+                        ),
+                      ),
+                      if (isUnread)
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          constraints: const BoxConstraints(minWidth: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(gradient: Bento.accentGradient, borderRadius: BorderRadius.circular(10)),
+                          child: Text(
+                            unread > 99 ? '99+' : '$unread',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert_rounded, size: 20, color: Bento.muted(dark)),
+              padding: EdgeInsets.zero,
+              onSelected: (val) {
+                if (val == 'delete') _confirmDeleteConversation(partnerId, partnerName);
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Delete chat', style: TextStyle(color: Colors.red.shade400, fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

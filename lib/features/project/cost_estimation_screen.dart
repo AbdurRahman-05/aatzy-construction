@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/wallpaper_background.dart';
@@ -173,7 +174,7 @@ class _CostEstimationScreenState extends State<CostEstimationScreen> {
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
-        appBar: AppBar(
+        appBar: BentoAppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(

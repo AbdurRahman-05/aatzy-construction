@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
@@ -139,7 +140,7 @@ class _VerificationPendingScreenState extends ConsumerState<VerificationPendingS
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0E1015) : Colors.white,
-      appBar: AppBar(
+      appBar: BentoAppBar(
         title: const Text('Verification Pending', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         backgroundColor: Colors.transparent,

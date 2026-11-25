@@ -8,8 +8,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       businessName, ownerName, email, password, phone, category, experience,
-      address, bio, aadharCard, panCard, profileCompletion, isGoogleSignUp,
-      phoneVerificationToken,
+      address, bio, aadharCard, panCard, portfolioImage, portfolioImages,
+      profileCompletion, isGoogleSignUp, phoneVerificationToken,
     } = body;
 
     if (!email || !password || !businessName || !phone) {
@@ -62,6 +62,31 @@ export async function POST(request: Request) {
         isVerified: false, 
       },
     });
+
+    // Save uploaded portfolio image(s) from registration
+    const incomingPortfolio: string[] = [];
+    if (typeof portfolioImage === 'string' && portfolioImage.trim().length > 0) {
+      incomingPortfolio.push(portfolioImage.trim());
+    }
+    if (Array.isArray(portfolioImages)) {
+      for (const img of portfolioImages) {
+        if (typeof img === 'string' && img.trim().length > 0) {
+          incomingPortfolio.push(img.trim());
+        } else if (img && typeof img.imageData === 'string' && img.imageData.trim().length > 0) {
+          incomingPortfolio.push(img.imageData.trim());
+        }
+      }
+    }
+    if (incomingPortfolio.length > 0) {
+      await prisma.portfolioImage.createMany({
+        data: incomingPortfolio.map((imageData, idx) => ({
+          providerId: provider.id,
+          title: incomingPortfolio.length > 1 ? `Project Showcase ${idx + 1}` : 'Project Showcase',
+          description: 'Uploaded during partner registration',
+          imageData,
+        })),
+      });
+    }
 
     // Send welcome email with details asynchronously
     sendProviderWelcomeEmail(provider).catch(err => {

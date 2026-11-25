@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
@@ -530,7 +531,7 @@ class _ProviderProfileEditScreenState extends ConsumerState<ProviderProfileEditS
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F5F2),
-      appBar: AppBar(
+      appBar: BentoAppBar(
         title: const Text(
           'Edit Profile',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),

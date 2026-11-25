@@ -15,6 +15,7 @@ interface Provider {
   address?: string | null;
   aadharCard?: string | null;
   panCard?: string | null;
+  portfolioImages?: { id: string; title: string; description?: string | null; imageData: string }[];
   profileCompletion: number;
   createdAt: any;
 }
@@ -155,6 +156,32 @@ export default function ProviderReviewModal({ provider }: { provider: Provider }
                     </div>
                   </div>
                 </div>
+
+                {provider.portfolioImages && provider.portfolioImages.length > 0 && (
+                  <div className="col-span-2 pt-2">
+                    <label className="text-sm font-bold text-gray-900 block mb-3">
+                      Portfolio / Showcase Images ({provider.portfolioImages.length})
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      {provider.portfolioImages.map((img) => (
+                        <div key={img.id} className="space-y-1">
+                          <div
+                            onClick={() => setPreviewImage({ src: img.imageData, title: img.title || 'Portfolio Image' })}
+                            className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 hover:border-blue-300 transition-colors group relative cursor-pointer"
+                          >
+                            <img src={img.imageData} alt={img.title || 'Portfolio'} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <svg className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                              </svg>
+                            </div>
+                          </div>
+                          {img.title && <span className="text-xs font-medium text-gray-500 block truncate">{img.title}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Submitted On</label>

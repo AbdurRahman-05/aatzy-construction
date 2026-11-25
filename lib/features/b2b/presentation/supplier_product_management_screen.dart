@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -78,6 +79,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
     'Truckload',
     'Meter',
     'Box',
+    'Liter',
   ];
 
   final List<Map<String, String>> _quickSpecs = [
@@ -287,7 +289,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
 
     return Scaffold(
       backgroundColor: scaffoldBg,
-      appBar: AppBar(
+      appBar: BentoAppBar(
         backgroundColor: cardBg,
         elevation: 0,
         scrolledUnderElevation: 1,

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { denyUnlessProjectParticipant } from '@/lib/projectAccess';
+import { notifyConsumerDailyLog } from '@/lib/notifications';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -32,6 +33,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         notes: notesToSave,
       }
     });
+
+    notifyConsumerDailyLog({
+      projectId: id,
+      logTitle: title,
+      status,
+      notes: notesToSave,
+    }).catch(err => console.error('Error notifying daily log:', err));
 
     return NextResponse.json(newUpdate);
   } catch (error) {

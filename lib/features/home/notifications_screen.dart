@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers/notifications_provider.dart';
@@ -66,7 +67,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: BentoAppBar(
           backgroundColor: isDark ? const Color(0xFF111318) : Colors.white,
           elevation: 0,
           titleSpacing: 0,
@@ -197,39 +198,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ),
         body: Column(
           children: [
-            // Filter Pills Row
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: isDark ? const Color(0xFF181B22).withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.9),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    _buildFilterChip(
-                      label: 'All (${notifications.length})',
-                      isSelected: _filterIndex == 0,
-                      onTap: () => setState(() => _filterIndex = 0),
-                    ),
-                    const SizedBox(width: 10),
-                    _buildFilterChip(
-                      label: 'Unread ($unreadCount)',
-                      isSelected: _filterIndex == 1,
-                      onTap: () => setState(() => _filterIndex = 1),
-                    ),
-                  ],
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+              child: BentoSegmented(
+                labels: ['All (${notifications.length})', 'Unread ($unreadCount)'],
+                icons: const [Icons.notifications_rounded, Icons.mark_email_unread_rounded],
+                index: _filterIndex,
+                onChanged: (i) => setState(() => _filterIndex = i),
               ),
             ),
-
-            // Notifications List
             Expanded(
               child: RefreshIndicator(
+                color: Bento.accent,
                 onRefresh: () => ref.read(notificationsProvider.notifier).fetchNotifications(),
                 child: displayedNotifications.isEmpty
                     ? _buildEmptyState(isDark)
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 32),
                         itemCount: displayedNotifications.length,
                         itemBuilder: (context, index) {
                           final n = displayedNotifications[index];
@@ -244,133 +229,22 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  Widget _buildFilterChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF0F766E)
-              : Colors.grey.shade200.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF4B5563),
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            fontSize: 12.5,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyState(bool isDark) {
-    if (_filterIndex == 1) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF181B22) : Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.done_all_rounded, size: 48, color: Color(0xFF0F766E)),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'All Caught Up!',
-              style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF181B22),
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'You have no unread notifications.',
-              style: TextStyle(
-                color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: () => setState(() => _filterIndex = 0),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF0F766E)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text(
-                'View All Notifications',
-                style: TextStyle(color: Color(0xFF0F766E), fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
+    final unreadView = _filterIndex == 1;
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+      children: [
+        BentoEmptyState(
+          icon: unreadView ? Icons.done_all_rounded : Icons.notifications_none_rounded,
+          title: unreadView ? 'All caught up!' : 'No notifications yet',
+          subtitle: unreadView
+              ? 'You have no unread notifications.'
+              : 'Updates about bids, leads and orders will show here.',
+          actionLabel: unreadView ? 'View all' : null,
+          onAction: unreadView ? () => setState(() => _filterIndex = 0) : null,
         ),
-      );
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF181B22) : Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(Icons.notifications_none_rounded, size: 54, color: isDark ? const Color(0xFF6B7280) : Colors.grey.shade400),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No Notifications',
-            style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF181B22),
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Updates about bids, leads, and orders will show here.',
-            style: TextStyle(
-              color: isDark ? const Color(0xFF9AA1AD) : Colors.grey.shade600,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -433,185 +307,111 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     int index,
     bool isDark,
   ) {
-    return GestureDetector(
-      onTap: () {
-        ref.read(notificationsProvider.notifier).markAsRead(n.id);
-        if (n.route != null && n.route!.isNotEmpty) {
-          context.push(n.route!);
-        } else {
-          _showNotificationDetailModal(context, n, index);
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF181B22) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: n.isUnread
-                ? n.color.withValues(alpha: 0.45)
-                : (isDark ? Colors.white10 : const Color(0xFFECEAE6)),
-            width: n.isUnread ? 1.5 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: n.isUnread
-                  ? n.color.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+    final hasRoute = n.route != null && n.route!.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: BentoCard(
+        padding: const EdgeInsets.fromLTRB(14, 14, 10, 12),
+        color: n.isUnread
+            ? Color.alphaBlend(n.color.withValues(alpha: isDark ? 0.10 : 0.05), Bento.surface(isDark))
+            : null,
+        onTap: () {
+          ref.read(notificationsProvider.notifier).markAsRead(n.id);
+          if (hasRoute) {
+            context.push(n.route!);
+          } else {
+            _showNotificationDetailModal(context, n, index);
+          }
+        },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: n.color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(n.icon, color: n.color, size: 20),
-            ),
-            const SizedBox(width: 10),
+            BentoIconBubble(icon: n.icon, color: n.color, size: 42),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Text(
                           n.title,
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: n.isUnread ? FontWeight.w900 : FontWeight.w700,
-                            color: isDark ? Colors.white : const Color(0xFF111318),
-                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            letterSpacing: -0.2,
+                            fontWeight: n.isUnread ? FontWeight.w900 : FontWeight.w700,
+                            color: Bento.text(isDark),
+                          ),
                         ),
                       ),
-                      if (n.isUnread) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: n.color,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
+                      const SizedBox(width: 8),
+                      Text(n.time, style: TextStyle(fontSize: 11, color: Bento.muted(isDark), fontWeight: FontWeight.w600)),
                     ],
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Text(
                     n.body,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white70 : const Color(0xFF4B5563),
-                      height: 1.35,
-                    ),
+                    style: TextStyle(fontSize: 12.5, color: Bento.muted(isDark), height: 1.4),
                   ),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      runSpacing: 6,
-                      spacing: 8,
-                      children: [
-                        Text(
-                          n.time,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade500,
-                            fontWeight: FontWeight.w600,
-                          ),
+                  Row(
+                    children: [
+                      if (n.isUnread)
+                        _miniAction(
+                          label: 'Mark read',
+                          icon: Icons.check_rounded,
+                          color: n.color,
+                          onTap: () => ref.read(notificationsProvider.notifier).markAsRead(n.id),
                         ),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            if (n.isUnread)
-                              InkWell(
-                                onTap: () {
-                                  ref.read(notificationsProvider.notifier).markAsRead(n.id);
-                                },
-                                borderRadius: BorderRadius.circular(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.check_rounded, size: 13, color: n.color),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        'Mark read',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: n.color,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            if (n.route != null && n.route!.isNotEmpty)
-                              InkWell(
-                                onTap: () {
-                                  ref.read(notificationsProvider.notifier).markAsRead(n.id);
-                                  context.push(n.route!);
-                                },
-                                borderRadius: BorderRadius.circular(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'View',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
-                                          color: n.color,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 2),
-                                      Icon(Icons.arrow_forward_rounded, size: 12, color: n.color),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            InkWell(
-                              onTap: () {
-                                ref.read(notificationsProvider.notifier).deleteNotification(n.id);
-                                _showDeleteUndoSnackBar(n, index);
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
-                                child: Icon(
-                                  Icons.delete_outline_rounded,
-                                  size: 16,
-                                  color: Colors.grey.shade400,
-                                ),
-                              ),
-                            ),
-                          ],
+                      if (hasRoute) ...[
+                        if (n.isUnread) const SizedBox(width: 6),
+                        _miniAction(
+                          label: 'Open',
+                          icon: Icons.arrow_forward_rounded,
+                          color: n.color,
+                          onTap: () {
+                            ref.read(notificationsProvider.notifier).markAsRead(n.id);
+                            context.push(n.route!);
+                          },
                         ),
                       ],
-                    ),
+                      const Spacer(),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        tooltip: 'Delete',
+                        icon: Icon(Icons.delete_outline_rounded, size: 18, color: Bento.muted(isDark)),
+                        onPressed: () {
+                          ref.read(notificationsProvider.notifier).deleteNotification(n.id);
+                          _showDeleteUndoSnackBar(n, index);
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _miniAction({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
+    return BentoPressable(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: color)),
+            const SizedBox(width: 3),
+            Icon(icon, size: 13, color: color),
           ],
         ),
       ),

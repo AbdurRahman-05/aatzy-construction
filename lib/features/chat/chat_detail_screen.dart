@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../core/wallpaper_background.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -533,8 +536,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     });
 
     final auth = ref.watch(authProvider);
-    final myImage = auth.profileImage;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final partnerRole = (auth.role ?? '').toUpperCase() == 'PROVIDER' ? 'Client' : 'Partner';
 
     return PopScope(
       canPop: false,
@@ -542,177 +545,270 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         if (didPop) return;
         _handleBack();
       },
-      child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
-        appBar: AppBar(
-          backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
-          elevation: 0.5,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-            onPressed: _handleBack,
-          ),
-          titleSpacing: 0,
-          title: Row(
-            children: [
-              _buildAvatar(_partnerImage, widget.partnerName, 36),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.partnerName,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF111318),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      'Active now',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.green.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            PopupMenuButton<String>(
-              icon: Icon(
-                Icons.more_vert_rounded,
-                color: isDark ? Colors.white70 : const Color(0xFF111318),
-              ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              color: isDark ? const Color(0xFF181B22) : Colors.white,
-              onSelected: (val) {
-                if (val == 'delete_conversation') {
-                  _confirmDeleteConversation();
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'delete_conversation',
-                  child: Row(
+      child: WallpaperBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: BentoAppBar(
+            leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: _handleBack),
+            title: Row(
+              children: [
+                _buildAvatar(_partnerImage, widget.partnerName, 40),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 20),
-                      const SizedBox(width: 10),
                       Text(
-                        'Delete Conversation',
-                        style: TextStyle(
-                          color: Colors.red.shade400,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+                        widget.partnerName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w900, letterSpacing: -0.4, color: Bento.text(dark)),
+                      ),
+                      Text(
+                        partnerRole,
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Bento.accentText(dark)),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _messages.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildAvatar(_partnerImage, widget.partnerName, 64),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Say hello to ${widget.partnerName}!',
-                                style: TextStyle(
-                                  color: isDark ? Colors.white54 : Colors.grey.shade600,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                          itemCount: _messages.length,
-                          itemBuilder: (context, index) {
-                            final msg = _messages[index];
-                            final isMe = msg['senderId'] == auth.id;
-                            return _buildMessage(
-                              msg,
-                              isMe,
-                              isMe ? myImage : _partnerImage,
-                              isMe ? (auth.name ?? 'Me') : widget.partnerName,
-                              isDark,
-                            );
-                          },
-                        ),
-            ),
-            // Input bar
-            Container(
-              color: isDark ? const Color(0xFF181B22) : Colors.white,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF2E333D) : const Color(0xFFF0EEEA),
-                            borderRadius: BorderRadius.circular(28),
-                          ),
-                          child: TextField(
-                            controller: _controller,
-                            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-                            decoration: InputDecoration(
-                              hintText: 'Message ${widget.partnerName}...',
-                              hintStyle: TextStyle(
-                                color: isDark ? Colors.white38 : Colors.grey.shade500,
-                                fontSize: 14,
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            ),
-                            onSubmitted: (_) => _sendMessage(),
-                            maxLines: null,
-                            textCapitalization: TextCapitalization.sentences,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _sendMessage,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ],
+            actions: [
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert_rounded, color: Bento.text(dark)),
+                onSelected: (val) {
+                  if (val == 'delete_conversation') _confirmDeleteConversation();
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'delete_conversation',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 20),
+                        const SizedBox(width: 10),
+                        Text('Delete conversation', style: TextStyle(color: Colors.red.shade400, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
                   ),
+                ],
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _messages.isEmpty
+                        ? _buildEmptyChat(dark)
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                            itemCount: _messages.length,
+                            itemBuilder: (context, index) => _buildMessageRow(index, auth.id, dark),
+                          ),
+              ),
+              _buildComposer(dark),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Messages
+  // ---------------------------------------------------------------------------
+
+  Map<String, dynamic> _msgAt(int i) {
+    final raw = _messages[i];
+    return raw is Map<String, dynamic> ? raw : Map<String, dynamic>.from(raw as Map);
+  }
+
+  DateTime? _timeOf(Map<String, dynamic> msg) => DateTime.tryParse(msg['createdAt']?.toString() ?? '')?.toLocal();
+
+  String _dayLabel(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    if (diff < 7) return DateFormat('EEEE').format(dt);
+    return DateFormat('d MMM yyyy').format(dt);
+  }
+
+  Widget _buildMessageRow(int index, String? myId, bool dark) {
+    final msg = _msgAt(index);
+    final isMe = msg['senderId'] == myId;
+    final time = _timeOf(msg);
+
+    final prev = index > 0 ? _msgAt(index - 1) : null;
+    final next = index < _messages.length - 1 ? _msgAt(index + 1) : null;
+    final prevTime = prev != null ? _timeOf(prev) : null;
+
+    final newDay = time != null &&
+        (prevTime == null || prevTime.year != time.year || prevTime.month != time.month || prevTime.day != time.day);
+    final sameSenderAsPrev = prev != null && prev['senderId'] == msg['senderId'] && !newDay;
+    final sameSenderAsNext = next != null && next['senderId'] == msg['senderId'];
+    final nextTime = next != null ? _timeOf(next) : null;
+    final nextSameDay = nextTime != null && time != null && nextTime.day == time.day && nextTime.month == time.month && nextTime.year == time.year;
+    final lastInGroup = !(sameSenderAsNext && nextSameDay);
+
+    return Column(
+      children: [
+        if (newDay)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(color: Bento.surface(dark), borderRadius: BorderRadius.circular(20), border: Border.all(color: Bento.border(dark))),
+                child: Text(
+                  _dayLabel(time),
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: Bento.muted(dark)),
                 ),
               ),
+            ),
+          ),
+        Padding(
+          padding: EdgeInsets.only(top: sameSenderAsPrev ? 3 : 10),
+          child: _buildMessage(msg, isMe, time, lastInGroup, dark),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMessage(Map<String, dynamic> msg, bool isMe, DateTime? time, bool lastInGroup, bool dark) {
+    final text = msg['text']?.toString() ?? '';
+    final timeStr = time != null ? DateFormat('h:mm a').format(time) : '';
+    const big = Radius.circular(20);
+    const small = Radius.circular(6);
+
+    final bubble = GestureDetector(
+      onLongPress: () => _showMessageOptions(msg, isMe),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.74),
+        padding: const EdgeInsets.fromLTRB(14, 10, 12, 8),
+        decoration: BoxDecoration(
+          gradient: isMe ? Bento.accentGradient : null,
+          color: isMe ? null : Bento.surface(dark),
+          border: isMe ? null : Border.all(color: Bento.border(dark)),
+          borderRadius: BorderRadius.only(
+            topLeft: big,
+            topRight: big,
+            bottomLeft: isMe || !lastInGroup ? big : small,
+            bottomRight: !isMe || !lastInGroup ? big : small,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: (isMe ? Bento.accent : Colors.black).withValues(alpha: isMe ? 0.18 : (dark ? 0.2 : 0.04)),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              widthFactor: 1,
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: isMe ? Colors.white : Bento.text(dark),
+                  fontSize: 14.5,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (timeStr.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    timeStr,
+                    style: TextStyle(fontSize: 10.5, color: isMe ? Colors.white.withValues(alpha: 0.75) : Bento.muted(dark)),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(width: 3),
+                    Icon(Icons.check_rounded, size: 13, color: Colors.white.withValues(alpha: 0.8)),
+                  ],
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    if (isMe) {
+      return Row(mainAxisAlignment: MainAxisAlignment.end, children: [Flexible(child: bubble)]);
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        SizedBox(
+          width: 30,
+          child: lastInGroup ? _buildAvatar(_partnerImage, widget.partnerName, 28) : null,
+        ),
+        const SizedBox(width: 6),
+        Flexible(child: bubble),
+      ],
+    );
+  }
+
+  Widget _buildEmptyChat(bool dark) {
+    const suggestions = ['Hi 👋', 'Can we discuss the project?', 'When are you available?'];
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(gradient: Bento.accentGradient, shape: BoxShape.circle),
+              child: _buildAvatar(_partnerImage, widget.partnerName, 76),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              widget.partnerName,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Bento.text(dark), letterSpacing: -0.4),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Start the conversation',
+              style: TextStyle(fontSize: 13, color: Bento.muted(dark)),
+            ),
+            const SizedBox(height: 18),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final s in suggestions)
+                  BentoPressable(
+                    onTap: () {
+                      _controller.text = s;
+                      _controller.selection = TextSelection.collapsed(offset: s.length);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: Bento.surface(dark),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Bento.border(dark)),
+                      ),
+                      child: Text(s, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Bento.text(dark))),
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -720,115 +816,57 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  Widget _buildMessage(
-    dynamic rawMsg,
-    bool isMe,
-    String? avatarImage,
-    String avatarName,
-    bool isDark,
-  ) {
-    final msg = rawMsg is Map<String, dynamic>
-        ? rawMsg
-        : Map<String, dynamic>.from(rawMsg as Map);
-    final text = msg['text']?.toString() ?? '';
-
-    String timeStr = '';
-    if (msg['createdAt'] != null) {
-      try {
-        final dt = DateTime.parse(msg['createdAt'].toString()).toLocal();
-        final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-        final min = dt.minute.toString().padLeft(2, '0');
-        final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-        timeStr = '$hour:$min $ampm';
-      } catch (_) {}
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isMe) ...[
-            _buildAvatar(avatarImage, avatarName, 28),
-            const SizedBox(width: 6),
-          ],
-          Flexible(
-            child: GestureDetector(
-              onLongPress: () => _showMessageOptions(msg, isMe),
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.72,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isMe
-                      ? Theme.of(context).primaryColor
-                      : (isDark ? const Color(0xFF2E333D) : Colors.white),
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(16),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
-                    bottomRight: isMe ? Radius.zero : const Radius.circular(16),
+  Widget _buildComposer(bool dark) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+          decoration: BoxDecoration(
+            color: Bento.surface(dark),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Bento.border(dark)),
+            boxShadow: Bento.shadow(dark),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  minLines: 1,
+                  maxLines: 5,
+                  textCapitalization: TextCapitalization.sentences,
+                  onSubmitted: (_) => _sendMessage(),
+                  style: TextStyle(color: Bento.text(dark), fontSize: 14.5),
+                  decoration: InputDecoration(
+                    hintText: 'Message ${widget.partnerName}…',
+                    hintStyle: TextStyle(color: Bento.muted(dark), fontSize: 14),
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      text,
-                      style: TextStyle(
-                        color: isMe
-                            ? Colors.white
-                            : (isDark ? const Color(0xDEFFFFFF) : Colors.black87),
-                        fontSize: 14.5,
-                        height: 1.35,
-                      ),
-                    ),
-                    if (timeStr.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            timeStr,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isMe
-                                  ? Colors.white.withValues(alpha: 0.75)
-                                  : (isDark ? Colors.white38 : Colors.black38),
-                            ),
-                          ),
-                          if (isMe) ...[
-                            const SizedBox(width: 3),
-                            Icon(
-                              Icons.done_all_rounded,
-                              size: 13,
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ],
                 ),
               ),
-            ),
+              BentoPressable(
+                onTap: _sendMessage,
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    gradient: Bento.accentGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Bento.accent.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                ),
+              ),
+            ],
           ),
-          if (isMe) ...[
-            const SizedBox(width: 6),
-            _buildAvatar(avatarImage, avatarName, 28),
-          ],
-        ],
+        ),
       ),
     );
   }

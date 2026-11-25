@@ -199,7 +199,7 @@ export interface CreateNotificationParams {
   role: 'CONSUMER' | 'PROVIDER';
   title: string;
   body: string;
-  type: 'NEW_LEAD' | 'NEW_QUOTE' | 'QUOTE_ACCEPTED' | 'TASK_CREATED' | 'TASK_COMPLETED' | 'STAGE_COMPLETED' | 'CHAT_MESSAGE';
+  type: 'NEW_LEAD' | 'NEW_QUOTE' | 'QUOTE_ACCEPTED' | 'TASK_CREATED' | 'TASK_COMPLETED' | 'STAGE_COMPLETED' | 'CHAT_MESSAGE' | 'DAILY_LOG' | 'PROJECT_CANCELLED';
   entityId?: string;
   route?: string;
   senderId?: string; // Optional: used for chat notification suppression on device
@@ -398,6 +398,44 @@ export async function notifyConsumerTaskCreated(params: {
     });
   } catch (error) {
     console.error('Error notifying consumer of task creation:', error);
+  }
+}
+
+/**
+ * When a contractor records a daily log update on a project, notify the project owner (consumer).
+ */
+export async function notifyConsumerDailyLog(params: {
+  projectId: string;
+  logTitle: string;
+  status: string;
+  notes?: string;
+}) {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: params.projectId },
+      select: { userId: true, title: true },
+    });
+
+    if (!project || !project.userId) return;
+
+    const cleanNotes = params.notes
+      ? params.notes.replace(/\[PHOTO:[\s\S]*?\]/g, '').trim()
+      : '';
+    const snippet = cleanNotes.length > 80
+      ? `${cleanNotes.slice(0, 77)}...`
+      : cleanNotes;
+
+    await createNotification({
+      recipientId: project.userId,
+      role: 'CONSUMER',
+      title: `📝 Daily Log Update: ${project.title}`,
+      body: `${params.logTitle} (${params.status})${snippet ? ` — ${snippet}` : ''}`,
+      type: 'DAILY_LOG',
+      entityId: params.projectId,
+      route: `/project-detail/${params.projectId}`,
+    });
+  } catch (error) {
+    console.error('Error notifying consumer of daily log:', error);
   }
 }
 

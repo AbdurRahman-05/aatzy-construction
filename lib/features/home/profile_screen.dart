@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
@@ -582,7 +583,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: WallpaperBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: _isLoading ? null : AppBar(
+          appBar: _isLoading ? null : BentoAppBar(
             leading: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(6),
@@ -670,7 +671,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   children: [
                                     Icon(Icons.info_outline_rounded, size: 16),
                                     SizedBox(width: 6),
-                                    Text('Ledger', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                    Text('Info', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1754,8 +1756,22 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     final title = _project?['title'] ?? 'Active Job Details';
     final location = _project?['location'] ?? 'N/A';
     final plotSize = _project?['plotSize']?.toString() ?? '0';
-    final double budget = (_project?['budget'] as num? ?? 0.0).toDouble();
-    final timeline = _project?['timeline'] ?? 'N/A';
+    final quotes = _project?['quotes'] as List? ?? [];
+    Map<String, dynamic>? acceptedQuote;
+    for (final q in quotes) {
+      if (q is Map && q['isAccepted'] == true) {
+        acceptedQuote = Map<String, dynamic>.from(q);
+        break;
+      }
+    }
+    final double acceptedBudget =
+        (acceptedQuote?['estimatedCost'] as num?)?.toDouble() ?? 0.0;
+    final double budget = acceptedBudget > 0
+        ? acceptedBudget
+        : (_project?['budget'] as num? ?? 0.0).toDouble();
+    final timeline = (acceptedQuote?['timeline']?.toString().isNotEmpty == true)
+        ? acceptedQuote!['timeline']
+        : (_project?['timeline'] ?? 'N/A');
     final clientName = _project?['user']?['name'] ?? 'Client';
     final clientEmail = _project?['user']?['email'] ?? '';
     final updates = _project?['updates'] as List? ?? [];
@@ -1796,7 +1812,7 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: BentoAppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
@@ -1830,667 +1846,99 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   left: 16,
                   right: 16,
                   top: 16,
-                  bottom: 85,
+                  bottom: 24,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Completed or Cancelled View-Only Banner
-                    if (isCompleted) ...[
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFA7F3D0)),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(
-                              Icons.verified_rounded,
-                              color: Color(0xFF059669),
-                              size: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Project Completed (View-Only Mode) — All milestones and tasks finalized.',
-                                style: TextStyle(
-                                  color: Color(0xFF065F46),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else if (isCancelled) ...[
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEF2F2),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFFECACA)),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(
-                              Icons.cancel_rounded,
-                              color: Color(0xFFDC2626),
-                              size: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Project Cancelled — Work has stopped. You can permanently delete this project below.',
-                                style: TextStyle(
-                                  color: Color(0xFF991B1B),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    // Client details card
-                    Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).primaryColor.withValues(alpha: 0.1),
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        clientName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                      if (clientEmail.isNotEmpty)
-                                        Text(
-                                          clientEmail,
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    'Hired',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(height: 24),
-                            _buildDetailRow(
-                              Icons.location_on,
-                              'Location',
-                              location,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDetailRow(
-                              Icons.square_foot,
-                              'Plot Size',
-                              '$plotSize sq ft',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDetailRow(
-                              Icons.calendar_today,
-                              'Timeline',
-                              timeline,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDetailRow(
-                              Icons.currency_rupee,
-                              'Budget',
-                              '₹$budget',
-                            ),
-                          ],
-                        ),
-                      ),
+                    // ── Bento hero: stage, progress, client ──
+                    _buildJobHero(
+                      title: title.toString(),
+                      clientName: clientName.toString(),
+                      clientEmail: clientEmail.toString(),
+                      clientImage: _project?['user']?['profileImage']?.toString(),
+                      stage: currentStage.toString(),
+                      completed: completedCount,
+                      total: totalCount,
                     ),
-                    const SizedBox(height: 16),
-                    Builder(
-                      builder: (context) {
-                        final currentStage =
-                            _project?['currentStage'] ?? 'Tracking';
-                        final bool allCompleted =
-                            totalCount > 0 && completedCount == totalCount;
-
-                        if (currentStage == 'Cancelled') {
-                          return Card(
-                            color: Colors.red.shade50,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: const [
-                                      Icon(
-                                        Icons.cancel,
-                                        color: Colors.red,
-                                        size: 28,
-                                      ),
-                                      SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          'Project has been Cancelled.',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.red,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                  const Text(
-                                    'This project was cancelled. You can permanently delete this project and all its records.',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.redAccent,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  ElevatedButton.icon(
-                                    onPressed: _showDeleteConfirmationDialog,
-                                    icon: const Icon(
-                                      Icons.delete_forever,
-                                      size: 18,
-                                    ),
-                                    label: const Text('Delete Project Data'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red.shade700,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 10,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        if (currentStage == 'Completed' ||
-                            currentStage == 'Finished') {
-                          return Card(
-                            color: Colors.green.shade50,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Project Completed successfully!',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        if (currentStage == 'Finished Pending Approval') {
-                          return Card(
-                            color: Colors.blue.shade50,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.hourglass_empty,
-                                    color: Colors.blue,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Project Submitted. Waiting for client\'s approval & review.',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        final bool isOnHold = currentStage == 'On Hold';
-
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Project Management Actions',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    // Hold/Resume Button
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: () => _updateProjectStage(
-                                          isOnHold ? 'Tracking' : 'On Hold',
-                                        ),
-                                        icon: Icon(
-                                          isOnHold
-                                              ? Icons.play_arrow
-                                              : Icons.pause,
-                                        ),
-                                        label: Text(
-                                          isOnHold
-                                              ? 'Resume Job'
-                                              : 'Hold Project',
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: isOnHold
-                                              ? Colors.orange
-                                              : Colors.grey.shade700,
-                                          foregroundColor: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    // Finish Button
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: allCompleted && !isOnHold
-                                            ? () => _updateProjectStage(
-                                                'Finished Pending Approval',
-                                              )
-                                            : null,
-                                        icon: const Icon(Icons.done_all),
-                                        label: const Text('Finish Project'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.green,
-                                          foregroundColor: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (!allCompleted) ...[
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.info_outline,
-                                        size: 14,
-                                        color: Colors.red,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          'Finish Project requires all tasks ($completedCount/$totalCount completed) to be done.',
-                                          style: const TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                    const SizedBox(height: Bento.gap),
+                    _buildJobFacts(location.toString(), plotSize, timeline.toString(), budget),
+                    const SizedBox(height: Bento.gap),
+                    _buildJobActions(currentStage.toString(), completedCount, totalCount),
                     const SizedBox(height: 24),
-                    // Tab / Segment Selector
+
+                    // ── Section tabs ──
                     SizedBox(
-                      height: 48,
+                      height: 42,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
                         children: [
-                          _buildCategoryTab(
-                            0,
-                            Icons.hourglass_empty,
-                            'Pending',
-                            tasks.where((t) => t['status'] == 'Todo').length,
-                          ),
+                          _buildCategoryTab(0, Icons.schedule_rounded, 'Pending', tasks.where((t) => t['status'] == 'Todo').length),
                           const SizedBox(width: 8),
                           _buildCategoryTab(
                             1,
-                            Icons.play_arrow,
+                            Icons.play_arrow_rounded,
                             'Ongoing',
-                            tasks
-                                .where(
-                                  (t) =>
-                                      (t['status'] == 'In Progress' ||
-                                      t['status'] == 'Ongoing'),
-                                )
-                                .length,
+                            tasks.where((t) => t['status'] == 'In Progress' || t['status'] == 'Ongoing').length,
                           ),
                           const SizedBox(width: 8),
-                          _buildCategoryTab(
-                            2,
-                            Icons.check_circle,
-                            'Finished',
-                            tasks
-                                .where((t) => t['status'] == 'Completed')
-                                .length,
-                          ),
+                          _buildCategoryTab(2, Icons.check_circle_rounded, 'Finished', tasks.where((t) => t['status'] == 'Completed').length),
                           const SizedBox(width: 8),
-                          _buildCategoryTab(
-                            3,
-                            Icons.account_balance_wallet,
-                            'Financials',
-                            null,
-                          ),
+                          _buildCategoryTab(3, Icons.account_balance_wallet_rounded, 'Financials', null),
                           const SizedBox(width: 8),
-                          _buildCategoryTab(
-                            4,
-                            Icons.people,
-                            'Workers',
-                            _workers.length,
-                          ),
+                          _buildCategoryTab(4, Icons.groups_rounded, 'Workers', _workers.length),
                           const SizedBox(width: 8),
-                          _buildCategoryTab(
-                            5,
-                            Icons.description,
-                            'Daily Logs',
-                            updates.length,
-                          ),
-                          const SizedBox(width: 12),
+                          _buildCategoryTab(5, Icons.photo_library_rounded, 'Daily logs', updates.length),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
+                    // ── Tab 0: Pending steps ──
                     if (_selectedTab == 0) ...[
-                      if (tasks.isEmpty) ...[
-                        Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.assignment,
-                                  size: 64,
-                                  color: Colors.grey.shade400,
+                      if (tasks.isEmpty)
+                        _buildNoPlanCard(isReadOnly)
+                      else ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Pending steps',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.4,
+                                  color: Bento.text(Theme.of(context).brightness == Brightness.dark),
                                 ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'No Execution Plan Created Yet',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Create a custom plan or generate a schedule template based on the client\'s selected services (${_project?['type'] ?? ''}).',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 13,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                if (!isReadOnly) ...[
-                                  const SizedBox(height: 24),
-                                  ElevatedButton.icon(
-                                    onPressed: _generateTemplateTasks,
-                                    icon: const Icon(Icons.auto_awesome),
-                                    label: const Text(
-                                      'Generate Smart Plan Template',
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TextButton(
-                                    onPressed: _showAddTaskDialog,
-                                    child: const Text('Create Custom Step'),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: Wrap(
-                            alignment: WrapAlignment.spaceBetween,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              Text(
-                                'Pending Project Steps',
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
-                              if (!isReadOnly)
-                                ElevatedButton.icon(
-                                  onPressed: _showAddTaskDialog,
-                                  icon: const Icon(Icons.add_task, size: 16),
-                                  label: const Text('Add Step'),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                ),
-                            ],
-                          ),
+                            ),
+                            if (!isReadOnly)
+                              BentoButton(
+                                label: 'Add step',
+                                icon: Icons.add_rounded,
+                                compact: true,
+                                onTap: _showAddTaskDialog,
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         Builder(
                           builder: (context) {
-                            final pendingList = tasks
-                                .where((t) => t['status'] == 'Todo')
-                                .toList();
+                            final pendingList = tasks.where((t) => t['status'] == 'Todo').toList();
                             if (pendingList.isEmpty) {
-                              return Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(24),
-                                  child: Center(
-                                    child: Column(
-                                      children: [
-                                        Icon(
-                                          Icons.check_circle_outline,
-                                          size: 48,
-                                          color: Colors.green,
-                                        ),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          'No Pending Tasks!',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          'All steps have either been started or completed.',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                              return const BentoEmptyState(
+                                icon: Icons.task_alt_rounded,
+                                title: 'No pending steps',
+                                subtitle: 'Every step has been started or completed.',
                               );
                             }
-                            return ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: pendingList.length,
-                              separatorBuilder: (context, idx) =>
+                            return Column(
+                              children: [
+                                for (final task in pendingList) ...[
+                                  _buildPendingTaskCard(task, isReadOnly),
                                   const SizedBox(height: 10),
-                              itemBuilder: (context, idx) {
-                                final task = pendingList[idx];
-                                final taskId = task['id'];
-                                final tTitle = task['title'] ?? 'Untitled Step';
-                                final tDuration = task['duration'] ?? 1;
-                                final tStage =
-                                    task['stage'] ?? 'General Planning';
-
-                                return Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    title: Text(
-                                      tTitle,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text('Stage: $tStage'),
-                                        Text('Est. Duration: $tDuration days'),
-                                      ],
-                                    ),
-                                    trailing: isReadOnly
-                                        ? null
-                                        : Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: const Icon(
-                                                  Icons.play_arrow,
-                                                  color: Colors.blue,
-                                                ),
-                                                tooltip: 'Start Task',
-                                                onPressed: () =>
-                                                    _startTask(taskId),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                  Icons.delete_outline,
-                                                  color: Colors.redAccent,
-                                                ),
-                                                onPressed: () =>
-                                                    _deleteTask(taskId),
-                                              ),
-                                            ],
-                                          ),
-                                  ),
-                                );
-                              },
+                                ],
+                              ],
                             );
                           },
                         ),
@@ -4144,47 +3592,561 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
                   ],
                 ),
               ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            final clientId = _project?['user']?['id'] ?? '';
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatDetailScreen(
-                  partnerId: clientId,
-                  partnerName: clientName,
+        bottomNavigationBar: _project == null
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                  child: BentoPressable(
+                    onTap: () => _openClientChat(clientName.toString()),
+                    child: Container(
+                      height: 54,
+                      decoration: BoxDecoration(
+                        gradient: Bento.inkGradient,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 18, offset: const Offset(0, 8))],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.chat_bubble_rounded, color: Bento.accentLight, size: 20),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              'Chat with $clientName',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            );
-          },
-          icon: const Icon(Icons.chat_bubble_outline),
-          label: Text('Chat with $clientName'),
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Colors.grey),
-        const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: const TextStyle(color: Colors.grey, fontSize: 14),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+  // ===========================================================================
+  // Bento building blocks for the job detail page
+  // ===========================================================================
+
+  ({String label, Color color, IconData icon}) _jobStatus(String stage) {
+    final s = stage.toLowerCase().trim();
+    if (s == 'cancelled') return (label: 'Cancelled', color: const Color(0xFFF87171), icon: Icons.cancel_rounded);
+    if (s == 'completed' || s == 'finished') return (label: 'Completed', color: const Color(0xFF34D399), icon: Icons.verified_rounded);
+    if (s == 'finished pending approval') return (label: 'Awaiting approval', color: const Color(0xFFA78BFA), icon: Icons.hourglass_top_rounded);
+    if (s == 'on hold') return (label: 'On hold', color: const Color(0xFFFBBF24), icon: Icons.pause_circle_rounded);
+    return (label: 'In progress', color: Bento.accentLight, icon: Icons.construction_rounded);
+  }
+
+  String _formatRupees(num value) => '₹${NumberFormat.decimalPattern('en_IN').format(value.round())}';
+
+  Widget _buildJobHero({
+    required String title,
+    required String clientName,
+    required String clientEmail,
+    required String? clientImage,
+    required String stage,
+    required int completed,
+    required int total,
+  }) {
+    final status = _jobStatus(stage);
+    final progress = total == 0 ? 0.0 : completed / total;
+
+    return BentoCard(
+      gradient: Bento.inkGradient,
+      padding: EdgeInsets.zero,
+      child: Stack(
+        children: [
+          const Positioned(right: -60, top: -70, child: BentoGlow(size: 210)),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    BentoPill(
+                      label: status.label.toUpperCase(),
+                      color: status.color,
+                      background: status.color.withValues(alpha: 0.16),
+                      icon: status.icon,
+                    ),
+                    const Spacer(),
+                    BentoPill(
+                      label: 'HIRED',
+                      color: const Color(0xFF34D399),
+                      background: const Color(0xFF10B981).withValues(alpha: 0.16),
+                      icon: Icons.handshake_rounded,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 78,
+                      height: 78,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CircularProgressIndicator(value: 1, strokeWidth: 7, color: Colors.white.withValues(alpha: 0.1)),
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: progress),
+                            duration: const Duration(milliseconds: 800),
+                            curve: Curves.easeOutCubic,
+                            builder: (_, v, _) => CircularProgressIndicator(
+                              value: v,
+                              strokeWidth: 7,
+                              strokeCap: StrokeCap.round,
+                              color: status.color,
+                            ),
+                          ),
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '$completed/$total',
+                                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                                ),
+                                const Text('steps', style: TextStyle(color: Colors.white54, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 21, height: 1.15, fontWeight: FontWeight.w900, letterSpacing: -0.6),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            total == 0 ? 'No steps planned yet' : '${(progress * 100).round()}% of the work is done',
+                            style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(Bento.radiusSm),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: Row(
+                    children: [
+                      BentoAvatar(name: clientName, image: clientImage, size: 40, ring: false),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('CLIENT', style: TextStyle(color: Colors.white38, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                            Text(
+                              clientName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w800),
+                            ),
+                            if (clientEmail.isNotEmpty)
+                              Text(
+                                clientEmail,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white60, fontSize: 11.5),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJobFacts(String location, String plotSize, String timeline, double budget) {
+    Widget fact(IconData icon, Color color, String label, String value) {
+      final dark = Theme.of(context).brightness == Brightness.dark;
+      return BentoCard(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            BentoIconBubble(icon: icon, color: color, size: 36),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 11, color: Bento.muted(dark), fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 1),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Bento.text(dark)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: fact(Icons.place_rounded, Bento.red, 'Location', location)),
+            const SizedBox(width: Bento.gap),
+            Expanded(child: fact(Icons.square_foot_rounded, Bento.blue, 'Plot size', '$plotSize sq ft')),
+          ],
+        ),
+        const SizedBox(height: Bento.gap),
+        Row(
+          children: [
+            Expanded(child: fact(Icons.event_rounded, Bento.violet, 'Timeline', timeline)),
+            const SizedBox(width: Bento.gap),
+            Expanded(child: fact(Icons.account_balance_wallet_rounded, Bento.green, 'Budget', budget > 0 ? _formatRupees(budget) : '—')),
+          ],
         ),
       ],
     );
   }
+
+  Widget _buildJobActions(String stage, int completed, int total) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final s = stage.toLowerCase().trim();
+
+    Widget banner(Color color, IconData icon, String title, String text, {Widget? action}) {
+      return BentoCard(
+        color: Color.alphaBlend(color.withValues(alpha: dark ? 0.14 : 0.08), Bento.surface(dark)),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                BentoIconBubble(icon: icon, color: color, size: 42),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Bento.text(dark))),
+                      const SizedBox(height: 2),
+                      Text(text, style: TextStyle(fontSize: 12, color: Bento.muted(dark), height: 1.35)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (action != null) ...[const SizedBox(height: 14), action],
+          ],
+        ),
+      );
+    }
+
+    if (s == 'cancelled') {
+      return banner(
+        Bento.red,
+        Icons.cancel_rounded,
+        'Project cancelled',
+        'Work has stopped. You can permanently delete this project and all its records.',
+        action: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _showDeleteConfirmationDialog,
+            icon: const Icon(Icons.delete_forever_rounded, size: 18),
+            label: const Text('Delete project data'),
+            style: ElevatedButton.styleFrom(backgroundColor: Bento.red, foregroundColor: Colors.white),
+          ),
+        ),
+      );
+    }
+    if (s == 'completed' || s == 'finished') {
+      return banner(Bento.green, Icons.verified_rounded, 'Project completed', 'All milestones are finalized. This job is now view-only.');
+    }
+    if (s == 'finished pending approval') {
+      return banner(Bento.violet, Icons.hourglass_top_rounded, 'Submitted for approval', 'Waiting for the client to review and approve the finished work.');
+    }
+
+    final isOnHold = s == 'on hold';
+    final allDone = total > 0 && completed == total;
+    final canFinish = allDone && !isOnHold;
+
+    Widget actionTile({
+      required IconData icon,
+      required String label,
+      required String caption,
+      required VoidCallback? onTap,
+      Gradient? gradient,
+      Color? color,
+      bool light = true,
+    }) {
+      final fg = light ? Colors.white : Bento.muted(dark);
+      return BentoCard(
+        gradient: gradient,
+        color: color,
+        padding: const EdgeInsets.all(14),
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: light ? Colors.white.withValues(alpha: 0.18) : Bento.border(dark),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: fg, size: 21),
+            ),
+            const SizedBox(height: 14),
+            Text(label, style: TextStyle(color: light ? Colors.white : Bento.text(dark), fontSize: 15, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 2),
+            Text(
+              caption,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: light ? Colors.white70 : Bento.muted(dark), fontSize: 11.5, height: 1.3),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: isOnHold
+                    ? actionTile(
+                        icon: Icons.play_arrow_rounded,
+                        label: 'Resume job',
+                        caption: 'Notify the client work restarted',
+                        color: const Color(0xFFD97706),
+                        onTap: () => _updateProjectStage('Tracking'),
+                      )
+                    : actionTile(
+                        icon: Icons.pause_rounded,
+                        label: 'Hold project',
+                        caption: 'Pause work and inform the client',
+                        gradient: Bento.inkGradient,
+                        onTap: () => _updateProjectStage('On Hold'),
+                      ),
+              ),
+              const SizedBox(width: Bento.gap),
+              Expanded(
+                child: canFinish
+                    ? actionTile(
+                        icon: Icons.done_all_rounded,
+                        label: 'Finish project',
+                        caption: 'Send to the client for approval',
+                        gradient: Bento.accentGradient,
+                        onTap: () => _updateProjectStage('Finished Pending Approval'),
+                      )
+                    : actionTile(
+                        icon: Icons.lock_rounded,
+                        label: 'Finish project',
+                        caption: isOnHold ? 'Resume the job first' : 'Complete all steps to unlock',
+                        color: Bento.surfaceAlt(dark),
+                        light: false,
+                        onTap: null,
+                      ),
+              ),
+            ],
+          ),
+        ),
+        if (!allDone && total > 0) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: BentoProgressBar(value: completed / total, height: 6)),
+              const SizedBox(width: 10),
+              Text(
+                '$completed of $total steps done',
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Bento.muted(dark)),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildNoPlanCard(bool isReadOnly) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return BentoCard(
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        children: [
+          const BentoIconBubble(icon: Icons.auto_awesome_rounded, color: Bento.accent, size: 60),
+          const SizedBox(height: 14),
+          Text(
+            'No execution plan yet',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Bento.text(dark), letterSpacing: -0.3),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Generate a smart plan from the client\'s selected services (${_project?['type'] ?? ''}) or add your own steps.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12.5, color: Bento.muted(dark), height: 1.4),
+          ),
+          if (!isReadOnly) ...[
+            const SizedBox(height: 18),
+            BentoButton(
+              label: 'Generate smart plan',
+              icon: Icons.auto_awesome_rounded,
+              expand: true,
+              onTap: _generateTemplateTasks,
+            ),
+            const SizedBox(height: 6),
+            TextButton(onPressed: _showAddTaskDialog, child: const Text('Create a custom step')),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingTaskCard(dynamic task, bool isReadOnly) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final taskId = task['id'];
+    final title = (task['title'] ?? 'Untitled step').toString();
+    final duration = task['duration'] ?? 1;
+    final stage = (task['stage'] ?? 'General planning').toString();
+
+    return BentoCard(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      child: Row(
+        children: [
+          BentoIconBubble(icon: Icons.radio_button_unchecked_rounded, color: Bento.muted(dark), size: 40),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Bento.text(dark)),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    BentoPill(label: stage, color: Bento.accentText(dark), icon: Icons.layers_rounded),
+                    BentoPill(
+                      label: '$duration day${duration == 1 ? '' : 's'}',
+                      color: Bento.muted(dark),
+                      background: Bento.surfaceAlt(dark),
+                      icon: Icons.timer_outlined,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (!isReadOnly) ...[
+            const SizedBox(width: 6),
+            BentoCircleButton(
+              icon: Icons.play_arrow_rounded,
+              color: Bento.accentText(dark),
+              tooltip: 'Start step',
+              onPressed: () => _startTask(taskId),
+            ),
+            IconButton(
+              tooltip: 'Delete step',
+              icon: Icon(Icons.delete_outline_rounded, color: Bento.muted(dark)),
+              onPressed: () => _deleteTask(taskId),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _openClientChat(String clientName) {
+    final clientId = _project?['user']?['id'] ?? '';
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ChatDetailScreen(partnerId: clientId, partnerName: clientName)),
+    );
+  }
+
+  Widget _buildCategoryTab(int index, IconData icon, String label, int? count) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final selected = _selectedTab == index;
+    return BentoPressable(
+      onTap: () => setState(() => _selectedTab = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: selected ? (dark ? Colors.white : Bento.ink) : Bento.surface(dark),
+          borderRadius: BorderRadius.circular(21),
+          border: Border.all(color: selected ? Colors.transparent : Bento.border(dark)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: selected ? (dark ? Bento.ink : Colors.white) : Bento.muted(dark)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: selected ? (dark ? Bento.ink : Colors.white) : Bento.text(dark),
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: selected ? Bento.accent : Bento.surfaceAlt(dark),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: selected ? Colors.white : Bento.muted(dark)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildLegendItem(Color color, String label, double value) {
     return Row(
@@ -4235,77 +4197,6 @@ class _ProviderJobDetailState extends ConsumerState<ProviderJobDetail> {
     );
   }
 
-  Widget _buildCategoryTab(int index, IconData icon, String label, int? count) {
-    final isSelected = _selectedTab == index;
-    return InkWell(
-      onTap: () => setState(() => _selectedTab = index),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Theme.of(context).primaryColor
-              : Colors.white.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).primaryColor
-                : Colors.grey.shade300,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : Colors.grey.shade700,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey.shade800,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-            if (count != null) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  count.toString(),
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.grey.shade800,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showAddWorkerDialog() {
     final nameController = TextEditingController();

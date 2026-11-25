@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
 import 'widgets/custom_image.dart';
@@ -182,231 +184,323 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
     }
   }
 
+
+  // ===========================================================================
+  // UI (bento)
+  // ===========================================================================
+
+  String _price(double v) => '₹${NumberFormat.decimalPattern('en_IN').format(v.round())}';
+
+  bool _hasText(String s) {
+    final t = s.trim().toLowerCase();
+    return t.isNotEmpty && t != 'none' && t != 'null';
+  }
+
+  Color _statusColor(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('approved') || s.contains('active')) return Bento.green;
+    if (s.contains('reject')) return Bento.red;
+    return const Color(0xFFD97706);
+  }
+
+  void _openAddProduct() => context.push('/supplier-add-product').then((_) => _fetchCatalogData());
+
+  void _editProduct(CatalogItem item) {
+    context.push('/supplier-add-product', extra: {
+      'id': item.id,
+      'name': item.name,
+      'description': item.description,
+      'status': item.status,
+      'categoryId': item.categoryId,
+      'categoryName': item.categoryName,
+      'price_per_unit': item.pricePerUnit,
+      'unit_type': item.unitType,
+      'specifications': item.specifications,
+      'images': item.images,
+    }).then((_) => _fetchCatalogData());
+  }
+
+  void _viewImage(CatalogItem item) {
+    if (item.images.isEmpty || item.images.first.isEmpty) return;
+    final img = item.images.first;
+    final isNet = img.startsWith('http://') || img.startsWith('https://');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FullScreenImageViewer(
+          base64Image: isNet ? null : img,
+          imageUrl: isNet ? img : null,
+          title: item.name,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final approved = _productsList.where((p) => _statusColor(p.status) == Bento.green).length;
+    final pending = _productsList.length - approved;
+
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
-        ),
-        title: const FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text('My Product Catalog', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        ),
+      appBar: BentoAppBar(
+        title: const Text('My products'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchCatalogData,
+          IconButton(icon: const Icon(Icons.refresh_rounded), tooltip: 'Refresh', onPressed: _fetchCatalogData),
+        ],
+      ),
+      floatingActionButton: _productsList.isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _openAddProduct,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add product', style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              color: Bento.accent,
+              onRefresh: _fetchCatalogData,
+              child: LayoutBuilder(
+                builder: (context, c) {
+                  final columns = c.maxWidth >= 900 ? 4 : (c.maxWidth >= 600 ? 3 : 2);
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              if (_errorMessage != null) ...[
+                                BentoCard(
+                                  color: Color.alphaBlend(Bento.warning.withValues(alpha: 0.12), Bento.surface(dark)),
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.info_rounded, color: Color(0xFFD97706), size: 20),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(_errorMessage!, style: TextStyle(fontSize: 12.5, color: Bento.text(dark))),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: Bento.gap),
+                              ],
+                              if (_productsList.isNotEmpty)
+                                Row(
+                                  children: [
+                                    Expanded(child: _statChip(dark, '${_productsList.length}', 'Listed', Icons.inventory_2_rounded, Bento.accent)),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: _statChip(dark, '$approved', 'Approved', Icons.verified_rounded, Bento.green)),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: _statChip(dark, '$pending', 'In review', Icons.hourglass_top_rounded, const Color(0xFFD97706))),
+                                  ],
+                                ),
+                              const SizedBox(height: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (_productsList.isEmpty)
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          sliver: SliverToBoxAdapter(
+                            child: BentoEmptyState(
+                              icon: Icons.storefront_rounded,
+                              title: 'Your catalog is empty',
+                              subtitle: 'List cement, steel, tiles and more so buyers can send you inquiries.',
+                              actionLabel: 'Add your first product',
+                              onAction: _openAddProduct,
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          sliver: SliverGrid(
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: columns,
+                              mainAxisExtent: 286,
+                              crossAxisSpacing: Bento.gap,
+                              mainAxisSpacing: Bento.gap,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, i) => _productCard(dark, _productsList[i]),
+                              childCount: _productsList.length,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+    );
+  }
+
+  Widget _statChip(bool dark, String value, String label, IconData icon, Color color) {
+    return BentoCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
+        children: [
+          BentoIconBubble(icon: icon, color: color, size: 32),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value, style: TextStyle(fontSize: 18, height: 1, fontWeight: FontWeight.w900, color: Bento.text(dark))),
+                const SizedBox(height: 2),
+                Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10.5, color: Bento.muted(dark), fontWeight: FontWeight.w600)),
+              ],
+            ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/supplier-add-product').then((_) => _fetchCatalogData()),
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
+    );
+  }
+
+  Widget _productCard(bool dark, CatalogItem item) {
+    final hasImage = item.images.isNotEmpty && item.images.first.isNotEmpty;
+    final statusColor = _statusColor(item.status);
+
+    Widget placeholder() => Container(
+          color: Bento.surfaceAlt(dark),
+          alignment: Alignment.center,
+          child: Icon(Icons.inventory_2_rounded, color: Bento.muted(dark), size: 34),
+        );
+
+    return BentoCard(
+      padding: EdgeInsets.zero,
+      onTap: () => _editProduct(item),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 120,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
               children: [
-                if (_errorMessage != null)
-                  Container(
-                    color: Colors.amber.shade100,
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    child: Text(_errorMessage!, style: const TextStyle(fontSize: 12, color: Colors.black87), textAlign: TextAlign.center),
+                GestureDetector(
+                  onTap: () => _viewImage(item),
+                  child: hasImage
+                      ? BuildMartImage(imageUrl: item.images.first, fit: BoxFit.cover, placeholder: placeholder())
+                      : placeholder(),
+                ),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: BentoPill(
+                    label: item.status,
+                    color: Colors.white,
+                    background: statusColor.withValues(alpha: 0.9),
                   ),
-                Expanded(
-                  child: _productsList.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade400),
-                              const SizedBox(height: 12),
-                              const Text('No listings found in your catalog.', style: TextStyle(color: Colors.grey)),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: () => context.push('/supplier-add-product').then((_) => _fetchCatalogData()),
-                                icon: const Icon(Icons.add),
-                                label: const Text('Add Listing'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _productsList.length,
-                          itemBuilder: (context, index) {
-                            final item = _productsList[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 2,
-                              child: Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (item.images.isNotEmpty && item.images.first.isNotEmpty) {
-                                          final img = item.images.first;
-                                          final isNet = img.startsWith('http://') || img.startsWith('https://');
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => FullScreenImageViewer(
-                                                base64Image: isNet ? null : img,
-                                                imageUrl: isNet ? img : null,
-                                                title: item.name,
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: (item.images.isNotEmpty && item.images.first.isNotEmpty)
-                                            ? BuildMartImage(
-                                                imageUrl: item.images.first,
-                                                width: 54,
-                                                height: 54,
-                                                fit: BoxFit.cover,
-                                                placeholder: Container(
-                                                  width: 54,
-                                                  height: 54,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.blue.withValues(alpha: 0.08),
-                                                    borderRadius: BorderRadius.circular(10),
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.inventory_2,
-                                                    color: Colors.blue,
-                                                    size: 26,
-                                                  ),
-                                                ),
-                                              )
-                                            : Container(
-                                                width: 54,
-                                                height: 54,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.blue.withValues(alpha: 0.08),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                child: const Icon(
-                                                  Icons.inventory_2,
-                                                  color: Colors.blue,
-                                                  size: 26,
-                                                ),
-                                              ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item.name,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            item.categoryName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.bold),
-                                          ),
-                                          const SizedBox(height: 5),
-                                          Text(
-                                            item.description,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Wrap(
-                                            alignment: WrapAlignment.spaceBetween,
-                                            crossAxisAlignment: WrapCrossAlignment.center,
-                                            spacing: 6,
-                                            runSpacing: 4,
-                                            children: [
-                                              FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                alignment: Alignment.centerLeft,
-                                                child: Text(
-                                                  'Price: ₹${item.pricePerUnit.toStringAsFixed(0)} / ${item.unitType}',
-                                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.green.withValues(alpha: 0.12),
-                                                  borderRadius: BorderRadius.circular(6),
-                                                ),
-                                                child: Text(
-                                                  item.status,
-                                                  style: const TextStyle(
-                                                    fontSize: 9.5, 
-                                                    fontWeight: FontWeight.w800, 
-                                                    color: Colors.green,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          visualDensity: VisualDensity.compact,
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                          icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
-                                          onPressed: () {
-                                            context.push('/supplier-add-product', extra: {
-                                              'id': item.id,
-                                              'name': item.name,
-                                              'description': item.description,
-                                              'status': item.status,
-                                              'categoryId': item.categoryId,
-                                              'categoryName': item.categoryName,
-                                              'price_per_unit': item.pricePerUnit,
-                                              'unit_type': item.unitType,
-                                              'specifications': item.specifications,
-                                              'images': item.images,
-                                            }).then((_) => _fetchCatalogData());
-                                          },
-                                        ),
-                                        const SizedBox(height: 6),
-                                        IconButton(
-                                          visualDensity: VisualDensity.compact,
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                                          onPressed: () => _deleteCatalogItem(item),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
                 ),
               ],
             ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: -0.3, color: Bento.text(dark)),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    item.categoryName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Bento.accentText(dark)),
+                  ),
+                  if (_hasText(item.description)) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      item.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11.5, color: Bento.muted(dark), height: 1.3),
+                    ),
+                  ],
+                  const Spacer(),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: _price(item.pricePerUnit),
+                                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Bento.text(dark)),
+                                ),
+                                TextSpan(
+                                  text: ' / ${item.unitType}',
+                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Bento.muted(dark)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: BentoPressable(
+                          onTap: () => _editProduct(item),
+                          child: Container(
+                            height: 34,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Bento.accent.withValues(alpha: dark ? 0.2 : 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.edit_rounded, size: 15, color: Bento.accentText(dark)),
+                                const SizedBox(width: 5),
+                                Text('Edit', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Bento.accentText(dark))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      BentoPressable(
+                        onTap: () => _deleteCatalogItem(item),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Bento.red.withValues(alpha: dark ? 0.2 : 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.delete_outline_rounded, size: 17, color: Bento.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

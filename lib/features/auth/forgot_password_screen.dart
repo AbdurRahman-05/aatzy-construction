@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import '../../core/constants.dart';
@@ -230,7 +231,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF111318) : AppTheme.backgroundNeutral,
-      appBar: AppBar(
+      appBar: BentoAppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(

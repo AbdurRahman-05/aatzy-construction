@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:construction_app/core/api_http.dart' as http;
@@ -218,9 +219,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // final subState = ref.watch(subscriptionProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: BentoAppBar(title: const Text('Settings')),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 32),
         children: [
           /*
           // Membership & Billing disabled and hidden from UI
@@ -269,21 +270,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 12),
           ],
           */
+          _buildAccountCard(),
+          const SizedBox(height: 6),
           _buildSectionHeader('Notifications'),
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 SwitchListTile(
-                  secondary: const Icon(Icons.notifications_active, color: Colors.blue),
+                  secondary: const BentoIconBubble(icon: Icons.notifications_active, color: Colors.blue, size: 38),
                   title: const Text('Push Notifications'),
                   subtitle: const Text('Get real-time updates on quotes & tasks'),
                   value: _pushNotifications,
                   onChanged: (val) => _updatePreference('push_notifications', val),
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, indent: 72, endIndent: 16),
                 ListTile(
-                  leading: const Icon(Icons.send_to_mobile_rounded, color: Color(0xFF0F766E)),
+                  leading: const BentoIconBubble(icon: Icons.send_to_mobile_rounded, color: Color(0xFF0F766E), size: 38),
                   title: const Text('Send Test Notification', style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: const Text('Preview how leads and job alerts appear'),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
@@ -300,9 +302,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     }
                   },
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, indent: 72, endIndent: 16),
                 SwitchListTile(
-                  secondary: const Icon(Icons.email, color: Colors.orange),
+                  secondary: const BentoIconBubble(icon: Icons.email, color: Color(0xFFE11D48), size: 38),
                   title: const Text('Email Alerts'),
                   subtitle: const Text('Receive digests and billing invoices'),
                   value: _emailAlerts,
@@ -314,19 +316,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 12),
           _buildSectionHeader('App Configuration'),
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 SwitchListTile(
-                  secondary: const Icon(Icons.location_on, color: Colors.red),
+                  secondary: const BentoIconBubble(icon: Icons.location_on, color: Colors.red, size: 38),
                   title: const Text('Location Services'),
                   subtitle: const Text('Allow finding nearby active providers'),
                   value: _locationServices,
                   onChanged: (val) => _updatePreference('location_services', val),
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, indent: 72, endIndent: 16),
                 SwitchListTile(
-                  secondary: const Icon(Icons.dark_mode, color: Colors.purple),
+                  secondary: const BentoIconBubble(icon: Icons.dark_mode, color: Colors.purple, size: 38),
                   title: const Text('Dark Theme'),
                   subtitle: const Text('Toggle between dark and light themes'),
                   value: _darkMode,
@@ -338,11 +339,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 12),
           _buildSectionHeader('Tutorial & App Guide'),
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.school, color: Colors.deepOrange),
+                  leading: const BentoIconBubble(icon: Icons.school, color: Color(0xFF8B5CF6), size: 38),
                   title: const Text('View User Side Benefits Tutorial'),
                   subtitle: const Text('Re-open the interactive pop-up guide'),
                   trailing: const Icon(Icons.chevron_right),
@@ -351,9 +351,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     UserTutorialDialog.show(context, userId: auth.id, force: true);
                   },
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, indent: 72, endIndent: 16),
                 ListTile(
-                  leading: const Icon(Icons.restart_alt, color: Colors.blueGrey),
+                  leading: const BentoIconBubble(icon: Icons.restart_alt, color: Colors.blueGrey, size: 38),
                   title: const Text('Reset Tutorial Status'),
                   subtitle: const Text('Pop up tutorial automatically on next home view'),
                   trailing: const Icon(Icons.chevron_right),
@@ -373,18 +373,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 12),
           _buildSectionHeader('Security & Privacy'),
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.lock, color: Colors.green),
+                  leading: const BentoIconBubble(icon: Icons.lock, color: Colors.green, size: 38),
                   title: const Text('Change Password'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _showChangePasswordDialog,
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, indent: 72, endIndent: 16),
                 ListTile(
-                  leading: const Icon(Icons.gavel, color: Colors.teal),
+                  leading: const BentoIconBubble(icon: Icons.gavel, color: Colors.teal, size: 38),
                   title: const Text('Terms of Service'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showDocumentModal(
@@ -392,9 +391,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     'Welcome to Connectzy!\n\n1. Acceptance of Terms\nBy using our platform, you agree to comply with our general user terms and agreements.\n\n2. Service Provider Responsibility\nAll providers registered on our platform verify that their credentials, details, and works uploaded to portfolio are true and accurate.\n\n3. Consumer Guarantee\nConnectzy acts as an aggregation platform to connect building owners with contractors, engineers, and suppliers. Real-time contracts are signed directly between both parties.',
                   ),
                 ),
-                const Divider(height: 1),
+                const Divider(height: 1, indent: 72, endIndent: 16),
                 ListTile(
-                  leading: const Icon(Icons.privacy_tip, color: Colors.indigo),
+                  leading: const BentoIconBubble(icon: Icons.privacy_tip, color: Colors.indigo, size: 38),
                   title: const Text('Privacy Policy'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showDocumentModal(
@@ -420,15 +419,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _buildSectionHeader(String title) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 8, top: 4),
+      padding: const EdgeInsets.only(left: 8, bottom: 8, top: 10),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-          color: isDark ? Colors.white : const Color(0xFF4B5563),
-          letterSpacing: 0.2,
+          fontWeight: FontWeight.w800,
+          fontSize: 11.5,
+          color: Bento.muted(isDark),
+          letterSpacing: 1.1,
         ),
+      ),
+    );
+  }
+
+  Widget _buildAccountCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final auth = ref.watch(authProvider);
+    final name = (auth.role == 'PROVIDER' ? (auth.businessName ?? auth.name) : auth.name) ?? 'Your account';
+    return BentoCard(
+      gradient: Bento.inkGradient,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          BentoAvatar(name: name, image: auth.profileImage, size: 52),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.4),
+                ),
+                if ((auth.email ?? '').isNotEmpty)
+                  Text(
+                    auth.email!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white60, fontSize: 12.5),
+                  ),
+              ],
+            ),
+          ),
+          BentoPill(
+            label: auth.role == 'PROVIDER' ? 'PARTNER' : 'CUSTOMER',
+            color: Bento.accentLight,
+            background: Colors.white.withValues(alpha: isDark ? 0.08 : 0.1),
+          ),
+        ],
       ),
     );
   }

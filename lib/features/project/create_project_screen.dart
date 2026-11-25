@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
@@ -1004,7 +1005,7 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
       child: WallpaperBackground(
         child: Scaffold(
           backgroundColor: isDark ? const Color(0xFF111318) : const Color(0xFFF6F5F2),
-          appBar: AppBar(
+          appBar: BentoAppBar(
             backgroundColor: isDark ? const Color(0xFF181B22) : Colors.white,
             elevation: 0,
             scrolledUnderElevation: 0,

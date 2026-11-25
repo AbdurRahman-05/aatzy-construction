@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
 import 'widgets/custom_image.dart';
@@ -63,7 +64,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final p = _product;
     if (p == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Error')),
+        appBar: BentoAppBar(title: const Text('Error')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -104,7 +105,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final String unit = p['unit_type'] ?? 'Bag';
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: BentoAppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),

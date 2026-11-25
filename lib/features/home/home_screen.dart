@@ -218,12 +218,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       _buildHeader(auth.name ?? 'Guest', auth.profileImage),
                       const SizedBox(height: 20),
+                      // Sponsored banner slot, above the active project
+                      // (Admin Panel -> Ads Manager -> "Home Page Banner")
+                      const HomeAdSlot(side: 'CLIENT', padding: EdgeInsets.only(bottom: Bento.gap)),
                       _buildHero(),
                       const SizedBox(height: Bento.gap),
                       _buildActionGrid(),
                       const SizedBox(height: Bento.gap),
-                      // Sponsored banner slot (Admin Panel -> Ads Manager -> "Home Page Banner")
-                      const HomeAdSlot(side: 'CLIENT', padding: EdgeInsets.only(bottom: Bento.gap)),
                       _buildOverviewStrip(),
                       const SizedBox(height: 30),
                       _buildExperts(),
@@ -828,8 +829,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final icon = cat['icon'] as IconData;
 
     return BentoCard(
-      color: dark ? Color.alphaBlend(color.withValues(alpha: 0.14), Bento.surface(true)) : Color.alphaBlend(color.withValues(alpha: 0.08), Colors.white),
-      padding: EdgeInsets.all(large ? 16 : 12),
+      color: dark
+          ? Color.alphaBlend(color.withValues(alpha: 0.14), Bento.surface(true))
+          : Color.alphaBlend(color.withValues(alpha: 0.08), Colors.white),
+      padding: EdgeInsets.symmetric(horizontal: large ? 16 : 14, vertical: large ? 16 : 12),
       onTap: () => context.push(cat['route'] as String),
       child: Stack(
         children: [
@@ -842,33 +845,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                BentoIconBubble(icon: icon, color: color, size: 40),
+                Container(
+                  width: 28,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 const Spacer(),
                 Text(
                   cat['title'] as String,
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: Bento.text(dark)),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: Bento.text(dark)),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
                   cat['subtitle'] as String,
                   style: TextStyle(fontSize: 11.5, color: Bento.muted(dark), height: 1.3),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Explore',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: color),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_rounded, size: 13, color: color),
+                  ],
+                ),
               ],
             )
           else
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                BentoIconBubble(icon: icon, color: color, size: 32),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    cat['title'] as String,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Bento.text(dark), letterSpacing: -0.2),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                Text(
+                  cat['title'] as String,
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Bento.text(dark), letterSpacing: -0.2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  cat['subtitle'] as String,
+                  style: TextStyle(fontSize: 10.5, color: Bento.muted(dark), fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

@@ -59,7 +59,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       prisma.quote.update({ where: { id }, data: { isAccepted: true } }),
       prisma.project.update({
         where: { id: existing.projectId },
-        data: { currentStage: 'Tracking' },
+        data: {
+          currentStage: 'Tracking',
+          ...(existing.estimatedCost > 0 ? { budget: existing.estimatedCost } : {}),
+        },
       }),
     ]);
 

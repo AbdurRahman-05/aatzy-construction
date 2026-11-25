@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
@@ -486,7 +487,7 @@ class _CompareQuotesScreenState extends ConsumerState<CompareQuotesScreen> {
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
+        appBar: BentoAppBar(
           title: const Text(
             'Compare Quotes',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF111318)),

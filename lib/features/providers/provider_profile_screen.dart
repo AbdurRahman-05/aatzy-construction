@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
@@ -118,7 +119,7 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
         backgroundColor: Colors.transparent,
         appBar: _isLoading || _provider == null
             ? null
-            : AppBar(
+            : BentoAppBar(
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
                   onPressed: () {

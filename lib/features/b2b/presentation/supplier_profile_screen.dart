@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../services/b2b_api_service.dart';
@@ -156,7 +157,7 @@ class _SupplierProfileScreenState extends ConsumerState<SupplierProfileScreen> {
     final primaryColor = isDark ? const Color(0xFF0F9B8E) : Colors.blue;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: BentoAppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),

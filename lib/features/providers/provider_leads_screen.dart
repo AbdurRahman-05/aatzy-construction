@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
@@ -194,278 +197,153 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
       }
     });
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth >= 700;
-    final horizontalPadding = isTablet ? 24.0 : 16.0;
+
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final width = MediaQuery.of(context).size.width;
+    final hPad = width >= 700 ? 24.0 : (width < 380 ? 14.0 : 18.0);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(_selectedSegment == 0 ? 'Project Leads' : 'Material Inquiries'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Leads',
-            onPressed: () => _fetchLeads(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
-            children: [
-              // Segmented Switcher: Project Leads vs Material Inquiries
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8.0),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF181B22) : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isDark ? const Color(0xFF2E333D) : Colors.grey.shade300,
-                    ),
-                  ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 14),
                   child: Row(
                     children: [
                       Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () {
-                            setState(() {
-                              _userSwitchedSegment = true;
-                              _selectedSegment = 0;
-                              _applyFilter();
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 9),
-                            decoration: BoxDecoration(
-                              color: _selectedSegment == 0
-                                  ? const Color(0xFF0F766E)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedSegment == 0
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFF0F766E).withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      )
-                                    ]
-                                  : null,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Leads',
+                              style: TextStyle(fontSize: 28, height: 1.1, fontWeight: FontWeight.w900, letterSpacing: -1, color: Bento.text(dark)),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.business_center_outlined,
-                                  size: 16,
-                                  color: _selectedSegment == 0
-                                      ? Colors.white
-                                      : (isDark ? Colors.grey.shade400 : Colors.grey.shade700),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Projects (${_allLeads.length})',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: _selectedSegment == 0
-                                        ? Colors.white
-                                        : (isDark ? Colors.grey.shade400 : Colors.grey.shade700),
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(height: 3),
+                            Text(
+                              _isLoading
+                                  ? 'Finding work near you…'
+                                  : '${_allLeads.length} project · ${_allMaterialLeads.length} material',
+                              style: TextStyle(fontSize: 13, color: Bento.muted(dark), fontWeight: FontWeight.w600),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () {
-                            setState(() {
-                              _userSwitchedSegment = true;
-                              _selectedSegment = 1;
-                              _applyFilter();
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 9),
-                            decoration: BoxDecoration(
-                              color: _selectedSegment == 1
-                                  ? const Color(0xFF0F766E)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedSegment == 1
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0xFF0F766E).withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      )
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.inventory_2_outlined,
-                                  size: 16,
-                                  color: _selectedSegment == 1
-                                      ? Colors.white
-                                      : (isDark ? Colors.grey.shade400 : Colors.grey.shade700),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Materials (${_allMaterialLeads.length})',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: _selectedSegment == 1
-                                        ? Colors.white
-                                        : (isDark ? Colors.grey.shade400 : Colors.grey.shade700),
-                                  ),
-                                ),
-                                if (_allMaterialLeads.isNotEmpty && _selectedSegment != 1) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0F766E),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      '${_allMaterialLeads.length}',
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
+                      BentoCircleButton(
+                        icon: Icons.refresh_rounded,
+                        tooltip: 'Refresh leads',
+                        onPressed: () => _fetchLeads(),
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              // Search Bar
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8.0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: _selectedSegment == 0 ? 'Search project leads...' : 'Search material inquiries...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () => _searchController.clear(),
-                          )
-                        : null,
+                // Project / material switch
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: hPad),
+                  child: BentoSegmented(
+                    labels: ['Projects (${_allLeads.length})', 'Materials (${_allMaterialLeads.length})'],
+                    icons: const [Icons.home_work_rounded, Icons.inventory_2_rounded],
+                    index: _selectedSegment,
+                    onChanged: (i) => setState(() {
+                      _userSwitchedSegment = true;
+                      _selectedSegment = i;
+                      _applyFilter();
+                    }),
                   ),
                 ),
-              ),
+                const SizedBox(height: 12),
 
-              // Leads / Inquiries Content
-              Expanded(
-                child: _isLoading
-                    ? const ShimmerLeadsList(itemCount: 4)
-                    : RefreshIndicator(
-                        onRefresh: _fetchLeads,
-                        child: _selectedSegment == 0
-                            ? _buildProjectLeadsView(horizontalPadding, isTablet, isDark)
-                            : _buildMaterialLeadsView(horizontalPadding, isTablet, isDark),
-                      ),
-              ),
-            ],
+                // Search
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: hPad),
+                  child: BentoSearchField(
+                    controller: _searchController,
+                    hint: _selectedSegment == 0 ? 'Search projects, clients, places' : 'Search material requests',
+                    onChanged: (_) {},
+                  ),
+                ),
+
+                Expanded(
+                  child: _isLoading
+                      ? Padding(
+                          padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 0),
+                          child: const ShimmerLeadsList(itemCount: 4),
+                        )
+                      : RefreshIndicator(
+                          color: Bento.accent,
+                          onRefresh: _fetchLeads,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            child: KeyedSubtree(
+                              key: ValueKey(_selectedSegment),
+                              child: _selectedSegment == 0 ? _buildProjectLeadsView(hPad, width) : _buildMaterialLeadsView(hPad),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProjectLeadsView(double horizontalPadding, bool isTablet, bool isDark) {
+  // ===========================================================================
+  // Project leads
+  // ===========================================================================
+
+  Widget _buildProjectLeadsView(double hPad, double width) {
     if (_filteredLeads.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 24),
+        padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 110),
         children: [
-          const Padding(
-            padding: EdgeInsets.all(24.0),
-            child: Center(
-              child: Text(
-                'No leads found matching your category and location.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-            ),
+          BentoEmptyState(
+            icon: Icons.radar_rounded,
+            title: _searchController.text.isNotEmpty ? 'No matching leads' : 'No project leads right now',
+            subtitle: _searchController.text.isNotEmpty
+                ? 'Try another name, client or place.'
+                : 'New projects in your category and city will appear here. Pull down to refresh.',
           ),
           if (_allMaterialLeads.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: BorderSide(color: const Color(0xFF0F766E).withValues(alpha: 0.3)),
-              ),
-              color: isDark ? const Color(0xFF0F766E).withValues(alpha: 0.15) : const Color(0xFFF0FDFA),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
+            const SizedBox(height: Bento.gap),
+            BentoCard(
+              gradient: Bento.accentGradient,
+              padding: const EdgeInsets.all(18),
+              onTap: () => setState(() {
+                _userSwitchedSegment = true;
+                _selectedSegment = 1;
+                _applyFilter();
+              }),
+              child: Row(
+                children: [
+                  const Icon(Icons.inventory_2_rounded, color: Colors.white, size: 30),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.inventory_2_outlined, color: Color(0xFF0F766E), size: 24),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'You have ${_allMaterialLeads.length} Material Inquiries waiting!',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
+                        Text(
+                          '${_allMaterialLeads.length} material request${_allMaterialLeads.length == 1 ? '' : 's'} waiting',
+                          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Buyers want quotes for building materials.',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Buyers are requesting quotes for bulk building materials. Tap below to view your inquiries and submit quotations.',
-                      style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                    ),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _userSwitchedSegment = true;
-                            _selectedSegment = 1;
-                            _applyFilter();
-                          });
-                        },
-                        icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                        label: Text('View ${_allMaterialLeads.length} Material Inquiries'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F766E),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                ],
               ),
             ),
           ],
@@ -473,53 +351,115 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
       );
     }
 
-    return isTablet
-        ? GridView.builder(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 2.7,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _filteredLeads.length,
-            itemBuilder: (context, index) {
-              return _buildLeadCard(_filteredLeads[index]);
-            },
-          )
-        : ListView.builder(
-            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-            itemCount: _filteredLeads.length,
-            itemBuilder: (context, index) {
-              return _buildLeadCard(_filteredLeads[index]);
-            },
-          );
+    final columns = width >= 700 ? 2 : 1;
+    return GridView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 110),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisExtent: 172,
+        crossAxisSpacing: Bento.gap,
+        mainAxisSpacing: Bento.gap,
+      ),
+      itemCount: _filteredLeads.length,
+      itemBuilder: (context, i) => _buildLeadCard(_filteredLeads[i]),
+    );
   }
 
-  Widget _buildMaterialLeadsView(double horizontalPadding, bool isTablet, bool isDark) {
+  Widget _buildLeadCard(dynamic lead) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final title = (lead['title'] ?? 'New project').toString();
+    final client = (lead['userName'] ?? 'Client').toString();
+    final type = (lead['type'] ?? '').toString();
+    final location = (lead['location'] ?? '').toString();
+    final budget = lead['budget'] is num ? lead['budget'] as num : null;
+    final created = DateTime.tryParse((lead['createdAt'] ?? '').toString());
+    final isNew = created != null && DateTime.now().difference(created).inHours < 48;
+
+    return BentoCard(
+      padding: const EdgeInsets.all(16),
+      onTap: () async {
+        await context.push('/provider-lead/${lead['id']}');
+        _fetchLeads(silent: true);
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              BentoIconBubble(icon: Icons.home_work_rounded, color: Bento.accent, size: 44),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800, letterSpacing: -0.3, color: Bento.text(dark)),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      type.isEmpty ? client : '$client · $type',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: Bento.muted(dark)),
+                    ),
+                  ],
+                ),
+              ),
+              if (isNew) const BentoPill(label: 'NEW', color: Bento.accent, icon: Icons.bolt_rounded),
+            ],
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              if (location.isNotEmpty)
+                Flexible(
+                  child: BentoPill(label: location, color: Bento.muted(dark), background: Bento.surfaceAlt(dark), icon: Icons.place_rounded),
+                ),
+              const SizedBox(width: 6),
+              if (budget != null)
+                BentoPill(
+                  label: '₹${NumberFormat.decimalPattern('en_IN').format(budget.round())}',
+                  color: const Color(0xFF059669),
+                  icon: Icons.account_balance_wallet_rounded,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(
+                'View & send quote',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Bento.accentText(dark)),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_forward_rounded, size: 16, color: Bento.accentText(dark)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // Material inquiries
+  // ===========================================================================
+
+  Widget _buildMaterialLeadsView(double hPad) {
     if (_filteredMaterialLeads.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 32),
+        padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 110),
         children: [
-          const Center(
-            child: Text(
-              'No material inquiries found matching your search.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Center(
-            child: OutlinedButton.icon(
-              onPressed: () => context.push('/b2b-materials'),
-              icon: const Icon(Icons.hub_outlined, size: 16),
-              label: const Text('Open Materials Hub Console'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0F766E),
-                side: const BorderSide(color: Color(0xFF0F766E)),
-              ),
-            ),
+          BentoEmptyState(
+            icon: Icons.inventory_2_rounded,
+            title: _searchController.text.isNotEmpty ? 'No matching requests' : 'No material requests yet',
+            subtitle: 'Buyer requests for your products will show up here.',
+            actionLabel: 'Open materials console',
+            onAction: () => context.push('/b2b-materials'),
           ),
         ],
       );
@@ -527,288 +467,144 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+      padding: EdgeInsets.fromLTRB(hPad, 16, hPad, 110),
       children: [
-        // Quick shortcut to full Materials Console
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F766E).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF0F766E).withValues(alpha: 0.25)),
-          ),
+        BentoCard(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          onTap: () => context.push('/b2b-materials'),
           child: Row(
             children: [
-              const Icon(Icons.hub_outlined, color: Color(0xFF0F766E), size: 18),
-              const SizedBox(width: 8),
-              const Expanded(
+              const BentoIconBubble(icon: Icons.hub_rounded, color: Bento.violet, size: 36),
+              const SizedBox(width: 10),
+              Expanded(
                 child: Text(
-                  'Materials Order Console & Delivery Tracking',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  'Orders & delivery tracking',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Bento.text(Theme.of(context).brightness == Brightness.dark)),
                 ),
               ),
-              TextButton(
-                onPressed: () => context.push('/b2b-materials'),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  foregroundColor: const Color(0xFF0F766E),
-                ),
-                child: const Text('Open Console ↗', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              ),
+              const Icon(Icons.north_east_rounded, size: 18),
             ],
           ),
         ),
-
-        // List of Material Inquiry Cards
-        ..._filteredMaterialLeads.map((lead) => _buildMaterialLeadCard(lead)),
+        const SizedBox(height: Bento.gap),
+        for (final lead in _filteredMaterialLeads) ...[
+          _buildMaterialLeadCard(lead),
+          const SizedBox(height: Bento.gap),
+        ],
       ],
     );
   }
 
+  Future<void> _contactBuyer(String name, String phone, String email) async {
+    Uri? uri;
+    if (phone.trim().isNotEmpty) {
+      uri = Uri(scheme: 'tel', path: phone.trim());
+    } else if (email.trim().isNotEmpty) {
+      uri = Uri(scheme: 'mailto', path: email.trim());
+    }
+    if (uri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No contact details shared by $name yet.')),
+      );
+      return;
+    }
+    try {
+      await launchUrl(uri);
+    } catch (e) {
+      debugPrint('Contact buyer error: $e');
+    }
+  }
+
   Widget _buildMaterialLeadCard(dynamic lead) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final status = (lead['status'] ?? 'New').toString();
-    final title = (lead['title'] ?? 'Material Requirement').toString();
+    final title = (lead['title'] ?? 'Material requirement').toString();
     final desc = (lead['description'] ?? '').toString();
     final quantity = lead['quantity']?.toString() ?? '0';
-    final unit = (lead['unit'] ?? 'Units').toString();
-    final location = (lead['location'] ?? 'Madurai').toString();
+    final unit = (lead['unit'] ?? 'units').toString();
+    final location = (lead['location'] ?? '').toString();
     final date = lead['created_at'] != null ? lead['created_at'].toString().split('T').first : '';
     final buyerName = (lead['buyer_name'] ?? 'Customer').toString();
     final buyerEmail = (lead['buyer_email'] ?? '').toString();
     final buyerPhone = (lead['buyer_phone'] ?? '').toString();
 
-    Color statusColor = Colors.blue;
-    if (status == 'Quote Sent') statusColor = Colors.purple;
-    if (status == 'Accepted' || status == 'Closed') statusColor = Colors.green;
-    if (status == 'Rejected' || status == 'Lead Rejected') statusColor = Colors.red;
+    Color statusColor = Bento.blue;
+    if (status == 'Quote Sent') statusColor = Bento.violet;
+    if (status == 'Accepted' || status == 'Closed') statusColor = Bento.green;
+    if (status == 'Rejected' || status == 'Lead Rejected') statusColor = Bento.red;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 2,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => context.push('/b2b-materials'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return BentoCard(
+      padding: const EdgeInsets.all(16),
+      onTap: () => context.push('/b2b-materials'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (date.isNotEmpty)
-                    Text(
-                      'DATE: $date',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
-                    ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(50),
-                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      status,
-                      style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
-              if (desc.isNotEmpty && desc != 'none') ...[
-                const SizedBox(height: 4),
-                Text(
-                  desc,
-                  style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  _buildChip(Icons.shopping_bag_outlined, 'Qty: $quantity $unit'),
-                  if (location.isNotEmpty && location != 'none')
-                    _buildChip(Icons.location_on_outlined, location),
-                ],
-              ),
-              const Divider(height: 20, color: Colors.grey),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-                    child: const Icon(Icons.person, size: 18, color: Colors.blue),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          buyerName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
-                        ),
-                        if (buyerEmail.isNotEmpty || buyerPhone.isNotEmpty)
-                          Text(
-                            [
-                              if (buyerEmail.isNotEmpty) 'Email: $buyerEmail',
-                              if (buyerPhone.isNotEmpty) 'Ph: $buyerPhone',
-                            ].join(' | '),
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push('/b2b-materials'),
-                      icon: const Icon(Icons.send_rounded, size: 16),
-                      label: const Text('Send Quote'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 9),
-                        side: const BorderSide(color: Color(0xFF0F766E)),
-                        foregroundColor: const Color(0xFF0F766E),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Calling Buyer $buyerName: ${buyerPhone.isNotEmpty ? buyerPhone : buyerEmail}...')),
-                        );
-                      },
-                      icon: const Icon(Icons.phone_in_talk_rounded, size: 16),
-                      label: const Text('Call Buyer'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F766E),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 9),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              BentoPill(label: status, color: statusColor),
+              const Spacer(),
+              if (date.isNotEmpty) Text(date, style: TextStyle(fontSize: 11.5, color: Bento.muted(dark), fontWeight: FontWeight.w600)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChip(IconData icon, String text) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF181B22) : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: isDark ? const Color(0xFF2E333D) : Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: const Color(0xFF0F766E)),
-          const SizedBox(width: 4),
-          Text(text, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeadCard(dynamic lead) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: isDark ? Colors.blue.withValues(alpha: 0.2) : Colors.blue.shade50,
-          child: const Icon(Icons.business_center, color: Colors.blue),
-        ),
-        title: Text(
-          lead['title'] ?? 'N/A',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: -0.3, color: Bento.text(dark)),
+          ),
+          if (desc.isNotEmpty && desc != 'none') ...[
             const SizedBox(height: 4),
-            Text('Client: ${lead['userName'] ?? 'Unknown'}'),
-            if (lead['type'] != null && lead['type'].toString().isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(
-                'Category: ${lead['type']}',
-                style: TextStyle(
-                  color: isDark ? const Color(0xFF9AA1AD) : Colors.blueGrey.shade700,
-                  fontSize: 12,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 14, color: Colors.red),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    lead['location'] ?? 'N/A',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (lead['budget'] != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF059669).withValues(alpha: 0.3) : const Color(0xFFBBF7D0),
-                      ),
-                    ),
-                    child: Text(
-                      '₹${(lead['budget'] as num).toInt().toString()}',
-                      style: TextStyle(
-                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF16A34A),
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
+            Text(
+              desc,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12.5, color: Bento.muted(dark), height: 1.35),
             ),
           ],
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () async {
-          await context.push('/provider-lead/${lead['id']}');
-          _fetchLeads(silent: true); // refresh silently on returning
-        },
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              BentoPill(label: '$quantity $unit', color: Bento.accentText(dark), icon: Icons.shopping_bag_rounded),
+              if (location.isNotEmpty && location != 'none')
+                BentoPill(label: location, color: Bento.muted(dark), background: Bento.surfaceAlt(dark), icon: Icons.place_rounded),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: Bento.surfaceAlt(dark), borderRadius: BorderRadius.circular(14)),
+            child: Row(
+              children: [
+                BentoAvatar(name: buyerName, size: 34, ring: false),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(buyerName, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Bento.text(dark))),
+                      if (buyerPhone.isNotEmpty || buyerEmail.isNotEmpty)
+                        Text(
+                          buyerPhone.isNotEmpty ? buyerPhone : buyerEmail,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 11.5, color: Bento.muted(dark)),
+                        ),
+                    ],
+                  ),
+                ),
+                BentoCircleButton(
+                  icon: buyerPhone.isNotEmpty ? Icons.call_rounded : Icons.mail_rounded,
+                  color: Bento.accentText(dark),
+                  tooltip: 'Contact buyer',
+                  onPressed: () => _contactBuyer(buyerName, buyerPhone, buyerEmail),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          BentoButton(label: 'Send quote', icon: Icons.send_rounded, expand: true, onTap: () => context.push('/b2b-materials')),
+        ],
       ),
     );
   }

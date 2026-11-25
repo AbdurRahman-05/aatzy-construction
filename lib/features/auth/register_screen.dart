@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:construction_app/core/api_http.dart' as http;
@@ -152,7 +153,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return WallpaperBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(title: const Text('Register')),
+        appBar: BentoAppBar(title: const Text('Register')),
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),

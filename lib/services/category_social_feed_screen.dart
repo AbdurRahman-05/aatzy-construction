@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:construction_app/core/widgets/bento.dart';
 import 'dart:convert';
 import '../features/providers/provider_profile_screen.dart';
 
@@ -23,7 +24,7 @@ class _CategorySocialFeedScreenState extends State<CategorySocialFeedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
+      appBar: BentoAppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
