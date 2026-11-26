@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { ADMIN_COOKIE_NAME, isValidAdminToken } from '@/lib/auth';
 import { getRecentActions } from '@/lib/recentActions';
-import { categoryNameFor } from '@/lib/materials';
+import { categoryNameFor, orderProfit } from '@/lib/materials';
 import LoginForm from './LoginForm';
 import AdminShell from './_ui/AdminShell';
 import OverviewTiles, { type OverviewData } from './_ui/OverviewTiles';
@@ -189,9 +189,18 @@ export default async function AdminDashboard({
       const qty = inq.quantity || 1;
       const unitPrice = inq.quotedPrice ?? inq.product?.pricePerUnit ?? 0;
       const totalRevenue = unitPrice * qty;
-      const unitCost = inq.product?.costPrice ?? 0;
-      const totalCost = unitCost > 0 ? unitCost * qty : 0;
-      const netProfit = totalCost > 0 ? Math.max(0, totalRevenue - totalCost) : Math.round(totalRevenue * 0.1);
+      // Partner's cost snapshot from the quote wins over the product's current cost
+      const pnl = orderProfit({
+        quantity: qty,
+        quotedPrice: unitPrice,
+        unitCost: inq.unitCost,
+        extraCost: inq.extraCost,
+        productCostPrice: inq.product?.costPrice,
+      });
+      const unitCost = inq.unitCost ?? inq.product?.costPrice ?? 0;
+      const totalCost = pnl.cost ?? 0;
+      // Unknown cost: keep the old 10% estimate so the chart is not empty
+      const netProfit = pnl.known ? Math.round(pnl.profit ?? 0) : Math.round(totalRevenue * 0.1);
       return {
         id: inq.id,
         title: inq.title,

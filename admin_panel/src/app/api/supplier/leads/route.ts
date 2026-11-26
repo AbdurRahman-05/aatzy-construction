@@ -64,6 +64,9 @@ export async function GET(request: Request) {
       product_name: i.product?.name || null,
       product_image: i.product?.images && i.product.images.length > 0 ? i.product.images[0] : null,
       product_cost: i.product?.costPrice || 0,
+      // Private to this partner: cost snapshot saved with the quote
+      unit_cost: i.unitCost,
+      extra_cost: i.extraCost,
     }));
 
     return NextResponse.json({ success: true, leads: formatted });

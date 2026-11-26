@@ -96,6 +96,12 @@ class LeadItem {
   String deliveryStatus;
   double gstPercent;
   final double productCost;
+
+  /// Private to the partner: purchase cost per unit saved with the quote (null = not entered).
+  double? unitCost;
+
+  /// Private to the partner: transport / loading / labour for the whole order.
+  double extraCost;
   final List<String> images;
   final String finishedDate;
 
@@ -118,6 +124,8 @@ class LeadItem {
     required this.deliveryStatus,
     required this.gstPercent,
     this.productCost = 0,
+    this.unitCost,
+    this.extraCost = 0,
     required this.images,
     required this.finishedDate,
   });
@@ -144,6 +152,8 @@ class LeadItem {
       deliveryStatus: json['delivery_status'] ?? 'Pending',
       gstPercent: _toDouble(json['gst_percent']) ?? 18.0,
       productCost: _toDouble(json['product_cost']) ?? 0,
+      unitCost: _toDouble(json['unit_cost']),
+      extraCost: _toDouble(json['extra_cost']) ?? 0,
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       finishedDate: _dateOnly(json['updated_at'] ?? json['updatedAt']),
     );

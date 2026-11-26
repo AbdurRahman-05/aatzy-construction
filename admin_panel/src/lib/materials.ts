@@ -136,3 +136,50 @@ export function checkBuyerUpdate(
   }
   return allow;
 }
+
+// ---------------------------------------------------------------------------
+// Partner-only cost bookkeeping (profit & loss on material orders)
+// ---------------------------------------------------------------------------
+
+const MAX_COST = 1e9;
+
+/**
+ * Parses an optional cost value sent by the partner app.
+ * undefined = not sent (leave as is), null = clear it, number = new value.
+ */
+export function parseCost(value: unknown): { ok: true; value: number | null | undefined } | { ok: false; error: string } {
+  if (value === undefined) return { ok: true, value: undefined };
+  if (value === null || value === '') return { ok: true, value: null };
+  const n = typeof value === 'number' ? value : parseFloat(String(value));
+  if (!Number.isFinite(n) || n < 0 || n > MAX_COST) {
+    return { ok: false, error: 'Costs must be a number of 0 or more.' };
+  }
+  return { ok: true, value: Math.round(n * 100) / 100 };
+}
+
+/** Removes the partner's private cost fields before an inquiry is sent to a buyer. */
+export function withoutPartnerCosts<T extends Record<string, unknown>>(inquiry: T): Omit<T, 'unitCost' | 'extraCost'> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { unitCost, extraCost, ...rest } = inquiry;
+  return rest;
+}
+
+/**
+ * Profit on one order, before GST (GST is collected for the government, it is not income).
+ * The cost snapshot on the order wins; the product's current cost is the fallback.
+ */
+export function orderProfit(o: {
+  quantity: number;
+  quotedPrice: number | null;
+  unitCost: number | null;
+  extraCost: number | null;
+  productCostPrice?: number | null;
+}) {
+  const qty = o.quantity > 0 ? o.quantity : 1;
+  const unitCost = o.unitCost ?? (o.productCostPrice && o.productCostPrice > 0 ? o.productCostPrice : null);
+  const revenue = (o.quotedPrice ?? 0) * qty;
+  const extra = o.extraCost ?? 0;
+  if (unitCost === null) return { revenue, cost: null as number | null, profit: null as number | null, known: false };
+  const cost = unitCost * qty + extra;
+  return { revenue, cost, profit: revenue - cost, known: true };
+}

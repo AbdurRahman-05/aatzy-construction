@@ -198,6 +198,10 @@ model Inquiry {
   quotedPrice    Float?
   deliveryStatus String             @default("Pending")
   gstPercent     Float              @default(18.0)
+  // Partner-only bookkeeping (never sent to the buyer): purchase cost per unit at quote time
+  // and extra costs for the whole order (transport, loading, labour). Used for profit & loss.
+  unitCost       Float?
+  extraCost      Float              @default(0)
   rating         Int?
   reviewText     String?
   createdAt      DateTime           @default(now())

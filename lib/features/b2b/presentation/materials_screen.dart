@@ -10,6 +10,8 @@ import '../../auth/auth_provider.dart';
 import '../models/material_order_models.dart';
 import 'widgets/custom_image.dart';
 import 'product_list_screen.dart' show formatRupees;
+import '../utils/order_profit.dart';
+import 'widgets/order_profit_widgets.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 
 class MaterialsScreen extends ConsumerStatefulWidget {
@@ -207,6 +209,8 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     double? quotedPrice,
     String? deliveryStatus,
     double? gstPercent,
+    double? unitCost,
+    double? extraCost,
   }) async {
     setState(() => _isLoading = true);
     final auth = ref.read(authProvider);
@@ -220,6 +224,9 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
         'quotedPrice': quotedPrice,
         'deliveryStatus': deliveryStatus,
         'gstPercent': gstPercent,
+        // Private to the partner - saved on the order for profit & loss, never shown to the buyer
+        'unitCost': ?unitCost,
+        'extraCost': ?extraCost,
       });
 
       if (res.success) {
@@ -228,6 +235,8 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
           if (quotedPrice != null) lead.quotedPrice = quotedPrice;
           if (deliveryStatus != null) lead.deliveryStatus = deliveryStatus;
           if (gstPercent != null) lead.gstPercent = gstPercent;
+          if (unitCost != null) lead.unitCost = unitCost;
+          if (extraCost != null) lead.extraCost = extraCost;
         });
 
         if (mounted) {
@@ -254,6 +263,21 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     }
   }
 
+  /// Private: the partner enters / corrects what this order really cost them.
+  Future<void> _editCosts(LeadItem lead) async {
+    final saved = await showCostsEditorSheet(context, lead);
+    if (!saved || !mounted) return;
+    setState(() {});
+    final p = lead.profit;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(p.known
+            ? 'Costs saved - ${p.isLoss ? 'loss' : 'profit'} ${formatMoney(p.profit!.abs())} on this order'
+            : 'Costs saved'),
+      ),
+    );
+  }
+
   void _showQuoteDialog(LeadItem lead, {bool isNewQuote = false}) {
     double selectedGstPercent = lead.gstPercent > 0 ? lead.gstPercent : 18.0;
     final notesController = TextEditingController(
@@ -262,6 +286,11 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     final quotedPriceController = TextEditingController(
       text: (lead.quotedPrice != null && lead.quotedPrice! > 0) ? lead.quotedPrice!.toStringAsFixed(2) : '',
     );
+    // Private costs - prefilled from the last quote, else from the product's purchase cost
+    String fmt(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+    final startCost = lead.effectiveUnitCost;
+    final costController = TextEditingController(text: startCost != null ? fmt(startCost) : '');
+    final extraController = TextEditingController(text: lead.extraCost > 0 ? fmt(lead.extraCost) : '');
 
     showDialog(
       context: context,
@@ -461,6 +490,17 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 12),
+
+                              // Private profit & loss - only the partner ever sees this
+                              QuoteProfitPanel(
+                                lead: lead,
+                                rateController: quotedPriceController,
+                                costController: costController,
+                                extraController: extraController,
+                                gstPercent: selectedGstPercent,
+                                onChanged: () => setDialogState(() {}),
+                              ),
                               const SizedBox(height: 18),
 
                               // GST Selection as Segmented Chips
@@ -556,7 +596,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text('Estimated Billing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF111318))),
+                                        const Text('Customer pays (incl. GST)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF111318))),
                                         Text(
                                           '₹${totalAmount.toStringAsFixed(2)}',
                                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0D9488)),
@@ -642,6 +682,8 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                     );
                                     return;
                                   }
+                                  final cost = double.tryParse(costController.text.trim());
+                                  final extra = double.tryParse(extraController.text.trim()) ?? 0;
                                   Navigator.pop(context);
                                   _updateLeadStatus(
                                     lead,
@@ -649,6 +691,8 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                     notesController.text.trim(),
                                     quotedPrice: qPrice,
                                     gstPercent: selectedGstPercent,
+                                    unitCost: (cost != null && cost > 0) ? cost : null,
+                                    extraCost: extra >= 0 ? extra : 0,
                                   );
                                 },
                                 icon: const Icon(Icons.send_rounded, size: 16),
@@ -986,6 +1030,12 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
         actions: [
           if (isProvider)
             IconButton(
+              tooltip: 'Profit report',
+              icon: const Icon(Icons.insights_rounded),
+              onPressed: () => showProfitReportSheet(context, _providerClosedDeals),
+            ),
+          if (isProvider)
+            IconButton(
               tooltip: 'My products',
               icon: const Icon(Icons.inventory_2_outlined),
               onPressed: () => context.push('/supplier-products'),
@@ -1059,6 +1109,18 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     if (isProvider) {
       final list = [_providerNotStarted, _providerOnProcesses, _providerClosedDeals, _providerRejected][tabIndex];
       cards = list.map(_buildProviderLeadCard).toList();
+      // Private profit summary for the partner on top of "In progress" and "Closed"
+      if (list.isNotEmpty && (tabIndex == 1 || tabIndex == 2)) {
+        cards.insert(
+          0,
+          ProfitSummaryCard(
+            key: ValueKey('profit-summary-$tabIndex'),
+            leads: list,
+            closed: tabIndex == 2,
+            onOpenReport: tabIndex == 2 ? () => showProfitReportSheet(context, _providerClosedDeals) : null,
+          ),
+        );
+      }
     } else {
       final list = [_consumerNotStarted, _consumerOnProcesses, _consumerClosedDeals, _consumerRejected][tabIndex];
       cards = list.map(_buildConsumerInquiryCard).toList();
@@ -1417,9 +1479,6 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   Widget _buildProviderLeadCard(LeadItem lead) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final inDelivery = ['Accepted', 'Closed'].contains(lead.status) && lead.deliveryStatus != 'Delivered';
-    final profit = (lead.quotedPrice != null && lead.productCost > 0)
-        ? (lead.quotedPrice! - lead.productCost) * lead.quantityVal
-        : null;
 
     return BentoCard(
       padding: const EdgeInsets.all(14),
@@ -1489,16 +1548,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
               gstPercent: lead.gstPercent,
               dark: dark,
             ),
-            if (profit != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                'Your margin on this order: ${formatRupees(profit)} (before GST)',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: profit >= 0 ? Bento.green : Bento.red,
-                ),
-              ),
+            // Private profit / loss on this order (partner only)
+            if (!['Rejected', 'Lead Rejected'].contains(lead.status)) ...[
+              const SizedBox(height: 8),
+              LeadProfitStrip(lead: lead, onEditCosts: () => _editCosts(lead)),
             ],
           ],
           if (inDelivery) ...[

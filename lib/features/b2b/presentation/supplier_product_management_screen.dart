@@ -8,6 +8,7 @@ import '../../../core/services/media_picker_service.dart';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
 import 'widgets/custom_image.dart';
+import '../utils/order_profit.dart';
 
 class SupplierProductManagementScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic>? editItem;
@@ -99,6 +100,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
     super.initState();
     _nameController.addListener(_rebuildPreview);
     _priceController.addListener(_rebuildPreview);
+    _costController.addListener(_rebuildPreview);
     _unitTypeController.addListener(_rebuildPreview);
     _specKeyController.addListener(_rebuildPreview);
     _specValueController.addListener(_rebuildPreview);
@@ -135,6 +137,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
   void dispose() {
     _nameController.removeListener(_rebuildPreview);
     _priceController.removeListener(_rebuildPreview);
+    _costController.removeListener(_rebuildPreview);
     _unitTypeController.removeListener(_rebuildPreview);
     _specKeyController.removeListener(_rebuildPreview);
     _specValueController.removeListener(_rebuildPreview);
@@ -648,72 +651,79 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
           ),
           const SizedBox(height: 18),
 
+          // Purchase cost (private) + selling price (public) side by side
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Price per Unit
               Expanded(
-                flex: 3,
+                child: TextFormField(
+                  controller: _costController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Purchase cost',
+                    hintText: 'What you pay',
+                    prefixText: '₹ ',
+                    prefixStyle: TextStyle(fontWeight: FontWeight.bold, color: textDark),
+                    helperText: '🔒 Only you see this',
+                    helperStyle: TextStyle(fontSize: 11, color: textMuted),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) return null;
+                    final v = double.tryParse(value.trim());
+                    if (v == null || v < 0) return 'Must be a number';
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
                 child: TextFormField(
                   controller: _priceController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: 'Price per Unit (₹)',
+                    labelText: 'Selling price',
                     hintText: '420',
                     prefixText: '₹ ',
                     prefixStyle: TextStyle(fontWeight: FontWeight.bold, color: textDark),
+                    helperText: 'Customers see this',
+                    helperStyle: TextStyle(fontSize: 11, color: textMuted),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     filled: true,
                     fillColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return 'Enter price';
-                    if (double.tryParse(value.trim()) == null) return 'Must be numeric';
+                    final v = double.tryParse(value.trim());
+                    if (v == null || v <= 0) return 'Must be more than 0';
                     return null;
                   },
-                ),
-              ),
-              const SizedBox(width: 14),
-
-              // Unit Type
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: _unitTypeController,
-                  decoration: InputDecoration(
-                    labelText: 'Unit Type',
-                    hintText: 'e.g. Bag',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    filled: true,
-                    fillColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
-                  ),
-                  validator: (value) => value == null || value.trim().isEmpty ? 'Required' : null,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
 
-          // Private cost price -> margin on orders
+          // Fill the selling price from the cost with one tap
+          _buildMarkupChips(textDark, textMuted, primaryColor, cardBorder),
+
+          // Live profit per unit
+          _buildUnitProfitPreview(textDark, textMuted),
+          const SizedBox(height: 14),
+
+          // Unit Type
           TextFormField(
-            controller: _costController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            controller: _unitTypeController,
             decoration: InputDecoration(
-              labelText: 'Your cost per unit (optional)',
-              hintText: 'What you pay for it',
-              prefixText: '₹ ',
-              prefixStyle: TextStyle(fontWeight: FontWeight.bold, color: textDark),
-              helperText: 'Only you can see this. Used to show your margin on each order.',
+              labelText: 'Unit Type',
+              hintText: 'e.g. Bag',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               filled: true,
               fillColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) return null;
-              final v = double.tryParse(value.trim());
-              if (v == null || v < 0) return 'Must be a number';
-              return null;
-            },
+            validator: (value) => value == null || value.trim().isEmpty ? 'Required' : null,
           ),
           const SizedBox(height: 12),
 
@@ -746,6 +756,130 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
                 },
               );
             }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// "+15%" style buttons that set the selling price from the purchase cost.
+  Widget _buildMarkupChips(Color textDark, Color textMuted, Color primaryColor, Color cardBorder) {
+    final cost = double.tryParse(_costController.text.trim()) ?? 0;
+    if (cost <= 0) return const SizedBox.shrink();
+    final price = double.tryParse(_priceController.text.trim()) ?? 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Set price with markup on cost:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: kMarkupPresets.map((pct) {
+              final target = priceWithMarkup(cost, pct);
+              final selected = (price - target).abs() < 0.01;
+              return ChoiceChip(
+                label: Text('+$pct%  ·  ${formatMoney(target)}'),
+                selected: selected,
+                showCheckmark: false,
+                labelStyle: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? Colors.white : textDark,
+                ),
+                selectedColor: primaryColor,
+                backgroundColor: Theme.of(context).cardColor,
+                side: BorderSide(color: selected ? primaryColor : cardBorder),
+                onSelected: (_) {
+                  final text = target == target.roundToDouble() ? target.toStringAsFixed(0) : target.toStringAsFixed(2);
+                  _priceController.text = text;
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Profit / loss per unit, the margin, and what it means on a typical order.
+  Widget _buildUnitProfitPreview(Color textDark, Color textMuted) {
+    final price = double.tryParse(_priceController.text.trim()) ?? 0;
+    final cost = double.tryParse(_costController.text.trim()) ?? 0;
+    final unit = _unitTypeController.text.trim().isEmpty ? 'unit' : _unitTypeController.text.trim();
+    if (price <= 0) return const SizedBox.shrink();
+
+    if (cost <= 0) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: textMuted.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.lock_outline_rounded, size: 18, color: textMuted),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Add your purchase cost to see your profit on every sale. Customers never see it.',
+                style: TextStyle(fontSize: 12, color: textMuted, height: 1.35),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final p = OrderProfit.calculate(quantity: 1, pricePerUnit: price, costPerUnit: cost);
+    final loss = p.isLoss;
+    final even = (p.profit ?? 0).abs() < 0.005;
+    final color = loss ? Bento.red : (even ? Bento.warning : Bento.green);
+    final per100 = (p.profit ?? 0) * 100;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(loss ? Icons.trending_down_rounded : Icons.trending_up_rounded, size: 20, color: color),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  even
+                      ? 'No profit - you sell at cost'
+                      : loss
+                          ? 'Loss of ${formatMoney(-(p.profit!))} per $unit'
+                          : 'Profit ${formatMoney(p.profit!)} per $unit',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  '${formatPct(p.marginPct)} margin',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            loss
+                ? 'You are selling below cost. Break-even price is ${formatMoney(cost)} per $unit.'
+                : 'On 100 $unit you ${even ? 'break even' : 'make ${formatMoney(per100)}'}. Prices are before GST - GST is not profit.',
+            style: TextStyle(fontSize: 11.5, color: textDark.withValues(alpha: 0.75), height: 1.35),
           ),
         ],
       ),

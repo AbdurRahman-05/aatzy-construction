@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, forbidden } from '@/lib/auth';
-import { checkBuyerUpdate } from '@/lib/materials';
+import { checkBuyerUpdate, withoutPartnerCosts } from '@/lib/materials';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -111,7 +111,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return NextResponse.json({
       success: true,
       message: 'Inquiry status updated successfully',
-      inquiry: updated,
+      // Never send the partner's private costs to the buyer
+      inquiry: withoutPartnerCosts(updated),
     });
   } catch (error) {
     console.error('Update inquiry status error:', error);

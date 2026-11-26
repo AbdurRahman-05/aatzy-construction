@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, forbidden } from '@/lib/auth';
-import { checkSupplierUpdate } from '@/lib/materials';
+import { checkSupplierUpdate, parseCost } from '@/lib/materials';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -16,6 +16,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const { id } = await context.params;
     const body = await request.json();
     const { status, notes, quotedPrice, deliveryStatus, gstPercent } = body;
+
+    // Partner-only costs (purchase cost per unit + extra costs). Private - never shown to the buyer.
+    const unitCostIn = parseCost(body.unitCost);
+    const extraCostIn = parseCost(body.extraCost);
+    if (!unitCostIn.ok) return NextResponse.json({ error: unitCostIn.error }, { status: 400 });
+    if (!extraCostIn.ok) return NextResponse.json({ error: extraCostIn.error }, { status: 400 });
 
     const inquiry = await prisma.inquiry.findFirst({
       where: { id },
@@ -49,6 +55,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         quotedPrice: nextPrice,
         deliveryStatus: nextDelivery,
         gstPercent: nextGst,
+        unitCost: unitCostIn.value,
+        extraCost: extraCostIn.value === null ? 0 : extraCostIn.value,
       },
     });
 
