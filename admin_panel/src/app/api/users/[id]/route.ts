@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendFCMNotification } from '@/lib/fcm';
 import { requireAdmin, requireAuth, denyUnlessSelf } from '@/lib/auth';
+import { createNotification } from '@/lib/notifications';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -79,10 +80,39 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       where: { id },
       select: { fcmToken: true, name: true, email: true },
     });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
-    await prisma.user.delete({
-      where: { id },
+    // Projects (and their quotes / updates / tasks) are not cascade-deleted by the database,
+    // so a customer with any project could never be deleted. Remove them explicitly.
+    const activePartners = await prisma.quote.findMany({
+      where: { isAccepted: true, project: { userId: id } },
+      select: { providerId: true, projectId: true, project: { select: { title: true, currentStage: true } } },
     });
+
+    await prisma.$transaction([
+      prisma.quote.deleteMany({ where: { project: { userId: id } } }),
+      prisma.projectUpdate.deleteMany({ where: { project: { userId: id } } }),
+      prisma.projectTask.deleteMany({ where: { project: { userId: id } } }),
+      prisma.project.deleteMany({ where: { userId: id } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
+
+    // Tell partners who were working for this customer (best effort)
+    const FINISHED = ['completed', 'finished', 'cancelled'];
+    for (const q of activePartners) {
+      if (FINISHED.includes((q.project.currentStage || '').toLowerCase().trim())) continue;
+      createNotification({
+        recipientId: q.providerId,
+        role: 'PROVIDER',
+        title: '❌ Project Cancelled',
+        body: `The client account for "${q.project.title}" was removed, so this project has been closed.`,
+        type: 'PROJECT_CANCELLED',
+        entityId: q.projectId,
+        route: '/provider-home',
+      }).catch(err => console.error('Client removal notification error:', err));
+    }
 
     if (user?.fcmToken) {
       sendFCMNotification({

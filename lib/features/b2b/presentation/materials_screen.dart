@@ -36,9 +36,9 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 2),
+      initialIndex: widget.initialTab.clamp(0, 3),
     );
     _fetchData();
   }
@@ -53,7 +53,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   void didUpdateWidget(covariant MaterialsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialTab != widget.initialTab) {
-      _tabController.animateTo(widget.initialTab.clamp(0, 2));
+      _tabController.animateTo(widget.initialTab.clamp(0, 3));
     }
   }
 
@@ -168,7 +168,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
 
   // Filters for Consumer
   List<InquiryModel> get _consumerNotStarted => _inquiries.where((i) {
-    return ['New', 'Viewed', 'Contacted', 'Quote Sent', 'Rejected'].contains(i.status);
+    return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(i.status);
   }).toList();
 
   List<InquiryModel> get _consumerOnProcesses => _inquiries.where((i) {
@@ -179,9 +179,13 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     return i.status == 'Completed' || (i.status == 'Closed' && i.deliveryStatus == 'Delivered');
   }).toList();
 
+  List<InquiryModel> get _consumerRejected => _inquiries.where((i) {
+    return ['Rejected', 'Lead Rejected'].contains(i.status);
+  }).toList();
+
   // Filters for Provider
   List<LeadItem> get _providerNotStarted => _leads.where((l) {
-    return ['New', 'Viewed', 'Contacted', 'Quote Sent', 'Rejected', 'Lead Rejected'].contains(l.status);
+    return ['New', 'Viewed', 'Contacted', 'Quote Sent'].contains(l.status);
   }).toList();
 
   List<LeadItem> get _providerOnProcesses => _leads.where((l) {
@@ -190,6 +194,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
 
   List<LeadItem> get _providerClosedDeals => _leads.where((l) {
     return l.status == 'Completed' || (l.status == 'Closed' && l.deliveryStatus == 'Delivered');
+  }).toList();
+
+  List<LeadItem> get _providerRejected => _leads.where((l) {
+    return ['Rejected', 'Lead Rejected'].contains(l.status);
   }).toList();
 
   // Provider Action Handlers (reused from LeadManagementScreen)
@@ -966,8 +974,8 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     final dark = Theme.of(context).brightness == Brightness.dark;
 
     final counts = isProvider
-        ? [_providerNotStarted.length, _providerOnProcesses.length, _providerClosedDeals.length]
-        : [_consumerNotStarted.length, _consumerOnProcesses.length, _consumerClosedDeals.length];
+        ? [_providerNotStarted.length, _providerOnProcesses.length, _providerClosedDeals.length, _providerRejected.length]
+        : [_consumerNotStarted.length, _consumerOnProcesses.length, _consumerClosedDeals.length, _consumerRejected.length];
 
     return Scaffold(
       appBar: BentoAppBar(
@@ -1003,11 +1011,11 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
             child: BentoPillTabs(
               controller: _tabController,
               labels: isProvider
-                  ? const ['New leads', 'In progress', 'Closed']
-                  : const ['Quotes', 'On the way', 'Delivered'],
+                  ? const ['New leads', 'In progress', 'Closed', 'Rejected']
+                  : const ['Quotes', 'On the way', 'Delivered', 'Rejected'],
               icons: isProvider
-                  ? const [Icons.mark_email_unread_rounded, Icons.local_shipping_rounded, Icons.task_alt_rounded]
-                  : const [Icons.request_quote_rounded, Icons.local_shipping_rounded, Icons.task_alt_rounded],
+                  ? const [Icons.mark_email_unread_rounded, Icons.local_shipping_rounded, Icons.task_alt_rounded, Icons.cancel_outlined]
+                  : const [Icons.request_quote_rounded, Icons.local_shipping_rounded, Icons.task_alt_rounded, Icons.cancel_outlined],
               counts: _isLoading ? null : counts,
             ),
           ),
@@ -1038,6 +1046,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                       _buildTabList(isProvider, 0),
                       _buildTabList(isProvider, 1),
                       _buildTabList(isProvider, 2),
+                      _buildTabList(isProvider, 3),
                     ],
                   ),
           ),
@@ -1049,10 +1058,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   Widget _buildTabList(bool isProvider, int tabIndex) {
     final List<Widget> cards;
     if (isProvider) {
-      final list = [_providerNotStarted, _providerOnProcesses, _providerClosedDeals][tabIndex];
+      final list = [_providerNotStarted, _providerOnProcesses, _providerClosedDeals, _providerRejected][tabIndex];
       cards = list.map(_buildProviderLeadCard).toList();
     } else {
-      final list = [_consumerNotStarted, _consumerOnProcesses, _consumerClosedDeals][tabIndex];
+      final list = [_consumerNotStarted, _consumerOnProcesses, _consumerClosedDeals, _consumerRejected][tabIndex];
       cards = list.map(_buildConsumerInquiryCard).toList();
     }
 
@@ -1086,12 +1095,18 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
           ? 'Orders you are packing or delivering appear here.'
           : 'Accepted orders being packed or delivered appear here.';
       icon = Icons.local_shipping_outlined;
-    } else {
+    } else if (tabIndex == 2) {
       title = isProvider ? 'No closed deals yet' : 'No deliveries yet';
       subtitle = isProvider
           ? 'Completed orders and their delivery proof appear here.'
           : 'Your delivered materials and their history appear here.';
       icon = Icons.task_alt_rounded;
+    } else {
+      title = 'No rejected quotes';
+      subtitle = isProvider
+          ? 'Quotes declined by buyers or leads you rejected appear here.'
+          : 'Quotes you declined or inquiries declined by suppliers appear here.';
+      icon = Icons.cancel_outlined;
     }
 
     return Padding(
