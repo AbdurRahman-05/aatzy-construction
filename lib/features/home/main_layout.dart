@@ -8,6 +8,9 @@ import '../project/projects_list_screen.dart';
 import '../../core/wallpaper_background.dart';
 import '../../core/services/ad_popup_service.dart';
 import '../../core/widgets/bento.dart';
+import 'package:go_router/go_router.dart';
+import '../auth/auth_provider.dart';
+import 'welcome_intent_sheet.dart';
 
 class MainTabNotifier extends Notifier<int> {
   final List<int> _history = [0];
@@ -71,11 +74,45 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        AdPopupService.checkAndShowAd(context, role: 'CONSUMER');
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showEntryPopups());
+  }
+
+  /// On every app open: the "What are you planning?" page first. If the
+  /// customer stays on Home ("Just exploring" / close), the admin ad popup
+  /// follows; if they pick a goal, we take them there without an ad.
+  Future<void> _showEntryPopups() async {
+    if (!mounted) return;
+    final auth = ref.read(authProvider);
+    final intent = await WelcomeIntentSheet.maybeShow(
+      context,
+      userId: auth.id,
+      userName: auth.name,
+    );
+    if (!mounted) return;
+
+    if (intent == null || intent == UserIntent.exploring) {
+      AdPopupService.checkAndShowAd(context, role: 'CONSUMER');
+      return;
+    }
+    _openIntent(intent);
+  }
+
+  void _openIntent(UserIntent intent) {
+    String createProject(String type, String service) =>
+        '/create-project?type=${Uri.encodeQueryComponent(type)}&service=${Uri.encodeQueryComponent(service)}';
+
+    switch (intent) {
+      case UserIntent.buildHouse:
+        context.push(createProject('Residential Villa', 'Construction'));
+      case UserIntent.renovate:
+        context.push(createProject('Renovation & Remodel', 'Renovations/Remodeling'));
+      case UserIntent.interiors:
+        context.push(createProject('Residential Villa', 'Interiors & Finishing'));
+      case UserIntent.buyMaterials:
+        context.push('/b2b-materials');
+      case UserIntent.exploring:
+        break;
+    }
   }
 
   @override

@@ -25,11 +25,9 @@ import '../features/home/help_support_screen.dart';
 import '../features/b2b/presentation/product_list_screen.dart';
 import '../features/b2b/presentation/product_detail_screen.dart';
 import '../features/b2b/presentation/inquiry_form_screen.dart';
-import '../features/b2b/presentation/my_inquiries_screen.dart';
 import '../features/b2b/presentation/news_screen.dart';
 import '../features/b2b/presentation/supplier_catalog_screen.dart';
 import '../features/b2b/presentation/supplier_product_management_screen.dart';
-import '../features/b2b/presentation/lead_management_screen.dart';
 import '../features/b2b/presentation/materials_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/chat/chat_detail_screen.dart';
@@ -119,7 +117,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'create-project',
             builder: (context, state) {
               final estimate = state.extra is CostEstimateResult ? state.extra as CostEstimateResult : null;
-              return CreateProjectScreen(initialEstimate: estimate);
+              return CreateProjectScreen(
+                initialEstimate: estimate,
+                initialPropertyType: state.uri.queryParameters['type'],
+                initialService: state.uri.queryParameters['service'],
+              );
             },
           ),
           GoRoute(
@@ -218,11 +220,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           productId: state.uri.queryParameters['productId'],
           productName: state.uri.queryParameters['productName'],
           productImage: state.uri.queryParameters['productImage'],
+          supplierName: state.uri.queryParameters['supplierName'],
+          unit: state.uri.queryParameters['unit'],
+          price: double.tryParse(state.uri.queryParameters['price'] ?? ''),
         ),
       ),
       GoRoute(
         path: '/b2b-my-inquiries',
-        builder: (context, state) => const MyInquiriesScreen(),
+        builder: (context, state) => const MaterialsScreen(),
       ),
       GoRoute(
         path: '/b2b-materials',
@@ -247,7 +252,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/supplier-leads',
-        builder: (context, state) => const LeadManagementScreen(),
+        builder: (context, state) => const MaterialsScreen(),
       ),
       // Chat routes — used by notification deep-links
       GoRoute(

@@ -14,7 +14,17 @@ import 'cost_estimation_screen.dart';
 
 class CreateProjectScreen extends ConsumerStatefulWidget {
   final CostEstimateResult? initialEstimate;
-  const CreateProjectScreen({super.key, this.initialEstimate});
+
+  /// Pre-selects a property type / service (e.g. from the welcome sheet).
+  final String? initialPropertyType;
+  final String? initialService;
+
+  const CreateProjectScreen({
+    super.key,
+    this.initialEstimate,
+    this.initialPropertyType,
+    this.initialService,
+  });
 
   @override
   ConsumerState<CreateProjectScreen> createState() => _CreateProjectScreenState();
@@ -181,6 +191,14 @@ class _CreateProjectScreenState extends ConsumerState<CreateProjectScreen> {
   @override
   void initState() {
     super.initState();
+    final presetType = widget.initialPropertyType;
+    if (presetType != null && _propertyTypes.any((t) => t['name'] == presetType)) {
+      _selectedPropertyType = presetType;
+    }
+    final presetService = widget.initialService;
+    if (presetService != null && _allServices.any((s) => s['name'] == presetService)) {
+      _selectedServices.add(presetService);
+    }
     if (widget.initialEstimate != null) {
       _applyEstimate(widget.initialEstimate!);
     }

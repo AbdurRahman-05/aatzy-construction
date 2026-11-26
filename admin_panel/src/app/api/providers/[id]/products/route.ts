@@ -1,15 +1,23 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, denyUnlessSelf } from '@/lib/auth';
+import { categoryNameFor } from '@/lib/materials';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
 
+    // Public endpoint: the partner sees everything (incl. cost price and pending/rejected items);
+    // everyone else only sees live products, without the partner's buying price.
+    const authResult = requireAuth(request);
+    if (!authResult.ok) return authResult.response;
+    const isOwner = authResult.auth?.role === 'PROVIDER' && authResult.auth.id === id;
+
     const products = await prisma.product.findMany({
       where: {
         providerId: id,
         deletedAt: null,
+        ...(isOwner ? {} : { status: 'Approved' }),
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -22,9 +30,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       unit_type: p.unitType,
       images: p.images,
       status: p.status,
-      category: p.category,
+      category: categoryNameFor(p.categoryId, p.category),
+      category_name: categoryNameFor(p.categoryId, p.category),
+      category_id: p.categoryId || 1,
       specifications: p.specifications ? JSON.parse(p.specifications) : {},
-      cost_price: p.costPrice,
+      ...(isOwner ? { cost_price: p.costPrice, rejected_reason: p.rejectedReason } : {}),
     }));
 
     return NextResponse.json({ success: true, products: formatted });

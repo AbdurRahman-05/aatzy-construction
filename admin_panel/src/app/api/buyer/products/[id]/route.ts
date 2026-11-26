@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { categoryNameFor } from '@/lib/materials';
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -20,19 +21,27 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       },
     });
 
-    if (!product || product.deletedAt) {
+    if (!product || product.deletedAt || product.status !== 'Approved') {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    const providerReviews = product.provider.reviews;
-    const avgRating = providerReviews.length > 0
-      ? parseFloat((providerReviews.reduce((sum, r) => sum + r.rating, 0) / providerReviews.length).toFixed(1))
+    // Supplier rating = project reviews + ratings from completed material orders
+    const materialRatings = await prisma.inquiry.findMany({
+      where: { providerId: product.providerId, rating: { not: null } },
+      select: { rating: true },
+    });
+    const allRatings = [
+      ...product.provider.reviews.map(r => r.rating),
+      ...materialRatings.map(r => r.rating as number),
+    ];
+    const avgRating = allRatings.length > 0
+      ? parseFloat((allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length).toFixed(1))
       : 0.0;
 
     // Get related products
     const related = await prisma.product.findMany({
       where: {
-        category: product.category,
+        ...(product.categoryId ? { categoryId: product.categoryId } : { category: product.category }),
         id: { not: id },
         status: 'Approved',
         deletedAt: null,
@@ -60,11 +69,13 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       company_name: product.provider.businessName,
       supplier_description: product.provider.bio || '',
       supplier_location: product.provider.address || 'All India',
-      business_type: 'Supplier',
-      website: '',
+      category: categoryNameFor(product.categoryId, product.category),
+      is_verified: product.provider.isVerified,
+      business_type: product.provider.businessType || 'Supplier',
+      website: product.provider.website || '',
       logo_url: product.provider.profileImage || '',
       avg_rating: avgRating,
-      total_reviews: providerReviews.length,
+      total_reviews: allRatings.length,
     };
 
     return NextResponse.json({

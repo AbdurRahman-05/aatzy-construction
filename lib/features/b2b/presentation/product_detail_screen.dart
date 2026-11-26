@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:construction_app/core/widgets/bento.dart';
 import 'package:go_router/go_router.dart';
+import '../../auth/auth_provider.dart';
 import '../services/b2b_api_service.dart';
+import 'product_list_screen.dart' show formatRupees;
 import 'widgets/custom_image.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 
-class ProductDetailScreen extends StatefulWidget {
+class ProductDetailScreen extends ConsumerStatefulWidget {
   final String productId;
 
   const ProductDetailScreen({super.key, required this.productId});
 
   @override
-  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+  ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  bool _isSaved = false;
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _product;
   List<dynamic> _relatedProducts = [];
   String? _errorMessage;
+  int _imageIndex = 0;
 
   @override
   void initState() {
@@ -34,25 +37,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
 
     try {
-      final api = B2BApiService();
-      final res = await api.get('/buyer/products/${widget.productId}');
+      final res = await B2BApiService().get('/buyer/products/${widget.productId}');
+      if (!mounted) return;
       if (res.success && res.data != null) {
         setState(() {
           _product = res.data['product'];
           _relatedProducts = res.data['relatedProducts'] ?? [];
         });
       } else {
-        setState(() {
-          _errorMessage = res.data['error'] ?? 'Failed to load details';
-        });
+        setState(() => _errorMessage = res.data['error'] ?? 'Failed to load details');
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to load live product details.';
-      });
+      if (mounted) setState(() => _errorMessage = 'Failed to load product details.');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _openInquiry(Map<String, dynamic> p, double price, String unit) {
+    final params = <String, String>{
+      'productId': p['id'].toString(),
+      'productName': p['name']?.toString() ?? '',
+      'supplierId': p['supplier_id'].toString(),
+      'supplierName': p['company_name']?.toString() ?? '',
+      'unit': unit,
+      'price': price.toStringAsFixed(2),
+    };
+    context.push(Uri(path: '/b2b-inquiry-form', queryParameters: params).toString());
+  }
+
+  void _openChat(Map<String, dynamic> p) {
+    final supplierId = p['supplier_id']?.toString() ?? '';
+    if (supplierId.isEmpty) return;
+    final name = Uri.encodeQueryComponent(p['company_name']?.toString() ?? 'Supplier');
+    context.push('/chat/$supplierId?name=$name');
   }
 
   @override
@@ -61,48 +79,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return const ShimmerProductDetail();
     }
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final p = _product;
     if (p == null) {
       return Scaffold(
-        appBar: BentoAppBar(title: const Text('Error')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(_errorMessage ?? 'Product details not found.'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _fetchProductDetails,
-                child: const Text('Retry'),
-              ),
-            ],
+        appBar: BentoAppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => context.pop(),
+          ),
+          title: const Text('Product'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: BentoEmptyState(
+            icon: Icons.inventory_2_outlined,
+            title: 'Product unavailable',
+            subtitle: _errorMessage ?? 'This product may have been removed by the supplier.',
+            actionLabel: 'Retry',
+            onAction: _fetchProductDetails,
           ),
         ),
       );
     }
 
+    final auth = ref.watch(authProvider);
+    final isProvider = auth.role == 'PROVIDER';
+
+    // Only show specifications the supplier actually entered
     final rawSpecs = p['specifications'];
-    final Map<String, String> specs = {};
+    final specs = <String, String>{};
     if (rawSpecs is Map) {
       rawSpecs.forEach((key, value) {
-        specs[key.toString()] = value.toString();
+        final v = value?.toString().trim() ?? '';
+        if (v.isNotEmpty) specs[key.toString()] = v;
       });
-    } else {
-      specs['Packaging'] = 'Standard B2B Packing';
-      specs['Min Order Quantity'] = '100 units';
     }
 
     final imagesList = p['images'] as List?;
     final images = (imagesList != null && imagesList.isNotEmpty)
         ? imagesList
-        : [
-            'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=600',
-          ];
+        : const ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=600'];
 
-    final double price = p['price_per_unit'] != null
-        ? double.parse(p['price_per_unit'].toString())
-        : 0.0;
+    final double price = double.tryParse(p['price_per_unit']?.toString() ?? '') ?? 0.0;
     final String unit = p['unit_type'] ?? 'Bag';
+    final bool verified = p['is_verified'] == true;
+    final double rating = double.tryParse(p['avg_rating']?.toString() ?? '') ?? 0.0;
+    final int reviews = int.tryParse(p['total_reviews']?.toString() ?? '') ?? 0;
+    final String category = p['category']?.toString() ?? '';
 
     return Scaffold(
       appBar: BentoAppBar(
@@ -110,392 +134,407 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Product Details'),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isSaved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-              color: _isSaved ? Colors.red : Colors.black87,
-            ),
-            onPressed: () {
-              setState(() => _isSaved = !_isSaved);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _isSaved ? 'Saved to favorites' : 'Removed from favorites',
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+        title: const Text('Product'),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: 250,
-              child: PageView.builder(
-                itemCount: images.length,
-                itemBuilder: (context, index) {
-                  return BuildMartImage(
-                    imageUrl: images[index],
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  );
-                },
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 120),
+        children: [
+          // Image gallery
+          BentoCard(
+            padding: EdgeInsets.zero,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(Bento.radius),
+              child: SizedBox(
+                height: 260,
+                child: Stack(
+                  children: [
+                    PageView.builder(
+                      itemCount: images.length,
+                      onPageChanged: (i) => setState(() => _imageIndex = i),
+                      itemBuilder: (context, index) => Container(
+                        color: Bento.surfaceAlt(dark),
+                        padding: const EdgeInsets.all(12),
+                        child: BuildMartImage(
+                          imageUrl: images[index].toString(),
+                          fit: BoxFit.contain,
+                          width: double.infinity,
+                        ),
+                      ),
+                    ),
+                    if (images.length > 1)
+                      Positioned(
+                        bottom: 12,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(images.length, (i) {
+                            final active = i == _imageIndex;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              width: active ? 18 : 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: active ? Bento.accent : Bento.muted(dark).withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: Bento.gap),
 
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          // Title + price
+          BentoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    if (category.isNotEmpty)
+                      BentoPill(label: category, color: Bento.accentText(dark), icon: Icons.category_rounded),
+                    if (verified)
+                      const BentoPill(label: 'Verified supplier', color: Bento.green, icon: Icons.verified_rounded),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  p['name'] ?? '',
+                  style: TextStyle(
+                    fontSize: 21,
+                    height: 1.2,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                    color: Bento.text(dark),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: Bento.accentGradient,
+                    borderRadius: BorderRadius.circular(Bento.radiusSm),
+                  ),
+                  child: Row(
                     children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Listed price',
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11.5, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 2),
+                            Text.rich(
+                              TextSpan(children: [
+                                TextSpan(
+                                  text: formatRupees(price),
+                                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
+                                ),
+                                TextSpan(
+                                  text: '  / $unit',
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w700),
+                                ),
+                              ]),
+                            ),
+                          ],
+                        ),
+                      ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(50),
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(
-                          p['business_type'] ?? 'Verified Supplier',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.star_rounded,
-                        color: Colors.amber,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${p['avg_rating'] ?? "0.0"} (${p['total_reviews'] ?? 0} reviews)',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                        child: const Text(
+                          'Final price\nin quote',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 10.5, height: 1.2, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    p['name'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Estimated Rate: ₹${price.toStringAsFixed(0)} / $unit',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Bento.gap),
 
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Product Description',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    p['description'] ?? 'No description provided.',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      color: Colors.grey.shade700,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(color: Colors.grey),
+          // Description
+          BentoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionTitle('About this product', Icons.notes_rounded, dark),
+                const SizedBox(height: 8),
+                Text(
+                  (p['description']?.toString().trim().isNotEmpty ?? false)
+                      ? p['description']
+                      : 'No description provided.',
+                  style: TextStyle(fontSize: 13.5, height: 1.5, color: Bento.muted(dark)),
+                ),
+              ],
+            ),
+          ),
 
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Specifications',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
+          if (specs.isNotEmpty) ...[
+            const SizedBox(height: Bento.gap),
+            BentoCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _sectionTitle('Specifications', Icons.straighten_rounded, dark),
                   const SizedBox(height: 10),
-                  Table(
-                    border: TableBorder.all(
-                      color: Colors.grey.shade300,
-                      width: 1,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    columnWidths: const {
-                      0: FlexColumnWidth(2),
-                      1: FlexColumnWidth(3),
-                    },
-                    children: specs.entries.map((entry) {
-                      return TableRow(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Text(
-                              entry.key,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
+                  ...specs.entries.map((e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Bento.surfaceAlt(dark),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Text(
-                              entry.value,
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(color: Colors.grey),
-
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Supplier Details',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: BuildMartImage(
-                            imageUrl: p['logo_url'] ?? '',
-                            width: 52,
-                            height: 52,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                p['company_name'] ?? 'BuildMart Supplier',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(e.key,
+                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Bento.muted(dark))),
                               ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star_rounded,
-                                    color: Colors.amber,
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${p['avg_rating'] ?? "0.0"} (${p['total_reviews'] ?? 0} Reviews)',
-                                    style: const TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_on_rounded,
-                                    size: 12,
-                                    color: Colors.red,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    p['supplier_location'] ?? 'All India',
-                                    style: TextStyle(
-                                      fontSize: 11.5,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
+                              Expanded(
+                                flex: 3,
+                                child: Text(e.value,
+                                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Bento.text(dark))),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  if (_relatedProducts.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    const Divider(color: Colors.grey),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Related Products',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 150,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _relatedProducts.length,
-                        itemBuilder: (context, idx) {
-                          final rel = _relatedProducts[idx];
-                          final relImages = rel['images'] as List?;
-                          final relImage =
-                              (relImages != null && relImages.isNotEmpty)
-                              ? relImages[0] as String
-                              : '';
-                          return GestureDetector(
-                            onTap: () {
-                              context.pushReplacement(
-                                '/b2b-product-detail/${rel['id']}',
-                              );
-                            },
-                            child: Container(
-                              width: 130,
-                              margin: const EdgeInsets.only(right: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: BuildMartImage(
-                                      imageUrl: relImage,
-                                      width: 130,
-                                      height: 90,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    rel['name'] ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  Text(
-                                    '₹${rel['price_per_unit']} / ${rel['unit_type']}',
-                                    style: const TextStyle(
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 100),
+                      )),
                 ],
               ),
             ),
           ],
-        ),
-      ),
-      bottomSheet: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Colors.grey.shade200, width: 1),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, -3),
-              ),
-            ],
-          ),
-          child: SizedBox(
-            height: 48,
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                context.push(
-                  '/b2b-inquiry-form?productId=${p['id']}&productName=${Uri.encodeComponent(p['name'] ?? "")}&supplierId=${p['supplier_id']}&productImage=${Uri.encodeComponent(images[0])}',
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: Bento.gap),
+
+          // Supplier
+          BentoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionTitle('Supplier', Icons.storefront_rounded, dark),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    BentoAvatar(
+                      name: p['company_name']?.toString() ?? 'Supplier',
+                      image: (p['logo_url']?.toString().isNotEmpty ?? false) ? p['logo_url'] : null,
+                      size: 50,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  p['company_name'] ?? 'Supplier',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Bento.text(dark)),
+                                ),
+                              ),
+                              if (verified) ...[
+                                const SizedBox(width: 4),
+                                const Icon(Icons.verified_rounded, size: 16, color: Bento.accent),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.star_rounded, size: 15, color: Bento.warning),
+                              const SizedBox(width: 3),
+                              Text(
+                                reviews > 0 ? '${rating.toStringAsFixed(1)} · $reviews ratings' : 'No ratings yet',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Bento.text(dark)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_rounded, size: 13, color: Bento.muted(dark)),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  p['supplier_location'] ?? 'All India',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 12, color: Bento.muted(dark)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.send_rounded, size: 18),
-                  SizedBox(width: 8),
+                if ((p['supplier_description']?.toString().trim().isNotEmpty ?? false)) ...[
+                  const SizedBox(height: 10),
                   Text(
-                    'Send B2B Inquiry',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    p['supplier_description'],
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12.5, height: 1.45, color: Bento.muted(dark)),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
+
+          if (_relatedProducts.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            const BentoSectionHeader(title: 'Similar products'),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 178,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _relatedProducts.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, idx) {
+                  final rel = _relatedProducts[idx];
+                  final relImages = rel['images'] as List?;
+                  final relImage = (relImages != null && relImages.isNotEmpty) ? relImages[0] as String : '';
+                  final relPrice = double.tryParse(rel['price_per_unit']?.toString() ?? '') ?? 0;
+                  return BentoPressable(
+                    onTap: () => context.pushReplacement('/b2b-product-detail/${rel['id']}'),
+                    child: Container(
+                      width: 140,
+                      decoration: BoxDecoration(
+                        color: Bento.surface(dark),
+                        borderRadius: BorderRadius.circular(Bento.radiusSm + 2),
+                        border: Border.all(color: Bento.border(dark)),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 100,
+                            width: double.infinity,
+                            color: Bento.surfaceAlt(dark),
+                            padding: const EdgeInsets.all(6),
+                            child: BuildMartImage(imageUrl: relImage, fit: BoxFit.contain),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rel['name'] ?? '',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Bento.text(dark)),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${formatRupees(relPrice)} / ${rel['unit_type'] ?? ''}',
+                                  style: TextStyle(color: Bento.accentText(dark), fontWeight: FontWeight.w800, fontSize: 11.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          decoration: BoxDecoration(
+            color: Bento.surface(dark),
+            border: Border(top: BorderSide(color: Bento.border(dark))),
+          ),
+          child: isProvider
+              ? Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 18, color: Bento.muted(dark)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Ordering materials is available on customer accounts.',
+                        style: TextStyle(fontSize: 12.5, color: Bento.muted(dark), fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    BentoPressable(
+                      onTap: () => _openChat(p),
+                      child: Container(
+                        height: 50,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Bento.surfaceAlt(dark),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Bento.border(dark)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.chat_bubble_outline_rounded, size: 18, color: Bento.text(dark)),
+                            const SizedBox(width: 6),
+                            Text('Chat', style: TextStyle(fontWeight: FontWeight.w800, color: Bento.text(dark))),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: BentoButton(
+                          label: 'Get a quote',
+                          icon: Icons.request_quote_rounded,
+                          expand: true,
+                          onTap: () => _openInquiry(p, price, unit),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
+    );
+  }
+
+  Widget _sectionTitle(String title, IconData icon, bool dark) {
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: Bento.accentText(dark)),
+        const SizedBox(width: 6),
+        Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Bento.text(dark))),
+      ],
     );
   }
 }

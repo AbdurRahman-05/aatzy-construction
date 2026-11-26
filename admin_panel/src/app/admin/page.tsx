@@ -10,6 +10,8 @@ import { cookies } from 'next/headers';
 import { ADMIN_COOKIE_NAME, isValidAdminToken } from '@/lib/auth';
 import LoginForm from './LoginForm';
 import AdsManager from '../components/AdsManager';
+import ProductsModeration, { type ModerationProduct } from '../components/ProductsModeration';
+import { categoryNameFor } from '@/lib/materials';
 import SubscriptionManager from '../components/SubscriptionManager';
 import AdminSidebar from '../components/AdminSidebar';
 import ViewTransitionContainer from '../components/ViewTransitionContainer';
@@ -258,6 +260,30 @@ export default async function AdminDashboard({
   });
 
   const recentActions = await getRecentActions(60);
+
+  // Material products for moderation - only loaded on that view (images can be large)
+  let productsJson: ModerationProduct[] = [];
+  if (view === 'products') {
+    const rawProducts = await prisma.product.findMany({
+      where: { deletedAt: null },
+      include: { provider: { select: { businessName: true, isVerified: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    productsJson = rawProducts.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      category: categoryNameFor(p.categoryId, p.category),
+      pricePerUnit: p.pricePerUnit,
+      unitType: p.unitType,
+      image: p.images[0] || null,
+      status: p.status,
+      rejectedReason: p.rejectedReason,
+      supplierName: p.provider.businessName,
+      supplierVerified: p.provider.isVerified,
+      createdAt: p.createdAt.toISOString(),
+    }));
+  }
 
   const adsJson = allAdsRaw.map((ad: any) => ({
     id: ad.id,
@@ -510,6 +536,10 @@ export default async function AdminDashboard({
 
             {view === 'ads' && (
               <AdsManager initialAds={adsJson} />
+            )}
+
+            {view === 'products' && (
+              <ProductsModeration initialProducts={productsJson} />
             )}
             </ViewTransitionContainer>
           </div>

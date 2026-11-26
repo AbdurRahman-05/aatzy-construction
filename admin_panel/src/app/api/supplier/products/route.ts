@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, denyUnlessSelf } from '@/lib/auth';
+import { categoryNameFor, parseCategoryId } from '@/lib/materials';
 
 export async function GET(request: Request) {
   try {
@@ -32,8 +33,9 @@ export async function GET(request: Request) {
       unit_type: p.unitType,
       images: p.images,
       status: p.status,
-      category_name: p.category || 'General',
+      category_name: categoryNameFor(p.categoryId, p.category),
       category_id: p.categoryId || 1,
+      rejected_reason: p.rejectedReason,
       specifications: p.specifications ? JSON.parse(p.specifications) : {},
       cost_price: p.costPrice,
     }));
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
       unit_type,
       specifications,
       images,
+      cost_price,
     } = body;
 
     if (!supplierId || !name || !description) {
@@ -74,9 +77,10 @@ export async function POST(request: Request) {
         providerId: supplierId,
         name,
         description,
-        categoryId: categoryId ? parseInt(categoryId.toString()) : 1,
-        category: 'Materials & Supply',
+        categoryId: parseCategoryId(categoryId) ?? 1,
+        category: categoryNameFor(parseCategoryId(categoryId) ?? 1),
         pricePerUnit: parseFloat(price_per_unit || 0),
+        costPrice: parseFloat(cost_price || 0) || 0,
         unitType: unit_type || 'Bag',
         images: images || [],
         specifications: specifications ? JSON.stringify(specifications) : '{}',

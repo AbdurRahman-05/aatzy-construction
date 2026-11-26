@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, forbidden } from '@/lib/auth';
+import { checkSupplierUpdate } from '@/lib/materials';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -24,13 +25,30 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: 'Inquiry not found' }, { status: 404 });
     }
 
+    const nextPrice = (quotedPrice !== undefined && quotedPrice !== null && quotedPrice !== '') ? parseFloat(quotedPrice.toString()) : undefined;
+    const nextGst = (gstPercent !== undefined && gstPercent !== null && gstPercent !== '') ? parseFloat(gstPercent.toString()) : undefined;
+    const nextDelivery = (deliveryStatus !== undefined && deliveryStatus !== null && deliveryStatus !== '') ? String(deliveryStatus) : undefined;
+    const nextStatus = status ? String(status) : undefined;
+
+    // Locked price after acceptance, no self-accepting, delivery only after acceptance, etc.
+    const rule = checkSupplierUpdate(inquiry, {
+      status: nextStatus,
+      // Re-sending the same price/GST on an accepted order is harmless - only real changes count
+      quotedPrice: nextPrice !== undefined && nextPrice !== inquiry.quotedPrice ? nextPrice : undefined,
+      gstPercent: nextGst !== undefined && nextGst !== inquiry.gstPercent ? nextGst : undefined,
+      deliveryStatus: nextDelivery,
+    });
+    if (!rule.ok) {
+      return NextResponse.json({ error: rule.error, code: rule.code }, { status: 409 });
+    }
+
     const updated = await prisma.inquiry.update({
       where: { id },
       data: {
-        status: status || undefined,
-        quotedPrice: (quotedPrice !== undefined && quotedPrice !== null) ? parseFloat(quotedPrice.toString()) : undefined,
-        deliveryStatus: (deliveryStatus !== undefined && deliveryStatus !== null) ? deliveryStatus : undefined,
-        gstPercent: (gstPercent !== undefined && gstPercent !== null) ? parseFloat(gstPercent.toString()) : undefined,
+        status: nextStatus,
+        quotedPrice: nextPrice,
+        deliveryStatus: nextDelivery,
+        gstPercent: nextGst,
       },
     });
 
@@ -39,6 +57,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         inquiryId: id,
         status: status || inquiry.status,
         notes: notes || `Lead status updated to: ${status || inquiry.status}`,
+        changedByUserId: inquiry.providerId,
       },
     });
 

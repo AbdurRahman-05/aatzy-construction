@@ -98,6 +98,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const qty = parseFloat(quantity);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      return NextResponse.json({ error: 'Enter a quantity greater than zero.' }, { status: 400 });
+    }
+
+    if (productId) {
+      const product = await prisma.product.findFirst({
+        where: { id: productId, providerId: supplierId, deletedAt: null },
+        select: { status: true },
+      });
+      if (!product || product.status !== 'Approved') {
+        return NextResponse.json({ error: 'This product is no longer available.' }, { status: 404 });
+      }
+    } else {
+      const supplier = await prisma.provider.findUnique({ where: { id: supplierId }, select: { id: true } });
+      if (!supplier) {
+        return NextResponse.json({ error: 'Supplier not found.' }, { status: 404 });
+      }
+    }
+
     const inquiry = await prisma.inquiry.create({
       data: {
         buyerId,
@@ -105,7 +125,7 @@ export async function POST(request: Request) {
         productId: productId || null,
         title,
         description,
-        quantity: parseFloat(quantity),
+        quantity: qty,
         unit: unit || 'Units',
         location: location || 'India',
         images: images || [],

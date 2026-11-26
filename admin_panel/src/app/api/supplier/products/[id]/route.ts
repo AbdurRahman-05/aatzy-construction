@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, forbidden } from '@/lib/auth';
+import { categoryNameFor, parseCategoryId } from '@/lib/materials';
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -22,18 +23,26 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       unit_type,
       specifications,
       images,
+      cost_price,
     } = body;
 
+    const newCategoryId = parseCategoryId(categoryId);
+    // A listing the admin rejected goes back to review after the partner edits it
+    const current = await prisma.product.findUnique({ where: { id }, select: { status: true } });
+    const backToReview = current?.status === 'Rejected';
     const product = await prisma.product.update({
       where: { id },
       data: {
         name,
         description,
-        categoryId: categoryId ? parseInt(categoryId.toString()) : undefined,
+        categoryId: newCategoryId,
+        category: newCategoryId ? categoryNameFor(newCategoryId) : undefined,
         pricePerUnit: price_per_unit ? parseFloat(price_per_unit.toString()) : undefined,
+        costPrice: cost_price !== undefined && cost_price !== null && cost_price !== '' ? (parseFloat(cost_price.toString()) || 0) : undefined,
         unitType: unit_type,
         images: images,
         specifications: specifications ? JSON.stringify(specifications) : undefined,
+        ...(backToReview ? { status: 'Pending', rejectedReason: null } : {}),
       },
     });
 

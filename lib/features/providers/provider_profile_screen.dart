@@ -93,10 +93,8 @@ class _ProviderProfileScreenState extends ConsumerState<ProviderProfileScreen> {
     }
 
     try {
-      final res = await B2BApiService().get(
-        '/supplier/products',
-        queryParameters: {'supplierId': widget.providerId},
-      );
+      // Public catalogue of this partner (live products only, no cost price)
+      final res = await B2BApiService().get('/providers/${widget.providerId}/products');
       if (res.success && res.data != null && mounted) {
         setState(() {
           _supplierProducts = res.data['products'] ?? [];

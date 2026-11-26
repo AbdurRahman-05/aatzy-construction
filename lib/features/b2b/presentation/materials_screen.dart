@@ -7,11 +7,11 @@ import '../../../core/services/media_picker_service.dart';
 import 'dart:convert';
 import '../services/b2b_api_service.dart';
 import '../../auth/auth_provider.dart';
-import 'my_inquiries_screen.dart';
-import 'lead_management_screen.dart';
+import '../models/material_order_models.dart';
 import 'widgets/custom_image.dart';
+import 'product_list_screen.dart' show formatRupees;
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/widgets/shimmer_loading.dart';
-import '../../../core/services/push_notification_service.dart';
 
 class MaterialsScreen extends ConsumerStatefulWidget {
   final int initialTab;
@@ -192,29 +192,6 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     return l.status == 'Completed' || (l.status == 'Closed' && l.deliveryStatus == 'Delivered');
   }).toList();
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'New':
-        return Colors.blue;
-      case 'Viewed':
-        return Colors.orange;
-      case 'Contacted':
-        return Colors.teal;
-      case 'Quote Sent':
-        return Colors.purple;
-      case 'Accepted':
-        return Colors.green;
-      case 'Rejected':
-        return Colors.red;
-      case 'Closed':
-        return Colors.green.shade800;
-      case 'Completed':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
   // Provider Action Handlers (reused from LeadManagementScreen)
   Future<void> _updateLeadStatus(
     LeadItem lead,
@@ -245,25 +222,6 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
           if (deliveryStatus != null) lead.deliveryStatus = deliveryStatus;
           if (gstPercent != null) lead.gstPercent = gstPercent;
         });
-
-        // Trigger native push notification on device
-        final notifStage = deliveryStatus ?? newStatus;
-        PushNotificationService().showNotification(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          title: notifStage == 'Delivered'
-              ? '✅ Material Delivered: ${lead.requirementTitle}'
-              : (notifStage == 'Dispatched'
-                  ? '🚚 Material Dispatched: ${lead.requirementTitle}'
-                  : (notifStage == 'Packed'
-                      ? '📦 Material Packed: ${lead.requirementTitle}'
-                      : (newStatus == 'Quote Sent'
-                          ? '💰 Quote Sent: ₹${quotedPrice?.toStringAsFixed(0) ?? ''}/${lead.unit}'
-                          : '📦 Order Updated: $notifStage'))),
-          body: 'Order for "${lead.requirementTitle}" (${lead.quantity}) updated to $notifStage.',
-          payload: '/b2b-materials',
-          channelId: 'buildzy_orders_v2',
-          channelName: 'Material Inquiries & Orders',
-        );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -343,12 +301,12 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                                color: const Color(0xFF0D9488).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.receipt_long_rounded,
-                                color: Color(0xFF2563EB),
+                                color: Color(0xFF0D9488),
                                 size: 22,
                               ),
                             ),
@@ -412,7 +370,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                             style: TextStyle(
                                               fontSize: 9.5,
                                               fontWeight: FontWeight.w800,
-                                              color: Color(0xFF1D4ED8),
+                                              color: Color(0xFF0F766E),
                                               letterSpacing: 0.5,
                                             ),
                                           ),
@@ -442,7 +400,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                         style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFF1D4ED8),
+                                          color: Color(0xFF0F766E),
                                         ),
                                       ),
                                     ),
@@ -471,7 +429,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                     padding: EdgeInsets.symmetric(horizontal: 12),
                                     child: Text(
                                       '₹',
-                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D9488)),
                                     ),
                                   ),
                                   prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
@@ -492,7 +450,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                    borderSide: const BorderSide(color: Color(0xFF0D9488), width: 1.5),
                                   ),
                                 ),
                               ),
@@ -512,7 +470,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                   ),
                                   Text(
                                     '${selectedGstPercent.toStringAsFixed(0)}% Tax Selected',
-                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF2563EB), fontWeight: FontWeight.w600),
+                                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF0D9488), fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -534,10 +492,10 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                           duration: const Duration(milliseconds: 150),
                                           padding: const EdgeInsets.symmetric(vertical: 9),
                                           decoration: BoxDecoration(
-                                            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFF0EEEA),
+                                            color: isSelected ? const Color(0xFF0D9488) : const Color(0xFFF0EEEA),
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(
-                                              color: isSelected ? const Color(0xFF1D4ED8) : const Color(0xFFECEAE6),
+                                              color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFECEAE6),
                                               width: isSelected ? 1.5 : 1,
                                             ),
                                           ),
@@ -594,7 +552,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                         const Text('Estimated Billing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF111318))),
                                         Text(
                                           '₹${totalAmount.toStringAsFixed(2)}',
-                                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF2563EB)),
+                                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF0D9488)),
                                         ),
                                       ],
                                     ),
@@ -633,7 +591,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                    borderSide: const BorderSide(color: Color(0xFF0D9488), width: 1.5),
                                   ),
                                 ),
                               ),
@@ -759,12 +717,12 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: (isDelivered ? Colors.green : const Color(0xFF2563EB)).withValues(alpha: 0.1),
+                                color: (isDelivered ? Colors.green : const Color(0xFF0D9488)).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 isDelivered ? Icons.check_circle_rounded : Icons.local_shipping_rounded,
-                                color: isDelivered ? Colors.green : const Color(0xFF2563EB),
+                                color: isDelivered ? Colors.green : const Color(0xFF0D9488),
                                 size: 22,
                               ),
                             ),
@@ -821,7 +779,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                               Row(
                                 children: ['Pending', 'Packed', 'Dispatched', 'Delivered'].map((stage) {
                                   final isSelected = selectedDeliveryStatus == stage;
-                                  Color activeColor = const Color(0xFF2563EB);
+                                  Color activeColor = const Color(0xFF0D9488);
                                   if (stage == 'Delivered') activeColor = Colors.green;
                                   if (stage == 'Dispatched') activeColor = Colors.orange;
 
@@ -901,7 +859,7 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                                    borderSide: const BorderSide(color: Color(0xFF0D9488), width: 1.5),
                                   ),
                                 ),
                               ),
@@ -1005,11 +963,11 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     final isProvider = auth.role == 'PROVIDER';
+    final dark = Theme.of(context).brightness == Brightness.dark;
 
-    // Determine counts for tabs
-    int notStartedCount = isProvider ? _providerNotStarted.length : _consumerNotStarted.length;
-    int onProcessesCount = isProvider ? _providerOnProcesses.length : _consumerOnProcesses.length;
-    int closedDealsCount = isProvider ? _providerClosedDeals.length : _consumerClosedDeals.length;
+    final counts = isProvider
+        ? [_providerNotStarted.length, _providerOnProcesses.length, _providerClosedDeals.length]
+        : [_consumerNotStarted.length, _consumerOnProcesses.length, _consumerClosedDeals.length];
 
     return Scaffold(
       appBar: BentoAppBar(
@@ -1017,108 +975,64 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),
         ),
-        title: Text(isProvider ? 'Supplier Materials Console' : 'Materials & Purchased History'),
+        title: Text(isProvider ? 'Material Leads' : 'My Material Orders'),
         actions: [
+          if (isProvider)
+            IconButton(
+              tooltip: 'My products',
+              icon: const Icon(Icons.inventory_2_outlined),
+              onPressed: () => context.push('/supplier-products'),
+            )
+          else
+            IconButton(
+              tooltip: 'Buy materials',
+              icon: const Icon(Icons.storefront_rounded),
+              onPressed: () => context.push('/b2b-products'),
+            ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            icon: const Icon(Icons.refresh_rounded),
             onPressed: _fetchData,
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabAlignment: TabAlignment.center,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          tabs: [
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(isProvider ? 'Not Started' : 'Quotes / Inquiries'),
-                  if (notStartedCount > 0) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$notStartedCount',
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(isProvider ? 'On Processes' : 'In Transit'),
-                  if (onProcessesCount > 0) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$onProcessesCount',
-                        style: const TextStyle(fontSize: 10, color: Colors.blue),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(isProvider ? 'Closed Deals' : 'Purchased History'),
-                  if (closedDealsCount > 0) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '$closedDealsCount',
-                        style: const TextStyle(fontSize: 10, color: Colors.green),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
-      body: _isLoading
-          ? const SingleChildScrollView(
-              padding: EdgeInsets.all(16),
-              child: ShimmerOrderList(itemCount: 4),
-            )
-          : Column(
-              children: [
-                if (_errorMessage != null)
-                  Container(
-                    color: Colors.amber.shade100,
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    child: Text(_errorMessage!, style: const TextStyle(fontSize: 12, color: Colors.black87), textAlign: TextAlign.center),
-                  ),
-                Expanded(
-                  child: TabBarView(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+            child: BentoPillTabs(
+              controller: _tabController,
+              labels: isProvider
+                  ? const ['New leads', 'In progress', 'Closed']
+                  : const ['Quotes', 'On the way', 'Delivered'],
+              icons: isProvider
+                  ? const [Icons.mark_email_unread_rounded, Icons.local_shipping_rounded, Icons.task_alt_rounded]
+                  : const [Icons.request_quote_rounded, Icons.local_shipping_rounded, Icons.task_alt_rounded],
+              counts: _isLoading ? null : counts,
+            ),
+          ),
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: BentoCard(
+                color: Bento.warning.withValues(alpha: 0.12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, size: 16, color: Bento.warning),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(_errorMessage!, style: TextStyle(fontSize: 12, color: Bento.text(dark)))),
+                  ],
+                ),
+              ),
+            ),
+          Expanded(
+            child: _isLoading
+                ? const SingleChildScrollView(
+                    padding: EdgeInsets.all(16),
+                    child: ShimmerOrderList(itemCount: 4),
+                  )
+                : TabBarView(
                     controller: _tabController,
                     children: [
                       _buildTabList(isProvider, 0),
@@ -1126,145 +1040,33 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                       _buildTabList(isProvider, 2),
                     ],
                   ),
-                ),
-              ],
-            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildTabList(bool isProvider, int tabIndex) {
+    final List<Widget> cards;
     if (isProvider) {
-      final List<LeadItem> list;
-      if (tabIndex == 0) {
-        list = _providerNotStarted;
-      } else if (tabIndex == 1) {
-        list = _providerOnProcesses;
-      } else {
-        list = _providerClosedDeals;
-      }
-
-      if (list.isEmpty) {
-        return RefreshIndicator(
-          onRefresh: _fetchData,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height * 0.65,
-              ),
-              child: _buildEmptyState(isProvider, tabIndex),
-            ),
-          ),
-        );
-      }
-
-      return Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: RefreshIndicator(
-            onRefresh: _fetchData,
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: list.length,
-              itemBuilder: (context, index) {
-                final lead = list[index];
-                return _buildProviderLeadCard(lead);
-              },
-            ),
-          ),
-        ),
-      );
+      final list = [_providerNotStarted, _providerOnProcesses, _providerClosedDeals][tabIndex];
+      cards = list.map(_buildProviderLeadCard).toList();
     } else {
-      final List<InquiryModel> list;
-      if (tabIndex == 0) {
-        list = _consumerNotStarted;
-      } else if (tabIndex == 1) {
-        list = _consumerOnProcesses;
-      } else {
-        list = _consumerClosedDeals;
-      }
-
-      if (list.isEmpty) {
-        return RefreshIndicator(
-          onRefresh: _fetchData,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height * 0.65,
-              ),
-              child: _buildEmptyState(isProvider, tabIndex),
-            ),
-          ),
-        );
-      }
-
-      return Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: RefreshIndicator(
-            onRefresh: _fetchData,
-            child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: list.length + (tabIndex == 2 ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (tabIndex == 2 && index == 0) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFA7F3D0)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 20),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Purchased Materials History',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                  color: Color(0xFF065F46),
-                                ),
-                              ),
-                              Text(
-                                '${list.length} completed & delivered order${list.length > 1 ? 's' : ''} in your history.',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  color: Color(0xFF047857),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                final inq = tabIndex == 2 ? list[index - 1] : list[index];
-                return _buildConsumerInquiryCard(inq);
-              },
-            ),
-          ),
-        ),
-      );
+      final list = [_consumerNotStarted, _consumerOnProcesses, _consumerClosedDeals][tabIndex];
+      cards = list.map(_buildConsumerInquiryCard).toList();
     }
+
+    return RefreshIndicator(
+      onRefresh: _fetchData,
+      color: Bento.accent,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 2, 16, 24),
+        itemCount: cards.isEmpty ? 1 : cards.length,
+        separatorBuilder: (_, _) => const SizedBox(height: Bento.gap),
+        itemBuilder: (context, index) => cards.isEmpty ? _buildEmptyState(isProvider, tabIndex) : cards[index],
+      ),
+    );
   }
 
   Widget _buildEmptyState(bool isProvider, int tabIndex) {
@@ -1273,323 +1075,531 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     final IconData icon;
 
     if (tabIndex == 0) {
-      title = 'No New Negotiations';
-      subtitle = isProvider ? 'No pending leads awaiting quotation.' : 'No active inquiries waiting for quotes.';
-      icon = Icons.hourglass_empty_rounded;
+      title = isProvider ? 'No new leads' : 'No open requests';
+      subtitle = isProvider
+          ? 'When a customer asks for a quote on your products, it shows up here.'
+          : 'Ask suppliers for a quote and their replies will appear here.';
+      icon = isProvider ? Icons.mark_email_unread_outlined : Icons.request_quote_outlined;
     } else if (tabIndex == 1) {
-      title = 'No Ongoing Deliveries';
-      subtitle = isProvider ? 'No orders currently in packed or dispatched stages.' : 'No active shipments currently on transit.';
+      title = 'Nothing on the way';
+      subtitle = isProvider
+          ? 'Orders you are packing or delivering appear here.'
+          : 'Accepted orders being packed or delivered appear here.';
       icon = Icons.local_shipping_outlined;
     } else {
-      title = isProvider ? 'No Closed Deals' : 'No Purchased Materials Yet';
-      subtitle = isProvider ? 'You haven\'t closed or completed any bulk deals yet.' : 'All your delivered material orders and purchase receipts will appear here.';
-      icon = Icons.inventory_2_outlined;
+      title = isProvider ? 'No closed deals yet' : 'No deliveries yet';
+      subtitle = isProvider
+          ? 'Completed orders and their delivery proof appear here.'
+          : 'Your delivered materials and their history appear here.';
+      icon = Icons.task_alt_rounded;
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/no_materials_orders.png',
-              width: 160,
-              height: 160,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(icon, size: 64, color: Colors.grey.shade400),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-            ),
-            if (!isProvider && tabIndex == 2) ...[
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => context.push('/b2b-products'),
-                icon: const Icon(Icons.shopping_bag_outlined, size: 16),
-                label: const Text('Browse & Buy Materials', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F766E),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Padding(
+      padding: const EdgeInsets.only(top: 24),
+      child: BentoEmptyState(
+        icon: icon,
+        title: title,
+        subtitle: subtitle,
+        actionLabel: isProvider ? 'Manage products' : 'Browse materials',
+        onAction: () => context.push(isProvider ? '/supplier-products' : '/b2b-products'),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Shared card pieces
+  // ---------------------------------------------------------------------------
+
+  ({String label, Color color, IconData icon}) _statusLook(String status, String deliveryStatus, {required bool isProvider}) {
+    switch (status) {
+      case 'New':
+      case 'Viewed':
+      case 'Contacted':
+        return isProvider
+            ? (label: 'Needs quote', color: Bento.blue, icon: Icons.fiber_new_rounded)
+            : (label: 'Waiting for quote', color: Bento.blue, icon: Icons.hourglass_top_rounded);
+      case 'Quote Sent':
+        return isProvider
+            ? (label: 'Quote sent', color: Bento.violet, icon: Icons.send_rounded)
+            : (label: 'Quote received', color: Bento.violet, icon: Icons.request_quote_rounded);
+      case 'Rejected':
+        return isProvider
+            ? (label: 'Quote declined', color: Bento.red, icon: Icons.thumb_down_alt_rounded)
+            : (label: 'You declined', color: Bento.red, icon: Icons.thumb_down_alt_rounded);
+      case 'Lead Rejected':
+        return (label: isProvider ? 'Lead rejected' : 'Supplier declined', color: Bento.red, icon: Icons.block_rounded);
+      case 'Accepted':
+      case 'Closed':
+        if (deliveryStatus == 'Delivered') {
+          return (label: 'Delivered', color: Bento.green, icon: Icons.task_alt_rounded);
+        }
+        final stage = deliveryStatus == 'Pending' ? 'Preparing' : deliveryStatus;
+        return (label: stage, color: Bento.accent, icon: Icons.local_shipping_rounded);
+      case 'Completed':
+        return (label: 'Completed', color: Bento.green, icon: Icons.task_alt_rounded);
+      default:
+        return (label: status, color: Bento.muted(false), icon: Icons.info_outline_rounded);
+    }
+  }
+
+  Widget _statusPill(String status, String deliveryStatus, {required bool isProvider}) {
+    final look = _statusLook(status, deliveryStatus, isProvider: isProvider);
+    return BentoPill(label: look.label, color: look.color, icon: look.icon);
+  }
+
+  Widget _thumb(String image, bool dark) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: Bento.surfaceAlt(dark),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: image.isNotEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(4),
+              child: BuildMartImage(imageUrl: image, fit: BoxFit.contain),
+            )
+          : const Icon(Icons.inventory_2_rounded, color: Bento.accent),
+    );
+  }
+
+  /// Unit price + total incl. GST, shown once a quote exists.
+  Widget _priceBlock({
+    required double unitPrice,
+    required double qty,
+    required String unit,
+    required double gstPercent,
+    required bool dark,
+  }) {
+    final subtotal = unitPrice * qty;
+    final total = subtotal * (1 + gstPercent / 100);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Bento.accent.withValues(alpha: dark ? 0.16 : 0.07),
+        borderRadius: BorderRadius.circular(Bento.radiusSm - 2),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Quoted price', style: TextStyle(fontSize: 11, color: Bento.muted(dark), fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(
+                  '${formatRupees(unitPrice)} / $unit',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Bento.text(dark)),
                 ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('Total incl. ${gstPercent.toStringAsFixed(0)}% GST',
+                  style: TextStyle(fontSize: 11, color: Bento.muted(dark), fontWeight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              Text(
+                formatRupees(total),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Bento.accentText(dark)),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Pending → Packed → Dispatched → Delivered
+  Widget _deliveryTrack(String deliveryStatus, bool dark) {
+    const stages = ['Pending', 'Packed', 'Dispatched', 'Delivered'];
+    const labels = ['Preparing', 'Packed', 'On the way', 'Delivered'];
+    final current = stages.indexOf(deliveryStatus).clamp(0, 3);
+    return Row(
+      children: List.generate(stages.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          final done = (i ~/ 2) < current;
+          return Expanded(
+            child: Container(
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: done ? Bento.accent : Bento.border(dark),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }
+        final idx = i ~/ 2;
+        final done = idx <= current;
+        return Column(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: done ? Bento.accent : Bento.surfaceAlt(dark),
+                shape: BoxShape.circle,
+                border: Border.all(color: done ? Bento.accent : Bento.border(dark)),
+              ),
+              child: done ? const Icon(Icons.check_rounded, size: 13, color: Colors.white) : null,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              labels[idx],
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: idx == current ? FontWeight.w800 : FontWeight.w600,
+                color: done ? Bento.text(dark) : Bento.muted(dark),
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _smallAction({required IconData icon, required String label, required VoidCallback onTap, required bool dark}) {
+    return BentoPressable(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Bento.surfaceAlt(dark),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Bento.border(dark)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: Bento.accentText(dark)),
+            const SizedBox(width: 5),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Bento.text(dark))),
           ],
         ),
       ),
     );
   }
 
+  void _chatWith({required bool asProvider, required String partnerId, required String name}) {
+    if (partnerId.isEmpty) return;
+    final base = asProvider ? '/provider-chat' : '/chat';
+    context.push('$base/$partnerId?name=${Uri.encodeQueryComponent(name)}');
+  }
+
+  Future<void> _callNumber(String phone) async {
+    final uri = Uri(scheme: 'tel', path: phone);
+    if (!await launchUrl(uri) && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open the dialer')));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Customer card
+  // ---------------------------------------------------------------------------
+
   Widget _buildConsumerInquiryCard(InquiryModel inq) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: InkWell(
-        onTap: () => _showTimeline(inq),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final accepted = ['Accepted', 'Closed'].contains(inq.status);
+    final finished = inq.status == 'Completed' || (inq.status == 'Closed' && inq.deliveryStatus == 'Delivered');
+
+    return BentoCard(
+      onTap: () => _showTimeline(inq),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'ID: ${inq.id.length > 8 ? inq.id.substring(0, 8).toUpperCase() : inq.id}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(inq.status).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(50),
-                      border: Border.all(color: _getStatusColor(inq.status).withValues(alpha: 0.3)),
+              _thumb(inq.productImage, dark),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      inq.productName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Bento.text(dark)),
                     ),
-                    child: Text(
-                      inq.status == 'Closed'
-                          ? 'Deal Finalized'
-                          : (inq.status == 'Quote Sent' ? 'Quote Received' : inq.status),
-                      style: TextStyle(color: _getStatusColor(inq.status), fontSize: 11, fontWeight: FontWeight.bold),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${inq.supplierName}  ·  ${inq.quantity}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: Bento.muted(dark), fontWeight: FontWeight.w600),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                inq.productName,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Supplier: ${inq.supplierName}',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Quantity: ${inq.quantity}',
-                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-              ),
-              if (inq.quotedPrice != null) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withValues(alpha: 0.12)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Quoted Price:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      Text(
-                        '₹${inq.quotedPrice!.toStringAsFixed(2)} / Unit',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.blue),
-                      ),
-                    ],
-                  ),
+                    const SizedBox(height: 8),
+                    _statusPill(inq.status, inq.deliveryStatus, isProvider: false),
+                  ],
                 ),
-              ],
-              const Divider(height: 24, color: Colors.grey),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    (inq.status == 'Completed' || inq.status == 'Closed') && inq.finishedDate.isNotEmpty
-                        ? 'Closed on: ${inq.finishedDate}'
-                        : 'Sent on: ${inq.date}',
-                    style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        inq.status == 'Closed' ? 'Track Shipping' : 'Track Status',
-                        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: Colors.blue),
-                    ],
-                  ),
-                ],
               ),
             ],
           ),
-        ),
+          if (inq.quotedPrice != null && inq.quotedPrice! > 0) ...[
+            const SizedBox(height: 12),
+            _priceBlock(
+              unitPrice: inq.quotedPrice!,
+              qty: inq.quantityVal,
+              unit: inq.unit,
+              gstPercent: inq.gstPercent,
+              dark: dark,
+            ),
+          ],
+          if (accepted && !finished) ...[
+            const SizedBox(height: 14),
+            _deliveryTrack(inq.deliveryStatus, dark),
+          ],
+          if (inq.status == 'Quote Sent') ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.touch_app_rounded, size: 15, color: Bento.violet),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Tap to accept or decline this quote',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Bento.text(dark)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.event_rounded, size: 14, color: Bento.muted(dark)),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  finished && inq.finishedDate.isNotEmpty ? 'Delivered ${inq.finishedDate}' : 'Requested ${inq.date}',
+                  style: TextStyle(fontSize: 11.5, color: Bento.muted(dark), fontWeight: FontWeight.w600),
+                ),
+              ),
+              if (inq.supplierId.isNotEmpty) ...[
+                _smallAction(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'Chat',
+                  dark: dark,
+                  onTap: () => _chatWith(asProvider: false, partnerId: inq.supplierId, name: inq.supplierName),
+                ),
+                const SizedBox(width: 8),
+              ],
+              _smallAction(
+                icon: Icons.arrow_forward_rounded,
+                label: inq.status == 'Quote Sent' ? 'Review' : 'Track',
+                dark: dark,
+                onTap: () => _showTimeline(inq),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Partner card
+  // ---------------------------------------------------------------------------
+
   Widget _buildProviderLeadCard(LeadItem lead) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  (lead.status == 'Completed' || (lead.status == 'Closed' && lead.deliveryStatus == 'Delivered')) && lead.finishedDate.isNotEmpty
-                      ? 'CLOSED ON: ${lead.finishedDate}'
-                      : (lead.status == 'Closed' || lead.status == 'Accepted'
-                          ? 'ORDER DATE: ${lead.finishedDate.isNotEmpty ? lead.finishedDate : lead.date}'
-                          : 'DATE: ${lead.date}'),
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(lead.status).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(50),
-                    border: Border.all(color: _getStatusColor(lead.status).withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    lead.status == 'Closed'
-                        ? (lead.deliveryStatus == 'Delivered' ? 'Deal Closed' : 'In Transit (${lead.deliveryStatus})')
-                        : lead.status,
-                    style: TextStyle(color: _getStatusColor(lead.status), fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              lead.requirementTitle,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              lead.requirementDesc,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                _buildBadge(Icons.shopping_bag_outlined, 'Qty: ${lead.quantity}'),
-                const SizedBox(width: 8),
-                _buildBadge(Icons.location_on_rounded, lead.location),
-              ],
-            ),
-            if (lead.quotedPrice != null) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _buildBadge(Icons.monetization_on_outlined, 'Quoted: ₹${lead.quotedPrice!.toStringAsFixed(2)}'),
-                  if (lead.status == 'Closed' || lead.status == 'Accepted') ...[
-                    const SizedBox(width: 8),
-                    _buildBadge(Icons.local_shipping_outlined, 'Shipment: ${lead.deliveryStatus}'),
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final accepted = ['Accepted', 'Closed', 'Completed'].contains(lead.status);
+    final inDelivery = ['Accepted', 'Closed'].contains(lead.status) && lead.deliveryStatus != 'Delivered';
+    final profit = (lead.quotedPrice != null && lead.productCost > 0)
+        ? (lead.quotedPrice! - lead.productCost) * lead.quantityVal
+        : null;
+
+    return BentoCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _thumb(lead.productImage, dark),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lead.requirementTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Bento.text(dark)),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _statusPill(lead.status, lead.deliveryStatus, isProvider: true),
+                        BentoPill(label: lead.quantity, color: Bento.text(dark), icon: Icons.scale_rounded,
+                            background: Bento.surfaceAlt(dark)),
+                      ],
+                    ),
                   ],
-                ],
+                ),
               ),
             ],
-            const Divider(height: 24, color: Colors.grey),
+          ),
+          if (lead.requirementDesc.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              lead.requirementDesc,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12.5, height: 1.4, color: Bento.muted(dark)),
+            ),
+          ],
+          if (lead.location.isNotEmpty) ...[
+            const SizedBox(height: 8),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.grey.shade200,
-                  child: const Icon(Icons.person, color: Colors.blue, size: 20),
+                Icon(Icons.location_on_rounded, size: 14, color: Bento.muted(dark)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(lead.location,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: Bento.text(dark), fontWeight: FontWeight.w600)),
                 ),
+              ],
+            ),
+          ],
+          if (lead.quotedPrice != null && lead.quotedPrice! > 0) ...[
+            const SizedBox(height: 12),
+            _priceBlock(
+              unitPrice: lead.quotedPrice!,
+              qty: lead.quantityVal,
+              unit: lead.unit,
+              gstPercent: lead.gstPercent,
+              dark: dark,
+            ),
+            if (profit != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Your margin on this order: ${formatRupees(profit)} (before GST)',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: profit >= 0 ? Bento.green : Bento.red,
+                ),
+              ),
+            ],
+          ],
+          if (inDelivery) ...[
+            const SizedBox(height: 14),
+            _deliveryTrack(lead.deliveryStatus, dark),
+          ],
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Bento.surfaceAlt(dark),
+              borderRadius: BorderRadius.circular(Bento.radiusSm - 2),
+            ),
+            child: Row(
+              children: [
+                BentoAvatar(name: lead.buyerName, size: 36, ring: false),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(lead.buyerName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Bento.text(dark))),
                       Text(
-                        lead.buyerName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      Text(
-                        'Email: ${lead.buyerEmail} | Ph: ${lead.buyerPhone}',
-                        style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                        accepted && lead.buyerPhone.isNotEmpty
+                            ? lead.buyerPhone
+                            : 'Requested ${lead.date}',
+                        style: TextStyle(fontSize: 11.5, color: Bento.muted(dark)),
                       ),
                     ],
                   ),
                 ),
+                if (accepted && lead.buyerPhone.isNotEmpty) ...[
+                  BentoCircleButton(
+                    icon: Icons.call_rounded,
+                    tooltip: 'Call customer',
+                    onPressed: () => _callNumber(lead.buyerPhone),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                if (lead.buyerId.isNotEmpty)
+                  BentoCircleButton(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    tooltip: 'Chat with customer',
+                    onPressed: () => _chatWith(asProvider: true, partnerId: lead.buyerId, name: lead.buyerName),
+                  ),
               ],
             ),
-            const SizedBox(height: 16),
-            _buildProviderActionButtons(lead),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBadge(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 13, color: Colors.blue),
-          const SizedBox(width: 4),
-          Text(text, style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w500)),
+          ),
+          const SizedBox(height: 12),
+          _buildProviderActionButtons(lead),
         ],
       ),
     );
   }
 
   Widget _buildProviderActionButtons(LeadItem lead) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    Widget note(IconData icon, String text, Color color) => Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: dark ? 0.18 : 0.09),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 17, color: color),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(text, style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+        );
+
+    Widget rejectButton(VoidCallback onTap, {String label = 'Reject'}) => BentoPressable(
+          onTap: onTap,
+          child: Container(
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Bento.red.withValues(alpha: 0.5)),
+            ),
+            child: Text(label, style: const TextStyle(color: Bento.red, fontWeight: FontWeight.w800, fontSize: 13)),
+          ),
+        );
+
     if (lead.status == 'Completed' || (lead.status == 'Closed' && lead.deliveryStatus == 'Delivered')) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.shade200),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Order Completed & Closed',
-                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
+          note(Icons.task_alt_rounded, 'Order completed', Bento.green),
           if (lead.images.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const Text(
-              'Material Delivery Proof (Uploaded by Consumer):',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
+            Text('Delivery photo from the customer',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Bento.text(dark))),
+            const SizedBox(height: 6),
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: BuildMartImage(
-                imageUrl: lead.images.last,
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+              borderRadius: BorderRadius.circular(14),
+              child: BuildMartImage(imageUrl: lead.images.last, height: 170, width: double.infinity, fit: BoxFit.cover),
             ),
           ],
         ],
@@ -1597,63 +1607,27 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     }
 
     if (lead.status == 'Lead Rejected') {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          'This lead has been rejected/terminated.',
-          style: TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-      );
+      return note(Icons.block_rounded, 'You rejected this lead', Bento.red);
     }
 
     if (lead.status == 'Quote Sent') {
       return Row(
         children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.purple.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.purple.shade100),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.hourglass_empty_rounded, size: 16, color: Colors.purple),
-                  SizedBox(width: 6),
-                  Text('Awaiting Buyer\'s Decision', style: TextStyle(color: Colors.purple, fontSize: 12, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          OutlinedButton(
-            onPressed: () => _confirmRejectLead(lead),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: const BorderSide(color: Colors.red),
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            ),
-            child: const Text('Reject'),
-          ),
+          Expanded(child: note(Icons.hourglass_top_rounded, 'Waiting for the customer', Bento.violet)),
+          const SizedBox(width: 10),
+          rejectButton(() => _confirmRejectLead(lead), label: 'Withdraw'),
         ],
       );
     }
 
     if (lead.status == 'Accepted' || (lead.status == 'Closed' && lead.deliveryStatus != 'Delivered')) {
       return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () => _showCloseDealDialog(lead),
-          icon: const Icon(Icons.local_shipping_outlined, size: 18),
-          label: const Text('Update Status'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-          ),
+        height: 46,
+        child: BentoButton(
+          label: 'Update delivery',
+          icon: Icons.local_shipping_rounded,
+          expand: true,
+          onTap: () => _showCloseDealDialog(lead),
         ),
       );
     }
@@ -1662,30 +1636,18 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
       return Row(
         children: [
           Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _showQuoteDialog(lead, isNewQuote: true),
-              icon: const Icon(Icons.restart_alt_rounded, size: 18),
-              label: const Text('New Quote'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.blue,
-                side: const BorderSide(color: Colors.blue),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+            child: SizedBox(
+              height: 46,
+              child: BentoButton(
+                label: 'Send new quote',
+                icon: Icons.restart_alt_rounded,
+                expand: true,
+                onTap: () => _showQuoteDialog(lead, isNewQuote: true),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _confirmRejectLead(lead, reason: 'Supplier rejected lead after buyer rejected the quote.'),
-              icon: const Icon(Icons.cancel_outlined, size: 18),
-              label: const Text('Reject Lead'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-              ),
-            ),
-          ),
+          const SizedBox(width: 10),
+          rejectButton(() => _confirmRejectLead(lead, reason: 'Supplier closed the lead after the customer declined the quote.')),
         ],
       );
     }
@@ -1694,17 +1656,22 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
       return const SizedBox.shrink();
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () => _showQuoteDialog(lead),
-        icon: const Icon(Icons.send_rounded, size: 18),
-        label: const Text('Send Quote'),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          side: const BorderSide(color: Colors.blue),
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 46,
+            child: BentoButton(
+              label: 'Send quote',
+              icon: Icons.send_rounded,
+              expand: true,
+              onTap: () => _showQuoteDialog(lead),
+            ),
+          ),
         ),
-      ),
+        const SizedBox(width: 10),
+        rejectButton(() => _confirmRejectLead(lead)),
+      ],
     );
   }
 }
@@ -1741,7 +1708,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
   Color _getStatusColor(String status) {
     switch (status) {
       case 'New':
-        return Colors.blue;
+        return Bento.accent;
       case 'Viewed':
         return Colors.orange;
       case 'Contacted':
@@ -1801,14 +1768,6 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
         'images': [_materialPhotoBase64!]
       });
       if (res.success) {
-        PushNotificationService().showNotification(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          title: '✅ Material Received & Order Closed',
-          body: 'Delivery confirmed for "${widget.inq.productName}". Photo proof sent to supplier.',
-          payload: '/b2b-my-inquiries',
-          channelId: 'buildzy_orders_v2',
-          channelName: 'Material Inquiries & Orders',
-        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Order closed successfully! Delivery photo sent to provider.')),
@@ -1850,23 +1809,17 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
         'notes': isAccept ? 'Quote accepted by buyer. Deal closed.' : 'Quote rejected by buyer.',
       });
       if (res.success) {
-        PushNotificationService().showNotification(
-          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-          title: isAccept ? '🎉 Quote Accepted & Deal Finalized' : '❌ Quote Declined',
-          body: isAccept 
-              ? 'You accepted the quote for "${widget.inq.productName}". Supplier notified to dispatch.' 
-              : 'You declined the quotation for "${widget.inq.productName}".',
-          payload: '/b2b-my-inquiries',
-          channelId: 'buildzy_orders_v2',
-          channelName: 'Material Inquiries & Orders',
-        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Quote ${isAccept ? "Accepted & Deal Closed" : "Rejected"} successfully!')),
+            SnackBar(content: Text(isAccept ? 'Quote accepted. The supplier will start preparing your order.' : 'Quote declined.')),
           );
           widget.onStatusUpdated();
           context.pop();
         }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res.data['error'] ?? 'Could not update this quote. Please try again.')),
+        );
       }
     } catch (e) {
       debugPrint('Error updating status: $e');
@@ -2008,6 +1961,10 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
         );
         _fetchTimeline();
         widget.onStatusUpdated();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res.data['error'] ?? 'Could not submit your review.')),
+        );
       }
     } catch (e) {
       debugPrint('Error submitting review: $e');
@@ -2045,7 +2002,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
         children: [
           Icon(
             isCompleted ? Icons.check_circle_rounded : Icons.radio_button_off_rounded,
-            color: isCompleted ? Colors.blue : Colors.grey.shade300,
+            color: isCompleted ? Bento.accent : Colors.grey.shade300,
             size: 20,
           ),
           const SizedBox(width: 14),
@@ -2088,7 +2045,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isActive ? Colors.green : (isPast ? Colors.blue : Colors.grey.shade300),
+                color: isActive ? Colors.green : (isPast ? Bento.accent : Colors.grey.shade300),
               ),
               child: Icon(
                 isActive ? Icons.check : (isPast ? Icons.done : Icons.circle_outlined),
@@ -2099,7 +2056,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
             Container(
               width: 2,
               height: 40,
-              color: isPast ? Colors.blue : Colors.grey.shade300,
+              color: isPast ? Bento.accent : Colors.grey.shade300,
             ),
           ],
         ),
@@ -2182,7 +2139,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.local_shipping_outlined, color: Colors.blue, size: 20),
+                      Icon(Icons.local_shipping_outlined, color: Bento.accent, size: 20),
                       SizedBox(width: 8),
                       Text('Delivery Tracker Stages', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     ],
@@ -2289,7 +2246,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Total Billing Amount (incl. GST)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                      Text('₹${totalInvoice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.blue)),
+                      Text('₹${totalInvoice.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Bento.accent)),
                     ],
                   ),
                 ],
@@ -2339,16 +2296,16 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50.withValues(alpha: 0.5),
+                  color: const Color(0xFFF0FDFA).withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.blue.shade200),
+                  border: Border.all(color: Color(0xFF99F6E4)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       'Confirm Received Material',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF115E59)),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -2515,7 +2472,7 @@ class _MaterialsTimelineViewState extends ConsumerState<_MaterialsTimelineView> 
               ElevatedButton(
                 onPressed: _isSubmittingReview ? null : _submitReview,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Bento.accent,
                   foregroundColor: Colors.white,
                 ),
                 child: _isSubmittingReview

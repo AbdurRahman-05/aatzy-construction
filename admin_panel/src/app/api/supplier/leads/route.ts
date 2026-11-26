@@ -23,6 +23,7 @@ export async function GET(request: Request) {
           select: {
             name: true,
             email: true,
+            phone: true,
           },
         },
         product: {
@@ -36,6 +37,8 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Contact details are shared only once the customer has accepted this supplier's quote
+    const DEAL_STATUSES = ['Accepted', 'Closed', 'Completed'];
     const formatted = inquiries.map(i => ({
       id: i.id,
       buyer_id: i.buyerId,
@@ -56,8 +59,8 @@ export async function GET(request: Request) {
       created_at: i.createdAt,
       updated_at: i.updatedAt,
       buyer_name: i.buyer.name,
-      buyer_email: i.buyer.email,
-      buyer_phone: '',
+      buyer_email: DEAL_STATUSES.includes(i.status) ? i.buyer.email : '',
+      buyer_phone: DEAL_STATUSES.includes(i.status) ? (i.buyer.phone || '') : '',
       product_name: i.product?.name || null,
       product_image: i.product?.images && i.product.images.length > 0 ? i.product.images[0] : null,
       product_cost: i.product?.costPrice || 0,

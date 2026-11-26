@@ -248,8 +248,10 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
                               _buildQuickActionsBento(),
                               const SizedBox(height: 30),
                               _buildRunningSites(),
-                              const SizedBox(height: 30),
-                              _buildDealsAndEnquiriesRow(isSmallScreen, screenWidth),
+                              if (_sellsMaterials) ...[
+                                const SizedBox(height: 30),
+                                _buildDealsAndEnquiriesRow(isSmallScreen, screenWidth),
+                              ],
                             ] else ...[
                               _buildFinanceStats(totalRevenue, totalExpenses, totalProfit),
                               const SizedBox(height: 20),
@@ -288,6 +290,14 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
         final stage = (p['currentStage'] as String? ?? '').toLowerCase().trim();
         return !_closedStages.contains(stage);
       }).toList();
+
+  /// A partner counts as a materials seller once they list a product, receive a
+  /// material request, or registered in a materials / supplier category.
+  bool get _sellsMaterials {
+    if (_supplierProducts.isNotEmpty || _materialLeads.isNotEmpty) return true;
+    final category = (_profileData?['category'] ?? '').toString().toLowerCase();
+    return category.contains('material') || category.contains('supplier') || category.contains('dealer');
+  }
 
   /// Material-only partners go to the materials console, everyone else to the Leads tab.
   void _openLeads() {
@@ -548,6 +558,9 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
           ],
         ),
         const SizedBox(height: Bento.gap),
+        if (!_sellsMaterials)
+          _buildStartSellingCard()
+        else
         Row(
           children: [
             Expanded(
@@ -580,6 +593,37 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
   // ==========================================
   // 4. QUICK ACTIONS (bento)
   // ==========================================
+  /// Shown to partners who don't sell materials yet - adding a first product turns the supplier tools on.
+  Widget _buildStartSellingCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return BentoCard(
+      onTap: () => context.push('/supplier-add-product').then((_) => _fetchStats()),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const BentoIconBubble(icon: Icons.storefront_rounded, color: Bento.green, size: 44),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Sell materials too?',
+                    style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Bento.text(isDark))),
+                const SizedBox(height: 2),
+                Text(
+                  'List cement, steel, paint or any product and get orders from customers.',
+                  style: TextStyle(fontSize: 12, height: 1.35, color: Bento.muted(isDark)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const BentoPill(label: 'Start', color: Colors.white, background: Bento.accent, icon: Icons.add_rounded),
+        ],
+      ),
+    );
+  }
+
   Widget _buildQuickActionsBento() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final newMaterialLeads = _materialLeads.where((l) => (l['status'] ?? 'New') == 'New').length;
@@ -675,23 +719,39 @@ class _ProviderDashboardState extends ConsumerState<ProviderDashboard> {
             child: Column(
               children: [
                 Expanded(
-                  child: mini(
-                    Icons.add_box_rounded,
-                    Bento.green,
-                    'Add product',
-                    'List a new item',
-                    () => context.push('/supplier-add-product'),
-                  ),
+                  child: _sellsMaterials
+                      ? mini(
+                          Icons.add_box_rounded,
+                          Bento.green,
+                          'Add product',
+                          'List a new item',
+                          () => context.push('/supplier-add-product'),
+                        )
+                      : mini(
+                          Icons.engineering_rounded,
+                          Bento.blue,
+                          'My sites',
+                          'Projects in progress',
+                          () => ref.read(providerTabProvider.notifier).setTab(1),
+                        ),
                 ),
                 const SizedBox(height: Bento.gap),
                 Expanded(
-                  child: mini(
-                    Icons.inventory_rounded,
-                    Bento.violet,
-                    'Material leads',
-                    newMaterialLeads > 0 ? '$newMaterialLeads new' : 'Buyer requests',
-                    () => context.push('/b2b-materials'),
-                  ),
+                  child: _sellsMaterials
+                      ? mini(
+                          Icons.inventory_rounded,
+                          Bento.violet,
+                          'Material leads',
+                          newMaterialLeads > 0 ? '$newMaterialLeads new' : 'Buyer requests',
+                          () => context.push('/b2b-materials'),
+                        )
+                      : mini(
+                          Icons.chat_bubble_rounded,
+                          Bento.violet,
+                          'Messages',
+                          'Chat with clients',
+                          () => ref.read(providerTabProvider.notifier).setTab(3),
+                        ),
                 ),
               ],
             ),

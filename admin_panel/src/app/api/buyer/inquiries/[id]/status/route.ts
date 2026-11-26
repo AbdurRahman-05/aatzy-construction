@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth, forbidden } from '@/lib/auth';
+import { checkBuyerUpdate } from '@/lib/materials';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -14,7 +15,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     const { id } = await context.params;
     const body = await request.json();
-    const { status, notes, rating, reviewText, buyerId, images } = body;
+    const { status, notes, rating, reviewText, images } = body;
 
     const inquiry = await prisma.inquiry.findUnique({
       where: { id },
@@ -24,12 +25,20 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: 'Inquiry not found' }, { status: 404 });
     }
 
+    const ratingValue = rating !== undefined && rating !== null && rating !== '' ? Number(rating) : undefined;
+    const rule = checkBuyerUpdate(inquiry, { status: status || undefined, rating: ratingValue });
+    if (!rule.ok) {
+      return NextResponse.json({ error: rule.error, code: rule.code }, { status: 409 });
+    }
+
     const updateData: any = {};
     let logStatus = inquiry.status;
     let logNotes = notes;
 
     if (status) {
       updateData.status = status;
+      // Buyer confirming receipt means the material arrived
+      if (status === 'Completed') updateData.deliveryStatus = 'Delivered';
       logStatus = status;
       if (!logNotes) {
         logNotes = `Inquiry status updated to ${status} by buyer.`;
@@ -40,8 +49,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       updateData.images = images;
     }
 
-    if (rating !== undefined && rating !== null) {
-      updateData.rating = parseInt(rating.toString());
+    if (ratingValue !== undefined) {
+      updateData.rating = ratingValue;
       updateData.reviewText = reviewText || null;
       if (!logNotes) {
         logNotes = `Buyer rated supplier: ${rating} Stars. ${reviewText ? `Review: "${reviewText}"` : ''}`;
@@ -59,7 +68,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         inquiryId: id,
         status: logStatus,
         notes: logNotes || 'Status updated.',
-        changedByUserId: buyerId || inquiry.buyerId,
+        changedByUserId: inquiry.buyerId,
       },
     });
 

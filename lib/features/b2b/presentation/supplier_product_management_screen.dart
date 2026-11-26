@@ -23,6 +23,8 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
   final _descController = TextEditingController();
   final _imageUrlController = TextEditingController();
   final _priceController = TextEditingController();
+  // Partner's own buying cost - private, used only to show their margin on orders
+  final _costController = TextEditingController();
   final _unitTypeController = TextEditingController();
 
   final _specKeyController = TextEditingController();
@@ -108,6 +110,8 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
       _descController.text = item['description'] ?? '';
       _selectedCategory = item['categoryId'] ?? 1;
       _priceController.text = (item['price_per_unit'] ?? '').toString();
+      final cost = double.tryParse((item['cost_price'] ?? '').toString()) ?? 0;
+      if (cost > 0) _costController.text = cost.toStringAsFixed(cost == cost.roundToDouble() ? 0 : 2);
       _unitTypeController.text = item['unit_type'] ?? '';
 
       final listImgs = item['images'];
@@ -140,6 +144,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
     _descController.dispose();
     _imageUrlController.dispose();
     _priceController.dispose();
+    _costController.dispose();
     _unitTypeController.dispose();
     _specKeyController.dispose();
     _specValueController.dispose();
@@ -200,6 +205,7 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
         'name': _nameController.text.trim(),
         'description': _descController.text.trim(),
         'price_per_unit': double.tryParse(_priceController.text) ?? 0.0,
+        'cost_price': double.tryParse(_costController.text.trim()) ?? 0.0,
         'unit_type': _unitTypeController.text.trim().isNotEmpty ? _unitTypeController.text.trim() : 'Unit',
         'specifications': _specKeyController.text.trim().isNotEmpty
             ? {_specKeyController.text.trim(): _specValueController.text.trim()}
@@ -685,6 +691,29 @@ class _SupplierProductManagementScreenState extends ConsumerState<SupplierProduc
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+
+          // Private cost price -> margin on orders
+          TextFormField(
+            controller: _costController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Your cost per unit (optional)',
+              hintText: 'What you pay for it',
+              prefixText: '₹ ',
+              prefixStyle: TextStyle(fontWeight: FontWeight.bold, color: textDark),
+              helperText: 'Only you can see this. Used to show your margin on each order.',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Theme.of(context).cardColor.withValues(alpha: 0.5),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return null;
+              final v = double.tryParse(value.trim());
+              if (v == null || v < 0) return 'Must be a number';
+              return null;
+            },
           ),
           const SizedBox(height: 12),
 

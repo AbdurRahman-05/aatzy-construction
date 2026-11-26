@@ -21,6 +21,9 @@ class CatalogItem {
   final Map<String, dynamic> specifications;
   final List<String> images;
 
+  /// Why the admin hid this product (only when status is Rejected).
+  final String? rejectedReason;
+
   CatalogItem({
     required this.id,
     required this.name,
@@ -32,6 +35,7 @@ class CatalogItem {
     required this.unitType,
     required this.specifications,
     required this.images,
+    this.rejectedReason,
   });
 
   factory CatalogItem.fromJson(Map<String, dynamic> json) {
@@ -71,10 +75,11 @@ class CatalogItem {
       status: json['status'] ?? 'Approved',
       categoryName: json['category_name'] ?? 'General',
       categoryId: json['category_id'] != null ? int.parse(json['category_id'].toString()) : 1,
-      pricePerUnit: json['price_per_unit'] != null ? double.parse(json['price_per_unit'].toString()) : 450.0,
+      pricePerUnit: double.tryParse(json['price_per_unit']?.toString() ?? '') ?? 0.0,
       unitType: json['unit_type'] ?? 'Bag',
       specifications: specs,
       images: imgs,
+      rejectedReason: json['rejected_reason']?.toString(),
     );
   }
 }
@@ -194,6 +199,19 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
   bool _hasText(String s) {
     final t = s.trim().toLowerCase();
     return t.isNotEmpty && t != 'none' && t != 'null';
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'Approved':
+        return 'Live';
+      case 'Pending':
+        return 'In review';
+      case 'Rejected':
+        return 'Hidden';
+      default:
+        return status;
+    }
   }
 
   Color _statusColor(String status) {
@@ -394,7 +412,7 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
                   top: 8,
                   left: 8,
                   child: BentoPill(
-                    label: item.status,
+                    label: _statusLabel(item.status),
                     color: Colors.white,
                     background: statusColor.withValues(alpha: 0.9),
                   ),
@@ -421,7 +439,15 @@ class _SupplierCatalogScreenState extends ConsumerState<SupplierCatalogScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Bento.accentText(dark)),
                   ),
-                  if (_hasText(item.description)) ...[
+                  if (item.status == 'Rejected' && _hasText(item.rejectedReason ?? '')) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Hidden: ${item.rejectedReason}. Edit to send for review.',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Bento.red, fontWeight: FontWeight.w700, height: 1.3),
+                    ),
+                  ] else if (_hasText(item.description)) ...[
                     const SizedBox(height: 4),
                     Text(
                       item.description,

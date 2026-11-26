@@ -45,6 +45,8 @@ export async function PUT(
         costPrice: costPrice !== undefined ? parseFloat(costPrice) : undefined,
         images: images !== undefined ? images : undefined,
         specifications: specifications !== undefined ? JSON.stringify(specifications) : undefined,
+        // A listing the admin rejected goes back to review after the partner edits it
+        ...(check.status === 'Rejected' ? { status: 'Pending', rejectedReason: null } : {}),
       },
     });
 
