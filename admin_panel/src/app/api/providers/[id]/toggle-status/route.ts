@@ -17,7 +17,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const newStatus = !provider.isVerified;
     const updatedProvider = await prisma.provider.update({
       where: { id },
-      data: { isVerified: newStatus },
+      data: newStatus ? { isVerified: true, isRejected: false } : { isVerified: false },
     });
 
     if (newStatus) {

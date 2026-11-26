@@ -3,7 +3,6 @@ import 'package:construction_app/core/widgets/bento.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:construction_app/core/api_http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
@@ -495,26 +494,6 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
     );
   }
 
-  Future<void> _contactBuyer(String name, String phone, String email) async {
-    Uri? uri;
-    if (phone.trim().isNotEmpty) {
-      uri = Uri(scheme: 'tel', path: phone.trim());
-    } else if (email.trim().isNotEmpty) {
-      uri = Uri(scheme: 'mailto', path: email.trim());
-    }
-    if (uri == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No contact details shared by $name yet.')),
-      );
-      return;
-    }
-    try {
-      await launchUrl(uri);
-    } catch (e) {
-      debugPrint('Contact buyer error: $e');
-    }
-  }
-
   Widget _buildMaterialLeadCard(dynamic lead) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final status = (lead['status'] ?? 'New').toString();
@@ -525,8 +504,7 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
     final location = (lead['location'] ?? '').toString();
     final date = lead['created_at'] != null ? lead['created_at'].toString().split('T').first : '';
     final buyerName = (lead['buyer_name'] ?? 'Customer').toString();
-    final buyerEmail = (lead['buyer_email'] ?? '').toString();
-    final buyerPhone = (lead['buyer_phone'] ?? '').toString();
+    final buyerId = (lead['buyer_id'] ?? '').toString();
 
     Color statusColor = Bento.blue;
     if (status == 'Quote Sent') statusColor = Bento.violet;
@@ -583,9 +561,9 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(buyerName, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Bento.text(dark))),
-                      if (buyerPhone.isNotEmpty || buyerEmail.isNotEmpty)
+                      if (date.isNotEmpty)
                         Text(
-                          buyerPhone.isNotEmpty ? buyerPhone : buyerEmail,
+                          'Requested $date',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 11.5, color: Bento.muted(dark)),
@@ -593,12 +571,13 @@ class _ProviderLeadsScreenState extends ConsumerState<ProviderLeadsScreen> with 
                     ],
                   ),
                 ),
-                BentoCircleButton(
-                  icon: buyerPhone.isNotEmpty ? Icons.call_rounded : Icons.mail_rounded,
-                  color: Bento.accentText(dark),
-                  tooltip: 'Contact buyer',
-                  onPressed: () => _contactBuyer(buyerName, buyerPhone, buyerEmail),
-                ),
+                if (buyerId.isNotEmpty)
+                  BentoCircleButton(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    color: Bento.accentText(dark),
+                    tooltip: 'Chat with customer',
+                    onPressed: () => context.push('/provider-chat/$buyerId?name=${Uri.encodeQueryComponent(buyerName)}'),
+                  ),
               ],
             ),
           ),

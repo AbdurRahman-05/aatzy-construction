@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Check, EyeOff, Package, Search } from 'lucide-react';
+import { useToast } from '../admin/_ui/Toast';
+import { productPill } from '../admin/_ui/StatusPill';
+import { inr, timeAgo } from '../admin/_ui/format';
 
 export interface ModerationProduct {
   id: string;
@@ -19,183 +24,193 @@ export interface ModerationProduct {
 
 type Filter = 'Pending' | 'Approved' | 'Rejected' | 'All';
 
-const STATUS_STYLES: Record<string, string> = {
-  Approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  Pending: 'bg-amber-50 text-amber-700 border-amber-200',
-  Rejected: 'bg-red-50 text-red-700 border-red-200',
-};
-
-const STATUS_LABEL: Record<string, string> = {
+const FILTER_LABEL: Record<Filter, string> = {
+  Pending: 'In review',
   Approved: 'Live',
-  Pending: 'Waiting for review',
   Rejected: 'Hidden',
+  All: 'All',
 };
 
-function rupees(value: number): string {
-  return `₹${Math.round(value).toLocaleString('en-IN')}`;
-}
+const HIDE_REASONS = ['Photo is unclear', 'Price looks wrong', 'Wrong category', 'Not a construction material', 'Duplicate listing'];
 
 export default function ProductsModeration({ initialProducts }: { initialProducts: ModerationProduct[] }) {
+  const router = useRouter();
+  const toast = useToast();
   const [products, setProducts] = useState<ModerationProduct[]>(initialProducts);
-  const [filter, setFilter] = useState<Filter>(
-    initialProducts.some(p => p.status === 'Pending') ? 'Pending' : 'All'
-  );
+  const [filter, setFilter] = useState<Filter>(initialProducts.some(p => p.status === 'Pending') ? 'Pending' : 'All');
   const [search, setSearch] = useState('');
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [hiding, setHiding] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
 
-  const counts = useMemo(() => ({
-    Pending: products.filter(p => p.status === 'Pending').length,
-    Approved: products.filter(p => p.status === 'Approved').length,
-    Rejected: products.filter(p => p.status === 'Rejected').length,
-    All: products.length,
-  }), [products]);
+  const counts = useMemo(
+    () => ({
+      Pending: products.filter(p => p.status === 'Pending').length,
+      Approved: products.filter(p => p.status === 'Approved').length,
+      Rejected: products.filter(p => p.status === 'Rejected').length,
+      All: products.length,
+    }),
+    [products]
+  );
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return products.filter(p =>
-      (filter === 'All' || p.status === filter) &&
-      (!q || p.name.toLowerCase().includes(q) || p.supplierName.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))
+    return products.filter(
+      p =>
+        (filter === 'All' || p.status === filter) &&
+        (!q || p.name.toLowerCase().includes(q) || p.supplierName.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))
     );
   }, [products, filter, search]);
 
-  const moderate = async (product: ModerationProduct, status: 'Approved' | 'Rejected') => {
-    let rejectedReason: string | undefined;
-    if (status === 'Rejected') {
-      const reason = window.prompt(
-        `Why are you hiding "${product.name}"? The partner will see this reason.`,
-        product.rejectedReason || ''
-      );
-      if (reason === null) return;
-      if (!reason.trim()) {
-        setError('A reason is required to hide a product.');
-        return;
-      }
-      rejectedReason = reason.trim();
-    }
+  const moderate = (product: ModerationProduct, status: 'Approved' | 'Rejected', rejectedReason?: string) => {
+    const before = { status: product.status, rejectedReason: product.rejectedReason };
+    const patch = (s: string, r: string | null) => setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, status: s, rejectedReason: r } : p)));
+    patch(status, status === 'Rejected' ? rejectedReason ?? null : null);
+    setHiding(null);
+    setReason('');
 
-    setBusyId(product.id);
-    setError('');
-    try {
-      const res = await fetch(`/api/admin/products/${product.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, rejectedReason }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || 'Could not update the product.');
-        return;
-      }
-      setProducts(prev => prev.map(p =>
-        p.id === product.id ? { ...p, status, rejectedReason: status === 'Rejected' ? rejectedReason ?? null : null } : p
-      ));
-    } catch {
-      setError('Network error while updating the product.');
-    } finally {
-      setBusyId(null);
-    }
+    toast.deferred({
+      message: status === 'Approved' ? `${product.name} is live` : `${product.name} hidden from customers`,
+      undo: () => patch(before.status, before.rejectedReason),
+      commit: async () => {
+        const res = await fetch(`/api/admin/products/${product.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, rejectedReason }),
+        });
+        if (res.ok) router.refresh();
+        return res.ok;
+      },
+      failMessage: `Could not update ${product.name}.`,
+    });
   };
 
   const filters: Filter[] = ['Pending', 'Approved', 'Rejected', 'All'];
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-gray-100 mb-6 gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Material Products</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Products go live as soon as a partner lists them. Hide anything wrong or misleading; edited products come back here for review.
-            </p>
-          </div>
-          <input
-            type="search"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search product, supplier or category"
-            className="w-full md:w-72 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-          />
+    <div>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-cz-muted" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search product, supplier or category" className="cz-input pl-10" />
         </div>
-
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-1 rounded-2xl border border-cz-line bg-cz-surface p-1 shadow-sm">
           {filters.map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-full text-xs font-bold border transition ${
-                filter === f
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-black transition ${
+                filter === f ? 'bg-cz-hero text-white' : 'text-cz-muted hover:text-cz-ink'
               }`}
             >
-              {f === 'Approved' ? 'Live' : f === 'Rejected' ? 'Hidden' : f === 'Pending' ? 'Needs review' : 'All'}
-              <span className={`ml-2 px-1.5 py-0.5 rounded-md ${filter === f ? 'bg-teal-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
-                {counts[f]}
-              </span>
+              {FILTER_LABEL[f]}
+              <span className={`rounded-md px-1.5 text-[10px] ${filter === f ? 'bg-white/15' : 'bg-cz-soft'}`}>{counts[f]}</span>
             </button>
           ))}
         </div>
+        <p className="w-full text-xs text-cz-muted">
+          Products go live as soon as a partner lists them. Hide anything wrong or misleading - the partner sees your reason, and edited products come back to the Approvals inbox.
+        </p>
+      </div>
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 text-red-700 text-sm font-semibold rounded-xl border border-red-200">{error}</div>
-        )}
+      {visible.length === 0 ? (
+        <div className="cz-card flex flex-col items-center px-6 py-16 text-center">
+          <Package size={28} className="mb-3 text-cz-muted" />
+          <p className="text-sm font-semibold text-cz-muted">No products here.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {visible.map(p => (
+            <div key={p.id} className="cz-card flex flex-col overflow-hidden">
+              <div className="relative flex h-44 items-center justify-center bg-cz-soft">
+                {p.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.image} alt={p.name} className="max-h-full max-w-full object-contain p-3" />
+                ) : (
+                  <Package size={28} className="text-cz-muted" />
+                )}
+                <span className="absolute left-3 top-3">{productPill(p.status)}</span>
+              </div>
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="line-clamp-2 font-bold leading-snug text-cz-ink">{p.name}</h3>
+                <p className="mt-1 truncate text-xs text-cz-muted">
+                  {p.supplierName}
+                  {p.supplierVerified ? ' ✓' : ''} · {p.category} · {timeAgo(p.createdAt)}
+                </p>
+                <p className="mt-2 text-base font-black text-cz-accent-text">
+                  {inr(p.pricePerUnit)} <span className="text-xs font-semibold text-cz-muted">/ {p.unitType}</span>
+                </p>
+                <p className="mt-2 line-clamp-3 text-xs text-cz-muted">{p.description}</p>
+                {p.status === 'Rejected' && p.rejectedReason && (
+                  <p className="mt-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-700">Hidden: {p.rejectedReason}</p>
+                )}
 
-        {visible.length === 0 ? (
-          <div className="text-center py-16 text-gray-400 text-sm font-semibold">No products here.</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            {visible.map(p => (
-              <div key={p.id} className="rounded-2xl border border-gray-100 overflow-hidden flex flex-col bg-white shadow-sm">
-                <div className="h-40 bg-gray-50 flex items-center justify-center">
-                  {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.image} alt={p.name} className="max-h-full max-w-full object-contain p-2" />
-                  ) : (
-                    <span className="text-gray-300 text-xs font-bold">No image</span>
-                  )}
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-bold text-gray-900 leading-snug">{p.name}</h3>
-                    <span className={`shrink-0 text-[10px] font-black px-2 py-1 rounded-full border ${STATUS_STYLES[p.status] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
-                      {STATUS_LABEL[p.status] || p.status}
-                    </span>
+                {hiding === p.id ? (
+                  <div className="mt-auto pt-4">
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {HIDE_REASONS.map(r => (
+                        <button
+                          key={r}
+                          onClick={() => setReason(r)}
+                          className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${
+                            reason === r ? 'border-red-400 bg-red-500/10 text-red-700' : 'border-cz-line text-cz-muted hover:text-cz-ink'
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      autoFocus
+                      value={reason}
+                      onChange={e => setReason(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && reason.trim()) moderate(p, 'Rejected', reason.trim());
+                        if (e.key === 'Escape') setHiding(null);
+                      }}
+                      placeholder="Reason (partner sees this)"
+                      className="cz-input text-xs"
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => setHiding(null)} className="flex-1 rounded-xl border border-cz-line py-2 text-xs font-bold text-cz-muted hover:bg-cz-soft">
+                        Cancel
+                      </button>
+                      <button
+                        disabled={!reason.trim()}
+                        onClick={() => moderate(p, 'Rejected', reason.trim())}
+                        className="flex-1 rounded-xl bg-red-600 py-2 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-40"
+                      >
+                        Hide
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {p.supplierName}{p.supplierVerified ? ' ✓' : ''} · {p.category}
-                  </p>
-                  <p className="text-sm font-black text-teal-700 mt-2">{rupees(p.pricePerUnit)} / {p.unitType}</p>
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-3">{p.description}</p>
-                  {p.status === 'Rejected' && p.rejectedReason && (
-                    <p className="text-xs text-red-600 mt-2 font-semibold">Reason: {p.rejectedReason}</p>
-                  )}
-                  <div className="mt-auto pt-4 flex gap-2">
+                ) : (
+                  <div className="mt-auto flex gap-2 pt-4">
                     {p.status !== 'Approved' && (
                       <button
-                        disabled={busyId === p.id}
                         onClick={() => moderate(p, 'Approved')}
-                        className="flex-1 px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold disabled:opacity-50"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-cz-accent py-2 text-xs font-bold text-white hover:bg-cz-accent-deep"
                       >
-                        {p.status === 'Rejected' ? 'Show again' : 'Approve'}
+                        <Check size={14} /> {p.status === 'Rejected' ? 'Show again' : 'Make it live'}
                       </button>
                     )}
                     {p.status !== 'Rejected' && (
                       <button
-                        disabled={busyId === p.id}
-                        onClick={() => moderate(p, 'Rejected')}
-                        className="flex-1 px-3 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold disabled:opacity-50"
+                        onClick={() => {
+                          setHiding(p.id);
+                          setReason('');
+                        }}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-red-500/30 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10"
                       >
-                        Hide
+                        <EyeOff size={14} /> Hide
                       </button>
                     )}
                   </div>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

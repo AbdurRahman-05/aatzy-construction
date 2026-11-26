@@ -1,275 +1,379 @@
 import prisma from '@/lib/prisma';
-import ProviderReviewModal from '../components/ProviderReviewModal';
-import StatusToggle from '../components/StatusToggle';
-import DeleteButton from '../components/DeleteButton';
-import ViewDetailsModal from '../components/ViewDetailsModal';
-import DashboardAnalytics from '../components/DashboardAnalytics';
-import RecentActionsFeed from '../components/RecentActionsFeed';
-import { getRecentActions } from '@/lib/recentActions';
 import { cookies } from 'next/headers';
 import { ADMIN_COOKIE_NAME, isValidAdminToken } from '@/lib/auth';
+import { getRecentActions } from '@/lib/recentActions';
+import { categoryNameFor } from '@/lib/materials';
 import LoginForm from './LoginForm';
+import AdminShell from './_ui/AdminShell';
+import OverviewTiles, { type OverviewData } from './_ui/OverviewTiles';
+import ApprovalsInbox, { type InboxItem } from './_ui/ApprovalsInbox';
+import ProjectsBoard, { type BoardProject } from './_ui/ProjectsBoard';
+import { CustomersView, PartnersView, type CustomerRow, type PartnerRow } from './_ui/PeopleViews';
+import { SIDEBAR_COOKIE, THEME_COOKIE, type SearchIndex } from './_ui/nav';
+import DashboardAnalytics from '../components/DashboardAnalytics';
+import RecentActionsFeed from '../components/RecentActionsFeed';
 import AdsManager from '../components/AdsManager';
 import ProductsModeration, { type ModerationProduct } from '../components/ProductsModeration';
-import { categoryNameFor } from '@/lib/materials';
-import SubscriptionManager from '../components/SubscriptionManager';
-import AdminSidebar from '../components/AdminSidebar';
 import ViewTransitionContainer from '../components/ViewTransitionContainer';
 
 export const dynamic = 'force-dynamic';
 
+const VIEWS = ['dashboard', 'pending', 'projects', 'users', 'providers', 'products', 'ads', 'recent-actions'];
+const CLOSED_STAGES = ['Completed', 'Finished', 'Cancelled', 'completed', 'finished', 'cancelled'];
+const QUIET_DAYS = 14;
+const DAY = 86_400_000;
+
+/** Server components render once per request, so one timestamp per request is fine. */
+const requestTime = () => Date.now();
+
+function latest(...dates: (Date | null | undefined)[]): Date {
+  return dates.filter((d): d is Date => !!d).reduce((a, b) => (b > a ? b : a), new Date(0));
+}
+
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; open?: string }>;
 }) {
-  const { view = 'dashboard' } = await searchParams;
+  const params = await searchParams;
+  const now = requestTime();
+  const view = VIEWS.includes(params.view || '') ? params.view! : 'dashboard';
+  const openId = params.open || undefined;
 
   const cookieStore = await cookies();
-  const adminSession = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
-
-  if (!isValidAdminToken(adminSession)) {
+  if (!isValidAdminToken(cookieStore.get(ADMIN_COOKIE_NAME)?.value)) {
     return <LoginForm />;
   }
+  const theme = cookieStore.get(THEME_COOKIE)?.value === 'dark' ? 'dark' : 'light';
+  const collapsed = cookieStore.get(SIDEBAR_COOKIE)?.value === '1';
 
-  const unapprovedProviders = await prisma.provider.findMany({
-    where: { isVerified: false, isRejected: false },
-    include: { portfolioImages: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  // ---- Always: badge counts + search index (small selects only)
+  const [pendingPartners, pendingProducts, idxUsers, idxProviders, idxProjects] = await Promise.all([
+    prisma.provider.count({ where: { isVerified: false, isRejected: false } }),
+    prisma.product.count({ where: { status: 'Pending', deletedAt: null } }),
+    prisma.user.findMany({ where: { role: 'CONSUMER' }, select: { id: true, name: true, email: true, phone: true }, orderBy: { createdAt: 'desc' } }),
+    prisma.provider.findMany({
+      select: { id: true, businessName: true, ownerName: true, phone: true, email: true, category: true, isVerified: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.project.findMany({
+      select: { id: true, title: true, location: true, currentStage: true, user: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
 
-  const allUsers = await prisma.user.findMany({
-    where: { role: 'CONSUMER' },
-    orderBy: { createdAt: 'desc' }
-  });
+  const searchIndex: SearchIndex = {
+    users: idxUsers.map(u => ({ id: u.id, name: u.name, email: u.email, phone: u.phone })),
+    providers: idxProviders.map(p => ({
+      id: p.id, name: p.businessName, owner: p.ownerName, phone: p.phone, email: p.email, category: p.category, verified: p.isVerified,
+    })),
+    projects: idxProjects.map(p => ({ id: p.id, title: p.title, location: p.location, client: p.user.name, stage: p.currentStage })),
+  };
 
-  const allProviders = await prisma.provider.findMany({
-    include: { portfolioImages: true },
-    orderBy: { createdAt: 'desc' }
-  });
+  let content: React.ReactNode = null;
 
-  const totalUsers = await prisma.user.count();
-  const totalProviders = await prisma.provider.count();
-  const activeProjects = await prisma.project.count({
-    where: {
-      currentStage: {
-        notIn: ['Completed', 'Finished', 'Cancelled', 'completed', 'finished', 'cancelled']
-      }
-    }
-  });
-  const totalQuotes = await prisma.quote.count();
-
-  // Fetch projects data for the analytics dashboard
-  const allProjectsRaw = await prisma.project.findMany({
-    include: {
-      user: { select: { name: true } },
-      quotes: {
+  // ---------------------------------------------------------------- Overview
+  if (view === 'dashboard') {
+    const since = new Date(now - 180 * DAY);
+    const [
+      evCustomers, evPartners, evProjects, evOrders, evDeals,
+      oldestPartner, oldestProduct, activeProjectsRaw, openOrders, totalCustomers, verifiedPartners, liveProducts,
+      allProjectsRaw, acceptedQuotesRaw, completedInquiriesRaw, recentActions,
+    ] = await Promise.all([
+      prisma.user.findMany({ where: { role: 'CONSUMER', createdAt: { gte: since } }, select: { createdAt: true } }),
+      prisma.provider.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+      prisma.project.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+      prisma.inquiry.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+      prisma.quote.findMany({ where: { isAccepted: true, updatedAt: { gte: since } }, select: { updatedAt: true, estimatedCost: true } }),
+      prisma.provider.findFirst({ where: { isVerified: false, isRejected: false }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
+      prisma.product.findFirst({ where: { status: 'Pending', deletedAt: null }, orderBy: { updatedAt: 'asc' }, select: { updatedAt: true } }),
+      prisma.project.findMany({
+        where: { currentStage: { notIn: CLOSED_STAGES } },
+        select: {
+          updatedAt: true,
+          updates: { select: { createdAt: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+          tasks: { select: { updatedAt: true }, orderBy: { updatedAt: 'desc' }, take: 1 },
+        },
+      }),
+      prisma.inquiry.count({ where: { status: { notIn: ['Completed', 'Rejected', 'Lead Rejected'] } } }),
+      prisma.user.count({ where: { role: 'CONSUMER' } }),
+      prisma.provider.count({ where: { isVerified: true } }),
+      prisma.product.count({ where: { status: 'Approved', deletedAt: null } }),
+      // Data for the existing deep-dive analytics below the tiles
+      prisma.project.findMany({
         include: {
-          provider: { select: { id: true, businessName: true } }
-        }
-      },
-      tasks: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+          user: { select: { name: true } },
+          quotes: { include: { provider: { select: { id: true, businessName: true } } } },
+          tasks: { select: { id: true, status: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.quote.findMany({
+        where: { isAccepted: true },
+        include: { provider: { select: { id: true, businessName: true, ownerName: true } } },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      prisma.inquiry.findMany({
+        where: { OR: [{ status: 'Completed' }, { status: 'Closed' }] },
+        include: {
+          provider: { select: { id: true, businessName: true, ownerName: true, email: true, phone: true, category: true } },
+          buyer: { select: { id: true, name: true, email: true } },
+          product: { select: { id: true, name: true, pricePerUnit: true, costPrice: true, category: true, unitType: true } },
+        },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      getRecentActions(60),
+    ]);
 
-  const projectsJson = allProjectsRaw.map(p => ({
-    id: p.id,
-    title: p.title,
-    type: p.type,
-    location: p.location,
-    budget: p.budget,
-    timeline: p.timeline,
-    currentStage: p.currentStage,
-    createdAt: p.createdAt.toISOString(),
-    user: { name: p.user.name },
-    quotes: p.quotes.map(q => ({
+    const oldest = [oldestPartner?.createdAt, oldestProduct?.updatedAt]
+      .filter((d): d is Date => !!d)
+      .reduce<Date | null>((a, b) => (!a || b < a ? b : a), null);
+    const stuck = activeProjectsRaw.filter(p => {
+      const last = latest(p.updatedAt, p.updates[0]?.createdAt, p.tasks[0]?.updatedAt);
+      return now - last.getTime() >= QUIET_DAYS * DAY;
+    }).length;
+
+    const overview: OverviewData = {
+      events: {
+        customers: evCustomers.map(e => e.createdAt.toISOString()),
+        partners: evPartners.map(e => e.createdAt.toISOString()),
+        projects: evProjects.map(e => e.createdAt.toISOString()),
+        orders: evOrders.map(e => e.createdAt.toISOString()),
+        deals: evDeals.map(d => ({ at: d.updatedAt.toISOString(), amount: d.estimatedCost || 0 })),
+      },
+      now: {
+        pendingPartners,
+        pendingProducts,
+        oldestPendingDays: oldest ? Math.floor((now - oldest.getTime()) / DAY) : 0,
+        activeProjects: activeProjectsRaw.length,
+        stuckProjects: stuck,
+        openOrders,
+        totalCustomers,
+        totalPartners: idxProviders.length,
+        verifiedPartners,
+        liveProducts,
+      },
+    };
+
+    const projectsJson = allProjectsRaw.map(p => ({
+      id: p.id,
+      title: p.title,
+      type: p.type,
+      location: p.location,
+      budget: p.budget,
+      timeline: p.timeline,
+      currentStage: p.currentStage,
+      createdAt: p.createdAt.toISOString(),
+      user: { name: p.user.name },
+      quotes: p.quotes.map(q => ({
+        id: q.id,
+        estimatedCost: q.estimatedCost,
+        isAccepted: q.isAccepted,
+        createdAt: q.createdAt.toISOString(),
+        updatedAt: q.updatedAt.toISOString(),
+        provider: q.provider ? { id: q.provider.id, businessName: q.provider.businessName } : null,
+      })),
+      tasks: p.tasks.map(t => ({ id: t.id, status: t.status })),
+    }));
+
+    const acceptedQuotesJson = acceptedQuotesRaw.map(q => ({
       id: q.id,
       estimatedCost: q.estimatedCost,
       isAccepted: q.isAccepted,
       createdAt: q.createdAt.toISOString(),
       updatedAt: q.updatedAt.toISOString(),
-      provider: q.provider ? {
-        id: q.provider.id,
-        businessName: q.provider.businessName
-      } : null
-    })),
-    tasks: p.tasks.map(t => ({
-      id: t.id,
-      status: t.status
-    }))
-  }));
+      provider: { id: q.provider.id, businessName: q.provider.businessName, ownerName: q.provider.ownerName },
+    }));
 
-  // Fetch accepted quotes data for profit analytics breakdown
-  const acceptedQuotesRaw = await prisma.quote.findMany({
-    where: { isAccepted: true },
-    include: {
-      provider: { select: { id: true, businessName: true, ownerName: true } },
-      project: true
-    },
-    orderBy: { updatedAt: 'desc' }
-  });
+    const materialOrders = completedInquiriesRaw.map(inq => {
+      const qty = inq.quantity || 1;
+      const unitPrice = inq.quotedPrice ?? inq.product?.pricePerUnit ?? 0;
+      const totalRevenue = unitPrice * qty;
+      const unitCost = inq.product?.costPrice ?? 0;
+      const totalCost = unitCost > 0 ? unitCost * qty : 0;
+      const netProfit = totalCost > 0 ? Math.max(0, totalRevenue - totalCost) : Math.round(totalRevenue * 0.1);
+      return {
+        id: inq.id,
+        title: inq.title,
+        quantity: qty,
+        unit: inq.unit || inq.product?.unitType || 'Units',
+        unitPrice,
+        totalRevenue,
+        unitCost,
+        totalCost,
+        netProfit,
+        status: inq.status,
+        deliveryStatus: inq.deliveryStatus,
+        gstPercent: inq.gstPercent || 18,
+        createdAt: inq.createdAt.toISOString(),
+        updatedAt: inq.updatedAt.toISOString(),
+        provider: inq.provider
+          ? { id: inq.provider.id, businessName: inq.provider.businessName, ownerName: inq.provider.ownerName, email: inq.provider.email, phone: inq.provider.phone, category: inq.provider.category }
+          : null,
+        buyer: inq.buyer ? { id: inq.buyer.id, name: inq.buyer.name, email: inq.buyer.email } : null,
+        product: inq.product ? { id: inq.product.id, name: inq.product.name, category: inq.product.category } : null,
+      };
+    });
 
-  const acceptedQuotesJson = acceptedQuotesRaw.map(q => ({
-    id: q.id,
-    estimatedCost: q.estimatedCost,
-    isAccepted: q.isAccepted,
-    createdAt: q.createdAt.toISOString(),
-    updatedAt: q.updatedAt.toISOString(),
-    provider: {
-      id: q.provider.id,
-      businessName: q.provider.businessName,
-      ownerName: q.provider.ownerName
-    }
-  }));
+    content = (
+      <>
+        <OverviewTiles data={overview} />
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-black uppercase tracking-[0.14em] text-cz-muted">Deep dive</h2>
+          <span className="h-px flex-1 bg-cz-line" />
+        </div>
+        <DashboardAnalytics
+          projects={projectsJson}
+          acceptedQuotes={acceptedQuotesJson}
+          providers={idxProviders.map(p => ({ id: p.id, businessName: p.businessName, ownerName: p.ownerName }))}
+          recentActions={recentActions}
+          materialOrders={materialOrders}
+        />
+      </>
+    );
+  }
 
-  // Fetch completed / closed material inquiries for material profits breakdown
-  const completedInquiriesRaw = await prisma.inquiry.findMany({
-    where: {
-      OR: [
-        { status: 'Completed' },
-        { status: 'Closed' }
-      ]
-    },
-    include: {
-      provider: {
-        select: {
-          id: true,
-          businessName: true,
-          ownerName: true,
-          email: true,
-          phone: true,
-          category: true
-        }
+  // --------------------------------------------------------------- Approvals
+  if (view === 'pending') {
+    const [partners, products] = await Promise.all([
+      prisma.provider.findMany({
+        where: { isVerified: false, isRejected: false },
+        select: { id: true, businessName: true, ownerName: true, category: true, createdAt: true, profileCompletion: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.product.findMany({
+        where: { status: 'Pending', deletedAt: null },
+        include: { provider: { select: { businessName: true, isVerified: true } } },
+        orderBy: { updatedAt: 'asc' },
+      }),
+    ]);
+
+    const items: InboxItem[] = [
+      ...partners.map<InboxItem>(p => ({
+        kind: 'partner',
+        id: p.id,
+        title: p.businessName,
+        owner: p.ownerName,
+        category: p.category,
+        createdAt: p.createdAt.toISOString(),
+        profileCompletion: p.profileCompletion,
+      })),
+      ...products.map<InboxItem>(p => ({
+        kind: 'product',
+        id: p.id,
+        title: p.name,
+        supplierName: p.provider.businessName,
+        supplierVerified: p.provider.isVerified,
+        category: categoryNameFor(p.categoryId, p.category),
+        createdAt: p.updatedAt.toISOString(),
+        image: p.images[0] || null,
+        pricePerUnit: p.pricePerUnit,
+        unitType: p.unitType,
+        description: p.description,
+        rejectedReason: p.rejectedReason,
+      })),
+    ].sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // oldest first - fair queue
+
+    content = <ApprovalsInbox items={items} />;
+  }
+
+  // ---------------------------------------------------------------- Projects
+  if (view === 'projects') {
+    const raw = await prisma.project.findMany({
+      select: {
+        id: true, title: true, type: true, location: true, budget: true, currentStage: true, createdAt: true, updatedAt: true,
+        user: { select: { id: true, name: true } },
+        quotes: { select: { isAccepted: true, provider: { select: { id: true, businessName: true } } } },
+        tasks: { select: { status: true, updatedAt: true } },
+        updates: { select: { createdAt: true }, orderBy: { createdAt: 'desc' }, take: 1 },
       },
-      buyer: {
-        select: {
-          id: true,
-          name: true,
-          email: true
-        }
+      orderBy: { createdAt: 'desc' },
+    });
+    const projects: BoardProject[] = raw.map(p => {
+      const hired = p.quotes.find(q => q.isAccepted);
+      return {
+        id: p.id,
+        title: p.title,
+        type: p.type,
+        location: p.location,
+        budget: p.budget,
+        stage: p.currentStage,
+        client: p.user.name,
+        clientId: p.user.id,
+        partner: hired?.provider.businessName ?? null,
+        partnerId: hired?.provider.id ?? null,
+        quotes: p.quotes.length,
+        tasksDone: p.tasks.filter(t => (t.status || '').toLowerCase() === 'completed').length,
+        tasksTotal: p.tasks.length,
+        createdAt: p.createdAt.toISOString(),
+        lastActivity: latest(p.updatedAt, p.updates[0]?.createdAt, ...p.tasks.map(t => t.updatedAt)).toISOString(),
+      };
+    });
+    content = <ProjectsBoard projects={projects} initialOpen={openId} />;
+  }
+
+  // --------------------------------------------------------------- Customers
+  if (view === 'users') {
+    const raw = await prisma.user.findMany({
+      where: { role: 'CONSUMER' },
+      select: { id: true, name: true, email: true, phone: true, isApproved: true, createdAt: true, _count: { select: { projects: true, inquiries: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const customers: CustomerRow[] = raw.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      isApproved: u.isApproved,
+      createdAt: u.createdAt.toISOString(),
+      projects: u._count.projects,
+      orders: u._count.inquiries,
+    }));
+    content = <CustomersView customers={customers} initialOpen={openId} />;
+  }
+
+  // ---------------------------------------------------------------- Partners
+  if (view === 'providers') {
+    const raw = await prisma.provider.findMany({
+      select: {
+        id: true, businessName: true, ownerName: true, email: true, phone: true, category: true,
+        isVerified: true, isRejected: true, createdAt: true, subscriptionStatus: true, subscriptionExpiresAt: true,
+        _count: { select: { quotes: true, products: { where: { deletedAt: null } } } },
       },
-      product: {
-        select: {
-          id: true,
-          name: true,
-          pricePerUnit: true,
-          costPrice: true,
-          category: true,
-          unitType: true
-        }
-      }
-    },
-    orderBy: { updatedAt: 'desc' }
-  });
+      orderBy: { createdAt: 'desc' },
+    });
+    const partners: PartnerRow[] = raw.map(p => {
+      const exp = p.subscriptionExpiresAt?.getTime() ?? 0;
+      const daysLeft = exp > now ? Math.ceil((exp - now) / DAY) : 0;
+      const status = p.subscriptionStatus === 'ACTIVE' && daysLeft > 0 ? 'ACTIVE' : p.subscriptionExpiresAt ? 'EXPIRED' : p.subscriptionStatus || 'INACTIVE';
+      return {
+        id: p.id,
+        businessName: p.businessName,
+        ownerName: p.ownerName,
+        email: p.email,
+        phone: p.phone,
+        category: p.category,
+        isVerified: p.isVerified,
+        isRejected: p.isRejected,
+        createdAt: p.createdAt.toISOString(),
+        subscriptionStatus: status,
+        daysLeft,
+        subscriptionExpiresAt: p.subscriptionExpiresAt?.toISOString() ?? null,
+        quotes: p._count.quotes,
+        products: p._count.products,
+      };
+    });
+    content = <PartnersView partners={partners} initialOpen={openId} />;
+  }
 
-  const completedInquiriesJson = completedInquiriesRaw.map(inq => {
-    const qty = inq.quantity || 1;
-    const unitPrice = inq.quotedPrice ?? (inq.product?.pricePerUnit ?? 0);
-    const totalRevenue = unitPrice * qty;
-    const unitCost = inq.product?.costPrice ?? 0;
-    const totalCost = unitCost > 0 ? unitCost * qty : 0;
-    const netProfit = totalCost > 0 ? Math.max(0, totalRevenue - totalCost) : Math.round(totalRevenue * 0.10);
-
-    return {
-      id: inq.id,
-      title: inq.title,
-      quantity: qty,
-      unit: inq.unit || inq.product?.unitType || 'Units',
-      unitPrice,
-      totalRevenue,
-      unitCost,
-      totalCost,
-      netProfit,
-      status: inq.status,
-      deliveryStatus: inq.deliveryStatus,
-      gstPercent: inq.gstPercent || 18,
-      createdAt: inq.createdAt.toISOString(),
-      updatedAt: inq.updatedAt.toISOString(),
-      provider: inq.provider ? {
-        id: inq.provider.id,
-        businessName: inq.provider.businessName,
-        ownerName: inq.provider.ownerName,
-        email: inq.provider.email,
-        phone: inq.provider.phone,
-        category: inq.provider.category
-      } : null,
-      buyer: inq.buyer ? {
-        id: inq.buyer.id,
-        name: inq.buyer.name,
-        email: inq.buyer.email
-      } : null,
-      product: inq.product ? {
-        id: inq.product.id,
-        name: inq.product.name,
-        category: inq.product.category
-      } : null
-    };
-  });
-
-  const providersWithSubData = allProviders.map(p => {
-    const expiresAt = p.subscriptionExpiresAt;
-    const now = new Date();
-    const daysLeft = expiresAt && new Date(expiresAt) > now
-      ? Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      : 0;
-    const isSubActive = p.subscriptionStatus === 'ACTIVE' && daysLeft > 0;
-    const subStatus = isSubActive ? 'ACTIVE' : (expiresAt ? 'EXPIRED' : (p.subscriptionStatus || 'INACTIVE'));
-
-    return {
-      id: p.id,
-      businessName: p.businessName,
-      ownerName: p.ownerName,
-      email: p.email,
-      phone: p.phone,
-      category: p.category,
-      experience: p.experience,
-      isVerified: p.isVerified,
-      isRejected: p.isRejected,
-      address: p.address,
-      bio: p.bio,
-      aadharCard: p.aadharCard,
-      panCard: p.panCard,
-      profileCompletion: p.profileCompletion,
-      createdAt: p.createdAt.toISOString(),
-      subscriptionStatus: subStatus,
-      subscriptionPlan: p.subscriptionPlan,
-      subscriptionAmount: p.subscriptionAmount,
-      subscriptionStartedAt: p.subscriptionStartedAt?.toISOString() || null,
-      subscriptionExpiresAt: p.subscriptionExpiresAt?.toISOString() || null,
-      daysLeft,
-      razorpayOrderId: p.razorpayOrderId,
-      razorpayPaymentId: p.razorpayPaymentId,
-      portfolioImages: p.portfolioImages?.map(img => ({
-        id: img.id,
-        title: img.title,
-        description: img.description,
-        imageData: img.imageData,
-      })) || [],
-    };
-  });
-
-  const providersJson = allProviders.map(p => ({
-    id: p.id,
-    businessName: p.businessName,
-    ownerName: p.ownerName
-  }));
-
-  const allAdsRaw = await (prisma as any).ad.findMany({
-    orderBy: { createdAt: 'desc' }
-  });
-
-  const recentActions = await getRecentActions(60);
-
-  // Material products for moderation - only loaded on that view (images can be large)
-  let productsJson: ModerationProduct[] = [];
+  // ---------------------------------------------------------------- Products
   if (view === 'products') {
-    const rawProducts = await prisma.product.findMany({
+    const raw = await prisma.product.findMany({
       where: { deletedAt: null },
       include: { provider: { select: { businessName: true, isVerified: true } } },
       orderBy: { createdAt: 'desc' },
     });
-    productsJson = rawProducts.map(p => ({
+    const products: ModerationProduct[] = raw.map(p => ({
       id: p.id,
       name: p.name,
       description: p.description,
@@ -283,268 +387,47 @@ export default async function AdminDashboard({
       supplierVerified: p.provider.isVerified,
       createdAt: p.createdAt.toISOString(),
     }));
+    content = <ProductsModeration initialProducts={products} />;
   }
 
-  const adsJson = allAdsRaw.map((ad: any) => ({
-    id: ad.id,
-    title: ad.title,
-    desc: ad.desc,
-    badge: ad.badge,
-    icon: ad.icon,
-    gradient: ad.gradient,
-    imageUrl: ad.imageUrl || null,
-    mediaType: ad.mediaType || (ad.videoUrl ? 'video' : 'image'),
-    videoUrl: ad.videoUrl || null,
-    targetSide: ad.targetSide || 'ALL',
-    actionUrl: ad.actionUrl || null,
-    actionText: ad.actionText || 'Explore Now',
-    isActive: ad.isActive !== undefined ? Boolean(ad.isActive) : true,
-    createdAt: ad.createdAt.toISOString()
-  }));
+  // --------------------------------------------------------------------- Ads
+  if (view === 'ads') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allAdsRaw = await (prisma as any).ad.findMany({ orderBy: { createdAt: 'desc' } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adsJson = allAdsRaw.map((ad: any) => ({
+      id: ad.id,
+      title: ad.title,
+      desc: ad.desc,
+      badge: ad.badge,
+      icon: ad.icon,
+      gradient: ad.gradient,
+      imageUrl: ad.imageUrl || null,
+      mediaType: ad.mediaType || (ad.videoUrl ? 'video' : 'image'),
+      videoUrl: ad.videoUrl || null,
+      targetSide: ad.targetSide || 'ALL',
+      actionUrl: ad.actionUrl || null,
+      actionText: ad.actionText || 'Explore Now',
+      isActive: ad.isActive !== undefined ? Boolean(ad.isActive) : true,
+      createdAt: ad.createdAt.toISOString(),
+    }));
+    content = <AdsManager initialAds={adsJson} />;
+  }
+
+  // ---------------------------------------------------------------- Activity
+  if (view === 'recent-actions') {
+    content = <RecentActionsFeed initialActions={await getRecentActions(60)} />;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-40">
-        <div className="flex items-center space-x-4">
-          <div className="bg-blue-600 p-2 rounded-lg shadow-sm">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Connectzy Admin</h1>
-        </div>
-        <div className="flex items-center space-x-3">
-          <span className="text-sm font-medium text-gray-500">Administrator</span>
-          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-            AD
-          </div>
-        </div>
-      </header>
-      
-      <div className="flex flex-1">
-        <AdminSidebar currentView={view} pendingApprovalsCount={unapprovedProviders.length} />
-
-        <main className="flex-1 p-8 overflow-y-auto bg-gray-50">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
-                <div className="bg-blue-50 p-3 rounded-xl mb-4">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Users</h3>
-                <p className="text-3xl font-black text-gray-900 mt-1">{totalUsers}</p>
-              </div>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
-                <div className="bg-indigo-50 p-3 rounded-xl mb-4">
-                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Providers</h3>
-                <p className="text-3xl font-black text-gray-900 mt-1">{totalProviders}</p>
-              </div>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
-                <div className="bg-emerald-50 p-3 rounded-xl mb-4">
-                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
-                <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Active Projects</h3>
-                <p className="text-3xl font-black text-gray-900 mt-1">{activeProjects}</p>
-              </div>
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center">
-                <div className="bg-amber-50 p-3 rounded-xl mb-4">
-                  <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Quotes</h3>
-                <p className="text-3xl font-black text-gray-900 mt-1">{totalQuotes}</p>
-              </div>
-            </div>
-
-            <ViewTransitionContainer currentView={view}>
-              {view === 'dashboard' && (
-                <DashboardAnalytics 
-                  projects={projectsJson} 
-                  acceptedQuotes={acceptedQuotesJson} 
-                  providers={providersJson}
-                  recentActions={recentActions}
-                  materialOrders={completedInquiriesJson}
-                />
-              )}
-
-              {view === 'recent-actions' && (
-                <RecentActionsFeed initialActions={recentActions} />
-              )}
-
-            {view === 'pending' && (
-              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-blue-50/50">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
-                    <h2 className="text-lg font-bold text-blue-900">Provider Approvals Pending</h2>
-                  </div>
-                  <span className="bg-blue-100 text-blue-800 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest">{unapprovedProviders.length} Applications</span>
-                </div>
-                
-                {unapprovedProviders.length === 0 ? (
-                  <div className="p-12 text-center text-gray-400">
-                    <svg className="w-16 h-16 mx-auto text-gray-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-lg font-medium">All caught up! No pending reviews.</p>
-                  </div>
-                ) : (
-                  <ul className="divide-y divide-gray-50">
-                    {unapprovedProviders.map(provider => (
-                      <li key={provider.id} className="p-8 flex items-center justify-between hover:bg-gray-50 transition-all group">
-                        <div className="flex items-center space-x-6">
-                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-100">
-                            {provider.businessName[0].toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{provider.businessName}</p>
-                            <p className="text-sm text-gray-500 mt-0.5">{provider.ownerName} • {provider.category}</p>
-                          </div>
-                        </div>
-                        <ProviderReviewModal provider={provider} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
-            {view === 'users' && (
-              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
-                  <h2 className="text-lg font-bold text-gray-900">User Management</h2>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">User Name</th>
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Email</th>
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {allUsers.map(user => (
-                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="p-6 font-bold text-gray-900">{user.name}</td>
-                          <td className="p-6 text-gray-500">{user.email}</td>
-                          <td className="p-6 text-center">
-                            <StatusToggle id={user.id} initialStatus={user.isApproved} type="user" />
-                          </td>
-                          <td className="p-6 text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <ViewDetailsModal
-                                type="user"
-                                data={{
-                                  id: user.id,
-                                  name: user.name,
-                                  email: user.email,
-                                  role: user.role,
-                                  isApproved: user.isApproved,
-                                  createdAt: user.createdAt.toISOString(),
-                                }}
-                              />
-                              <DeleteButton id={user.id} type="user" name={user.name} />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {view === 'providers' && (
-              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
-                  <h2 className="text-lg font-bold text-gray-900">Provider Directory</h2>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Business</th>
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Category</th>
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Membership (₹5,999)</th>
-                        <th className="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {providersWithSubData.map(provider => (
-                        <tr key={provider.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="p-6">
-                            <p className="font-bold text-gray-900">{provider.businessName}</p>
-                            <p className="text-xs text-gray-400">{provider.ownerName}</p>
-                          </td>
-                          <td className="p-6 text-gray-500">{provider.category}</td>
-                          <td className="p-6 text-center">
-                            <StatusToggle id={provider.id} initialStatus={provider.isVerified} type="provider" />
-                          </td>
-                          <td className="p-6 text-center">
-                            {provider.subscriptionStatus === 'ACTIVE' && provider.daysLeft > 0 ? (
-                              <div className="inline-flex flex-col items-center">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                  {provider.daysLeft} days left
-                                </span>
-                                <span className="text-[10px] text-gray-400 mt-0.5 font-medium">Annual Pro</span>
-                              </div>
-                            ) : provider.subscriptionExpiresAt ? (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
-                                Expired
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-                                Unpaid
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-6 text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <ViewDetailsModal
-                                type="provider"
-                                data={provider}
-                              />
-                              <DeleteButton id={provider.id} type="provider" name={provider.businessName} />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* 
-            {view === 'subscriptions' && (
-              <SubscriptionManager providers={providersWithSubData} />
-            )}
-            */}
-
-            {view === 'ads' && (
-              <AdsManager initialAds={adsJson} />
-            )}
-
-            {view === 'products' && (
-              <ProductsModeration initialProducts={productsJson} />
-            )}
-            </ViewTransitionContainer>
-          </div>
-        </main>
-      </div>
-    </div>
+    <AdminShell
+      view={view}
+      initialTheme={theme}
+      initialCollapsed={collapsed}
+      approvalsCount={pendingPartners + pendingProducts}
+      searchIndex={searchIndex}
+    >
+      <ViewTransitionContainer currentView={view}>{content}</ViewTransitionContainer>
+    </AdminShell>
   );
 }

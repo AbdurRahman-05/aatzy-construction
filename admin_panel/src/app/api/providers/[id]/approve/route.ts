@@ -12,7 +12,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     
     const provider = await prisma.provider.update({
       where: { id },
-      data: { isVerified: true },
+      data: { isVerified: true, isRejected: false },
     });
 
     // Send approval email asynchronously

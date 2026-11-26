@@ -10,7 +10,6 @@ import '../../auth/auth_provider.dart';
 import '../models/material_order_models.dart';
 import 'widgets/custom_image.dart';
 import 'product_list_screen.dart' show formatRupees;
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 
 class MaterialsScreen extends ConsumerStatefulWidget {
@@ -1305,13 +1304,6 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
     context.push('$base/$partnerId?name=${Uri.encodeQueryComponent(name)}');
   }
 
-  Future<void> _callNumber(String phone) async {
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (!await launchUrl(uri) && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open the dialer')));
-    }
-  }
-
   // ---------------------------------------------------------------------------
   // Customer card
   // ---------------------------------------------------------------------------
@@ -1424,7 +1416,6 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
 
   Widget _buildProviderLeadCard(LeadItem lead) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final accepted = ['Accepted', 'Closed', 'Completed'].contains(lead.status);
     final inDelivery = ['Accepted', 'Closed'].contains(lead.status) && lead.deliveryStatus != 'Delivered';
     final profit = (lead.quotedPrice != null && lead.productCost > 0)
         ? (lead.quotedPrice! - lead.productCost) * lead.quantityVal
@@ -1534,22 +1525,12 @@ class _MaterialsScreenState extends ConsumerState<MaterialsScreen> with SingleTi
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Bento.text(dark))),
                       Text(
-                        accepted && lead.buyerPhone.isNotEmpty
-                            ? lead.buyerPhone
-                            : 'Requested ${lead.date}',
+                        'Requested ${lead.date}',
                         style: TextStyle(fontSize: 11.5, color: Bento.muted(dark)),
                       ),
                     ],
                   ),
                 ),
-                if (accepted && lead.buyerPhone.isNotEmpty) ...[
-                  BentoCircleButton(
-                    icon: Icons.call_rounded,
-                    tooltip: 'Call customer',
-                    onPressed: () => _callNumber(lead.buyerPhone),
-                  ),
-                  const SizedBox(width: 6),
-                ],
                 if (lead.buyerId.isNotEmpty)
                   BentoCircleButton(
                     icon: Icons.chat_bubble_outline_rounded,

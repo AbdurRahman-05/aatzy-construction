@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ArrowRight, Building2, Eye, EyeOff, Inbox, Loader2, Lock, ShieldCheck, Columns3, AlertTriangle } from 'lucide-react';
 
 export default function LoginForm() {
   const [password, setPassword] = useState('');
@@ -17,11 +18,8 @@ export default function LoginForm() {
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          password,
-        }),
+        body: JSON.stringify({ password }),
       });
-
       const data = await response.json();
 
       if (!response.ok) {
@@ -29,98 +27,110 @@ export default function LoginForm() {
         setIsLoading(false);
         return;
       }
-
       if (data.success) {
         // The server sets a signed HttpOnly session cookie
         window.location.reload();
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Failed to reach the authentication server.');
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F5F3] font-sans px-4">
-      <div className="w-full max-w-md bg-white border border-[#E8E8E5] rounded-3xl p-8 shadow-xl">
-        <div className="flex flex-col items-center mb-8">
-          <div className="bg-[#1F2937] p-4 rounded-2xl shadow-lg shadow-slate-900/20 mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-black text-[#1F2937] tracking-tight">Connectzy Admin Panel</h2>
-          <p className="text-[#737373] text-sm mt-1 font-medium text-center">
-            System administration & contractor verification hub
-          </p>
+    <div className="admin-root grid min-h-screen lg:grid-cols-[1.1fr_1fr]" data-theme="light">
+      {/* Brand side */}
+      <div className="cz-hero cz-blueprint relative hidden overflow-hidden rounded-none p-12 lg:flex lg:flex-col">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-teal-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 left-10 h-80 w-80 rounded-full bg-teal-600/20 blur-3xl" />
+
+        <div className="relative flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-teal-700 shadow-lg shadow-teal-900/40">
+            <Building2 size={22} />
+          </span>
+          <span className="text-lg font-black tracking-tight">Connectzy</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#737373] mb-2">
-              Admin Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full bg-[#F5F5F3] border border-[#E8E8E5] focus:border-[#1F2937] focus:ring-2 focus:ring-slate-900/10 rounded-xl px-4 py-3.5 text-[#1F2937] placeholder-slate-400 outline-none transition-all pr-12 text-sm"
-                required
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                disabled={isLoading}
-              >
-                {showPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
-              </button>
-            </div>
+        <div className="relative mt-auto max-w-md">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Admin console</p>
+          <h1 className="mt-3 text-4xl font-black leading-[1.1] tracking-tight">
+            Every site, partner and order - <span className="text-teal-300">one place.</span>
+          </h1>
+          <div className="mt-8 space-y-3">
+            {[
+              { icon: Inbox, t: 'Approve new partners and products in seconds' },
+              { icon: Columns3, t: 'See every project by stage and spot what is stuck' },
+              { icon: ShieldCheck, t: 'KYC, memberships and deletes - with a safety net' },
+            ].map(({ icon: Icon, t }) => (
+              <div key={t} className="flex items-center gap-3 rounded-2xl bg-white/[0.06] px-4 py-3 ring-1 ring-white/10">
+                <Icon size={18} className="shrink-0 text-teal-300" />
+                <span className="text-sm font-semibold text-white/85">{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="relative mt-10 text-xs text-white/40">© {new Date().getFullYear()} Connectzy · connectzy.app</p>
+      </div>
+
+      {/* Form side */}
+      <div className="flex items-center justify-center px-5 py-12">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-400 to-teal-700 text-white">
+              <Building2 size={22} />
+            </span>
+            <span className="text-lg font-black text-cz-ink">Connectzy Admin</span>
           </div>
 
-          {error && (
-            <div className="flex items-center space-x-2 bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl text-xs font-semibold">
-              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
+          <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cz-accent-soft text-cz-accent-text">
+            <Lock size={20} />
+          </span>
+          <h2 className="text-2xl font-black tracking-tight text-cz-ink">Welcome back</h2>
+          <p className="mt-1 text-sm text-cz-muted">Enter the admin password to continue.</p>
 
-          <div className="flex flex-col space-y-3">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-cz-muted">Admin password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="cz-input py-3 pr-12"
+                  required
+                  autoFocus
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-cz-muted hover:text-cz-ink"
+                  disabled={isLoading}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2 rounded-2xl bg-red-500/10 px-4 py-3 text-xs font-semibold text-red-700">
+                <AlertTriangle size={16} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#1F2937] hover:bg-[#111827] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-slate-900/20 transition-all text-sm flex items-center justify-center space-x-2"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-cz-hero py-3.5 text-sm font-bold text-white shadow-lg shadow-black/10 transition hover:opacity-90 disabled:opacity-60"
             >
-              {isLoading ? (
-                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : (
-                <>
-                  <span>Login to Admin Dashboard</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </>
-              )}
+              {isLoading ? <Loader2 size={18} className="animate-spin" /> : <>Log in <ArrowRight size={16} /></>}
             </button>
-          </div>
-        </form>
+          </form>
+          <p className="mt-6 text-center text-xs text-cz-muted">Too many wrong tries locks login for 15 minutes.</p>
+        </div>
       </div>
     </div>
   );

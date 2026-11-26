@@ -19,12 +19,15 @@ export default function PageTransitionLoader() {
     try {
       const url = new URL(urlStr, window.location.origin);
       const view = url.searchParams.get('view');
-      if (view === 'dashboard') return 'Project Dashboard';
-      if (view === 'pending') return 'Pending Approvals';
-      if (view === 'users') return 'User Management';
-      if (view === 'providers') return 'Provider Directory';
+      if (view === 'dashboard') return 'Overview';
+      if (view === 'projects') return 'Projects board';
+      if (view === 'products') return 'Material products';
+      if (view === 'recent-actions') return 'Activity';
+      if (view === 'pending') return 'Approvals inbox';
+      if (view === 'users') return 'Customers';
+      if (view === 'providers') return 'Partners';
       if (view === 'subscriptions') return 'Subscriptions';
-      if (view === 'ads') return 'Manage Ads';
+      if (view === 'ads') return 'Ads & banners';
       if (url.pathname === '/admin') return 'Admin Hub';
       if (url.pathname === '/') return 'Portfolio Home';
       return 'Next Page';
@@ -139,6 +142,14 @@ export default function PageTransitionLoader() {
 
   if (!isNavigating && progress === 0) return null;
 
+  // Admin uses the app's teal; the public website keeps its blue for now
+  const isAdmin = pathname?.startsWith('/admin');
+  const track = isAdmin ? 'bg-teal-600/10' : 'bg-blue-600/10';
+  const bar = isAdmin
+    ? 'bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-300 shadow-[0_0_12px_rgba(13,148,136,0.7)]'
+    : 'bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500 shadow-[0_0_12px_rgba(37,99,235,0.7),0_0_4px_rgba(245,158,11,0.6)]';
+  const dots = isAdmin ? ['bg-teal-600', 'bg-teal-400', 'bg-emerald-400'] : ['bg-blue-600', 'bg-indigo-500', 'bg-amber-500'];
+
   return (
     <>
       {/* Top Radiant Progress Bar */}
@@ -149,11 +160,11 @@ export default function PageTransitionLoader() {
         }}
       >
         {/* Glow backdrop track */}
-        <div className="absolute inset-0 bg-blue-600/10" />
+        <div className={`absolute inset-0 ${track}`} />
 
         {/* Dynamic Progress Indicator */}
         <div
-          className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500 shadow-[0_0_12px_rgba(37,99,235,0.7),0_0_4px_rgba(245,158,11,0.6)] transition-all duration-200 ease-out relative overflow-hidden"
+          className={`h-full ${bar} transition-all duration-200 ease-out relative overflow-hidden`}
           style={{ width: `${progress}%` }}
         >
           {/* Shimmer sweep */}
@@ -175,7 +186,7 @@ export default function PageTransitionLoader() {
         <div className="flex items-center space-x-3 bg-white/90 backdrop-blur-xl border border-gray-200/80 px-4 py-2 rounded-2xl shadow-xl shadow-blue-900/10">
           {/* Dual ring animated spinner */}
           <div className="relative w-5 h-5 flex items-center justify-center">
-            <div className="absolute inset-0 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+            <div className="absolute inset-0 border-2 border-teal-600/20 border-t-teal-600 rounded-full animate-spin" />
             <div className="absolute inset-0.5 border border-amber-500/30 border-b-amber-500 rounded-full animate-spin-reverse" />
           </div>
 
@@ -186,9 +197,9 @@ export default function PageTransitionLoader() {
 
           {/* Staggered animated pulse dots */}
           <div className="flex items-center space-x-1 pl-1">
-            <span className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce-dot-1" />
-            <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce-dot-2" />
-            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce-dot-3" />
+            <span className={`w-1.5 h-1.5 ${dots[0]} rounded-full animate-bounce-dot-1`} />
+            <span className={`w-1.5 h-1.5 ${dots[1]} rounded-full animate-bounce-dot-2`} />
+            <span className={`w-1.5 h-1.5 ${dots[2]} rounded-full animate-bounce-dot-3`} />
           </div>
         </div>
       </div>

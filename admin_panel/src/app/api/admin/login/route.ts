@@ -43,3 +43,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to process admin login' }, { status: 500 });
   }
 }
+
+/** Log out: clear the admin session cookie. */
+export async function DELETE() {
+  const response = NextResponse.json({ success: true });
+  response.cookies.set(ADMIN_COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+  return response;
+}
